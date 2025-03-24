@@ -9,5 +9,5 @@ spec:
   scale: large
   users:
     owners:
-      - JongWon Kim <jongwon@smartx.kr>
+      # - JongWon Kim <jongwon@smartx.kr>
       - Ho Kim <ho.kim@smartx.kr>
