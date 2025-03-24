@@ -1,0 +1,88 @@
+[package]
+name = "openark-core"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+alloc = ["openark-core-opentelemetry?/alloc"]
+std = ["clap?/std", "openark-core-opentelemetry?/std", "rustls?/std"]
+
+clap = ["dep:clap", "std"]
+operator = ["dep:kube", "kube/client", "std"]
+
+# OpenTelemetry
+opentelemetry = ["openark-core-opentelemetry/opentelemetry", "std"]
+opentelemetry-all = [
+    "openark-core-opentelemetry/opentelemetry-all",
+    "opentelemetry-logs",
+    "opentelemetry-metrics",
+    "opentelemetry-trace",
+]
+opentelemetry-otlp = [
+    "openark-core-opentelemetry/opentelemetry-otlp",
+    "opentelemetry",
+]
+
+# OpenTelemetry pillars and functions
+opentelemetry-logs = [
+    "openark-core-opentelemetry/opentelemetry-logs",
+    "opentelemetry",
+]
+opentelemetry-metrics = [
+    "openark-core-opentelemetry/opentelemetry-metrics",
+    "opentelemetry",
+]
+opentelemetry-trace = [
+    "openark-core-opentelemetry/opentelemetry-trace",
+    "opentelemetry",
+]
+
+# TLS
+openssl-tls = [
+    "kube?/openssl-tls",
+    "openark-core-opentelemetry?/openssl-tls",
+    "std",
+]
+rustls-tls = [
+    "kube?/rustls-tls",
+    "openark-core-opentelemetry?/rustls-tls",
+    "rustls/ring",
+]
+
+# Tracing
+tracing = ["dep:tracing"]
+
+[dependencies]
+openark-core-opentelemetry = { workspace = true, optional = true }
+
+clap = { workspace = true, optional = true, features = [
+    "color",
+    "derive",
+    "env",
+    "error-context",
+    "help",
+    "std",
+    "suggestions",
+    "unicode",
+    "usage",
+] }
+kube = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true, features = ["ring", "tls12"] }
+tracing = { workspace = true, optional = true }

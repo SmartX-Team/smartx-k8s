@@ -1,0 +1,275 @@
+---
+# -- Namespace of the main rook operator
+operatorNamespace: csi-rook-ceph
+
+# -- Cluster ceph.conf override
+configOverride: |
+  [global]
+  mon_allow_pool_delete = true
+  osd_pool_default_size = 3
+  osd_pool_default_min_size = 2
+
+# Installs a debugging toolbox deployment
+toolbox:
+  # Enable Ceph debugging pod deployment
+  enabled: true
+  # -- Toolbox image, defaults to the image used by the Ceph cluster
+  image: quay.io/ceph/ceph:v18.2.2
+  # affinity:
+  #   nodeAffinity:
+  #     # KISS normal control plane nodes should be preferred
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #       - weight: 1
+  #         preference:
+  #           matchExpressions:
+  #             - key: node-role.kubernetes.io/control-plane
+  #               operator: Exists
+  #     # KISS ephemeral control plane nodes should be excluded
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #         - matchExpressions:
+  #             - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+  #               operator: DoesNotExist
+
+monitoring:
+  # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
+  # Monitoring requires Prometheus to be pre-installed
+  enabled: true
+  # -- Whether to create the Prometheus rules for Ceph alerts
+  createPrometheusRules: true
+
+# All values below are taken from the CephCluster CRD
+# More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
+cephClusterSpec:
+  # This cluster spec example is for a converged cluster where all the Ceph daemons are running locally,
+  # as in the host-based example (cluster.yaml). For a different configuration such as a
+  # PVC-based cluster (cluster-on-pvc.yaml), external cluster (cluster-external.yaml),
+  # or stretch cluster (cluster-stretched.yaml), replace this entire `cephClusterSpec`
+  # with the specs from those examples.
+
+  # For more details, check https://rook.io/docs/rook/v1.10/CRDs/Cluster/ceph-cluster-crd/
+  cephVersion:
+    # The container image used to launch the Ceph daemon pods (mon, mgr, osd, mds, rgw).
+    # v16 is Pacific, v17 is Quincy.
+    # RECOMMENDATION: In production, use a specific version tag instead of the general v16 flag, which pulls the latest release and could result in different
+    # versions running within the cluster. See tags available at https://hub.docker.com/r/ceph/ceph/tags/.
+    # If you want to be more precise, you can always use a timestamp tag such quay.io/ceph/ceph:v15.2.11-20200419
+    # This tag might not contain a new Ceph version, just security fixes from the underlying operating system, which will reduce vulnerabilities
+    image: quay.io/ceph/ceph:v18.2.2
+    # Whether to allow unsupported versions of Ceph. Currently `pacific` and `quincy` are supported.
+    # Future versions such as `reef` (v18) would require this to be set to `true`.
+    # Do not set to true in production.
+    allowUnsupported: false
+
+  mon:
+    # Set the number of mons to be started. Generally recommended to be 3.
+    # For highest availability, an odd number of mons should be specified.
+    count: 3
+    # The mons should be on unique nodes. For production, at least 3 nodes are recommended for this reason.
+    # Mons should only be allowed on the same node for test environments where data loss is acceptable.
+    allowMultiplePerNode: false
+
+  mgr:
+    # When higher availability of the mgr is needed, increase the count to 2.
+    # In that case, one mgr will be active and one in standby. When Ceph updates which
+    # mgr is active, Rook will update the mgr services to match the active mgr.
+    count: 2
+    allowMultiplePerNode: false
+    modules:
+      # Several modules should not need to be included in this list. The "dashboard" and "monitoring" modules
+      # are already enabled by other settings in the cluster CR.
+      - name: pg_autoscaler
+        enabled: true
+
+  # enable the ceph dashboard for viewing cluster status
+  dashboard:
+    enabled: true
+
+    # serve the dashboard under a subpath (useful when you are accessing the dashboard via a reverse proxy)
+    urlPrefix: /
+
+    # serve the dashboard at the given port.
+    # port: 8443
+
+    # Serve the dashboard using SSL (if using ingress to expose the dashboard and `ssl: true` you need to set
+    # the corresponding "backend protocol" annotation(s) for your ingress controller of choice)
+    ssl: true
+
+  # Network configuration, see: https://github.com/rook/rook/blob/master/Documentation/CRDs/ceph-cluster-crd.md#network-configuration-settings
+  network:
+    connections:
+      # Whether to encrypt the data in transit across the wire to prevent eavesdropping the data on the network.
+      # The default is false. When encryption is enabled, all communication between clients and Ceph daemons, or between Ceph daemons will be encrypted.
+      # When encryption is not enabled, clients still establish a strong initial authentication and data integrity is still validated with a crc check.
+      # IMPORTANT: Encryption requires the 5.11 kernel for the latest nbd and cephfs drivers. Alternatively for testing only,
+      # you can set the "mounter: rbd-nbd" in the rbd storage class, or "mounter: fuse" in the cephfs storage class.
+      # The nbd and fuse drivers are *not* recommended in production since restarting the csi driver pod will disconnect the volumes.
+      encryption:
+        enabled: false
+      # Whether to compress the data in transit across the wire. The default is false.
+      # Requires Ceph Quincy (v17) or newer. Also see the kernel requirements above for encryption.
+      compression:
+        enabled: false
+      # Whether to require communication over msgr2. If true, the msgr v1 port (6789) will be disabled
+      # and clients will be required to connect to the Ceph cluster with the v2 port (3300).
+      # Requires a kernel that supports msgr v2 (kernel 5.11 or CentOS 8.4 or newer).
+      requireMsgr2: false
+
+  # To control where various services will be scheduled by kubernetes, use the placement configuration sections below.
+  # The example under 'all' would have all services scheduled on kubernetes nodes labeled with 'role=storage-node' and
+  # tolerate taints with a key of 'storage-node'.
+  placement:
+    all:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Storage
+
+  resources:
+    mgr:
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+      requests:
+        cpu: "1"
+        memory: "1Gi"
+    mon:
+      # limits:
+      #   cpu: "2"
+      #   memory: "2Gi"
+      requests:
+        cpu: "2"
+        memory: "2Gi"
+    osd:
+      limits:
+        cpu: "2"
+        # memory: "4Gi"
+      requests:
+        cpu: "0.5"
+        memory: "500Mi"
+
+  # The option to automatically remove OSDs that are out and are safe to destroy.
+  removeOSDsIfOutAndSafeToRemove: false
+
+  storage: # cluster level storage configuration and selection
+    useAllNodes: true
+    useAllDevices: true
+    config:
+      osdsPerDevice: "1" # this value can be overridden at the node or device level
+      encryptedDevice: "false" # the default value for this option is "false"
+
+  # Configure the healthcheck and liveness probes for ceph pods.
+  # Valid values for daemons are 'mon', 'osd', 'status'
+  healthCheck:
+    daemonHealth:
+      mon:
+        disabled: false
+        interval: 45s
+        timeout: 2h
+      osd:
+        disabled: false
+        interval: 60s
+        timeout: 2h
+      status:
+        disabled: false
+        interval: 60s
+        timeout: 2h
+    # Change pod liveness probe, it works for all mon, mgr, and osd pods.
+    livenessProbe:
+      rgw:
+        disabled: false
+        probe:
+          failureThreshold: 120
+          initialDelaySeconds: 7200
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+      mds:
+        disabled: false
+        probe:
+          failureThreshold: 120
+          initialDelaySeconds: 7200
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+      mon:
+        disabled: false
+        probe:
+          failureThreshold: 120
+          initialDelaySeconds: 7200
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+      mgr:
+        disabled: false
+        probe:
+          failureThreshold: 120
+          initialDelaySeconds: 7200
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+      osd:
+        disabled: false
+        probe:
+          failureThreshold: 120
+          initialDelaySeconds: 7200
+          periodSeconds: 60
+          successThreshold: 1
+          timeoutSeconds: 60
+    startupProbe:
+      rgw:
+        disabled: true
+      mds:
+        disabled: true
+      mon:
+        disabled: true
+      mgr:
+        disabled: true
+      osd:
+        disabled: true
+
+ingress:
+  # -- Enable an ingress for the ceph-dashboard
+  dashboard:
+    annotations:
+      nginx.ingress.kubernetes.io/auth-response-headers: Authorization
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+    host:
+      path: /
+
+# -- Settings for the filesystem snapshot class
+# @default -- See [CephFS Snapshots](../Storage-Configuration/Ceph-CSI/ceph-csi-snapshot.md#cephfs-snapshots)
+cephFileSystemVolumeSnapshotClass:
+  enabled: false
+  name: ceph-filesystem
+  isDefault: true
+  deletionPolicy: Delete
+  annotations: {}
+  labels: {}
+  # see https://rook.io/docs/rook/v1.10/Storage-Configuration/Ceph-CSI/ceph-csi-snapshot/#cephfs-snapshots for available configuration
+  parameters: {}
+
+# -- Settings for the block pool snapshot class
+# @default -- See [RBD Snapshots](../Storage-Configuration/Ceph-CSI/ceph-csi-snapshot.md#rbd-snapshots)
+cephBlockPoolsVolumeSnapshotClass:
+  enabled: false
+  name: ceph-block
+  isDefault: false
+  deletionPolicy: Delete
+  annotations: {}
+  labels: {}
+  # see https://rook.io/docs/rook/v1.10/Storage-Configuration/Ceph-CSI/ceph-csi-snapshot/#rbd-snapshots for available configuration
+  parameters: {}
+
+# -- A list of CephObjectStore configurations to deploy
+# @default -- See [below](#ceph-object-stores)
+cephObjectStores: []

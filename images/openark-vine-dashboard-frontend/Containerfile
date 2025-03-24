@@ -1,0 +1,76 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := "openark-vine-dashboard-frontend" }}
+
+# Install node dependencies
+RUN npm install --package-lock-only && ./node_modules/npm/bin/npm clean-install
+
+# Be ready for building
+FROM "{{ .Values.openark.builder.image.repo }}:{{ .Values.openark.builder.image.tag }}-{{ .Values.openark.base.image.tag }}" AS builder
+
+# Install node dependencies
+RUN curl -o- 'https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh' | bash \
+    && . "${HOME}/.nvm/nvm.sh" \
+    && nvm install {{ .Values.node.version | quote }}
+
+# Install npm dependencies
+RUN . "${HOME}/.nvm/nvm.sh" \
+    && curl -qL 'https://www.npmjs.com/install.sh' | bash
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        clang \
+        cmake \
+    # Enable wasm32 target
+    && rustup target add wasm32-unknown-unknown \
+    # Build
+    && cargo install --root /usr/local \
+        trunk \
+        wasm-bindgen-cli
+
+# Load source files
+ADD . /src
+WORKDIR "/src/crates/{{ $package }}"
+
+# Install node dependencies
+RUN . "${HOME}/.nvm/nvm.sh" \
+    && npm install --package-lock-only \
+    && npm clean-install
+
+# Build it!
+RUN \
+    # Cache build outputs
+    --mount=type=cache,target=/src/target \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    # Load Node.js
+    . "${HOME}/.nvm/nvm.sh" \
+    # Create an output directory
+    && mkdir /out \
+    # Alias
+    && ln -sf /usr/bin/true /usr/bin/clear \
+    && ln -sf npm /usr/bin/npm \
+    # Pre-hook
+    && npm run 'build:css' \
+    # Build
+    && trunk build --dist '/out' --release \
+        --no-default-features --features 'production' \
+    # Remove auto-generated stuffs
+    && rm /out/public/output.css
+
+# Be ready for serving
+FROM "{{ .Values.nginx.image.repo }}:{{ .Values.nginx.image.tag }}{{ .Values.nginx.image.otel | ternary "-otel" "" }}" AS server
+
+# Copy executable files
+COPY --from=builder /out /usr/share/nginx/html
+
+# Copy static files
+ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+ADD ./robots.txt /usr/share/nginx/html/
+# ADD ./favicon.ico /usr/share/nginx/html/favicon.ico
+ADD ./nginx.conf /etc/nginx/conf.d/default.conf
+
+# Mark as executable
+EXPOSE 6080/tcp

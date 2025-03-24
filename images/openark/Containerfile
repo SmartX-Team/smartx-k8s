@@ -1,0 +1,70 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := "openark" }}
+
+# Be ready for building
+FROM "{{ .Values.openark.builder.image.repo }}:{{ .Values.openark.builder.image.tag }}-{{ .Values.openark.base.image.tag }}" AS builder
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        clang \
+        cmake \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Load source files
+ADD . /src
+WORKDIR /src
+
+# Build it!
+RUN \
+    # Cache build outputs
+    --mount=type=cache,target=/src/target \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    # Create an output directory
+    mkdir /out \
+    # Build
+    && cargo build --bins --exclude 'openark-vine-dashboard-frontend' --workspace --release \
+    && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
+
+# Be ready for serving
+FROM "{{ .Values.openark.base.image.repo }}:{{ .Values.openark.base.image.tag }}" AS server
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        curl \
+        git \
+        jq \
+        systemd \
+        wget \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies / helm
+RUN curl "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3" | bash
+
+# Install dependencies / kubectl
+RUN K8S_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" \
+    && ARCH="$(dpkg --print-architecture)" \
+    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl" \
+    && chmod 0555 '/usr/local/bin/kubectl'
+
+# Create an user
+RUN groupadd --gid "2000" "user" \
+    && useradd --uid "2000" --gid "2000" \
+        --shell "/bin/bash" --non-unique "user"
+
+# Copy executable files
+ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+COPY --from=builder /out/* /usr/local/bin/
+
+# Mark as executable
+CMD [ "./arkctl" ]
+ENTRYPOINT [ "/usr/bin/env" ]
+USER user
+WORKDIR /usr/local/bin/

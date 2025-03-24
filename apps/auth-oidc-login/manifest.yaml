@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.auth-oidc-login
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: {{ .Values.twin.namespace | quote }}
+    patched: true
+    unsafe: true # RBAC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/auth
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

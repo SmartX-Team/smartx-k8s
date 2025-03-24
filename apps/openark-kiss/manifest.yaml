@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openark-kiss
+spec:
+  group: ops
+  phase: stable
+  scale: medium
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: false # Bootstrap
+    namespace: kiss
+    patched: false # Global
+    unsafe: true # Bootstrap
+    useClusterValues: true # Global
+    features:
+      - org.ulagbulag.io/bare-metal-provisioning/kiss
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

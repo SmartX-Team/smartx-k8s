@@ -1,0 +1,21 @@
+{{- if and
+  ( not .Values.vm.enabled )
+  .Values.persistence.enabled
+}}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+{{- include "helm.podMetadata" $ | nindent 2 }}
+spec:
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+{{- include "helm.podMetadata" $ | nindent 6 }}
+    spec:
+{{- include "helm.podTemplate" $ | nindent 6 }}
+{{- end }}

@@ -1,0 +1,9 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps
+spec:
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>

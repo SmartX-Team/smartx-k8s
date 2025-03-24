@@ -1,0 +1,463 @@
+---
+addUsers:
+  - name: kiss
+    groups:
+      - docker
+      - sudo
+      - users
+      - wheel
+    lock_passwd: false
+    passwd: $6$Tt5aacrWjfFz/v6l$lfIW/m1.dYdoJlRnYrtx/pKDyfUTJg8Sh/rbsOcMD2vJa.4rAzSZy7Lp89Q/3ijK97RQUm/zS0cApJmLFLwyx0
+    shell: /bin/bash
+    sudo: true
+
+assets:
+  image:
+    repo: docker.io/library/nginx
+    tag: stable
+    otel: true
+    pullPolicy: Always
+
+dnsmasq:
+  image:
+    repo: quay.io/poseidon/dnsmasq
+    tag: v0.5.0
+
+features:
+  dev: false
+
+greeter:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-greeter
+    tag: latest
+
+ipxe:
+  image:
+    repo: quay.io/ulagbulag/openark-ipxe
+    tag: latest
+
+ntpd:
+  image:
+    repo: docker.io/cturra/ntp
+    tag: latest
+
+operator:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+kubespray:
+  #####################################
+  # adduser
+  #####################################
+
+  # additional configurations
+  kube_owner: root
+  kube_cert_group: root
+
+  #####################################
+  # container-engine / containerd
+  #####################################
+
+  # Containerd conf default dir
+  containerd_storage_dir: "/var/lib/containerd"
+
+  containerd_base_runtime_spec_rlimit_nofile: 1048576
+
+  # Versions
+  # TODO: newer major releases (containerd 2.x) have many compatibility issues for now: 2025-03-16
+  containerd_version: 1.7.26
+
+  #####################################
+  # etcd
+  #####################################
+
+  # Settings for containerized control plane (etcd/kubelet/secrets)
+  # deployment type for legacy etcd mode
+  etcd_deployment_type: "{{ 'docker' if container_manager == 'docker' else 'host' }}" # data is stored in /opt/etcd
+
+  # Directory where etcd data stored
+  etcd_data_dir: /opt/etcd
+  etcd_config_dir: /etc/etcd
+  etcd_events_data_dir: /var/lib/etcd-events
+
+  #####################################
+  # kubernetes / client
+  #####################################
+
+  # Kubernetes configuration dirs and system namespace.
+  # Those are where all the additional config stuff goes
+  # the kubernetes normally puts in /srv/kubernetes.
+  # This puts them in a sane location and namespace.
+  # Editing those values will almost surely break something.
+  kube_config_dir: /etc/kubernetes
+
+  #####################################
+  # kubernetes / control-plane
+  #####################################
+
+  ## kube-controller-manager
+  kube_controller_manager_bind_address: 127.0.0.1
+
+  # enable kubernetes audit
+  kubernetes_audit: true
+
+  # configure arp_ignore and arp_announce to avoid answering ARP queries from kube-ipvs0 interface
+  # must be set to true for MetalLB to work
+  kube_proxy_strict_arp: false # set to true for MetalLB to work
+
+  kube_controller_terminated_pod_gc_threshold: 50
+  kube_apiserver_request_timeout: 120s
+
+  # 1.10+ admission plugins
+  kube_apiserver_enable_admission_plugins:
+    # - AlwaysPullImages
+    - EventRateLimit
+    - LimitRanger
+    - MutatingAdmissionWebhook
+    - NamespaceLifecycle
+    - NodeRestriction
+    - PodNodeSelector
+    # - PodSecurity
+    - ResourceQuota
+    - ServiceAccount
+    - ValidatingAdmissionWebhook
+
+  # enable admission plugins configuration
+  kube_apiserver_admission_control_config_file: true
+
+  # data structure to configure EventRateLimit admission plugin
+  # this should have the following structure:
+  # kube_apiserver_admission_event_rate_limits:
+  # <limit_name>:
+  #   type: <limit_type>
+  #   qps: <qps_value>
+  #   burst: <burst_value>
+  #   cache_size: <cache_size_value>
+  kube_apiserver_admission_event_rate_limits:
+    limit_1:
+      type: Namespace
+      qps: 50
+      burst: 100
+      cache_size: 2000
+    limit_2:
+      type: User
+      qps: 50
+      burst: 100
+
+  # create a default Pod Security Configuration and deny running of insecure pods
+  # kube_system namespace is exempted by default
+  kube_pod_security_use_default: false
+  kube_pod_security_default_enforce: restricted
+
+  # extra runtime config
+  kube_api_runtime_config:
+    - resource.k8s.io/v1beta1=true
+
+  ## Enable/Disable Kube API Server Authentication Methods
+  kube_token_auth: false
+  # kube_oidc_auth: false
+
+  ## Variables for OpenID Connect Configuration https://kubernetes.io/docs/admin/authentication/
+  ## To use OpenID you have to deploy additional an OpenID Provider (e.g Dex, Keycloak, ...)
+  # kube_oidc_url: https:// ...
+  kube_oidc_client_id: kubernetes
+  ## Optional settings for OIDC
+  kube_oidc_username_claim: preferred_username
+  kube_oidc_username_prefix: "oidc:"
+  kube_oidc_groups_claim: groups
+  kube_oidc_groups_prefix: "oidc:"
+  # Copy oidc CA file to the following path if needed
+  # kube_oidc_ca_file: {{ kube_cert_dir }}/ca.pem
+  # Optionally include a base64-encoded oidc CA cert
+  # kube_oidc_ca_cert: c3RhY2thYnVzZS5jb20...
+
+  ## Encrypting Secret Data at Rest
+  kube_encrypt_secret_data: true
+
+  ## Support tls min version, Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+  tls_min_version: VersionTLS12
+
+  ## Support tls cipher suites.
+  tls_cipher_suites:
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+
+  ## kube-scheduler
+  kube_scheduler_bind_address: 127.0.0.1
+
+  #####################################
+  # k8s-cluster / kubelet
+  #####################################
+
+  ### fail with swap on (default true)
+  kubelet_fail_swap_on: true
+
+  ## Kube Proxy mode One of ['iptables','ipvs']
+  kube_proxy_mode: ipvs
+
+  # krew root dir
+  krew_root_dir: /usr/local/krew
+
+  # nginx-proxy configure
+  nginx_config_dir: /etc/nginx
+
+  # Enable nodelocal dns cache
+  enable_nodelocaldns: false
+
+  # Can be host_resolvconf, docker_dns or none
+  resolvconf_mode: "none"
+
+  # Enable k8s_external plugin for CoreDNS
+  enable_coredns_k8s_external: false
+  # Enable endpoint_pod_names option for kubernetes plugin
+  enable_coredns_k8s_endpoint_pod_names: false
+
+  # Choose network plugin (cilium, calico, kube-ovn, weave or flannel. Use cni for generic cni plugin)
+  # Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
+  kube_network_plugin: cni # Bootstrap: custom_cni (Cilium)
+
+  # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
+  kube_network_plugin_multus: false
+
+  # Kubernetes internal network for services, unused block of space.
+  kube_service_addresses: 10.64.0.0/12 # same as CNI CIDR
+
+  # Configure Dual Stack networking (i.e. both IPv4 and IPv6)
+  enable_dual_stack_networks: false # disable IPv6
+
+  # Profiling
+  kube_profiling: false
+
+  # Kubernetes dashboard
+  # RBAC required. see docs/getting-started.md for access details.
+  dashboard_enabled: false
+
+  # Helm deployment
+  helm_enabled: true
+
+  # Local volume provisioner deployment
+  local_volume_provisioner_enabled: false
+  # local_volume_provisioner_storage_classes:
+  #   local-storage:
+  #     host_dir: /mnt/disks
+  #     mount_dir: /mnt/disks
+  #     volume_mode: Filesystem
+  #     fs_type: ext4
+  #   fast-disks:
+  #     host_dir: /mnt/fast-disks
+  #     mount_dir: /mnt/fast-disks
+  #     block_cleaner_command:
+  #       - "/scripts/shred.sh"
+  #       - "2"
+  #     volume_mode: Filesystem
+  #     fs_type: ext4
+
+  # Cert manager deployment
+  cert_manager_enabled: true
+  cert_manager_namespace: cert-manager
+
+  ## List of authorization modes that must be configured for
+  ## the k8s cluster. Only 'AlwaysAllow', 'AlwaysDeny', 'Node' and
+  ## 'RBAC' modes are tested. Order is important.
+  authorization_modes:
+    - Node
+    - RBAC
+
+  # When enabled, API bearer tokens (including service account tokens) can be used to authenticate to the kubelet's HTTPS endpoint
+  kubelet_authentication_token_webhook: true
+
+  # When enabled, access to the kubelet API requires authorization by delegation to the API server
+  kubelet_authorization_mode_webhook: true
+
+  # kubelet uses certificates for authenticating to the Kubernetes API
+  # Automatically generate a new key and request a new certificate from the Kubernetes API as the current certificate approaches expiration
+  kubelet_rotate_certificates: true
+  # kubelet can also request a new server certificate from the Kubernetes API
+  kubelet_rotate_server_certificates: true
+
+  # If set to true, kubelet errors if any of kernel tunables is different than kubelet defaults
+  kubelet_protect_kernel_defaults: true
+
+  # Set additional sysctl variables to modify Linux kernel variables, for example:
+  additional_sysctl:
+    # Configure aio
+    - name: fs.aio-max-nr
+      value: 262144
+
+    # Adjust notify
+    - name: fs.inotify.max_queued_events
+      value: 2099999999
+    - name: fs.inotify.max_user_instances
+      value: 2099999999
+    - name: fs.inotify.max_user_watches
+      value: 2099999999
+
+    # Configure BPF
+    - name: net.core.bpf_jit_limit
+      value: 528482304
+
+    # Activate zero-copy
+    - name: net.core.optmem_max
+      value: 1048576
+
+    # Adjust buffer size
+    - name: net.core.rmem_max
+      value: 2147483647
+    - name: net.core.wmem_max
+      value: 2147483647
+
+    # Activate jumbo frames
+    - name: net.ipv4.tcp_mtu_probing
+      value: 1
+
+    # Adjust TCP buffer size
+    - name: net.ipv4.tcp_rmem
+      value: 4096 131072 1073741824
+    - name: net.ipv4.tcp_wmem
+      value: 4096 16384 1073741824
+
+    # Adjust pages
+    - name: vm.nr_hugepages
+      value: 0
+
+  ## List of key=value pairs that describe feature gates for
+  ## the k8s cluster.
+  kube_feature_gates: []
+  kube_apiserver_feature_gates:
+    - AppArmor=true
+    - DRAResourceClaimDeviceStatus=true
+    - DynamicResourceAllocation=true
+  kube_controller_feature_gates:
+    - AppArmor=true
+    - DRAResourceClaimDeviceStatus=true
+    - DynamicResourceAllocation=true
+    - RotateKubeletServerCertificate=true
+  kube_scheduler_feature_gates:
+    - AppArmor=true
+    - DRAResourceClaimDeviceStatus=true
+    - DynamicResourceAllocation=true
+  kube_proxy_feature_gates: []
+  kubelet_feature_gates:
+    - CPUManagerPolicyAlphaOptions=true
+    - DRAResourceClaimDeviceStatus=true
+    - DynamicResourceAllocation=true
+    - RotateKubeletServerCertificate=true
+  kubeadm_feature_gates:
+    - ControlPlaneKubeletLocalMode=true
+
+  # Sets the eventRecordQPS parameter in kubelet-config.yaml.
+  # Setting it to 0 allows unlimited requests per second.
+  kubelet_event_record_qps: 1
+
+  # sysctl_file_path to add sysctl conf to
+  sysctl_file_path: /etc/sysctl.d/99-sysctl.conf
+
+  #####################################
+  # k8s-cluster / kubelet / advanced
+  #####################################
+
+  kubelet_streaming_connection_idle_timeout: 5m
+  kubelet_make_iptables_util_chains: true
+  kubelet_seccomp_default: true
+
+  ## NUMA-aware scheduling
+  kubelet_cpu_manager_policy: static
+  kubelet_cpu_manager_policy_options:
+    distribute-cpus-across-numa: "true"
+    full-pcpus-only: "true"
+
+  #####################################
+  # kubernetes / node
+  #####################################
+
+  # Set to empty to avoid cgroup creation
+  kubelet_enforce_node_allocatable: pods,kube-reserved,system-reserved
+
+  # Set systemd service hardening features
+  kubelet_systemd_hardening: true
+
+  # In case you have multiple interfaces in your
+  # control plane nodes and you want to specify the right
+  # IP addresses, kubelet_secure_addresses allows you
+  # to specify the IP from which the kubelet
+  # will receive the packets.
+  # kubelet_secure_addresses: 192.168.10.110 192.168.10.111 192.168.10.112
+
+  # Reserve this space for kube resources
+  # Whether to run kubelet and container-engine daemons in a dedicated cgroup. (Not required for resource reservations).
+  kube_reserved: true
+  kube_cpu_reserved: 1000m
+  kube_memory_reserved: 2Gi # heuristic minimal peak: 1Gi for ContainerD, 1Gi for kubelet
+  kube_ephemeral_storage_reserved: 2Gi
+  kube_pid_reserved: "2000" # heuristic minimal peak: 1000
+
+  # Set to true to reserve resources for system daemons
+  system_reserved: true
+  system_cpu_reserved: 1000m
+  system_memory_reserved: 5Gi # heuristic minimal peak: 3Gi for ETCD, 2Gi for the others
+  system_ephemeral_storage_reserved: 2Gi
+  system_pid_reserved: "4000" # heuristic minimal peak: 3000
+
+  # The maximum number of image pulls in parallel. Set it to a integer great than 1 to enable image pulling in parallel.
+  kubelet_max_parallel_image_pulls: 5
+
+  #####################################
+  # kubernetes / preinstall
+  #####################################
+
+  nameservers: "{{ upstream_dns_servers }}"
+
+  # An alternative flexvolume plugin directory
+  kubelet_flexvolumes_plugins_dir: /var/lib/kubelet/volumeplugins
+
+  systemd_resolved_disable_stub_listener: true
+
+  #####################################
+  # kubernetes-apps / ansible
+  #####################################
+
+  # Limits for coredns
+  coredns_affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              k8s-app: kube-dns{{ coredns_ordinal_suffix }}
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  ##########################################
+  # kubernetes-apps / kubelet-csr-approver
+  ##########################################
+
+  # kubelet-csr-approver
+  # See upstream https://github.com/postfinance/kubelet-csr-approver
+  kubelet_csr_approver_enabled: false
+
+  #####################################
+  # upgrade / pre-upgrade
+  #####################################
+
+  # TODO: Change the key name
+  drain_nodes: false
+  drain_pod_selector: serviceType!=ansible-task
+  upgrade_node_fail_if_drain_fails: false

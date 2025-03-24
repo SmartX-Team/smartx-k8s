@@ -1,0 +1,17 @@
+{{- define "helm.configmap" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+  "{{ .Chart.Name }}.sh": |
+{{- .Files.Get ( printf "bin/%s.sh" .Chart.Name ) | nindent 4 }}
+
+{{- end }}
+{{- include "helm.configmap" $ }}

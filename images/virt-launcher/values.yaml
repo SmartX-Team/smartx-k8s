@@ -1,0 +1,17 @@
+---
+debian:
+  image:
+    repo: docker.io/library/ubuntu
+    tag: "24.04"
+
+edk2:
+  repo:
+    baseUrl: https://github.com
+    owner: SmartX-Team
+    name: edk2
+    revision: master
+
+virtLauncher:
+  image:
+    repo: quay.io/kubevirt/virt-launcher
+    tag: ""

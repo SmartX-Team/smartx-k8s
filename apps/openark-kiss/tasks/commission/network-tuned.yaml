@@ -1,0 +1,22 @@
+---
+- name: Try to fix debian package manager
+  when: ansible_os_family in ["Debian"]
+  command: dpkg --configure -a
+
+- name: Install TuneD
+  package:
+    name: tuned
+    state: present
+  ignore_errors: true
+
+- name: Enable TuneD
+  systemd:
+    name: tuned.service
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Change TuneD Profile
+  vars:
+    kiss_network_profile: throughput-performance
+  command: tuned-adm profile {{ kiss_network_profile }}

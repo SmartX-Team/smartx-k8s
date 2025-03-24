@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",
+    // "continue.continue",
+    "esbenp.prettier-vscode",
+    "fill-labs.dependi",
+    "KevinRose.vsc-python-indent",
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "rust-lang.rust-analyzer",
+    "TechTheAwesome.rust-yew",
+    "tim-koehler.helm-intellisense"
+  ],
+  "unwantedRecommendations": ["github.copilot", "github.copilot-chat"]
+}

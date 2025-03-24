@@ -1,0 +1,293 @@
+---
+## Custom resource configuration
+crds:
+  # -- Keep CRDs on chart uninstall
+  keep: true
+
+# -- Create clusterroles that extend existing clusterroles to interact with argo-cd crds
+## Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
+createAggregateRoles: true
+
+# -- Restrict Argo to operate only in a single namespace (the namespace of the
+# Helm release) by apply Roles and RoleBindings instead of the Cluster
+# equivalents, and start workflow-controller with the --namespaced flag. Use it
+# in clusters with strict access policy.
+singleNamespace: false
+
+controller:
+  metricsConfig:
+    # --  Flag that use a self-signed cert for TLS
+    secure: false
+
+  # -- enable Workflow Archive to store the status of workflows. Postgres and MySQL (>= 5.7.8) are available.
+  ## Ref: https://argo-workflows.readthedocs.io/en/stable/workflow-archive/
+  persistence: {}
+  # connectionPool:
+  #   maxIdleConns: 100
+  #   maxOpenConns: 0
+  # # save the entire workflow into etcd and DB
+  # nodeStatusOffLoad: false
+  # # enable archiving of old workflows
+  # archive: false
+  # postgresql:
+  #   host: localhost
+  #   port: 5432
+  #   database: postgres
+  #   tableName: argo_workflows
+  #   # the database secrets must be in the same namespace of the controller
+  #   userNameSecret:
+  #     name: argo-postgres-config
+  #     key: username
+  #   passwordSecret:
+  #     name: argo-postgres-config
+  #     key: password
+  #   ssl: true
+  #   # sslMode must be one of: disable, require, verify-ca, verify-full
+  #   # you can find more information about those ssl options here: https://godoc.org/github.com/lib/pq
+  #   sslMode: require
+  # mysql:
+  #   host: localhost
+  #   port: 3306
+  #   database: argo
+  #   tableName: argo_workflows
+  #   userNameSecret:
+  #     name: argo-mysql-config
+  #     key: username
+  #   passwordSecret:
+  #     name: argo-mysql-config
+  #     key: password
+
+  # telemetryConfig controls the path and port for prometheus telemetry. Telemetry is enabled and emitted in the same endpoint
+  # as metrics by default, but can be overridden using this config.
+  telemetryConfig:
+    # --  Flag that use a self-signed cert for TLS
+    secure: false
+  serviceMonitor:
+    # -- Prometheus ServiceMonitor namespace
+    namespace: monitoring
+
+  # -- Specify all namespaces where this workflow controller instance will manage
+  # workflows. This controls where the service account and RBAC resources will
+  # be created. Only valid when singleNamespace is false.
+  workflowNamespaces:
+    - argo
+
+  # -- Assign custom [affinity] rules
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  # -- Configure Argo Server to show custom [links]
+  ## Ref: https://argo-workflows.readthedocs.io/en/stable/links/
+  # links: []
+  # -- Configure Argo Server to show custom [columns]
+  ## Ref: https://github.com/argoproj/argo-workflows/pull/10693
+  # columns: []
+
+server:
+  # -- Assign custom [affinity] rules
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  # -- Run the argo server in "secure" mode. Configure this value instead of `--secure` in extraArgs.
+  ## See the following documentation for more details on secure mode:
+  ## https://argo-workflows.readthedocs.io/en/stable/tls/
+  secure: false
+
+  # -- Extra environment variables to provide to the argo-server container
+  extraEnv:
+    # Beta feature: https://argo-workflows.readthedocs.io/en/latest/argo-server-sso/#sso-rbac-namespace-delegation
+    - name: SSO_DELEGATE_RBAC_TO_NAMESPACE
+      value: "true"
+
+  # -- A list of supported authentication modes. Available values are `server`, `client`, or `sso`. If you provide sso, please configure `.Values.server.sso` as well.
+  ## Ref: https://argo-workflows.readthedocs.io/en/stable/argo-server-auth-mode/
+  authModes:
+    - sso
+
+  ## Ingress configuration.
+  # ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ingress:
+    # -- Enable an ingress resource
+    enabled: true
+
+  ## Create a Google Backendconfig  for use with the GKE Ingress Controller
+  ## https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_backendconfig_parameters
+  GKEbackendConfig:
+    # -- Enable BackendConfig custom resource for Google Kubernetes Engine
+    enabled: false
+
+  ## Create a Google Managed Certificate for use with the GKE Ingress Controller
+  ## https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs
+  GKEmanagedCertificate:
+    # -- Enable ManagedCertificate custom resource for Google Kubernetes Engine.
+    enabled: false
+
+  ## Create a Google FrontendConfig Custom Resource, for use with the GKE Ingress Controller
+  ## https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters
+  GKEfrontendConfig:
+    # -- Enable FrontConfig custom resource for Google Kubernetes Engine
+    enabled: false
+
+  # SSO configuration when SSO is specified as a server auth mode.
+  sso:
+    # -- Create SSO configuration. If you set `true` , please also set `.Values.server.authMode` as `sso`.
+    enabled: true
+    clientId:
+      # -- Name of secret to retrieve the app OIDC client ID
+      name: argocd-secret
+      # -- Key of secret to retrieve the app OIDC client ID
+      key: oidc.openid_connect.clientID
+    clientSecret:
+      # -- Name of a secret to retrieve the app OIDC client secret
+      name: argocd-secret
+      # -- Key of a secret to retrieve the app OIDC client secret
+      key: oidc.openid_connect.clientSecret
+    # -- Scopes requested from the SSO ID provider
+    ## The 'groups' scope requests group membership information, which is usually used for authorization decisions.
+    scopes:
+      - openid
+      - profile
+      - email
+      - groups
+    # -- Define how long your login is valid for (in hours)
+    ## If omitted, defaults to 10h.
+    sessionExpiry: 10h
+    # -- Skip TLS verification for the HTTP client
+    insecureSkipVerify: false
+    # -- Filter the groups returned by the OIDC provider
+    ## A logical "OR" is used between each regex in the list
+    filterGroupsRegex:
+    #   - []
+    #   # - ".*argo-wf.*"
+    #   # - ".*argo-workflow.*"
+
+# -- Use static credentials for S3 (eg. when not using AWS IRSA)
+useStaticCredentials: true
+artifactRepository:
+  # -- Archive the main container logs as an artifact
+  archiveLogs: false
+  # -- Store artifact in a S3-compliant object store
+  # @default -- See [values.yaml]
+  s3:
+    {}
+    # # Note the `key` attribute is not the actual secret, it's the PATH to
+    # # the contents in the associated secret, as defined by the `name` attribute.
+    # accessKeySecret:
+    #   name: "{{ .Release.Name }}-minio"
+    #   key: accesskey
+    # secretKeySecret:
+    #   name: "{{ .Release.Name }}-minio"
+    #   key: secretkey
+    # sessionTokenSecret:
+    #   name: "{{ .Release.Name }}-minio"
+    #   key: sessionToken
+    # # insecure will disable TLS. Primarily used for minio installs not configured with TLS
+    # insecure: false
+    # caSecret:
+    #   name: ca-root
+    #   key: cert.pem
+    # bucket:
+    # endpoint:
+    # region:
+    # roleARN:
+    # useSDKCreds: true
+    # encryptionOptions:
+    #   enableEncryption: true
+
+# -- The section of custom artifact repository.
+# Utilize a custom artifact repository that is not one of the current base ones (s3, gcs, azure)
+customArtifactRepository: {}
+# artifactory:
+#   repoUrl: "https://artifactory.{{ .Values.ingress.domainName }}/raw"
+#   usernameSecret:
+#     name: artifactory-creds
+#     key: username
+#   passwordSecret:
+#     name: artifactory-creds
+#     key: password
+
+# -- The section of [artifact repository ref](https://argo-workflows.readthedocs.io/en/stable/artifact-repository-ref/).
+# Each map key is the name of configmap
+# @default -- `{}` (See [values.yaml])
+artifactRepositoryRef:
+  {}
+  # # -- 1st ConfigMap
+  # # If you want to use this config map by default, name it "artifact-repositories".
+  # # Otherwise, you can provide a reference to a
+  # # different config map in `artifactRepositoryRef.configMap`.
+  # artifact-repositories:
+  #   # -- v3.0 and after - if you want to use a specific key, put that key into this annotation.
+  #   annotations:
+  #     workflows.argoproj.io/default-artifact-repository: default-v1-s3-artifact-repository
+  #   # 1st data of configmap. See above artifactRepository or customArtifactRepository.
+  #   default-v1-s3-artifact-repository:
+  #     archiveLogs: false
+  #     s3:
+  #       bucket: my-bucket
+  #       endpoint: minio:9000
+  #       insecure: true
+  #       accessKeySecret:
+  #         name: my-minio-cred
+  #         key: accesskey
+  #       secretKeySecret:
+  #         name: my-minio-cred
+  #         key: secretkey
+  #    # 2nd data
+  #    oss-artifact-repository:
+  #      archiveLogs: false
+  #      oss:
+  #        endpoint: http://oss-cn-zhangjiakou-internal.aliyuncs.com
+  #        bucket: $mybucket
+  #        # accessKeySecret and secretKeySecret are secret selectors.
+  #        # It references the k8s secret named 'bucket-workflow-artifect-credentials'.
+  #        # This secret is expected to have have the keys 'accessKey'
+  #        # and 'secretKey', containing the base64 encoded credentials
+  #        # to the bucket.
+  #        accessKeySecret:
+  #          name: $mybucket-credentials
+  #          key: accessKey
+  #        secretKeySecret:
+  #          name: $mybucket-credentials
+  #          key: secretKey
+  # # 2nd ConfigMap
+  # another-artifact-repositories:
+  #   annotations:
+  #     workflows.argoproj.io/default-artifact-repository: gcs
+  #   gcs:
+  #     bucket: my-bucket
+  #     keyFormat: prefix/in/bucket/{{workflow.name}}/{{pod.name}}
+  #     serviceAccountKeySecret:
+  #       name: my-gcs-credentials
+  #       key: serviceAccountKey

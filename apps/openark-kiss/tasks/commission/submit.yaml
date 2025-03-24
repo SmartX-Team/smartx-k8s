@@ -1,0 +1,70 @@
+---
+- name: Make a submit template
+  set_fact:
+    kiss_submit_data:
+      access:
+        primary:
+          address: "{{ interface_primary_address_ipv4 | default(ansible_ssh_host) }}"
+          speedMbps: "{{ interface_primary_speed_mbps | default('0') }}"
+      machine:
+        uuid: "{{ ansible_host_uuid }}"
+      reset: "{{ not kiss_storage_exists }}"
+
+# NOTE: ordered (priority)!
+- name: Update submit template | Power
+  block:
+    - name: Update submit template | Power | IPMI
+      when:
+        - kiss_submit_data_power is not defined or not kiss_submit_data_power
+        - ipmi_address is defined and ipmi_address.stdout is defined
+      set_fact:
+        kiss_submit_data: "{{ kiss_submit_data | combine(kiss_submit_data_patch, recursive=true) }}"
+        kiss_submit_data_power: true
+      vars:
+        kiss_submit_data_patch:
+          power:
+            type: Ipmi
+            address: "{{ ipmi_address.stdout }}"
+
+    # - name: Update submit template | Power | Intel AMT
+    #   when:
+    #     - kiss_submit_data_power is not defined or not kiss_submit_data_power
+    #     - intel_amt_address is defined and intel_amt_address.stdout is defined
+    #   set_fact:
+    #     kiss_submit_data: "{{ kiss_submit_data | combine(kiss_submit_data_patch, recursive=true) }}"
+    #     kiss_submit_data_power: true
+    #   vars:
+    #     kiss_submit_data_patch:
+    #       power:
+    #         type: IntelAMT
+    #         address: "{{ intel_amt_address.stdout }}"
+
+    - name: Update submit template | Power | Intel AMT
+      when:
+        - kiss_submit_data_power is not defined or not kiss_submit_data_power
+        - kiss_power_intel_amt_host is defined and kiss_power_intel_amt_host != ''
+      set_fact:
+        kiss_submit_data: "{{ kiss_submit_data | combine(kiss_submit_data_patch, recursive=true) }}"
+        kiss_submit_data_power: true
+      vars:
+        kiss_submit_data_patch:
+          power:
+            type: IntelAMT
+            address: "{{ kiss_power_intel_amt_host }}"
+
+- name: Show about the results
+  debug:
+    var: kiss_submit_data
+
+- name: Submit results to kiss cluster
+  uri:
+    # TODO: change URL
+    url: http://gateway.kiss.svc.ops.openark/commission
+    method: POST
+    return_content: false
+    body_format: json
+    body: "{{ kiss_submit_data }}"
+  register: result
+  until: result.status == 200
+  retries: 5
+  delay: 5

@@ -1,0 +1,26 @@
+---
+- name: Check whether IPMI exists
+  stat:
+    path: /dev/ipmi0
+  register: ipmi
+
+- name: Download nerdctl command
+  when: ipmi.stat.exists
+  include_tasks: manual-nerdctl.yaml
+
+- name: Pull IPMI docker image
+  when: ipmi.stat.exists
+  shell: >
+    {{ bin_dir }}/nerdctl image pull
+    "quay.io/ulagbulag/openark-ipmitool:latest"
+  register: ipmi_pull_docker_image
+  until: ipmi_pull_docker_image.rc == 0
+  retries: 5
+  delay: 5
+
+- name: Cleanup old container | IPMI
+  when: ipmi.stat.exists
+  shell: >
+    {{ bin_dir }}/nerdctl container rm "kiss-ipmitool"
+  ignore_errors: true
+  no_log: true

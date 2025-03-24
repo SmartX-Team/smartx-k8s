@@ -1,0 +1,77 @@
+{{- if or
+  .Values.vm.enabled
+  ( eq .Values.volumes.home.type "LocalOwned" )
+  ( eq .Values.volumes.home.type "LocalShared" )
+}}
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "helm.localPVCName" $ }}-init"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "-2"
+    helm.sh/hook-delete-policy: hook-succeeded
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: "{{ include "helm.localPVCName" $ }}-init"
+spec:
+  backoffLimit: 5
+  suspend: false
+  ttlSecondsAfterFinished: 5
+  template:
+    metadata:
+      labels:
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: "{{ include "helm.localPVCName" $ }}-init"
+    spec:
+      affinity:
+{{- include "helm.affinity" $ | nindent 8 }}
+      containers:
+        - name: init-local-pv
+          image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+          imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - /bin/bash
+          args:
+            - -c
+            - |
+{{- tpl ( .Files.Get "bin/init_create_storage.sh" ) $ | trim | nindent 14 }}
+          env:
+{{- if .Values.vm.enabled }}
+            - name: TARGET_UID
+              value: "107"
+            - name: TARGET_GID
+              value: "107"
+{{- else }}
+            - name: TARGET_UID
+              value: "2000"
+            - name: TARGET_GID
+              value: "2000"
+{{- end }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 20Mi
+            limits:
+              cpu: 50m
+              memory: 50Mi
+          securityContext:
+            privileged: false
+            runAsNonRoot: false
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: {{ include "helm.localPVPath" $ | quote }}
+          workingDir: {{ include "helm.localPVPath" $ | quote }}
+      restartPolicy: OnFailure
+      volumes:
+        - name: data
+          hostPath:
+            path: {{ include "helm.localPVPath" $ | quote }}
+            type: DirectoryOrCreate
+
+{{- end }}

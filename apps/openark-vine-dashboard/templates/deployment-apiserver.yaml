@@ -1,0 +1,195 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "helm.fullname" $ }}-apiserver"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: apiserver
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: apiserver
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: apiserver
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+            # KISS compute nodes should be preferred
+            - weight: 2
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+            # KISS gateway nodes should be more preferred
+            - weight: 4
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Gateway
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Compute
+                      - Gateway
+      containers:
+        - name: apiserver
+          image: "{{ .Values.apiserver.image.repo }}:{{ .Values.apiserver.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.apiserver.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - openark-vine-dashboard-backend
+          env:
+            - name: APP_NAME
+              value: {{ .Values.app.name | quote }}
+            - name: APP_TITLE
+              value: {{ .Values.app.title | quote }}
+            - name: APP_DESCRIPTION
+              value: {{ .Values.app.description | quote }}
+            - name: BASE_URL
+              value: {{ .Values.apiserver.baseUrl | quote }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OAUTH_CONFIG_URL
+              valueFrom:
+                secretKeyRef:
+                  name: oidc
+                  key: OAUTH_CONFIG_URL
+            - name: OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oidc
+                  key: OAUTH_CLIENT_ID
+            - name: OAUTH_CLIENT_REDIRECT_URL
+              value: "https://{{ .Values.ingress.domainName }}/oauth/oidc/callback"
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oidc
+                  key: OAUTH_CLIENT_SECRET
+            - name: OAUTH_SCOPES
+              value: openid,profile,email,groups
+            - name: OPENARK_LABEL_CATEGORY
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/category" | quote }}
+            - name: OPENARK_LABEL_DESCRIPTION
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/description" | quote }}
+            - name: OPENARK_LABEL_TITLE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/title" | quote }}
+            - name: RUST_LOG
+              value: INFO
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 8888
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: "{{ .Values.apiserver.baseUrl }}/ping"
+              port: http
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: "{{ .Values.apiserver.baseUrl }}/health"
+              port: http
+          resources:
+            requests:
+              cpu: "1"
+              memory: 200Mi
+            limits:
+              cpu: "2"
+              memory: 500Mi
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: "{{ include "helm.fullname" $ }}-apiserver"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "helm.fullname" $ }}-apiserver"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: apiserver
+spec:
+  selector:
+{{- include "helm.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: apiserver
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8888
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "helm.fullname" $ }}-apiserver"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: apiserver
+spec:
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  tls:
+    - secretName: "{{ .Values.ingress.domainName }}-tls"
+      hosts:
+        - {{ .Values.ingress.domainName | quote }}
+  rules:
+    - host: {{ .Values.ingress.domainName | quote }}
+      http:
+        paths:
+          - path: {{ .Values.apiserver.baseUrl | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "helm.fullname" $ }}-apiserver"
+                port:
+                  number: 80
+          - path: /oauth/oidc
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "helm.fullname" $ }}-apiserver"
+                port:
+                  number: 80

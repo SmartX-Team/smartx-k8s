@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.nvidia-network-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: network-nvidia
+    patched: false
+    unsafe: true # H/W
+    useClusterValues: false
+    features:
+      - nvidia.com/network
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: network-operator
+    repoUrl: "https://helm.ngc.nvidia.com/nvidia"
+    version: 24.10.1

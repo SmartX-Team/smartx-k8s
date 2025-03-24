@@ -1,0 +1,6 @@
+{
+  "configUrl": "http://localhost:8888/.well-known/openid-configuration",
+  "clientId": "example",
+  "redirectUrl": "http://localhost:8888/oauth/oidc/callback",
+  "scopes": "openid,profile,email,groups,openid"
+}

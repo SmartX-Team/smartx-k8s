@@ -1,0 +1,23 @@
+---
+- hosts: kube_control_plane
+  tasks:
+    - name: Remove legacy APIServices
+      command: >
+        {{ bin_dir }}/kubectl delete APIServices v1beta1.metrics.k8s.io
+      ignore_errors: true
+
+- import_playbook: ./add-node-as-control_plane.yaml
+- import_playbook: ./add-node-as-bgp-peer.yaml
+- import_playbook: ./add-node-role.yaml
+
+- hosts: target
+  tasks:
+    - when:
+        - kiss_cluster_is_default is defined and not kiss_cluster_is_default
+        - kiss_cluster_is_new is defined and kiss_cluster_is_new
+      block:
+        - name: Mark the bootstrapped node as "first-node"
+          shell: >
+            {{ bin_dir }}/kubectl label nodes {{ inventory_hostname }}
+            --overwrite
+            node-role.kubernetes.io/first-node=

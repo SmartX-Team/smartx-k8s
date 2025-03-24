@@ -1,0 +1,62 @@
+---
+## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+##
+grafana:
+  enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+  ingress:
+    ## IngressClassName for Grafana Ingress.
+    ## Should be provided if Ingress is enable.
+    ##
+    ingressClassName: {{ .Values.ingress.domainName | quote }}
+
+    ## Annotations for Grafana Ingress
+    ##
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+      nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+
+    ## Hostnames.
+    ## Must be provided if Ingress is enable.
+    ##
+    hosts:
+      - "grafana.monitoring.{{ .Values.ingress.domainName }}"
+
+    ## TLS configuration for grafana Ingress
+    ## Secret must be manually created in the namespace
+    ##
+    tls:
+      - secretName: grafana-general-tls
+        hosts:
+          - "grafana.monitoring.{{ .Values.ingress.domainName }}"
+
+  ## Grafana's primary configuration
+  ## NOTE: values in map will be converted to ini format
+  ## ref: http://docs.grafana.org/installation/configuration/
+  ##
+  grafana.ini:
+    # grafana Authentication can be enabled with the following values on grafana.ini
+    server:
+      # The full public facing url you use in browser, used for redirects and emails
+      root_url: "https://grafana.monitoring.{{ .Values.ingress.domainName }}"
+
+## Deploy a Prometheus instance
+##
+prometheus:
+  ## Configuration for Prometheus service
+  ##
+  service:
+    labels:
+      {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+      {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+
+## Configuration for prometheus-node-exporter subchart
+##
+prometheus-node-exporter:
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+      operator: Exists
+      effect: NoExecute

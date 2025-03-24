@@ -1,0 +1,24 @@
+---
+- name: Provision Power Planes - Intel AMT Common
+  include_tasks: power-intel-amt-common.yaml
+
+- name: Cleanup old container | Intel AMT
+  when: intel_amt_is_ready
+  shell: >
+    {{ bin_dir }}/nerdctl container rm "kiss-wsmancli"
+  ignore_errors: true
+  no_log: true
+
+- name: Change boot order to Disk-first
+  when: intel_amt_is_ready
+  shell: >
+    {{ bin_dir }}/nerdctl run --rm --net host
+    --entrypoint /usr/local/bin/wsmanhelper.sh
+    --env AMT_HOSTNAME='{{ kiss_power_intel_amt_host }}'
+    --env AMT_USERNAME='{{ kiss_power_intel_amt_username }}'
+    --env AMT_PASSWORD='{{ kiss_power_intel_amt_password }}'
+    --name "kiss-wsmancli"
+    "quay.io/ulagbulag/openark-wsmancli:latest"
+    boot disk
+  ignore_errors: true
+  no_log: true

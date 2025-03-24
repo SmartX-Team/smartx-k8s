@@ -1,0 +1,6 @@
+---
+cdi:
+  config:
+    podResourceRequirements:
+      limits:
+        memory: 8Gi

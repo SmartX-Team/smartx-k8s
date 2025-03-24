@@ -1,0 +1,360 @@
+---
+{{- /*
+Get default SmartX helm values
+*/}}
+{{- $_ := set $ "Defaults" ( $.Files.Get "apps/template/defaults.yaml" | fromYaml ) }}
+
+{{- /*
+Collect available features
+*/}}
+{{- $_ := set $ "Features" dict }}
+{{- $_ := set $.Features "Map" ( tpl ( $.Files.Get "apps/template/features.yaml" ) $ | fromYaml ) }}
+{{- $_ := set $.Features "Keys" ( $.Features.Map | keys | sortAlpha ) }}
+{{- range $featName, $featSpec := $.Features.Map }}
+{{- range $column, $_ := . }}
+{{- if ne ( . | len ) ( . | uniq | len ) }}
+{{- fail ( printf "Detected duplicated map features\n\n%s:\n  %s:\n    - %s" $featName $column ( . | join "\n    - " ) ) }}
+{{- else if ne ( . | join ";" ) ( . | sortAlpha | join ";" ) }}
+{{- fail ( printf "Detected unsorted map features\n\n%s:\n  %s:\n    - %s" $featName $column ( . | join "\n    - " ) ) }}
+{{- end }}
+{{- range $feat := . }}
+{{- if eq $featName $feat }}
+{{- fail ( printf "Self-referenced map feature\n\n%s:\n  %s:\n    - %s" $featName $column $feat ) }}
+{{- else if not ( has $feat $.Features.Keys ) }}
+{{- fail ( printf "Unknown map feature\n\n%s:\n  %s:\n    - %s" $featName $column $feat ) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+# Features: Keys = {{ $.Features.Keys | toJson }}
+
+{{- /*
+Create a feature map
+*/}}
+{{- $_ := set $.Features "Queue" $.Features.Keys }}
+{{- range $phase, $_ := until ( $.Features.Map | len ) }}
+{{- range $featName, $featSpec := $.Features.Map }}
+{{- $_ := set . "enqueued" ( .enqueued | ne false ) }}
+{{- if .enqueued }}
+{{- $_ := set . "requires" ( .requires | default list ) }}
+{{- $_ := set . "optional" ( .optional | default list ) }}
+{{- $_ := set . "provides" ( .provides | default list ) }}
+{{- $_ := set . "queue" ( .queue | default .requires ) }}
+{{- $_ := set . "nextQueue" list }}
+{{- range $feat := .requires }}
+{{- if has $feat $.Features.Queue }}
+{{- $_ := set $featSpec "nextQueue" ( append $featSpec.nextQueue $feat ) }}
+{{- end }}
+{{- end }}
+# Features: Queue[{{ $phase }}][{{ $featName | quote }}].requires = {{ .requires | join ", " | default "<empty>" }}
+# Features: Queue[{{ $phase }}][{{ $featName | quote }}].nextQueue = {{ .nextQueue | join ", " | default "<empty>" }}
+{{- if empty .nextQueue }}
+{{- $_ := set . "enqueued" false }}
+{{- $_ := set . "requiresAll" .requires }}
+{{- range $feat := .requires }}
+{{- $_ := set $featSpec "requiresAll" ( concat $featSpec.requiresAll ( index $.Features.Map $feat "requiresAll" ) ) }}
+{{- end }}
+{{- $_ := set . "requiresAll" ( .requiresAll | uniq | sortAlpha ) }}
+{{- $_ := set . "optionalAll" .optional }}
+{{- range $feat := .requires }}
+{{- $_ := set $featSpec "optionalAll" ( concat $featSpec.optionalAll ( index $.Features.Map $feat "optionalAll" ) ) }}
+{{- end }}
+{{- $_ := set . "optionalAll" ( .optionalAll | uniq | sortAlpha ) }}
+{{- $_ := set . "providesAll" .provides }}
+{{- range $feat := .requires }}
+{{- $_ := set $featSpec "providesAll" ( concat $featSpec.providesAll ( index $.Features.Map $feat "providesAll" ) ) }}
+{{- end }}
+{{- $_ := set . "providesAll" ( .providesAll | uniq | sortAlpha ) }}
+{{- $_ := set $.Features "Queue" ( without $.Features.Queue $featName | sortAlpha ) }}
+{{- $_ := unset . "nextQueue" }}
+{{- $_ := unset . "queue" }}
+{{- else }}
+{{- $_ := set . "queue" .nextQueue }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if empty $.Features.Queue }}
+{{- range $featName, $featSpec := $.Features.Map }}
+# Features: Map[{{ $featName | quote }}].requiresAll = {{ .requiresAll | join ", " | default "<empty>" }}
+{{- end }}
+{{- range $featName, $featSpec := $.Features.Map }}
+# Features: Map[{{ $featName | quote }}].optionalAll = {{ .optionalAll | join ", " | default "<empty>" }}
+{{- end }}
+{{- else }}
+{{- fail ( printf "Detected circular dependencies\n- %s" ( $.Features.Queue | sortAlpha | join "\n- " ) ) }}
+{{- end }}
+{{- $_ := unset $.Features "Queue" }}
+{{- $_ := unset $.Features "Raw" }}
+{{- with $.Defaults.features }}
+{{- if ne ( . | len ) ( . | uniq | len ) }}
+{{- fail ( printf "Detected duplicated default SmartX features\n\nfeatures:\n  - %s" ( . | join "\n  - " ) ) }}
+{{- else if ne ( . | join ";" ) ( . | sortAlpha | join ";" ) }}
+{{- fail ( printf "Detected unsorted default SmartX features\n\nfeatures:\n  - %s" ( . | join "\n  - " ) ) }}
+{{- end }}
+{{- if ne ( . | len ) ( $.Features.Keys | len ) }}
+{{- $_ := set $.Features "Missed" list }}
+{{- range $feat := $.Features.Keys }}
+{{- if not ( has $feat $.Defaults.features ) }}
+{{- $_ := set $.Features "Missed" ( append $.Features.Missed $feat ) }}
+{{- end }}
+{{- end }}
+{{- fail ( printf "Detected missing default SmartX features\n\nfeatures:\n  - %s" ( $.Features.Missed | join "\n  - " ) ) }}
+{{- end }}
+{{- end }}
+{{- $_ := set $.Values "features" ( $.Values.features | default $.Defaults.features ) }}
+{{- with $.Values.features }}
+{{- if ne ( . | len ) ( . | uniq | len ) }}
+{{- fail ( printf "Detected duplicated default features\n\nfeatures:\n  - %s" ( . | join "\n  - " ) ) }}
+{{- else if ne ( . | join ";" ) ( . | sortAlpha | join ";" ) }}
+{{- fail ( printf "Detected unsorted default features\n\nfeatures:\n  - %s" ( . | join "\n  - " ) ) }}
+{{- end }}
+{{- $_ = set $.Features "Enabled" . }}
+
+{{- /*
+Detect undefined features
+*/}}
+{{- $_ = set $.Features "Undefined" list }}
+{{- range $feat := . }}
+{{- if and ( not ( empty $feat ) ) ( not ( hasKey $.Features.Map $feat ) ) }}
+{{- $_ = set $.Features "Undefined" ( append $.Features.Undefined $feat ) }}
+{{- end }}
+{{- end }}
+{{- if not ( empty $.Features.Undefined ) }}
+{{- fail ( printf "Detected undefined features\n\nfeatures:\n  - %s" ( $.Features.Undefined | join "\n  - " ) ) }}
+{{- end }}
+{{- $_ = unset $.Features "Undefined" }}
+
+{{- /*
+Collect features: Also enables required and provided features
+*/}}
+{{- range $feat := . }}
+{{- if not ( empty $feat ) }}
+{{- $_ = set $.Features "Enabled" ( concat $.Features.Enabled
+  ( index $.Features.Map $feat "requiresAll" )
+  ( index $.Features.Map $feat "providesAll" )
+) }}
+{{- end }}
+{{- end }}
+{{- $_ = set $.Values "features" ( $.Features.Enabled | uniq | sortAlpha ) }}
+{{- end }}
+# Features: .Values.features.enabled = {{ $.Values.features | join ", " }}
+{{- $_ := unset $ "Features" }}
+
+{{- /*
+Create a SmartX application
+*/}}
+{{- $appPath := "apps/template/application.yaml" }}
+{{- $manifestPath := "manifest.yaml" }}
+{{- $_ := set $ "Manifest" dict }}
+{{- $_ := set $.Manifest "Raw" ( tpl ( $.Files.Get $manifestPath ) $ | fromYaml ) }}
+{{- $clusterName := ( required "SmartX cluster name is not set" $.Values.cluster.name ) }}
+{{- $groupName := $.Manifest.Raw.spec.group }}
+{{- $projectName := ( printf "%s-%s" $clusterName $groupName ) }}
+{{- $repoUrl := ( printf "%s/%s/%s.git" $.Values.repo.baseUrl $.Values.repo.owner $.Values.repo.name ) }}
+{{- $towerClusterName := ( required "SmartX tower cluster name is not set" $.Values.tower.cluster ) }}
+{{- $towerGroupName := ( required "SmartX tower group name is not set" $.Values.tower.group ) }}
+{{- $towerProjectName := ( printf "%s-%s" $towerClusterName $towerGroupName ) }}
+{{- $_ := set $.Values "group" dict }}
+{{- $_ := set $.Values.group "name" $groupName }}
+{{- $_ := set $.Values "ingress" ( $.Values.ingress | default dict ) }}
+{{- $_ := set $.Values.ingress "namespace" ( printf "ingress-%s" ( $.Values.ingress.domainName | replace "." "-" ) ) }}
+{{- $_ := set $.Values "auth" ( $.Values.auth | default dict ) }}
+{{- $_ := set $.Values.auth "domainName" ( $.Values.auth.domainName | default ( printf "auth.%s" $.Values.ingress.domainName ) ) }}
+{{- $_ := set $.Values.auth "realms" ( $.Values.auth.realms | default dict ) }}
+{{- $_ := set $.Values.auth.realms "name" ( $.Values.auth.realms.name | default $clusterName ) }}
+{{- $_ := set $.Values "cluster" ( $.Values.cluster | default dict ) }}
+{{- $_ := set $.Values.cluster "domainName" ( $.Values.cluster.domainName ) }}
+{{- $_ := set $.Manifest.Raw.metadata "annotations" ( $.Manifest.Raw.metadata.annotations | default dict ) }}
+{{- $_ := set $.Manifest.Raw.metadata "labels" ( $.Manifest.Raw.metadata.labels | default dict ) }}
+{{- $baseFullName := ( index $.Manifest.Raw.metadata.labels "org.ulagbulag.io/base" | default $.Manifest.Raw.metadata.name ) }}
+{{- $_ := set $.Manifest "BaseName" ( $baseFullName | replace "." "/" ) }}
+{{- $_ := set $.Manifest "BasePath" ( $baseFullName | replace "." "/" ) }}
+{{- $_ := set $.Manifest.Raw.spec "users" ( $.Manifest.Raw.spec.users | default dict ) }}
+{{- $_ := set $.Manifest "Name" ( $.Manifest.Raw.metadata.name | replace "." "-" ) }}
+{{- $_ := set $.Manifest "Path" ( $.Manifest.Raw.metadata.name | replace "." "/" ) }}
+{{- $_ := set $.Manifest "AppCluster" $towerClusterName }}
+{{- $_ := set $.Manifest "AppName" $clusterName }}
+{{- $_ := set $.Manifest "AppNamespace" "argo" }}
+{{- $_ := set $.Manifest "AppOfApps" true }}
+{{- $_ := set $.Manifest "AppProject" $towerProjectName }}
+{{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
+{{- $_ := set $.Manifest "AutoPrune" false }}
+{{- $_ := set $.Manifest "AutoSync" true }}
+{{- $_ := set $.Manifest "Cluster" $clusterName }}
+{{- $_ := set $.Manifest "FilePath" $manifestPath }}
+{{- $_ := set $.Manifest "Group" ( $.Manifest.Raw.spec.group | default $groupName ) }}
+{{- $_ := set $.Manifest "Namespace" $.Manifest.AppNamespace }}
+{{- $_ := set $.Manifest "IgnoreDifferences" list }}
+{{- $_ := set $.Manifest "Owners" ( $.Manifest.Raw.spec.users.owners | default list | join ", " ) }}
+{{- $_ := set $.Manifest "Patched" true }}
+{{- $_ := set $.Manifest "Phase" ( $.Manifest.Raw.spec.phase | default "alpha" ) }}
+{{- $_ := set $.Manifest "Project" $projectName }}
+{{- $_ := set $.Manifest "Reviewers" ( $.Manifest.Raw.spec.users.reviewers | default list | join ", " ) }}
+{{- $_ := set $.Manifest "Scale" ( $.Manifest.Raw.spec.scale | default "undefined" ) }}
+{{- $_ := set $.Manifest "Sources" list }}
+{{- $source := dict }}
+{{- $_ := set $source "Helm" true }}
+{{- $_ := set $source "Path" "." }}
+{{- $_ := set $source "Remote" false }}
+{{- $_ := set $source "Repo" $repoUrl }}
+{{- $_ := set $source "Version" $.Values.repo.revision }}
+{{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
+{{- $_ := set $.Manifest "SyncOptions" ( list
+  ( print "CreateNamespace=" true )
+  ( print "RespectIgnoreDifferences=" true )
+  ( print "ServerSideApply=" true )
+) }}
+{{- $_ := set $.Manifest "TowerCluster" $towerClusterName }}
+{{- $_ := set $.Manifest "TowerProject" $towerProjectName }}
+{{- $_ := set $.Manifest "Unsafe" false }}
+{{- $_ := set $.Manifest "UseClusterValues" false }}
+{{- $_ := set $.Manifest "Values" dict }}
+{{- $_ := unset $.Manifest "Raw" }}
+{{ tpl ( $.Files.Get $appPath ) $ }}
+
+{{- /*
+Create applications
+*/}}
+{{- range $manifestPath, $_ := $.Files.Glob "apps/*/manifest.yaml" }}
+{{- $dirname := ( dir $manifestPath ) }}
+{{- $patchesPath := ( printf "%s/patches.yaml" $dirname ) }}
+{{- if eq "template" ( base $dirname ) }}
+---
+# File: {{ $manifestPath }}
+# Manifest: {{ $manifestPath }}
+# Skipped: template
+{{- else }}
+{{- $_ := set $ "Manifest" dict }}
+{{- $_ := set $.Manifest "Raw" ( tpl ( $.Files.Get $manifestPath ) $ | fromYaml ) }}
+{{- $_ := set $.Manifest "ErrorPrefix" dict }}
+{{- $_ := set $.Manifest.ErrorPrefix "Spec" ( print
+  "---\n"
+  ( printf "# Manifest: %s\n" $manifestPath )
+  ( printf "appVersion: %s\n" $.Manifest.Raw.appVersion )
+  ( printf "kind: %s\n" $.Manifest.Raw.kind )
+  "metadata:\n"
+  ( printf "  name: %s\n" $.Manifest.Raw.metadata.name )
+  "spec:\n"
+) }}
+{{- $_ := set $.Manifest.ErrorPrefix "App" ( print
+  $.Manifest.ErrorPrefix.Spec
+  "  app:\n"
+) }}
+{{- $_ := set $.Manifest.ErrorPrefix "Features" ( print
+  $.Manifest.ErrorPrefix.App
+  "    features:\n"
+) }}
+{{- $_ := set $.Manifest.ErrorPrefix "Source" ( print
+  $.Manifest.ErrorPrefix.Spec
+  "  source:\n"
+) }}
+{{- $_ := set $.Manifest.Raw.metadata "annotations" ( $.Manifest.Raw.metadata.annotations | default dict ) }}
+{{- $_ := set $.Manifest.Raw.metadata "labels" ( $.Manifest.Raw.metadata.labels | default dict ) }}
+{{- $baseFullName := ( index $.Manifest.Raw.metadata.labels "org.ulagbulag.io/base" | default $.Manifest.Raw.metadata.name ) }}
+{{- $_ := set $.Manifest "BaseName" ( $baseFullName | replace "smartx.apps." "" | replace "." "/" ) }}
+{{- $_ := set $.Manifest "BasePath" ( $baseFullName | replace "smartx.apps." "" | replace "." "/" ) }}
+{{- $_ := set $.Manifest.Raw.spec "users" ( $.Manifest.Raw.spec.users | default dict ) }}
+{{- $_ := set $.Manifest "Name" ( $.Manifest.Raw.metadata.name | replace "smartx.apps." "" | replace "." "-" ) }}
+{{- $_ := set $.Manifest "Path" ( $.Manifest.Raw.metadata.name | replace "smartx.apps." "" | replace "." "/" ) }}
+{{- if not ( hasKey $.Manifest.Raw.spec "app" ) }}
+---
+# File: {{ $manifestPath }}
+# Manifest: {{ $manifestPath }}
+# Skipped: not-an-app
+{{- else if not ( $.Manifest.Raw.spec.enabled | ne false ) }}
+---
+# File: {{ $manifestPath }}
+# Manifest: {{ $manifestPath }}
+# Skipped: disabled-manifest
+{{- else }}
+{{- $_ := set $.Manifest.Raw.spec.app "features" ( $.Manifest.Raw.spec.app.features | default list ) }}
+{{- with $.Manifest.Raw.spec.app.features }}
+{{- if ne ( . | len ) ( . | uniq | len ) }}
+{{- fail ( printf "Detected duplicated app features\n\n%s      - %s" $.Manifest.ErrorPrefix.Features ( . | join "\n      - " ) ) }}
+{{- else if ne ( . | join ";" ) ( . | sortAlpha | join ";" ) }}
+{{- fail ( printf "Detected unsorted app features\n\n%s      - %s" $.Manifest.ErrorPrefix.Features ( . | join "\n      - " ) ) }}
+{{- end }}
+{{- $_ := set $.Manifest "RemainingFeatures" list }}
+{{- range $feat := . }}
+{{- if not ( has $feat $.Values.features ) }}
+{{- $_ := set $.Manifest "RemainingFeatures" ( append $.Manifest.RemainingFeatures $feat ) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if not ( empty $.Manifest.RemainingFeatures ) }}
+---
+# File: {{ $manifestPath }}
+# Manifest: {{ $manifestPath }}
+# Skipped: disabled-features
+# Features: {{ $.Manifest.RemainingFeatures | join ", " }}
+{{- else }}
+{{- $_ := set $.Manifest "UseClusterValues" $.Manifest.Raw.spec.app.useClusterValues | default false }}
+{{- $_ := set $.Manifest "AppCluster" $clusterName }}
+{{- $_ := set $.Manifest "AppName" ( printf "%s-%s" $clusterName $.Manifest.Name ) }}
+{{- $_ := set $.Manifest "AppNamespace" "argo" }}
+{{- $_ := set $.Manifest "AppOfApps" false }}
+{{- $_ := set $.Manifest "AppProject" $projectName }}
+{{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
+{{- $_ := set $.Manifest "AutoPrune" false }}
+{{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}
+{{- $_ := set $.Manifest "Cluster" $clusterName }}
+{{- $_ := set $.Manifest "FilePath" $manifestPath }}
+{{- $_ := set $.Manifest "Group" ( $.Manifest.Raw.spec.group | default $groupName ) }}
+{{- $_ := set $.Manifest "Namespace" ( required "Missing app namespace" $.Manifest.Raw.spec.app.namespace ) }}
+{{- $_ := set $.Manifest "Sources" list }}
+{{- if hasKey $.Manifest.Raw.spec "source" }}
+{{- $source := dict }}
+{{- $_ := set $source "Chart" ( $.Manifest.Raw.spec.source.chart | default ( $.Manifest.Name ) ) }}
+{{- $_ := set $source "Helm" true }}
+{{- $_ := set $source "Remote" true }}
+{{- $_ := set $source "Repo" ( required "Missing source repoUrl" $.Manifest.Raw.spec.source.repoUrl ) }}
+{{- $_ := set $source "Version" ( required "Missing source version" $.Manifest.Raw.spec.source.version ) }}
+{{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
+{{- end }}
+{{- if or ( not ( $.Files.Glob ( printf "%s/Chart.yaml" $dirname ) | empty ) ) $.Manifest.UseClusterValues }}
+{{- $source := dict }}
+{{- $_ := set $source "Helm" true }}
+{{- $_ := set $source "Path" $dirname }}
+{{- $_ := set $source "Remote" false }}
+{{- $_ := set $source "Repo" $repoUrl }}
+{{- $_ := set $source "Version" $.Values.repo.revision }}
+{{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
+{{- end }}
+{{- if not ( $.Files.Glob ( printf "%s/kustomization.yaml" $dirname ) | empty ) }}
+{{- $source := dict }}
+{{- $_ := set $source "Helm" false }}
+{{- $_ := set $source "Path" $dirname }}
+{{- $_ := set $source "Remote" false }}
+{{- $_ := set $source "Repo" $repoUrl }}
+{{- $_ := set $source "Version" $.Values.repo.revision }}
+{{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
+{{- end }}
+{{- $_ := set $.Manifest "IgnoreDifferences" ( $.Manifest.Raw.spec.app.ignoreDifferences | default list ) }}
+{{- $_ := set $.Manifest "Owners" ( $.Manifest.Raw.spec.users.owners | default list | join ", " ) }}
+{{- $_ := set $.Manifest "Patched" ( $.Manifest.Raw.spec.app.patched | default false ) }}
+{{- $_ := set $.Manifest "Phase" ( $.Manifest.Raw.spec.phase | default "alpha" ) }}
+{{- $_ := set $.Manifest "Project" $projectName }}
+{{- $_ := set $.Manifest "Reviewers" ( $.Manifest.Raw.spec.users.reviewers | default list | join ", " ) }}
+{{- $_ := set $.Manifest "Scale" ( $.Manifest.Raw.spec.scale | default "undefined" ) }}
+{{- $_ := set $.Manifest "SyncOptions" ( list
+  ( print "CreateNamespace=" ( $.Manifest.Raw.spec.app.sync.createNamespace | ne false ) )
+  ( print "RespectIgnoreDifferences=" ( $.Manifest.Raw.spec.app.sync.respectIgnoreDifferences | ne false ) )
+  ( print "ServerSideApply=" ( $.Manifest.Raw.spec.app.sync.serverSideApply | ne false ) )
+) }}
+{{- $_ := set $.Manifest "TowerCluster" $towerClusterName }}
+{{- $_ := set $.Manifest "TowerProject" $towerProjectName }}
+{{- $_ := set $.Manifest "Unsafe" ( $.Manifest.Raw.spec.app.unsafe | default ( not $.Manifest.AutoSync ) ) }}
+{{- $_ := set $.Manifest "Values" ( tpl ( $.Files.Get $patchesPath ) $ | fromYaml | default dict ) }}
+{{- $_ := unset $.Manifest "Raw" }}
+{{ tpl ( $.Files.Get $appPath ) $ }}
+{{- range $path, $_ := $.Files.Glob ( printf "%s/*.yaml" $dirname ) }}
+{{- $filename := ( base $path ) }}
+{{- if not ( has $filename ( list "Chart.yaml" "defaults.yaml"  "kustomization.yaml" "manifest.yaml" "patches.yaml" "values.yaml" ) ) }}
+{{- fail ( printf "Invalid app file: Unknown file type (%s)\n\n* Please remove this file: %s" $filename $path ) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

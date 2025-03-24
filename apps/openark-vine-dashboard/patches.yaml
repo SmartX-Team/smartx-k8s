@@ -1,0 +1,13 @@
+---
+auth:
+  domainName: {{ .Values.auth.domainName | quote }}
+
+ingress:
+  domainName: {{ .Values.ingress.domainName | quote }}
+
+openark:
+  labels:
+    org.ulagbulag.io/category: {{ index .Values.openark.labels "org.ulagbulag.io/category" | quote }}
+    org.ulagbulag.io/description: {{ index .Values.openark.labels "org.ulagbulag.io/description" | quote }}
+    org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
+    org.ulagbulag.io/title: {{ index .Values.openark.labels "org.ulagbulag.io/title" | quote }}

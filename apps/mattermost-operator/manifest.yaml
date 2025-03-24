@@ -1,0 +1,32 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.mattermost-operator
+spec:
+  enabled: false
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: mattermost-operator
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/messenger
+      - org.ulagbulag.io/observability
+      - org.ulagbulag.io/visualization
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: mattermost-operator
+    repoUrl: "https://helm.mattermost.com"
+    version: 1.0.0

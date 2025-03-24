@@ -1,0 +1,2 @@
+---
+kubernetesClusterDomain: {{ .Values.cluster.domainName | quote }}

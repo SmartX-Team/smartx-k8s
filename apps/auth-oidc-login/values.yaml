@@ -1,0 +1,52 @@
+---
+# Default values for auth-oidc-login.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+auth:
+  domainName: ""
+  global:
+    domainName: ""
+    federation:
+      name: ""
+  sources:
+    []
+    # - name: google
+    #   kind: Google
+    #   domainName: smartx.kr
+
+# Extra features for auth-oidc-login
+features:
+  # Whether to enable OpenARK VINE
+  kiss: false
+
+  # Whether to manage users and groups in this chart
+  sync: false
+
+  # Whether to enable OpenARK VINE
+  vine: false
+
+# * Admin
+#   - Grant ALL permissions of the clusters (including the other managed clusters)
+#   - Inherit "Ops" roles
+# * Ops
+#   - Grant operational permissions of the clusters (including the other managed clusters)
+#   - Grant read-only permissions of the ALL cluster resources
+#   - Inherit "Dev" roles
+# * Dev
+#   - Grant ALL permissions of the namespace (default: Digital Twin namespace)
+#   - Inherit "Viewer" roles
+# * Viewer
+#   - Grant read-only permissions of the core cluster resources (e.g. nodes)
+#   - Grant read-only permissions of the namespace (default: Digital Twin namespace)
+groups:
+  []
+  # - name: {{ .Values.group.name | quote }}
+  #   role: Ops # Can be one of: Admin, Dev, Sec, Ops, Viewer
+  # - name: {{ .Values.cluster.name | quote }}
+  #   role: Dev # Can be one of: Admin, Dev, Sec, Ops, Viewer
+
+extraGroups:
+  []
+  # - name: "team-a"
+  #   role: Viewer # Can be one of: Admin, Dev, Sec, Ops, Viewer

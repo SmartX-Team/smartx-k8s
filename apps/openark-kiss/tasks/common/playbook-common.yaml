@@ -1,0 +1,128 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Set common facts
+      set_fact:
+        ansible_host_id: "{{ lookup('env', 'ansible_host_id') }}"
+        box_state_completed: "{{ lookup('env', 'box_state_completed') }}"
+
+    - name: Install iputils-ping
+      apt:
+        name: iputils-ping
+        update_cache: yes
+
+    - name: Add control planes
+      loop: "{{ lookup('env', 'kiss_cluster_control_planes') | split(' ') }}"
+      loop_control:
+        loop_var: node_packed
+      when: node_packed | length
+      include_tasks: ./add-node.yaml
+
+    - name: Add etcd nodes
+      loop: "{{ lookup('env', 'kiss_cluster_etcd_nodes') | split(' ') }}"
+      loop_control:
+        loop_var: node_packed
+      when: node_packed | length
+      include_tasks: ./add-node.yaml
+
+    - name: Add worker nodes
+      loop: "{{ lookup('env', 'kiss_cluster_worker_nodes', errors='ignore') | default('') | split(' ') }}"
+      loop_control:
+        loop_var: node_packed
+      when: node_packed | length
+      include_tasks: ./add-node.yaml
+
+    - name: Add target node
+      add_host:
+        ansible_host: "{{ lookup('env', 'ansible_host') }}"
+        ansible_host_id: "{{ lookup('env', 'ansible_host_id') }}"
+        ansible_host_uuid: "{{ lookup('env', 'ansible_host_uuid') }}"
+        ansible_host_key_checking: false
+        ansible_ssh_host: "{{ lookup('env', 'ansible_ssh_host') }}"
+        ansible_ssh_port: 22
+        ansible_ssh_private_key_file: "{{ lookup('env', 'ansible_ssh_private_key_file') }}"
+        ansible_ssh_user: "{{ lookup('env', 'ansible_user') }}"
+        ansible_user: "{{ lookup('env', 'ansible_user') }}"
+        ip: "{{ lookup('env', 'ansible_ssh_host') }}"
+        kiss_allow_critical_commands: "{{ lookup('env', 'kiss_allow_critical_commands') == 'true' }}"
+        kiss_allow_pruning_network_interfaces: "{{ lookup('env', 'kiss_allow_pruning_network_interfaces') == 'true' }}"
+        kiss_cluster_name_snake_case: "{{ lookup('env', 'kiss_cluster_name_snake_case') }}"
+        kiss_cluster_is_new: "{{ lookup('env', 'kiss_cluster_is_new') == 'true' }}"
+        kiss_group_enable_default_cluster: "{{ lookup('env', 'kiss_group_enable_default_cluster') == 'true' }}"
+        kiss_group_force_reset: "{{ lookup('env', 'kiss_group_force_reset') == 'true' }}"
+        kiss_group_force_reset_os: "{{ lookup('env', 'kiss_group_force_reset_os') == 'true' }}"
+        kiss_group_reset_storage: "{{ lookup('env', 'kiss_group_reset_storage') == 'true' }}"
+        kiss_group_role: "{{ lookup('env', 'kiss_group_role') }}"
+        kiss_group_role_is_domain_specific: "{{ lookup('env', 'kiss_group_role_is_domain_specific') }}"
+        kiss_group_role_is_member: "{{ lookup('env', 'kiss_group_role_is_member') == 'true' }}"
+        kiss_network_interface_mtu_size: "{{ lookup('env', 'kiss_network_interface_mtu_size') }}"
+        kiss_network_ipv4_dhcp_duration: "{{ lookup('env', 'kiss_network_ipv4_dhcp_duration') }}"
+        kiss_network_ipv4_dhcp_range_begin: "{{ lookup('env', 'kiss_network_ipv4_dhcp_range_begin') }}"
+        kiss_network_ipv4_dhcp_range_end: "{{ lookup('env', 'kiss_network_ipv4_dhcp_range_end') }}"
+        kiss_network_ipv4_gateway: "{{ lookup('env', 'kiss_network_ipv4_gateway') }}"
+        kiss_network_ipv4_subnet: "{{ lookup('env', 'kiss_network_ipv4_subnet') }}"
+        kiss_network_ipv4_subnet_address: "{{ lookup('env', 'kiss_network_ipv4_subnet_address') }}"
+        kiss_network_ipv4_subnet_mask: "{{ lookup('env', 'kiss_network_ipv4_subnet_mask') }}"
+        kiss_network_ipv4_subnet_mask_prefix: "{{ lookup('env', 'kiss_network_ipv4_subnet_mask_prefix') }}"
+        kiss_network_nameserver_incluster_ipv4: "{{ lookup('env', 'kiss_network_nameserver_incluster_ipv4') }}"
+        kiss_network_service: "{{ 'systemd-networkd' if lookup('env', 'kiss_os_dist') in ['flatcar'] else 'NetworkManager' }}"
+        kiss_network_wireless_wifi_key_mgmt: "{{ lookup('env', 'kiss_network_wireless_wifi_key_mgmt') }}"
+        kiss_network_wireless_wifi_key_psk: "{{ lookup('env', 'kiss_network_wireless_wifi_key_psk') }}"
+        kiss_network_wireless_wifi_ssid: "{{ lookup('env', 'kiss_network_wireless_wifi_ssid') }}"
+        kiss_os_dist: "{{ lookup('env', 'kiss_os_dist') }}"
+        kiss_os_hot_install: "{{ lookup('env', 'kiss_os_dist') in ['flatcar'] }}"
+        kiss_os_kernel: "{{ lookup('env', 'kiss_os_kernel') }}"
+        kiss_os_version: "{{ lookup('env', 'kiss_os_version') }}"
+        kiss_power_intel_amt_host: "{{ lookup('env', 'kiss_power_intel_amt_host') }}"
+        kiss_power_intel_amt_username: "{{ lookup('env', 'kiss_power_intel_amt_username') }}"
+        kiss_power_intel_amt_password: "{{ lookup('env', 'kiss_power_intel_amt_password') }}"
+        kiss_power_ipmi_host: "{{ lookup('env', 'kiss_power_ipmi_host') }}"
+        kiss_power_ipmi_username: "{{ lookup('env', 'kiss_power_ipmi_username') }}"
+        kiss_power_ipmi_password: "{{ lookup('env', 'kiss_power_ipmi_password') }}"
+        name: "{{ lookup('env', 'ansible_host') }}"
+        reset_restart_network_service_name: "{{ 'systemd-networkd' if lookup('env', 'kiss_os_dist') in ['flatcar'] else 'NetworkManager' }}"
+        upgrade_cluster_setup: "{{ ( lookup('env', 'kiss_ansible_task_name', errors='ignore') | default('') ) == 'upgrade' }}"
+        groups:
+          - all
+          - kube_node
+          - "k8s_cluster_{{ lookup('env', 'kiss_cluster_name_snake_case') }}"
+          - "os_{{ lookup('env', 'kiss_os_dist') }}"
+          - target
+
+- hosts: k8s_cluster
+  gather_facts: false
+  tasks:
+    - name: Change cluster name - {{ lookup('env', 'kiss_cluster_name') }}
+      set_fact:
+        cluster_name: "ops.{{ lookup('env', 'kiss_cluster_domain') }}"
+        coredns_k8s_external_zone: "k8s.{{ lookup('env', 'kiss_cluster_domain') }}"
+        kiss_cluster_name: "{{ lookup('env', 'kiss_cluster_name') }}"
+        kiss_cluster_is_default: "{{ lookup('env', 'kiss_cluster_is_default') == 'true' }}"
+
+    - name: Change calico configuration
+      when: not kiss_cluster_is_default
+      set_fact:
+        calico_advertise_cluster_ips: false
+
+    - name: Change kubernetes configuration
+      when: not kiss_cluster_is_default
+      set_fact:
+        kube_pods_subnet: "{{ kube_child_pods_subnet }}"
+        kube_service_addresses: "{{ kube_child_service_addresses }}"
+
+- hosts: os_flatcar
+  gather_facts: false
+  tasks:
+    - name: Set common facts
+      set_fact:
+        ansible_python_interpreter: /opt/bin/python
+        bin_dir: /opt/bin
+
+- hosts: os_rocky:os_ubuntu
+  gather_facts: false
+  tasks:
+    - name: Set common facts
+      set_fact:
+        ansible_python_interpreter: /usr/bin/python3
+        bin_dir: /usr/local/bin

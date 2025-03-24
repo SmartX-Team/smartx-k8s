@@ -1,0 +1,48 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.gitlab
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: gitlab
+    patched: false
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi/block
+      - org.ulagbulag.io/git/gitlab
+    ignoreDifferences:
+      - group: apps
+        kind: StatefulSet
+        name: gitlab-gitaly
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+      - group: apps
+        kind: StatefulSet
+        name: gitlab-postgresql
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+      - group: apps
+        kind: StatefulSet
+        name: gitlab-redis-master
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: gitlab
+    repoUrl: "https://charts.gitlab.io"
+    version: 8.8.1

@@ -1,0 +1,40 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.keycloak
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    authServer: true
+    autoSync: true
+    namespace: vine
+    patched: true
+    unsafe: true # RBAC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/auth/keycloak
+      - org.ulagbulag.io/csi/block
+    ignoreDifferences:
+      - kind: Secret
+        name: keycloak
+        jsonPointers:
+          - /data/admin-password
+      - group: apps
+        kind: StatefulSet
+        name: keycloak
+        jsonPointers:
+          - /spec/template/metadata/annotations/checksum~1secrets
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: keycloak
+    repoUrl: registry-1.docker.io/bitnamicharts
+    version: 21.6.1

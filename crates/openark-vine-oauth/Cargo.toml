@@ -1,0 +1,98 @@
+[package]
+name = "openark-vine-oauth"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = [
+    # "validate",
+]
+std = [
+    "base64/std",
+    "chrono/std",
+    "clap?/std",
+    "getrandom?/std",
+    "http?/std",
+    # "k8s-openapi?/std",
+    "regex?/std",
+    # "schemars?/std",
+    "serde?/std",
+    "serde-json?/std",
+    "thiserror/std",
+    "tracing?/std",
+    "url/std",
+]
+
+actix-web = ["dep:actix-web", "reqwest", "send", "serde", "std"]
+clap = ["dep:clap"]
+client = [
+    "dep:anyhow",
+    "dep:async-trait",
+    "dep:cookie",
+    "dep:http",
+    "dep:web-sys",
+    "web-sys?/HtmlDocument",
+    "web-sys?/RequestCredentials",
+    "web-sys?/Window",
+]
+error-decode = ["dep:regex"]
+kube = ["actix-web", "dep:k8s-openapi", "dep:kube"]
+rand = ["dep:getrandom"]
+reqwest = ["client", "dep:reqwest"]
+schemars = ["dep:schemars", "serde"]
+serde = ["dep:base64", "dep:serde", "dep:serde-json", "url/serde"]
+
+# Async trait bounds
+send = []
+
+# TLS
+openssl-tls = ["actix-web?/openssl", "reqwest?/native-tls"]
+rustls-tls = ["actix-web?/rustls-0_23", "reqwest?/rustls-tls"]
+
+# Tracing
+tracing = ["dep:tracing"]
+
+[dependencies]
+actix-web = { workspace = true, optional = true, features = ["cookies"] }
+anyhow = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true, features = ["alloc"] }
+chrono = { workspace = true }
+clap = { workspace = true, optional = true, features = ["derive"] }
+http = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true }
+k8s-openapi = { workspace = true, optional = true, features = ["schemars"] }
+kube = { workspace = true, optional = true, features = ["derive"] }
+regex = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true, features = ["json"] }
+schemars = { workspace = true, optional = true, features = ["derive", "url"] }
+serde = { workspace = true, optional = true, features = ["derive"] }
+serde-json = { workspace = true, optional = true, features = ["alloc"] }
+strum = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+tracing = { workspace = true, optional = true }
+url = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+cookie = { workspace = true, optional = true, features = ["secure"] }
+getrandom = { workspace = true, optional = true, features = ["wasm_js"] }
+web-sys = { workspace = true, optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+getrandom = { workspace = true, optional = true }

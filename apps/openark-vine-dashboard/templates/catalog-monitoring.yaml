@@ -1,0 +1,53 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: ceph
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Ceph
+    org.ulagbulag.io/description: Ceph is an open-source, distributed storage system.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: monitoring
+spec:
+  type: Link
+  thumbnailUrl: https://repository-images.githubusercontent.com/2310495/c84a2edb-6a86-4388-a7a1-4df83bc391d0
+  url: "https://ceph.monitoring.{{ .Values.ingress.domainName }}"
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: grafana
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Grafana
+    org.ulagbulag.io/description: >
+      The open and composable observability and data visualization platform.
+      Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: monitoring
+spec:
+  type: Link
+  thumbnailUrl: https://grafana.com/media/products/cloud/grafana/grafana-dashboard-english.png?w=1040
+  url: "https://grafana.monitoring.{{ .Values.ingress.domainName }}"
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: sewio-uwb
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Sewio UWB
+    org.ulagbulag.io/description: >
+      Sewio's real-time location system (RTLS) based on UWB consists of hardware and software
+      that together form an all-in-one platform serving multiple indoor tracking use cases
+      - ranging from asset tracking and material flow to employee location tracking for safety reasons.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: monitoring
+spec:
+  type: Link
+  thumbnailUrl: https://cdn.sewio.net/wp-content/uploads/2020/03/SEWIO-UWB-Real-Time-Location-System-for-Indoor-Tracking.png
+  url: "https://sewio.{{ .Values.ingress.domainName }}"

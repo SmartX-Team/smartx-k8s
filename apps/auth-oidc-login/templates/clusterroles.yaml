@@ -1,0 +1,76 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "{{ include "helm.groupPrefix" $ }}{{ include "helm.fullname" $ }}:admin"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-account.namespace: {{ $.Release.Namespace | quote }}
+    org.ulagbulag.io/privileged: "true"
+    org.ulagbulag.io/role: admin
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "{{ include "helm.groupPrefix" $ }}{{ include "helm.fullname" $ }}:ops"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-account.namespace: {{ $.Release.Namespace | quote }}
+    org.ulagbulag.io/privileged: "false"
+    org.ulagbulag.io/role: ops
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+      - watch
+{{- include "helm.viewerRules" $ | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "{{ include "helm.groupPrefix" $ }}{{ include "helm.fullname" $ }}:viewer"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-account.namespace: {{ $.Release.Namespace | quote }}
+    org.ulagbulag.io/privileged: "false"
+    org.ulagbulag.io/role: viewer
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    resourceNames:
+      - {{ $.Release.Namespace | quote }}
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+{{- if .Values.features.kiss }}
+  - apiGroups:
+      - kiss.ulagbulag.io
+    resources:
+      - boxes
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}

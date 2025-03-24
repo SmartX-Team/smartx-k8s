@@ -1,0 +1,50 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: argo-cd
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Argo CD
+    org.ulagbulag.io/description: Argo CD is a declarative, GitOps continuous delivery tool for Kubernetes.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: git-ops
+spec:
+  type: Link
+  thumbnailUrl: https://sdbrett.com/assets/images/argo-horizontal-color.svg
+  url: "https://cd.argo.{{ .Values.ingress.domainName }}"
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: argo-workflows
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Argo Workflows
+    org.ulagbulag.io/description: >
+      Argo Workflows is an open source container-native workflow engine for orchestrating parallel jobs on Kubernetes.
+      Argo Workflows is implemented as a Kubernetes CRD (Custom Resource Definition).
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: git-ops
+spec:
+  type: Link
+  thumbnailUrl: https://www.containerssimplified.com/wp-content/uploads/2023/07/argoworkflows-1.jpg
+  url: "https://workflows.argo.{{ .Values.ingress.domainName }}"
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: gitlab
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: GitLab
+    org.ulagbulag.io/description: The most comprehensive AI-powered DevSecOps Platform
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: git-ops
+spec:
+  type: Link
+  thumbnailUrl: https://waydev.co/wp-content/uploads/2020/05/gitlab-logo-gray-rgb-1.png
+  url: "https://gitlab.{{ .Values.ingress.domainName }}"

@@ -1,0 +1,123 @@
+{
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 4,
+  "files.associations": {
+    "*.conf": "ini",
+    "*.css": "tailwindcss",
+    "*.md": "markdown",
+    "*.tpl": "jinja-yaml",
+    "*.yaml": "yaml",
+    "**/apps/*/Chart.yaml": "yaml",
+    "**/apps/*/manifest.yaml": "jinja-yaml",
+    "**/apps/*/patches.yaml": "jinja-yaml",
+    "**/apps/*/templates/**/_*.yaml": "jinja-yaml",
+    "**/apps/*/templates/**/*.yaml": "jinja-yaml",
+    "**/apps/*/values.yaml": "yaml",
+    "**/apps/minio/bin/*.sh": "jinja-shell",
+    "**/apps/openark-kiss/assets/**/*.sh": "jinja-shell",
+    "**/apps/openark-kiss/assets/**/*.yaml": "jinja-yaml",
+    "**/apps/openark-kiss/tasks/**/manual-*.yaml": "jinja-yaml",
+    "**/apps/openark-vine-session/bin/**/*.sh": "jinja-shell",
+    "**/apps/openark-vine-session/notebook/*.py": "jinja-py",
+    "**/apps/openark-vine-session/sysprep/*.xml": "jinja-xml",
+    "**/apps/template/application.yaml": "jinja-yaml",
+    "**/apps/template/features.yaml": "yaml",
+    "**/crates/**/*.rs": "rust",
+    "**/crates/openark-vine-dashboard-frontend/api/**/*.json": "json",
+    "**/images/*/Containerfile": "jinja-dockerfile",
+    "**/images/*/manifest.yaml": "jinja-yaml",
+    "**/images/*/patches.yaml": "jinja-yaml",
+    "**/images/*/values.yaml": "yaml",
+    "**/images/template/**/*.containerfile": "jinja-dockerfile",
+    "**/images/template/defaults.yaml": "jinja-yaml",
+    "**/images/template/templates/**/*.yaml": "jinja-yaml",
+    "**/templates/applications.yaml": "jinja-yaml",
+    ".containerignore": "gitignore",
+    ".dockerignore": "gitignore",
+    ".gitignore": "gitignore",
+    ".helmignore": "gitignore",
+    "Cargo.toml": "toml",
+    "nginx.conf": "nginx",
+    "values.yaml": "yaml"
+  },
+  "chat.agent.enabled": false,
+  "chat.commandCenter.enabled": false,
+  "git.alwaysSignOff": true,
+  "git.enableCommitSigning": true,
+  "github.copilot.chat.agent.runTasks": false,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "./.vscode/daisyui.md"
+    }
+  ],
+  "github.copilot.chat.fixTestFailure.enabled": false,
+  "github.copilot.editor.enableAutoCompletions": false,
+  "github.copilot.editor.enableCodeActions": false,
+  "github.copilot.enabled": false,
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.git": true,
+    "**/.hg": true,
+    "**/.svn": true,
+    "**/dist": true,
+    "**/node_modules": true,
+    "**/package-lock.json": true,
+    "**/Thumbs.db": true
+  },
+  "search.exclude": {
+    "apps/exdns-2/values.yaml": true,
+    "apps/template/defaults.yaml": true,
+    "images/*/.cargo": true,
+    "images/*/Cargo.toml": true,
+    "images/*/crates": true,
+    "images/*/LICENSE": true,
+    "images/*/README.md": true
+  },
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html",
+    "rust": "html"
+  },
+  "[dockerfile]": {},
+  "[gitignore]": {},
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[jinja-yaml]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false,
+    "editor.tabSize": 2
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[markdown]": {},
+  "[nginx]": {},
+  "[python]": {
+    "editor.tabSize": 2
+  },
+  "[rust]": {},
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[tailwindcss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.quickSuggestions": {
+      "strings": "on"
+    }
+  },
+  "[toml]": {},
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  }
+}

@@ -1,0 +1,9 @@
+# Allow general ingress
+User-agent: *
+Allow: /
+
+# Disallow API routes
+User-agent: *
+Disallow: /api/
+User-agent: *
+Disallow: /v*/

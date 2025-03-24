@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: operator
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: operator
+  template:
+    metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: operator
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ include "helm.serviceAccountSystemName" $ }}
+      containers:
+        - name: operator
+          image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
+          command:
+            - kiss-operator
+          env:
+            - name: RUST_LOG
+              value: INFO
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi

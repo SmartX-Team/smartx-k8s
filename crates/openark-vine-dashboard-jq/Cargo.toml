@@ -1,0 +1,49 @@
+[package]
+name = "openark-vine-dashboard-jq"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+std = [
+    "dep:jaq-std",
+    "hifijson/std",
+    "jaq-core/std",
+    "jaq-std?/std",
+    "serde-json/std",
+    "thiserror/std",
+]
+
+# Tracing
+tracing = ["jaq-std?/log"]
+
+[dependencies]
+codesnake = { workspace = true }
+hifijson = { workspace = true, features = ["alloc"] }
+jaq-core = { workspace = true }
+jaq-json = { workspace = true, features = ["parse"] }
+jaq-std = { workspace = true, optional = true, features = [
+    "format",
+    "math",
+    "regex",
+    "time",
+] }
+serde-json = { workspace = true, features = ["alloc"] }
+thiserror = { workspace = true }
+unicode-width = { workspace = true }

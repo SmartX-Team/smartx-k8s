@@ -1,0 +1,32 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: harbor
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Harbor
+    org.ulagbulag.io/description: An open source trusted cloud native registry project that stores, signs, and scans content.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: data
+spec:
+  type: Link
+  thumbnailUrl: https://ruzickap.github.io/k8s-harbor/assets/img/harbor-horizontal-color.ef644877.svg
+  url: "https://harbor.{{ .Values.ingress.domainName }}"
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: minio
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: MinIO
+    org.ulagbulag.io/description: MinIO is a high-performance, S3 compatible object store, open sourced under GNU AGPLv3 license.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: data
+spec:
+  type: Link
+  thumbnailUrl: https://thomascenni.com/images/minio.png
+  url: "https://minio.{{ .Values.ingress.domainName }}"

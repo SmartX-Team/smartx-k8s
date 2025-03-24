@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: "{{ include "helm.fullname" $ }}-handler"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: handler
+spec:
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: handler
+  template:
+    metadata:
+      labels:
+{{- include "helm.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: handler
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Desktop
+      nodeSelector:
+{{- .Values.nodeSelector | default dict | toYaml | nindent 8 }}
+      initContainers:
+        - name: init-greeter-placeholder
+          image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+          imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
+          command:
+            - sleep
+            - infinity
+          resources:
+            requests:
+              cpu: 5m
+              memory: 20Mi
+            limits:
+              cpu: 5m
+              memory: 20Mi
+          restartPolicy: Always
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: handler
+          image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - openark-vine-session-handler
+          env:
+            - name: CONTROLLER_NAME
+              value: {{ .Chart.Name | quote }}
+            - name: DRY_RUN
+              value: "false"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: OPENARK_LABEL_SIGNED_OUT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+            - name: RUST_LOG
+              value: INFO
+            - name: SERVICE_NAME
+              value: openark-vine-greeter.service
+            - name: SYSTEMCTL_FORCE_BUS
+              value: "1"
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+          securityContext:
+            capabilities:
+              add:
+                - apparmor:unconfined
+                - seccomp:unconfined
+            privileged: true
+            runAsNonRoot: false
+            runAsUser: 0
+          volumeMounts:
+            - name: host-run
+              mountPath: /run
+      priorityClassName: system-node-critical
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: "{{ include "helm.fullname" $ }}-handler"
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - operator: Exists
+      volumes:
+        - name: host-run
+          hostPath:
+            path: /run
+            type: Directory

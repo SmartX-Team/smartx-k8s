@@ -1,0 +1,3 @@
+---
+- name: Upgrade node
+  import_playbook: /kubespray/scale.yml

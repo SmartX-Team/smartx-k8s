@@ -1,0 +1,45 @@
+---
+- name: List all network configurations | systemd-networkd
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  find:
+    paths:
+      - /etc/systemd/network/
+    pattern: "*-kiss-*"
+  register: results
+
+- name: Remove all network configurations | systemd-networkd
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  file:
+    path: "{{ item.path }}"
+    state: absent
+    force: true
+  with_items: "{{ results.files }}"
+
+- name: Enable primary interfaces | link | systemd-networkd
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ [interface_primary] }}"
+  template:
+    src: ./template_systemd-networkd_10-enable.link.j2
+    dest: /etc/systemd/network/10-kiss-enable-{{ item.name }}.link
+
+- name: Enable primary interfaces | network | systemd-networkd
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ [interface_primary] }}"
+  template:
+    src: ./template_systemd-networkd_10-enable.network.j2
+    dest: /etc/systemd/network/10-kiss-enable-{{ item.name }}.network
+
+- name: Disable all other interfaces | systemd-networkd
+  when:
+    - kiss_allow_pruning_network_interfaces | default(False)
+    - item.name != interfaces_primary.name
+  with_items: "{{ all_interfaces }}"
+  template:
+    src: ./template_systemd-networkd_20-disable.network.j2
+    dest: /etc/systemd/network/20-kiss-disable-{{ item.name }}.network
+
+- name: Restart systemd-networkd
+  systemd:
+    name: systemd-networkd.service
+    state: restarted
+    daemon_reload: true

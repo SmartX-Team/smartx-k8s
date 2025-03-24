@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.github-actions-runner-controller
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: devops-arc
+    patched: true
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/git/github
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: actions-runner-controller
+    repoUrl: "https://actions-runner-controller.github.io/actions-runner-controller"
+    version: 0.23.7

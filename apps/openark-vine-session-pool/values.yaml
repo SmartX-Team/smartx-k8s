@@ -1,0 +1,21 @@
+---
+defaultFeatures:
+  vm: false
+
+profiles:
+  - name: default
+
+  - name: container
+    vm:
+      enabled: false
+
+  - name: windows-11
+    user:
+      kind: Guest # Options: Guest, User
+      nodeSelector:
+        org.ulagbulag.io/session-version: "2"
+    vm:
+      enabled: true
+      os: windows-11
+      windows:
+        eula: true

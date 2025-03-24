@@ -1,0 +1,43 @@
+---
+# Default values for strimzi-kafka-operator.
+
+# Default replicas for the cluster operator
+replicas: 1
+
+# If you set `watchNamespaces` to the same value as ``.Release.Namespace` (e.g. `helm ... --namespace $NAMESPACE`),
+# the chart will fail because duplicate RoleBindings will be attempted to be created in the same namespace
+watchNamespaces: []
+watchAnyNamespace: true
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+        weight: 1
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - ControlPlane
+
+# If you are using the grafana dashboard sidecar,
+# you can import some default dashboards here
+dashboards:
+  enabled: false
+
+createGlobalResources: true
+# Create clusterroles that extend existing clusterroles to interact with strimzi crds
+# Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
+createAggregateRoles: false
+# Controls whether Strimzi generates network policy resources (By default true)
+generateNetworkPolicy: true
+# Controls whether Strimzi generates pod disruption budget resources (By default true)
+generatePodDisruptionBudget: true

@@ -1,0 +1,20 @@
+{{- with .Values.volumes.static }}
+{{- if .enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ include "helm.fullname" $ }}-static"
+  namespace: {{ $.Values.session.defaultNamespace | default $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+{{- .accessModes | toYaml | nindent 4 }}
+  resources:
+{{- .resources | toYaml | nindent 4 }}
+  storageClassName: {{ .storageClassName | quote }}
+{{- end }}
+{{- end }}

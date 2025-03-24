@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.grafana-kube-prometheus-stack
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: monitoring
+    patched: false
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi/block
+      - org.ulagbulag.io/monitoring
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: kube-prometheus-stack
+    repoUrl: "https://prometheus-community.github.io/helm-charts"
+    version: 69.2.3

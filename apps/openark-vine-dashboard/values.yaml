@@ -1,0 +1,58 @@
+---
+apiserver:
+  baseUrl: /api/v1
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+app:
+  name: openark-vine-dashboard
+  title: OpenARK VINE Dashboard
+  description: Cloud-Native Dashboard
+
+auth:
+  domainName: ""
+
+dashboard:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-dashboard-frontend
+    tag: ""
+    pullPolicy: Always
+
+gateway:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+ingress:
+  domainName: ""
+
+openark:
+  labels:
+    org.ulagbulag.io/alias: dash.ulagbulag.io/alias
+    org.ulagbulag.io/bind: org.ulagbulag.io/bind
+    org.ulagbulag.io/bind.cpu: org.ulagbulag.io/bind.cpu
+    org.ulagbulag.io/bind.memory: org.ulagbulag.io/bind.memory
+    org.ulagbulag.io/bind.namespace: org.ulagbulag.io/bind.namespace
+    org.ulagbulag.io/bind.node: org.ulagbulag.io/bind.node
+    org.ulagbulag.io/bind.persistent: org.ulagbulag.io/bind.persistent
+    org.ulagbulag.io/bind.profile: org.ulagbulag.io/bind.profile
+    org.ulagbulag.io/bind.revision: org.ulagbulag.io/bind.revision
+    org.ulagbulag.io/bind.storage: org.ulagbulag.io/bind.storage
+    org.ulagbulag.io/bind.timestamp: org.ulagbulag.io/bind.timestamp
+    org.ulagbulag.io/bind.user: org.ulagbulag.io/bind.user
+    org.ulagbulag.io/compute-mode: org.ulagbulag.io/compute-mode
+    org.ulagbulag.io/description: org.ulagbulag.io/description
+    org.ulagbulag.io/is-external: ark.ulagbulag.io/is-external
+    org.ulagbulag.io/is-private: ark.ulagbulag.io/is-private
+    org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy
+    org.ulagbulag.io/signed-out: org.ulagbulag.io/signed-out
+    org.ulagbulag.io/title: org.ulagbulag.io/title
+
+operator:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always

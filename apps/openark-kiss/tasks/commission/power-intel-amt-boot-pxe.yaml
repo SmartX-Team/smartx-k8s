@@ -1,0 +1,16 @@
+---
+- name: Provision Power Planes - Intel AMT Common
+  include_tasks: power-intel-amt-common.yaml
+
+- name: Change boot order to PxE-first
+  when: intel_amt_is_ready
+  shell: >
+    {{ bin_dir }}/nerdctl run --rm --net host
+    --entrypoint /usr/local/bin/wsmanhelper.sh
+    --env AMT_HOSTNAME='{{ kiss_power_intel_amt_host }}'
+    --env AMT_USERNAME='{{ kiss_power_intel_amt_username }}'
+    --env AMT_PASSWORD='{{ kiss_power_intel_amt_password }}'
+    "quay.io/ulagbulag/openark-wsmancli:latest"
+    boot pxe
+  ignore_errors: true
+  no_log: true

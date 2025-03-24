@@ -1,0 +1,13 @@
+{{- $namespace := $.Values.session.defaultNamespace | default $.Release.Namespace }}
+{{- if ne $namespace $.Release.Namespace }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    pod-security.kubernetes.io/enforce: privileged
+{{- end }}

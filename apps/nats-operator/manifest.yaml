@@ -1,0 +1,40 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.nats-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: nats-io
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/messenger
+      - org.ulagbulag.io/monitoring
+    ignoreDifferences:
+      - group: apiextensions.k8s.io
+        kind: CustomResourceDefinition
+        name: natsclusters.nats.io
+        jsonPointers:
+          - /spec/versions/0/schema/openAPIV3Schema
+      - group: apiextensions.k8s.io
+        kind: CustomResourceDefinition
+        name: natsserviceroles.nats.io
+        jsonPointers:
+          - /spec/versions/0/schema/openAPIV3Schema
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: nats-operator
+    repoUrl: "https://nats-io.github.io/k8s/helm/charts"
+    version: 0.8.3

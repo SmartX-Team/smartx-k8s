@@ -1,0 +1,23 @@
+---
+# Configuration for the query-frontend
+queryFrontend:
+  ingress:
+    # -- Ingress Class Name. MAY be required for Kubernetes versions >= 1.18
+    ingressClassName: {{ .Values.ingress.domainName | quote }}
+    # -- Annotations for the Jaeger ingress
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+      nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+    # -- Hosts configuration for the Jaeger ingress
+    hosts:
+      - host: "query.tempo.monitoring.{{ .Values.ingress.domainName }}"
+        paths:
+          - path: /
+            # -- pathType (e.g. ImplementationSpecific, Prefix, .. etc.) might also be required by some Ingress Controllers
+            pathType: Prefix
+    # -- TLS configuration for the Jaeger ingress
+    tls:
+      - secretName: tempo-query-tls
+        hosts:
+          - "query.tempo.monitoring.{{ .Values.ingress.domainName }}"

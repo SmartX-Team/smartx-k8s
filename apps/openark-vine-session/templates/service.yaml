@@ -1,0 +1,104 @@
+{{- define "helm.service.ports" -}}
+ports:
+
+{{- /********************************/}}
+{{- if .Values.services.ssh.enabled }}
+{{- if .Values.vm.enabled }}
+{{- fail "ssh service cannot be enabled with VM" }}
+{{- end }}
+  - name: ssh
+    protocol: TCP
+    port: 22
+{{- end }}
+
+{{- /********************************/}}
+{{- if and
+.Values.services.rdp.enabled
+( or
+  .Values.vm.enabled
+  ( not .Values.features.hostDisplay )
+) 
+}}
+{{- if not .Values.features.desktopEnvironment }}
+{{- fail "RDP service cannot be enabled without desktop environment" }}
+{{- end }}
+  - name: rdp-tcp
+    protocol: TCP
+    port: 3389
+  - name: rdp-udp
+    protocol: UDP
+    port: 3389
+{{- end }}
+
+{{- /********************************/}}
+{{- if .Values.services.x11vnc.enabled }}
+{{- if not .Values.features.desktopEnvironment }}
+{{- fail "x11vnc service cannot be enabled without desktop environment" }}
+{{- end }}
+  - name: x11vnc
+    protocol: TCP
+    port: 5900
+{{- end }}
+
+{{- /********************************/}}
+{{- if .Values.services.novnc.enabled }}
+{{- if not .Values.features.desktopEnvironment }}
+{{- fail "novnc service cannot be enabled without desktop environment" }}
+{{- else if not .Values.services.x11vnc.enabled }}
+{{- fail "novnc service cannot be enabled without x11vnc" }}
+{{- end }}
+  - name: novnc
+    protocol: TCP
+    port: 6080
+{{- end }}
+
+{{- /********************************/}}
+{{- if .Values.services.notebook.enabled }}
+{{- if .Values.vm.enabled }}
+{{- fail "notebook service cannot be enabled with VM" }}
+{{- end }}
+  - name: notebook
+    protocol: TCP
+    port: 8888
+{{- end }}
+
+{{- /********************************/}}
+{{- range $port := .Values.services.extraServices }}
+  -
+{{- if not ( empty .name ) }}
+    name: {{ .name | quote }}
+{{- end }}
+{{- if not ( empty .protocol ) }}
+    protocol: {{ .protocol | quote }}
+{{- end }}
+{{- if not ( empty ( .port | default .containerPort ) ) }}
+    port: {{ .port | default .containerPort }}
+{{- end }}
+{{- if and
+( not .containerPort )
+( not .port )
+( ne .containerPort .port )
+}}
+    targetPort: {{ .port }}
+{{- end }}
+{{- end }}
+
+{{- end }}
+
+{{- $ports := index ( include "helm.service.ports" $ | fromYaml ) "ports" }}
+{{- if not ( empty $ports ) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+spec:
+  selector:
+{{- include "helm.selectorLabels" $ | nindent 4 }}
+  ports:
+{{- $ports | toYaml | nindent 4 }}
+{{- end }}

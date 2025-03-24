@@ -1,0 +1,63 @@
+---
+tolerations:
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+    operator: Exists
+    effect: NoExecute
+
+## configures the webhook rules, which are evaluated for each image in a pod
+rules:
+  - name: Replace docker.io
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^docker.io
+    replace: "harbor.{{ .Values.ingress.domainName }}/docker.io"
+
+  - name: Replace ghcr.io
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^ghcr.io
+    replace: "harbor.{{ .Values.ingress.domainName }}/ghcr.io"
+
+  - name: Replace nvcr.io
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^nvcr.io
+    replace: "harbor.{{ .Values.ingress.domainName }}/nvcr.io"
+
+  - name: Replace quay.io
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^quay.io
+    replace: "harbor.{{ .Values.ingress.domainName }}/quay.io"
+
+  - name: Replace registry.gitlab.com
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^registry.gitlab.com
+    replace: "harbor.{{ .Values.ingress.domainName }}/registry.gitlab.com"
+
+  - name: Replace registry.k8s.io
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^registry.k8s.io
+    replace: "harbor.{{ .Values.ingress.domainName }}/registry.k8s.io"
+
+  - name: Replace registry.suse.com
+    checkUpstream: false
+    # image refs must match at least one of the rules, and not match any excludes
+    matches:
+      - ^registry.suse.com
+    replace: "harbor.{{ .Values.ingress.domainName }}/registry.suse.com"
+
+prometheus:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+metrics:
+  serviceMonitor:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

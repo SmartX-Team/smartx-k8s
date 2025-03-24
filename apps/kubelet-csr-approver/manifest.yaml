@@ -1,0 +1,28 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.kubelet-csr-approver
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kueue-system
+    patched: false
+    unsafe: true # kube-system
+    useClusterValues: false
+    features: []
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: kubelet-csr-approver
+    repoUrl: "https://postfinance.github.io/kubelet-csr-approver"
+    version: 1.1.0

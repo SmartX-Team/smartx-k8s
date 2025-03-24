@@ -1,0 +1,121 @@
+---
+# Manifest: {{ .Manifest.FilePath }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Manifest.AppName | quote }}
+  namespace: {{ .Manifest.AppNamespace | quote }}
+{{- if not .Manifest.Unsafe }}
+  finalizers:
+    # The default behaviour is foreground cascading deletion
+    # TODO: Can be changed: https://github.com/argoproj/argo-cd/issues/21035
+    - resources-finalizer.argocd.argoproj.io
+{{- end }}
+  annotations:
+{{- if .Manifest.Unsafe }}
+    helm.sh/resource-policy: keep
+{{- else }}
+    helm.sh/resource-policy: delete
+{{- end }}
+{{- if not ( empty .Manifest.Approvers ) }}
+    org.ulagbulag.io/approvers: {{ .Manifest.Approvers | quote }}
+{{- end }}
+{{- if not ( empty .Manifest.Owners ) }}
+    org.ulagbulag.io/owners: {{ .Manifest.Owners | quote }}
+{{- end }}
+{{- if not ( empty .Manifest.Reviewers ) }}
+    org.ulagbulag.io/reviewers: {{ .Manifest.Reviewers | quote }}
+{{- end }}
+  labels:
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/name: {{ .Manifest.AppName | quote }}
+    app.kubernetes.io/instance: {{ .Chart.Name | quote }}
+{{- if .Manifest.AppOfApps }}
+    argocd.argoproj.io/instance: {{ .Manifest.AppName | quote }}
+{{- end }}
+    org.ulagbulag.io/cluster: {{ .Manifest.Cluster | quote }}
+    org.ulagbulag.io/group: {{ .Manifest.Group | quote }}
+    org.ulagbulag.io/phase: {{ .Manifest.Phase | quote }}
+    org.ulagbulag.io/privileged: {{ .Manifest.AppOfApps | toString | quote }}
+    org.ulagbulag.io/project: {{ .Manifest.Project | quote }}
+    org.ulagbulag.io/scale: {{ .Manifest.Scale | quote }}
+    org.ulagbulag.io/tower-cluster: {{ .Manifest.TowerCluster | quote }}
+    org.ulagbulag.io/tower-project: {{ .Manifest.TowerProject | quote }}
+spec:
+  destination:
+    name: {{ .Manifest.AppCluster | quote }}
+    namespace: {{ .Manifest.Namespace | quote }}
+{{- if not ( empty .Manifest.IgnoreDifferences ) }}
+  ignoreDifferences:
+{{- .Manifest.IgnoreDifferences | toYaml | nindent 4 }}
+{{- end }}
+  project: {{ .Manifest.AppProject | quote }}
+  sources:
+{{- if empty .Manifest.Sources }}
+{{- fail ( printf "Empty sources: %s" .Manifest.Name ) }}
+{{- end }}
+{{- range $source := .Manifest.Sources }}
+    - repoURL: {{ .Repo | quote }}
+{{- if not ( empty .Chart ) }}
+      chart: {{ .Chart | quote }}
+{{- end }}
+{{- if not ( empty .Path ) }}
+      path: {{ .Path | quote }}
+{{- end }}
+      targetRevision: {{ .Version | quote }}
+{{- if .Helm }}
+      helm:
+        releaseName: {{ $.Manifest.Name | quote }}
+{{- end }}
+{{- if not ( empty $.Manifest.Values ) }}
+        valuesObject:
+{{- $.Manifest.Values | toYaml | nindent 10 }}
+{{- end }}
+{{- if or .Remote $.Manifest.Patched $.Manifest.UseClusterValues }}
+        valueFiles:
+{{- if $.Manifest.UseClusterValues }}
+{{- if .Remote }}
+          - "$origin/values.yaml"
+{{- else }}
+          - "{{ repeat ( sub ( $.Manifest.FilePath | split "/" | len ) 1 | int ) "../" }}values.yaml"
+{{- end }}
+          - "$cluster/values.yaml"
+{{- end }}
+{{- if .Remote }}
+          - "$origin/apps/{{ $.Manifest.BasePath }}/values.yaml"
+{{- end }}
+{{- if $.Manifest.Patched }}
+{{- if empty .Path }}
+          - "$cluster/patches/{{ $.Manifest.BasePath }}/values.yaml"
+{{- else if regexMatch "^apps/[0-9a-z-]+$" .Path }}
+          - "$cluster/patches/{{ substr 5 ( .Path | len ) .Path }}/values.yaml"
+{{- else }}
+          - {{ printf "$cluster/%s/values.yaml" .Path | replace "/./" "/" | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range $source := .Manifest.Sources }}
+{{- if .Remote }}
+    - repoURL: "{{ $.Values.repo.baseUrl }}/{{ $.Values.repo.owner }}/{{ $.Values.repo.name }}.git"
+      targetRevision: {{ $.Values.repo.revision | default "main" }}
+      ref: origin
+{{- end }}
+{{- end }}
+{{- if or .Manifest.Patched $.Manifest.UseClusterValues }}
+    - repoURL: "{{ .Values.repo.baseUrl }}/{{ .Values.repo.owner }}/{{ .Values.cluster.name }}-k8s.git"
+      targetRevision: "{{ .Values.cluster.group | default "default" }}"
+      ref: cluster
+{{- end }}
+  syncPolicy:
+{{- if .Manifest.AutoSync }}
+    automated:
+      selfHeal: true
+{{- if .Manifest.AutoPrune }}
+      allowEmpty: true
+      prune: true
+{{- end }}
+{{- end }}
+    syncOptions:
+{{- .Manifest.SyncOptions | toYaml | nindent 6 }}

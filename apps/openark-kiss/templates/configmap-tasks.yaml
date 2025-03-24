@@ -1,0 +1,29 @@
+{{/* Find all task kinds */}}
+{{- $_ := set $ "TaskKinds" list }}
+{{- range $path, $_ := .Files.Glob "tasks/**/*" }}
+{{- $_ := set $ "TaskKinds" ( append $.TaskKinds ( index ( $path | split "/" ) "_1" ) ) }}
+{{- end }}
+{{- $_ := set $ "TaskKinds" ( $.TaskKinds | uniq | sortAlpha ) }}
+
+{{/* Create task configmaps */}}
+{{- range $taskKind := $.TaskKinds }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "ansible-task-{{ $taskKind }}"
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+{{- range $taskPath, $_ := $.Files.Glob ( printf "tasks/%s/*" $taskKind ) }}
+  {{ base $taskPath }}: |
+{{- if regexMatch ( printf "^tasks/%s/manual-.*\\.yaml$" $taskKind ) $taskPath }}
+{{- tpl ( $.Files.Get $taskPath ) $ | trim | nindent 4 }}
+{{- else }}
+{{- $.Files.Get $taskPath | trim | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

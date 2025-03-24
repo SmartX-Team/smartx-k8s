@@ -1,0 +1,98 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/configmaps: {{ include "helm.configmap" $ | sha256sum | quote }} 
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+{{- include "helm.labels" $ | nindent 8 }}
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: controller
+          image: "{{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - openark-admission-controller
+          env:
+            - name: BIND_ADDR
+              value: 0.0.0.0:8443
+            - name: RUST_LOG
+              value: DEBUG
+            - name: SCRIPT_PATH
+              value: "/opt/scripts/{{ .Chart.Name }}.sh"
+            - name: TLS_CERT_PATH
+              value: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/tls.crt"
+            - name: TLS_KEY_PATH
+              value: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/tls.key"
+          ports:
+            - name: https
+              protocol: TCP
+              containerPort: 8443
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          volumeMounts:
+            - name: script
+              mountPath: "/opt/scripts/{{ .Chart.Name }}.sh"
+              subPath: "{{ .Chart.Name }}.sh"
+              readOnly: true
+            - name: tls
+              mountPath: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/ca.crt"
+              subPath: ca.crt
+              readOnly: true
+            - name: tls
+              mountPath: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/tls.crt"
+              subPath: tls.crt
+              readOnly: true
+            - name: tls
+              mountPath: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/tls.key"
+              subPath: tls.key
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: {{ include "helm.fullname" $ | quote }}
+            defaultMode: 365 # 0o555
+        - name: tls
+          secret:
+            secretName: "{{ include "helm.fullname" $ }}-certs"
+            defaultMode: 292 # 0o444

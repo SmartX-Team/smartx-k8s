@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: "smartx.apps.{{ .Values.ingress.namespace }}-exdns-2"
+  labels:
+    org.ulagbulag.io/base: smartx.apps.exdns-2
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: {{ .Values.ingress.namespace | quote }}
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/ingress
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: k8s-gateway
+    repoUrl: "https://ori-edge.github.io/k8s_gateway"
+    version: 2.4.0

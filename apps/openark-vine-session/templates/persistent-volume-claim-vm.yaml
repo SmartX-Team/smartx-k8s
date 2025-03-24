@@ -1,0 +1,66 @@
+{{- if .Values.vm.enabled }}
+
+{{/*
+Local Storage
+*/}}
+{{- if eq .Values.volumes.vm.type "LocalShared" }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{ include "helm.localPVName" $ }}-vm-shared-{{ .Values.vm.os }}"
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+{{- .Values.volumes.local.capacity | toYaml | nindent 4 }}
+  hostPath:
+    path: {{ include "helm.localPVPath.vm.shared" $ | quote }}
+    type: Directory
+  nodeAffinity:
+{{- include "helm.localPVNodeAffinity" $ | nindent 4 }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ include "helm.localPVName" $ | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ include "helm.localPVCName" $ }}-vm-shared-{{ .Values.vm.os }}"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+{{- .Values.volumes.local.capacity | toYaml | nindent 6 }}
+  storageClassName: {{ include "helm.localPVName" $ | quote }}
+  volumeName: "{{ include "helm.localPVName" $ }}-vm-shared-{{ .Values.vm.os }}"
+{{- end }}
+
+{{/*
+Remote Storage
+*/}}
+{{- if eq .Values.volumes.vm.type "RemoteOwned" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ include "helm.remotePVCName" $ }}-vm-{{ .Values.vm.os }}"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Delete=false
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+{{- .Values.persistence.accessModes | toYaml | nindent 4 }}
+  resources:
+{{- .Values.persistence.resources | toYaml | nindent 4 }}
+  storageClassName: {{ .Values.persistence.storageClassName | quote }}
+{{- end }}
+
+{{- end }}

@@ -1,0 +1,195 @@
+---
+ananicy:
+  enabled: false
+  image:
+    repo: ""
+    tag: ""
+    pullPolicy: ""
+
+auth:
+  domainName: ""
+
+features:
+  audio: true
+  containers: true
+  desktopEnvironment: true
+  devicePassthrough: false
+  hostAudio: false
+  hostDBus: false
+  hostDisplay: false
+  hostUdev: false
+  ipcPassthrough: false
+  vm: false
+
+fullnameOverride: ""
+
+greeter:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-greeter
+    tag: latest
+    pullPolicy: Always
+
+ingress:
+  domainName: ""
+
+kubevirt:
+  sidecar:
+    image:
+      repo: quay.io/ulagbulag/openark-vine-ovmf
+      tag: latest
+      pullPolicy: Always
+
+nameOverride: ""
+
+node:
+  name: ""
+
+openark:
+  labels: {}
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: ceph-block
+
+services:
+  notebook:
+    enabled: false
+    image:
+      repo: nvcr.io/nvidia/pytorch
+      tag: 25.02-py3
+      pullPolicy: IfNotPresent
+  novnc:
+    enabled: true
+    image:
+      repo: quay.io/ulagbulag/openark-vine-novnc
+      tag: latest
+      pullPolicy: Always
+  rdp:
+    enabled: true
+  ssh:
+    enabled: true
+  x11vnc:
+    enabled: true
+    image:
+      repo: quay.io/ulagbulag/openark-vine-x11vnc
+      tag: latest
+      pullPolicy: Always
+
+  extraServices:
+    []
+    # - name: rdp-tcp
+    #   protocol: TCP
+    #   containerPort: 3389
+    # - name: rdp-udp
+    #   protocol: UDP
+    #   containerPort: 3389
+
+session:
+  context:
+    uid: 2000
+    gid: 2000
+    hostIPC: false
+    hostNetwork: false
+    privileged: false
+    root: false
+    sudo: true
+  image:
+    repo: quay.io/ulagbulag/openark-vine-desktop
+    tag: ""
+    pullPolicy: Always
+
+  locale:
+    global: ko_KR.UTF-8
+    lang: en_US.UTF-8
+    lc:
+      all: ko_KR.UTF-8
+  template:
+    backgroundImageUrl: https://github.com/ulagbulag/openark-desktop-template/blob/master/.local/share/backgrounds/images/gist-ai.jpeg?raw=true
+    fontsUrl: ""
+    git: https://github.com/ulagbulag/openark-desktop-template.git
+    gitBranch: master
+    iconsUrl: ""
+    themesUrl: ""
+
+  command: []
+  args: []
+  env:
+    - name: GTK_IM_MODULE
+      value: nimf
+    - name: NO_AT_BRIDGE
+      value: "1"
+    - name: QT_IM_MODULE
+      value: nimf
+    - name: QT4_IM_MODULE
+      value: nimf
+    - name: TZ
+      value: Asia/Seoul
+    - name: XMODIFIERS
+      value: "@im=nimf"
+  priorityClassName: system-node-critical
+  # TODO(user): Configure it!
+  resources: {}
+  #   limits:
+  #     cpu: "12"
+  #     memory: 32Gi
+  #     nvidia.com/gpu: "1"
+  #     nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE: "1"
+
+user:
+  name: ""
+  role: "" # Options: Ops, Viewer
+  shell: zsh
+
+vm:
+  enabled: false
+  os: windows-11 # Options: windows-11
+  windows:
+    eula: false
+    source:
+      # TODO(user): Configure it!
+      url: ""
+    virtioContainerDisk:
+      image:
+        repo: quay.io/kubevirt/virtio-container-disk
+        tag: v1.5.0-rc.1
+        pullPolicy: IfNotPresent
+
+  hostDevices: []
+  #   - apiGroup: org.ulagbulag.io/pci
+  #     kind: UsbController
+  #     vendor: 10de
+  #     product: "2488"
+  #   - apiGroup: org.ulagbulag.io/usb
+  #     kind: Keyboard
+  #     vendor: 413c
+  #     product: "2107"
+
+volumes:
+  hostPathPrefix: /mnt
+  home:
+    type: Temporary # Options: LocalOwned, LocalShared, RemoteOwned, Temporary
+  vm:
+    type: LocalShared # Options: LocalShared, RemoteOwned
+
+  public:
+    enabled: false
+    persistentVolumeClaim:
+      claimName: ""
+  static:
+    enabled: false
+    persistentVolumeClaim:
+      claimName: ""
+
+  hook:
+    capacity:
+      storage: 2Gi
+
+  # TODO(user): Configure it!
+  local:
+    capacity: {}
+    #   storage: 200Gi

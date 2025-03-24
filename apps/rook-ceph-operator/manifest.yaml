@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.rook-ceph-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: csi-rook-ceph
+    patched: false
+    unsafe: true # CSI
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi
+      - org.ulagbulag.io/distributed-storage-cluster/ceph
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: rook-ceph
+    repoUrl: "https://charts.rook.io/release"
+    version: v1.15.5

@@ -1,0 +1,12 @@
+---
+- hosts: kube_control_plane
+  tasks:
+    - name: Remove legacy APIServices
+      command: >
+        {{ bin_dir }}/kubectl delete APIServices v1beta1.metrics.k8s.io
+      ignore_errors: true
+
+- name: Upgrade cluster
+  import_playbook: >
+    /kubespray/upgrade-cluster.yml
+    etcd_retries="10"

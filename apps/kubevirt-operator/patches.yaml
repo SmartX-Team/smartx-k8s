@@ -1,0 +1,34 @@
+---
+kubevirt:
+  # selectors and tolerations that should apply to KubeVirt infrastructure components
+  infra:
+    # nodePlacement describes scheduling confiuguration for specific KubeVirt components
+    nodePlacement:
+      # A list of tolerations applied to the relevant kind of pods.
+      # See https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ for more info.
+      # These are additional tolerations other than default ones.
+      tolerations:
+        - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+          operator: Exists
+          effect: NoExecute
+
+  # selectors and tolerations that should apply to KubeVirt workloads
+  workloads:
+    # nodePlacement describes scheduling confiuguration for specific KubeVirt components
+    nodePlacement:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+                      - Desktop
+{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+                  - key: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}
+                    operator: In
+                    values:
+                      - vm
+{{- end }}

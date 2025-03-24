@@ -1,0 +1,56 @@
+[package]
+name = "openark-vine-session-api"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+std = [
+    "chrono/std",
+    "clap?/std",
+    # "k8s-openapi?/std",
+    "regex/std",
+    # "schemars?/std",
+    "serde?/std",
+    "serde-json?/std",
+    "strum/std",
+    "url/std",
+]
+
+clap = ["dep:clap", "std"]
+kube = ["kube/client", "kube/derive", "schemars", "std"]
+schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
+serde = ["chrono/serde", "dep:serde", "dep:serde-json", "url/serde"]
+
+[dependencies]
+chrono = { workspace = true, features = ["alloc"] }
+clap = { workspace = true, optional = true, features = ["derive"] }
+k8s-openapi = { workspace = true }
+kube = { workspace = true }
+kube-quantity = { workspace = true }
+regex = { workspace = true }
+schemars = { workspace = true, optional = true, features = [
+    "chrono",
+    "derive",
+    "url",
+] }
+serde = { workspace = true, optional = true, features = ["alloc", "derive"] }
+serde-json = { workspace = true, optional = true }
+strum = { workspace = true, features = ["derive"] }
+url = { workspace = true }

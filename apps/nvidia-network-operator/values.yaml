@@ -1,0 +1,66 @@
+---
+nfd:
+  # -- Deploy Node Feature Discovery operator.
+  enabled: false
+  # -- Deploy Node Feature Rules to label the nodes with the discovered features.
+  deployNodeFeatureRules: true
+
+sriovNetworkOperator:
+  # -- Deploy SR-IOV Network Operator.
+  enabled: false
+
+nicConfigurationOperator:
+  # -- Deploy NIC Configuration Operator.
+  enabled: false
+
+maintenanceOperator:
+  # -- Deploy Maintenance Operator.
+  enabled: false
+
+# SR-IOV Network Operator chart related values.
+sriov-network-operator:
+  affinity:
+    nodeAffinity:
+      # KISS ephemeral control plane nodes should be excluded
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+
+# General Operator related values
+# The operator element allows to deploy network operator from an alternate location
+operator:
+  affinity:
+    nodeAffinity:
+      # KISS ephemeral control plane nodes should be excluded
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+  # -- Enable the use of Driver ToolKit to compile OFED drivers (OpenShift only).
+  useDTK: false
+
+# Can be set to nicclusterpolicy and override other ds node affinity,
+# e.g. https://github.com/Mellanox/network-operator/blob/master/manifests/state-multus-cni/0050-multus-ds.yml#L26-L36
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+      - matchExpressions:
+          - key: node-role.kubernetes.io/master
+            operator: DoesNotExist
+      - matchExpressions:
+          - key: node-role.kubernetes.io/kiss
+            operator: NotIn
+            values:
+              - Dashboard
+              - Desktop

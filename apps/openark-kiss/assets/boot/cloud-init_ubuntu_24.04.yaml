@@ -1,0 +1,117 @@
+#cloud-config
+version: 1
+autoinstall:
+  version: 1
+
+  apt:
+    fallback: abort
+    geoip: true
+    preserve_sources_list: false
+    mirror-selection:
+      primary:
+        - country-mirror
+  kernel:
+    flavor: hwe
+  keyboard:
+    layout: us
+  locale: en_US.UTF-8
+  network:
+    version: 2
+    renderer: NetworkManager
+    ethernets:
+      alleths:
+        match:
+          name: en*
+        dhcp4: true
+  # refresh-installer:
+  #   update: true
+  shutdown: reboot
+  timezone: geoip
+  updates: security
+
+  ssh:
+    install-server: true
+    allow-pw: false
+    authorized-keys:
+      - {{ .Values.kiss.auth.ssh.key.public | quote }}
+
+  user-data:
+    disable_root: true
+    # package_update: true
+    # package_upgrade: true
+    users:
+{{- range $_ := .Values.addUsers }}
+      - name: {{ .name | quote }}
+{{- if not ( empty .groups ) }}
+        groups: {{ .groups | join ", " | quote }}
+{{- end }}
+        lock_passwd: {{ .lock_passwd | ne false }}
+{{- if not ( empty .passwd ) }}
+        passwd: {{ .passwd | quote }}
+{{- end }}
+        shell: {{ .shell | default "/bin/bash" | quote }}
+        ssh_authorized_keys:
+          - {{ $.Values.kiss.auth.ssh.key.public | quote }}
+{{- if .sudo | default false }}
+        sudo: "ALL=(ALL) NOPASSWD: ALL"
+{{- end }}
+{{- end }}
+
+  storage:
+    swap:
+      size: 0
+    layout:
+      name: direct
+      match:
+        # ssd: true
+        size: smallest
+
+  early-commands:
+    # Installer Network Configuration
+    - |
+      cat <<EOF >>/etc/systemd/resolved.conf
+      [Resolve]
+      DNS=10.64.0.3
+      EOF
+      systemctl restart systemd-resolved.service
+    - |
+      mkdir -p /etc/NetworkManager/conf.d/
+      cat <<EOF >/etc/NetworkManager/conf.d/99-systemd.conf
+      [main]
+      dns=default
+      rc-manager=resolvconf
+      EOF
+    - rm -f /etc/netplan/50-cloud-init*
+    - |
+      cat <<EOF >/etc/netplan/50-cloud-init.yaml
+      network:
+        version: 2
+        renderer: NetworkManager
+        ethernets:
+          alleths:
+            match:
+              name: en*
+            dhcp4: true
+      EOF
+    - >
+      apt-get update && apt-get install -y network-manager
+      && systemctl disable --now systemd-networkd.service systemd-networkd.socket
+      && systemctl enable --now NetworkManager.service
+      && nmcli connection reload
+      && for dev in $(nmcli connection show --active | awk '{print $4}' | grep -P '^en'); do
+      nmcli connection down "${dev}" || true
+      ; done
+    - until netplan apply; do sleep 3; done
+    - until curl "http://assets.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}"; do netplan apply || true; sleep 30; done
+  late-commands:
+    # Execute Post-installation Scripts
+    - dhcpcd || true # Keep DHCP
+{{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
+{{- $filename := base $path }}
+    - >
+      curl -o "/target/tmp/{{ $filename }}"
+      "http://assets.{{ $.Release.Namespace }}.svc.{{ $.Values.cluster.domainName }}/patches/{{ $filename }}"
+      && chmod a+x "/target/tmp/{{ $filename }}"
+      && curtin in-target --target=/target -- "/tmp/{{ $filename }}"
+      && rm -f "/target/tmp/{{ $filename }}"
+{{- end }}

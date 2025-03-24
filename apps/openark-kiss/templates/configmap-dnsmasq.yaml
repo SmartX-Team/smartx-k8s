@@ -1,0 +1,21 @@
+{{- define "configmaps.dnsmasq" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dnsmasq
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: dnsmasq
+data:
+  resolv.conf: |
+    nameserver {{ .Values.cluster.nameservers.ipv4 }}
+    nameserver {{ .Values.network.nameservers.ns1 }}
+    nameserver {{ .Values.network.nameservers.ns2 }}
+    options timeout:2 attempts:3 rotate single-request-reopen
+
+{{- end }}
+{{- include "configmaps.dnsmasq" $ }}

@@ -1,0 +1,107 @@
+{
+  "kind": "Table",
+  "namespace": "vine-dashboard",
+  "name": "sessions",
+  "baseUrl": "http://localhost:9090/api/v1/bindings",
+  "totalRows": 1,
+  "services": {
+    "create": { "enabled": true },
+    "delete": { "enabled": true },
+    "get": { "enabled": true },
+    "list": { "enabled": true },
+    "update": { "enabled": false }
+  },
+  "extraServices": [
+    {
+      "name": "Notebook",
+      "kind": "Navigate",
+      "jsonPath": "/links/notebook",
+      "description": "Jupyter Notebook 화면으로 이동합니다.",
+      "single": true,
+      "multiple": false,
+      "sideEffect": false
+    },
+    {
+      "name": "Remote Desktop",
+      "kind": "Navigate",
+      "jsonPath": "/links/rdp",
+      "description": "원격 데스크톱 화면으로 이동합니다.",
+      "single": true,
+      "multiple": false,
+      "sideEffect": false
+    },
+    {
+      "name": "Remote Desktop",
+      "kind": "Navigate",
+      "jsonPath": "/links/vnc",
+      "description": "원격 데스크톱 화면으로 이동합니다.",
+      "single": true,
+      "multiple": false,
+      "sideEffect": false
+    }
+  ],
+  "printerColumns": [
+    {
+      "name": "User",
+      "kind": "String",
+      "jsonPath": "/user/name",
+      "description": "User name",
+      "prefixes": [{ "kind": "ImageUrl", "jsonPath": "/snapshot" }],
+      "tags": { "jsonPath": "/groups" }
+    },
+    {
+      "name": "Resources",
+      "kind": "String",
+      "jsonPath": "/resourceLabels",
+      "tags": { "jsonPath": "/resourceAnnotations" }
+    },
+    {
+      "name": "Region",
+      "kind": "String",
+      "jsonPath": "/region/title"
+    },
+    {
+      "name": "Status",
+      "kind": "String",
+      "jsonPath": "/status/state",
+      "prefixes": [{ "kind": "Level", "jsonPath": "/status/level" }]
+    }
+  ],
+  "schema": {
+    "fields": [
+      {
+        "name": "image",
+        "title": "Container Image",
+        "kind": "String",
+        "optional": false,
+        "maxLength": 256,
+        "placeholder": "quay.io/ulagbulag/openark-vine-desktop:ubuntu-24.04-v29"
+      },
+      {
+        "name": "cpu",
+        "title": "CPU",
+        "kind": "Integer",
+        "optional": false,
+        "default": 4,
+        "minValue": 0,
+        "maxValue": 256
+      },
+      {
+        "name": "gpu",
+        "title": "GPU",
+        "kind": "Integer",
+        "optional": false,
+        "default": 1,
+        "minValue": 0,
+        "maxValue": 1
+      },
+      {
+        "name": "memory",
+        "title": "RAM",
+        "kind": "String",
+        "optional": false,
+        "default": "4Gi"
+      }
+    ]
+  }
+}

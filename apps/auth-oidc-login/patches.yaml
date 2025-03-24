@@ -1,0 +1,23 @@
+---
+auth:
+  domainName: {{ .Values.auth.domainName | quote }}
+  realms:
+    name: {{ .Values.auth.realms.name | quote }}
+    clientId: {{ .Values.auth.realms.clientId | quote }}
+
+# Extra features for auth-oidc-login
+features:
+  # Whether to enable OpenARK VINE
+  kiss: {{ has "org.ulagbulag.io/bare-metal-provisioning/kiss" .Values.features }}
+
+  # Whether to manage users and groups in this chart
+  sync: {{ has "org.ulagbulag.io/auth/sync" .Values.features }}
+
+  # Whether to enable OpenARK VINE
+  vine: {{ has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+
+groups:
+  - name: {{ .Values.group.name | quote }}
+    role: Ops # Can be one of: Admin, Dev, Sec, Ops, Viewer
+  - name: {{ .Values.cluster.name | quote }}
+    role: Dev # Can be one of: Admin, Dev, Sec, Ops, Viewer

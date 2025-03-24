@@ -1,0 +1,1 @@
+../../../apps/openark-kiss/assets/patches/43-manual-nerdctl.sh

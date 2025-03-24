@@ -1,0 +1,58 @@
+---
+smartx:
+  cluster:
+    name: {{ .Values.cluster.name | quote }}
+  group:
+    name: {{ .Values.group.name | quote }}
+  twin:
+    namespace: {{ .Values.twin.namespace | quote }}
+
+controller:
+  metricsConfig:
+    # -- Enables prometheus metrics server
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  # telemetryConfig controls the path and port for prometheus telemetry. Telemetry is enabled and emitted in the same endpoint
+  # as metrics by default, but can be overridden using this config.
+  telemetryConfig:
+    # -- Enables prometheus telemetry server
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  serviceMonitor:
+    # -- Enable a prometheus ServiceMonitor
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  # -- Specify all namespaces where this workflow controller instance will manage
+  # workflows. This controls where the service account and RBAC resources will
+  # be created. Only valid when singleNamespace is false.
+  workflowNamespaces:
+    - argo
+    - {{ .Values.twin.namespace | quote }}
+
+server:
+  ## Ingress configuration.
+  # ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ingress:
+    # -- Additional ingress annotations
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+    # -- Defines which ingress controller will implement the resource
+    ingressClassName: {{ .Values.ingress.domainName | quote }}
+
+    # -- List of ingress hosts
+    ## Hostnames must be provided if Ingress is enabled.
+    ## Secrets must be manually created in the namespace
+    hosts:
+      - "workflows.argo.{{ .Values.ingress.domainName }}"
+
+    # -- Ingress TLS configuration
+    tls:
+      - secretName: argo-workflows-server-tls
+        hosts:
+          - "workflows.argo.{{ .Values.ingress.domainName }}"
+
+  # SSO configuration when SSO is specified as a server auth mode.
+  sso:
+    # -- The root URL of the OIDC identity provider
+    issuer: "https://{{ .Values.auth.domainName }}/realms/{{ .Values.auth.realms.name }}"
+    # -- The OIDC redirect URL. Should be in the form <argo-root-url>/oauth2/callback.
+    redirectUrl: "https://workflows.argo.{{ .Values.ingress.domainName }}/oauth2/callback"

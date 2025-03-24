@@ -1,0 +1,92 @@
+---
+# NOTE: KEEP LEGACY SINCE 2024-07-22
+- name: List all network configurations | link | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  find:
+    paths:
+      - /etc/udev/rules.d/
+    pattern: "70-kiss-*.rules"
+  register: results
+
+# NOTE: KEEP LEGACY SINCE 2024-07-22
+- name: Remove all network configurations | link | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  file:
+    path: "{{ item.path }}"
+    state: absent
+    force: true
+  with_items: "{{ results.files }}"
+
+- name: List all network configurations | network | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  find:
+    paths:
+      - /etc/NetworkManager/system-connections/
+    pattern: "*.nmconnection"
+  register: results
+
+- name: Remove all network configurations | network | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  file:
+    path: "{{ item.path }}"
+    state: absent
+    force: true
+  with_items: "{{ results.files }}"
+
+- name: Enable interfaces | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ all_interfaces_indexed }}"
+  template:
+    src: ./template_network-manager_10-enable.nmconnection.j2
+    dest: /etc/NetworkManager/system-connections/10-kiss-enable-{{ item.name }}.nmconnection
+
+- name: Bond interfaces | NetworkManager
+  when:
+    - all_interfaces | length > 0
+    - kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ all_bonds }}"
+  template:
+    src: ./template_network-manager_11-bond.nmconnection.j2
+    dest: /etc/NetworkManager/system-connections/11-kiss-bond-{{ item.name }}.nmconnection
+
+- name: List all network configurations | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  find:
+    paths:
+      - /etc/NetworkManager/system-connections/
+    pattern: "*-kiss-*"
+  register: results
+
+- name: Change all network configurations permissions | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  file:
+    path: "{{ item.path }}"
+    mode: "0400"
+    force: true
+  with_items: "{{ results.files }}"
+
+- name: Reload NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  shell: nmcli connection reload; reboot
+
+- name: Reboot the boxes if network is changed (The task will be restarted)
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  reboot:
+    reboot_timeout: 3600 # 1h (booting can take a long time)
+
+- name: Assert rebooting
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  fail:
+    msg: The nodes should be rebooted!
+
+- name: Enable bonds now | NetworkManager
+  when:
+    - all_interfaces | length > 0
+    - kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ all_bonds }}"
+  command: nmcli connection up 11-kiss-bond-{{ item.name }}
+
+- name: Enable interfaces now | NetworkManager
+  when: kiss_allow_pruning_network_interfaces | default(False)
+  with_items: "{{ all_interfaces_indexed }}"
+  command: nmcli connection up 10-kiss-enable-{{ item.name }}

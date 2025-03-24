@@ -1,0 +1,5 @@
+---
+- name: Provision Power Planes - IPMI Boot
+  include_tasks: power-ipmi-boot-disk.yaml
+- name: Provision Power Planes - IPMI Channel
+  include_tasks: power-ipmi-channel.yaml

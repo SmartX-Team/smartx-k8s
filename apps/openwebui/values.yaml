@@ -1,0 +1,267 @@
+---
+ollama:
+  # -- Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure
+  enabled: true
+  # -- If enabling embedded Ollama, update fullnameOverride to your desired Ollama name value, or else it will use the default ollama.name value from the Ollama chart
+  fullnameOverride: open-webui-ollama
+
+  # Knative configuration
+  knative:
+    # -- Enable Knative integration
+    enabled: false
+
+  # Ollama parameters
+  ollama:
+    gpu:
+      # -- Enable GPU integration
+      enabled: true
+
+      # -- GPU type: 'nvidia' or 'amd'
+      # If 'ollama.gpu.enabled', default value is nvidia
+      # If set to 'amd', this will add 'rocm' suffix to image tag if 'image.tag' is not override
+      # This is due cause AMD and CPU/CUDA are different images
+      type: nvidia
+
+      # -- Specify the number of GPU
+      # If you use MIG section below then this parameter is ignored
+      number: 8
+
+      # -- only for nvidia cards; change to (example) 'nvidia.com/mig-1g.10gb' to use MIG slice
+      nvidiaResource: nvidia.com/gpu
+      # nvidiaResource: "nvidia.com/mig-1g.10gb" # example
+      # If you want to use more than one NVIDIA MIG you can use the following syntax (then nvidiaResource is ignored and only the configuration in the following MIG section is used)
+
+      mig:
+        # -- Enable multiple mig devices
+        # If enabled you will have to specify the mig devices
+        # If enabled is set to false this section is ignored
+        enabled: false
+
+  # -- Specify runtime class
+  runtimeClassName: nvidia
+
+  # Configure the ingress resource that allows you to access the
+  ingress:
+    # -- Enable ingress controller resource
+    enabled: false
+    # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    annotations:
+      # nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-Email,X-Auth-Request-Preferred-Username,X-Auth-Request-User
+      nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: 200M
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    tls: true
+
+  # Configure autoscaling
+  autoscaling:
+    # -- Enable autoscaling
+    enabled: false
+
+  # -- Additional environments variables on the output Deployment definition.
+  # For extra OLLAMA env, please refer to https://github.com/ollama/ollama/blob/main/envconfig/config.go
+  extraEnv:
+    - name: OLLAMA_KEEP_ALIVE
+      value: "72h"
+
+  # Enable persistence using Persistent Volume Claims
+  # ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+  persistentVolume:
+    # -- Enable persistence using PVC
+    enabled: true
+
+    # -- Ollama server data Persistent Volume access modes
+    # Must match those of existing PV or dynamic provisioner
+    # Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+    accessModes:
+      - ReadWriteMany
+
+    # -- Ollama server data Persistent Volume size
+    size: 10Ti
+
+    # -- Ollama server data Persistent Volume Storage Class
+    # If defined, storageClassName: <storageClass>
+    # If set to "-", storageClassName: "", which disables dynamic provisioning
+    # If undefined (the default) or set to null, no storageClassName spec is
+    # set, choosing the default provisioner.  (gp2 on AWS, standard on
+    # GKE, AWS & OpenStack)
+    storageClass: ceph-filesystem
+
+  # -- Affinity for pod assignment
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                  - NVIDIA-A100-SXM4-40GB
+
+  # How to replace existing pods
+  updateStrategy:
+    # -- Deployment strategy can be "Recreate" or "RollingUpdate". Default is Recreate
+    type: Recreate
+
+pipelines:
+  # -- Automatically install Pipelines chart to extend Open WebUI functionality using Pipelines: https://github.com/open-webui/pipelines
+  enabled: true
+  # -- This section can be used to pass required environment variables to your pipelines (e.g. Langfuse hostname)
+  extraEnvVars: []
+
+  # -- Value of cluster domain
+  clusterDomain: ops.openark
+
+  persistence:
+    enabled: true
+    size: 100Gi
+    # -- If using multiple replicas, you must update accessModes to ReadWriteMany
+    accessModes:
+      - ReadWriteMany
+    storageClass: ceph-filesystem
+
+  # -- Affinity for pod assignment
+  affinity:
+    nodeAffinity:
+      # KISS normal control plane nodes should be preferred
+      preferredDuringSchedulingIgnoredDuringExecution:
+        # KISS normal control plane nodes should be preferred
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+        # KISS compute nodes should be more preferred
+        - weight: 2
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+                  - Compute
+
+  # Configure the ingress resource that allows you to access the
+  ingress:
+    # -- Enable ingress controller resource
+    enabled: false
+    # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    annotations:
+      # nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-Email,X-Auth-Request-Preferred-Username,X-Auth-Request-User
+      nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: 200M
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    tls: true
+
+tika:
+  # -- Automatically install Apache Tika to extend Open WebUI
+  enabled: false
+
+# -- A list of Ollama API endpoints. These can be added in lieu of automatically installing the Ollama Helm chart, or in addition to it.
+ollamaUrls: []
+
+# -- Value of cluster domain
+clusterDomain: ops.openark
+
+ingress:
+  enabled: true
+  # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+  # nginx.ingress.kubernetes.io/rewrite-target: /
+  annotations:
+    # nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-Email,X-Auth-Request-Preferred-Username,X-Auth-Request-User
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200M
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  tls: true
+
+persistence:
+  enabled: true
+  size: 100Gi
+  # -- If using multiple replicas, you must update accessModes to ReadWriteMany
+  accessModes:
+    - ReadWriteMany
+  storageClass: ceph-filesystem
+
+# -- Affinity for pod assignment
+affinity:
+  nodeAffinity:
+    # KISS normal control plane nodes should be preferred
+    preferredDuringSchedulingIgnoredDuringExecution:
+      # KISS normal control plane nodes should be preferred
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+              operator: DoesNotExist
+      # KISS compute nodes should be more preferred
+      - weight: 2
+        preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - ControlPlane
+                - Compute
+
+extraEnvVars:
+  - name: ENABLE_LOGIN_FORM
+    value: "false"
+  - name: ENABLE_OAUTH_GROUP_MANAGEMENT
+    value: "true"
+  - name: ENABLE_OAUTH_SIGNUP
+    value: "true"
+  - name: ENABLE_SIGNUP
+    value: "false"
+  # - name: HOST
+  #   value: 127.0.0.1
+  - name: OAUTH_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: oidc
+        key: OAUTH_CLIENT_ID
+  - name: OAUTH_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: oidc
+        key: OAUTH_CLIENT_SECRET
+  - name: OAUTH_GROUP_CLAIM
+    value: groups
+  - name: OAUTH_SCOPES
+    value: openid email profile groups
+  - name: OPENID_PROVIDER_URL
+    valueFrom:
+      secretKeyRef:
+        name: oidc
+        key: OPENID_PROVIDER_URL
+  # -- Default API key value for Pipelines. Should be updated in a production deployment, or be changed to the required API key if not using Pipelines
+  - name: OPENAI_API_KEY
+    value: " "
+  # - name: WEBUI_AUTH_TRUSTED_EMAIL_HEADER
+  #   value: X-Auth-Request-Email
+  # - name: WEBUI_AUTH_TRUSTED_NAME_HEADER
+  #   value: X-Auth-Request-Preferred-Username

@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.kubevirt-operator
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kubevirt
+    patched: false
+    unsafe: true # RuntimeClass
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/vm/kubevirt
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: kubevirt
+    repoUrl: "https://suse-edge.github.io/charts"
+    version: 0.4.0

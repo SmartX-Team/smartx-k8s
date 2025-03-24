@@ -1,0 +1,11 @@
+---
+# TODO: greeter: How to survive while running kubespray?
+- hosts: target
+  tasks:
+    - name: Stop openark-vine-greeter
+      systemd:
+        name: openark-vine-greeter.service
+        state: stopped
+        enabled: true
+        daemon_reload: true
+      ignore_errors: true

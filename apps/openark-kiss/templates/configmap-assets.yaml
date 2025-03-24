@@ -1,0 +1,45 @@
+{{- define "configmaps.assets" -}}
+
+{{/* Find all asset kinds */}}
+{{- $_ := set $ "AssetKinds" list }}
+{{- range $path, $_ := .Files.Glob "assets/**/*" }}
+{{- $_ := set $ "AssetKinds" ( append $.AssetKinds ( index ( $path | split "/" ) "_1" ) ) }}
+{{- end }}
+{{- $_ := set $ "AssetKinds" ( $.AssetKinds | uniq | sortAlpha ) }}
+
+{{/* Create asset configmaps */}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assets
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+{{- range $assetPath, $_ := $.Files.Glob "assets/*" }}
+  {{ base $assetPath }}: |
+{{- $.Files.Get $assetPath | trim | nindent 4 }}
+{{- end }}
+{{- range $assetKind := $.AssetKinds }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "assets-{{ $assetKind }}"
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+{{- range $assetPath, $_ := $.Files.Glob ( printf "assets/%s/*" $assetKind ) }}
+  {{ base $assetPath }}: |
+{{- tpl ( $.Files.Get $assetPath ) $ | trim | nindent 4 }}
+{{- end }}
+{{- end }}
+
+{{- end }}
+{{- include "configmaps.assets" $ }}

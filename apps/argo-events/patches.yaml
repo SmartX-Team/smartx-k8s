@@ -1,0 +1,10 @@
+---
+## Argo Events controller
+controller:
+  ## Events controller metrics configuration
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enable a prometheus ServiceMonitor
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

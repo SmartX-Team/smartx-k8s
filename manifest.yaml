@@ -1,0 +1,13 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx
+spec:
+  group: ops
+  phase: stable
+  scale: large
+  users:
+    owners:
+      - JongWon Kim <jongwon@smartx.kr>
+      - Ho Kim <ho.kim@smartx.kr>

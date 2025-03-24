@@ -1,0 +1,79 @@
+---
+clustermesh:
+  apiserver:
+    # clustermesh-apiserver Prometheus metrics configuration
+    metrics:
+      # -- Enables exporting apiserver metrics in OpenMetrics format.
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+      serviceMonitor:
+        # -- Enable service monitor.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+hubble:
+  # -- Hubble metrics configuration.
+  # See https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics
+  # for more comprehensive documentation about Hubble metrics.
+  metrics:
+    serviceMonitor:
+      # -- Create ServiceMonitor resources for Prometheus Operator.
+      # This requires the prometheus CRDs to be available.
+      # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    # -- Grafana dashboards for hubble
+    # grafana can import dashboards based on the label and value
+    # ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+    dashboards:
+      enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+  peerService:
+    # -- The cluster domain to use to query the Hubble Peer service. It should
+    # be the local cluster.
+    clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+ipam:
+  operator:
+    # @schema
+    # type: [array, string]
+    # @schema
+    # -- IPv4 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv4PodCIDRList:
+      - {{ .Values.cluster.pods.ipv4.subnet | quote }}
+
+    # -- IPv4 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv4MaskSize: {{ .Values.cluster.pods.ipv4.prefix | int }}
+
+    # @schema
+    # type: [array, string]
+    # @schema
+    # -- IPv6 CIDR list range to delegate to individual nodes for IPAM.
+    clusterPoolIPv6PodCIDRList:
+      - {{ .Values.cluster.pods.ipv6.subnet | quote }}
+
+    # -- IPv6 CIDR mask size to delegate to individual nodes for IPAM.
+    clusterPoolIPv6MaskSize: {{ .Values.cluster.pods.ipv6.prefix | int }}
+
+# -- (string) Kubernetes service host - use "auto" for automatic lookup from the cluster-info ConfigMap (kubeadm-based clusters only)
+k8sServiceHost: {{ regexReplaceAll "^https://([0-9a-z.]+):[0-9]+.*$" .Values.cluster.apiEndpoint "${1}" | quote }}
+# @schema
+# type: [string, integer]
+# @schema
+# -- (string) Kubernetes service port
+k8sServicePort: {{ regexReplaceAll "^https://[0-9a-z.]+:([0-9]+).*$" .Values.cluster.apiEndpoint "${1}" | quote }}
+
+# -- Configure the kube-proxy replacement in Cilium BPF datapath
+# Valid options are "true" or "false".
+# ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/
+kubeProxyReplacement: {{ not .Values.cluster.services.kubeProxy.enabled }}
+
+# -- Node tolerations for agent scheduling to nodes with taints
+# ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+tolerations:
+  - operator: Exists
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+    operator: Exists
+    effect: NoExecute
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"

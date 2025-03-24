@@ -1,0 +1,180 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnsmasq
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: dnsmasq
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: dnsmasq
+  template:
+    metadata:
+      annotations:
+        checksum/configmap: {{
+          printf "%s\n%s"
+            ( include "configmaps.dnsmasq" $ )
+            ( include "configmaps.kiss-config" $ )
+          | sha256sum
+          | quote
+        }} 
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: dnsmasq
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS ephemeral control plane nodes should be included
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      hostNetwork: true
+      nodeSelector:
+        # control plane nodes should get ready for DHCP
+        node-role.kubernetes.io/control-plane: ""
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: init-tftpboot
+          image: "{{ .Values.ipxe.image.repo }}:{{ .Values.ipxe.image.tag }}"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 50m
+              memory: 20Mi
+            limits:
+              memory: 100Mi
+          volumeMounts:
+            - name: tftpboot
+              mountPath: /var/lib/tftpboot
+      containers:
+        - name: dnsmasq
+          image: "{{ .Values.dnsmasq.image.repo }}:{{ .Values.dnsmasq.image.tag }}"
+          args:
+            - -d
+            - --enable-tftp
+            - --tftp-root=/var/lib/tftpboot
+            ## iPXE START
+            ### ARCH [0x00] - BIOS
+            - --dhcp-match=set:bios,option:client-arch,0
+            - --dhcp-boot=tag:bios,undionly.kpxe
+            ### ARCH [0x07] - EFI - BC
+            - --dhcp-match=set:efi-bc,option:client-arch,7
+            - --dhcp-boot=tag:efi-bc,ipxe-x86_64.efi
+            ### ARCH [0x09] - EFI - x86_64
+            - --dhcp-match=set:efi-x86_64,option:client-arch,9
+            - --dhcp-boot=tag:efi-x86_64,ipxe-x86_64.efi
+            ### ARCH [0x0B] - EFI - arm64
+            - --dhcp-match=set:efi-arm64,option:client-arch,11
+            - --dhcp-boot=tag:efi-arm64,ipxe-arm64.efi
+            ## iPXE END
+            - --dhcp-userclass=set:ipxe,iPXE
+            - --dhcp-boot=tag:ipxe,http://assets.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}/boot/boot_$(OS_DIST)_$(OS_VERSION).ipxe
+            - --dhcp-option=3,$(DHCP_RANGE_IPV4_GATEWAY)
+            - --dhcp-option=6,$(DHCP_RANGE_IPV4_NAMESERVER_1),$(DHCP_RANGE_IPV4_NAMESERVER_FALLBACK_1),$(DHCP_RANGE_IPV4_NAMESERVER_FALLBACK_2)
+            - --dhcp-option=26,$(NETWORK_INTERFACE_MTU_SIZE)
+            - --dhcp-option=27,1
+            - --dhcp-range=$(DHCP_RANGE_IPV4_BEGIN),$(DHCP_RANGE_IPV4_END),$(DHCP_RANGE_IPV4_DURATION)
+            - --port=0
+            - --resolv-file=/opt/dnsmasq/resolv.conf
+            - --bind-dynamic
+            - --log-queries
+            - --log-dhcp
+          env:
+            - name: DHCP_RANGE_IPV4_DURATION
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_ipv4_dhcp_duration
+            - name: DHCP_RANGE_IPV4_BEGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_ipv4_dhcp_range_begin
+            - name: DHCP_RANGE_IPV4_END
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_ipv4_dhcp_range_end
+            - name: DHCP_RANGE_IPV4_GATEWAY
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_ipv4_gateway
+            - name: DHCP_RANGE_IPV4_NAMESERVER_1
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_nameserver_incluster_ipv4
+            - name: DHCP_RANGE_IPV4_NAMESERVER_FALLBACK_1
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: bootstrapper_network_dns_server_ns1
+            - name: DHCP_RANGE_IPV4_NAMESERVER_FALLBACK_2
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: bootstrapper_network_dns_server_ns2
+            - name: NETWORK_INTERFACE_MTU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: network_interface_mtu_size
+            - name: OS_DIST
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: os_dist
+            - name: OS_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: kiss-config
+                  key: os_version
+          ports:
+            - name: dhcp
+              protocol: UDP
+              containerPort: 67
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 500m
+              memory: 100Mi
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          volumeMounts:
+            - name: dnsmasq
+              mountPath: /opt/dnsmasq
+            - name: misc
+              mountPath: /var/lib/misc
+            - name: tftpboot
+              mountPath: /var/lib/tftpboot
+      volumes:
+        - name: dnsmasq
+          configMap:
+            name: dnsmasq
+        - name: misc
+          hostPath:
+            path: /var/lib/dnsmasq
+            type: DirectoryOrCreate
+        - name: tftpboot
+          emptyDir: {}

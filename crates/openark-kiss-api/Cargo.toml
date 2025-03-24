@@ -1,0 +1,58 @@
+[package]
+name = "openark-kiss-api"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+alloc = ["chrono/alloc", "serde/alloc"]
+std = [
+    "chrono/std",
+    # "k8s-openapi?/std",
+    # "schemars?/std",
+    "serde?/std",
+    "serde-json?/std",
+    "strum/std",
+    "uuid/std",
+]
+
+kube = [
+    "alloc",
+    "dep:k8s-openapi",
+    "dep:kube",
+    "dep:serde-json",
+    "schemars",
+    "std",
+]
+schemars = ["dep:schemars", "k8s-openapi?/schemars", "serde"]
+serde = ["alloc", "chrono/serde", "dep:serde", "uuid/serde"]
+
+[dependencies]
+chrono = { workspace = true }
+k8s-openapi = { workspace = true, optional = true }
+kube = { workspace = true, optional = true, features = ["derive"] }
+schemars = { workspace = true, optional = true, features = [
+    "chrono",
+    "derive",
+    "uuid1",
+] }
+serde = { workspace = true, optional = true, features = ["derive"] }
+serde-json = { workspace = true, optional = true }
+strum = { workspace = true, features = ["derive"] }
+uuid = { workspace = true }

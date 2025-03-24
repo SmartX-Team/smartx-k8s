@@ -1,0 +1,70 @@
+[
+  {
+    "uid": "00000000-0000-0000-0000-000000000001",
+    "region": {
+      "name": "smartx",
+      "title": "SmartX"
+    },
+    "user": {
+      "name": "anonymous@example.com"
+    },
+    "groups": ["anonymous", "ops"],
+    "snapshot": "https://img.daisyui.com/images/profile/demo/5@94.webp",
+    "createdAt": "2025-03-18",
+    "startedAt": "2025-03-18",
+    "completedAt": "2025-03-18",
+    "resourceAnnotations": {
+      "GPU": "NVIDIA A100 40GB"
+    },
+    "resourceLabels": {
+      "CPU": 12,
+      "GPU": "1",
+      "RAM": "4Gi",
+      "Storage": "1Ti"
+    },
+    "links": {
+      "notebook": "https://google.com/",
+      "rdp": "https://google.com/",
+      "vnc": "https://google.com/"
+    },
+    "status": {
+      "level": "Info",
+      "state": "Running"
+    },
+    "events": []
+  },
+  {
+    "uid": "00000000-0000-0000-0000-000000000001",
+    "region": {
+      "name": "smartx",
+      "title": "SmartX"
+    },
+    "user": {
+      "name": "anonymous@example.com"
+    },
+    "groups": ["anonymous", "ops"],
+    "snapshot": "https://img.daisyui.com/images/profile/demo/5@94.webp",
+    "createdAt": "2025-03-18",
+    "startedAt": "2025-03-18",
+    "completedAt": "2025-03-18",
+    "resourceAnnotations": {
+      "GPU": "NVIDIA A100 40GB"
+    },
+    "resourceLabels": {
+      "CPU": 12,
+      "GPU": "1",
+      "RAM": "4Gi",
+      "Storage": "1Ti"
+    },
+    "links": {
+      "notebook": "https://google.com/",
+      "rdp": "https://google.com/",
+      "vnc": "https://google.com/"
+    },
+    "status": {
+      "level": "Info",
+      "state": "Running"
+    },
+    "events": []
+  }
+]

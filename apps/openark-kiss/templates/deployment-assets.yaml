@@ -1,0 +1,144 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assets
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: assets
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: assets
+  template:
+    metadata:
+      annotations:
+        checksum/configmaps: {{ include "configmaps.assets" $ | sha256sum | quote }} 
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: assets
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+            - weight: 2
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Gateway
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Compute
+                      - Gateway
+      containers:
+        - name: nginx
+          image: "{{ .Values.assets.image.repo }}:{{ .Values.assets.image.tag }}{{ .Values.assets.image.otel | ternary "-otel" "" }}"
+          imagePullPolicy: {{ .Values.assets.image.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: /_health
+              port: http
+          resources:
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          volumeMounts:
+            - name: assets
+              mountPath: /usr/share/nginx/html/assets
+              readOnly: true
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: boot
+              mountPath: /usr/share/nginx/html/boot
+              readOnly: true
+            - name: nginx
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: nginx
+              mountPath: /usr/share/nginx/html/robots.txt
+              subPath: robots.txt
+              readOnly: true
+            - name: patches
+              mountPath: /usr/share/nginx/html/patches
+              readOnly: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: assets
+          emptyDir: {}
+        - name: boot
+          configMap:
+            name: assets-boot
+        - name: cache
+          emptyDir: {}
+        - name: nginx
+          configMap:
+            name: assets
+        - name: patches
+          configMap:
+            name: assets-patches
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: assets
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: assets
+spec:
+  type: LoadBalancer
+  selector:
+{{- include "helm.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: assets
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

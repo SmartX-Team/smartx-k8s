@@ -1,0 +1,53 @@
+{{- define "podTemplate.pipewire-pulse" -}}
+name: pipewire-pulse
+image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
+command:
+  - /usr/bin/env
+  - pipewire-pulse
+args: []
+env:
+  - name: DISABLE_RTKIT
+    value: "y"
+  - name: XDG_RUNTIME_DIR
+    value: "/run/user/{{ include "helm.userId" $ }}"
+livenessProbe:
+  exec:
+    command:
+      - test
+      - -S
+      - /run/user/2000/pulse/native
+  initialDelaySeconds: 1
+  periodSeconds: 5
+readinessProbe:
+  exec:
+    command:
+      - pactl
+      - info
+  initialDelaySeconds: 1
+  periodSeconds: 15
+restartPolicy: Always
+securityContext:
+  capabilities:
+    add:
+      - apparmor:unconfined
+      - seccomp:unconfined
+  privileged: false
+  runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
+  runAsUser: {{ include "helm.userId" $ }}
+volumeMounts:
+
+{{- /********************************/}}
+  - name: runtime-dbus
+    mountPath: /run/dbus
+    readOnly: true
+
+{{- /********************************/}}
+  - name: runtime-user
+    mountPath: "/run/user/{{ include "helm.userId" $ }}"
+
+{{- /********************************/}}
+  - name: tmp
+    mountPath: /tmp
+
+{{- end }}

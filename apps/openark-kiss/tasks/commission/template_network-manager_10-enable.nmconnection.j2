@@ -1,0 +1,37 @@
+[connection]
+id=10-kiss-enable-{{ item.name }}
+uuid={{ item.uuid }}
+type={{ item.type }}
+interface-name={{ item.name }}
+
+autoconnect=true
+autoconnect-priority={{ item.id + 100 }}
+
+controller={{ interface_primary.uuid }}
+master={{ interface_primary.uuid }}
+port-type=bond
+slave-type=bond
+
+[ethernet]
+mtu={{ item.mtu }}
+
+[bond-port]
+queue-id={{ item.id }}
+
+[proxy]
+
+[tc]
+{% if item.qdisc is defined -%}
+qdisc.root={{ item.qdisc }}
+{%- endif %}
+
+{% if kiss_network_wireless_wifi_ssid != "" -%}
+[wifi]
+mode=infrastructure
+ssid={{ kiss_network_wireless_wifi_ssid }}
+
+[wifi-security]
+auth-log=open
+key-mgmt={{ kiss_network_wireless_wifi_key_mgmt }}
+psk={{ kiss_network_wireless_wifi_key_psk }}
+{%- endif %}

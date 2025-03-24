@@ -1,0 +1,308 @@
+---
+# TODO(user): Configure it!
+auth:
+  domainName: ""
+  realms:
+    name: ""
+    clientId: ""
+    clientSecret: ""
+  sources:
+    - name: google
+      kind: Google
+      domainName: smartx.kr
+
+# Base container image repository configuration
+baseImage:
+  repo: quay.io/ulagbulag
+
+# Bootstrapper Node Configuration
+bootstrapper:
+  auth:
+    ssh:
+      keyPath:
+        private: ./config/id_ed25519
+  kubernetes:
+    config:
+      path: ~/.kube/
+    reuse: true
+  kubespray:
+    config:
+      path: ./config/bootstrap/defaults/all.yaml
+      allPath: ./config/bootstrap/defaults/all.yaml
+      templatePath: ./config/
+  network:
+    address:
+      ipv4: 10.47.0.1
+  node:
+    name: node1.master # set to "host" if you want to install on host machines
+    image:
+      repo: quay.io/ulagbulag/openark-bootstrap-node
+      tag: latest
+    kubernetes:
+      path: /opt/kiss/
+    reuse:
+      container: true
+      kubernetes: false
+
+# Kubernetes Cluster Configuration
+# TODO(user): Configure it!
+cluster:
+  # DNS configuration.
+  # Kubernetes cluster name, also will be used as DNS domain
+  domainName: ops.openark # append `ops.` to prevent `openark.` from begin TLD
+  name: smartx
+  group: default
+  singleNode: false
+
+  # Vars for pointing to kubernetes api endpoints
+  apiEndpoint: https://localhost:6443
+
+  nameservers:
+    ipv4: 10.64.0.3
+
+  pods:
+    ipv4:
+      # internal network node size allocation (optional). This is the size allocated
+      # to each node for pod IP address allocation. Note that the number of pods per node is
+      # also limited by the kubelet_max_pods variable which defaults to 110.
+      #
+      # Example:
+      # Up to 64 nodes and up to 254 or kubelet_max_pods (the lowest of the two) pods per node:
+      #  - kube_pods_subnet: 10.233.64.0/18
+      #  - kube_network_node_prefix: 24
+      #  - kubelet_max_pods: 110
+      #
+      # Example:
+      # Up to 128 nodes and up to 126 or kubelet_max_pods (the lowest of the two) pods per node:
+      #  - kube_pods_subnet: 10.233.64.0/18
+      #  - kube_network_node_prefix: 25
+      #  - kubelet_max_pods: 110
+      prefix: 24
+
+      # internal network. When used, it will assign IP
+      # addresses from this range to individual pods.
+      # This network must be unused in your network infrastructure!
+      subnet: 10.48.0.0/12
+      childSubnet: 10.96.0.0/12
+
+    ipv6:
+      # IPv6 subnet size allocated to each for pods.
+      # This is only used if enable_dual_stack_networks is set to true
+      # This provides room for 254 pods per node.
+      prefix: 120
+
+      # Internal network. When used, it will assign IPv6 addresses from this range to individual pods.
+      # This network must not already be in your network infrastructure!
+      # This is only used if enable_dual_stack_networks is set to true.
+      # This provides room for 256 nodes with 254 pods per node.
+      subnet: fd85:ee78:d8a6:8607::1:0000/112
+
+  services:
+    ipv4:
+      # Kubernetes internal network for services, unused block of space.
+      subnet: 10.64.0.0/12 # same as CNI CIDR
+      childSubnet: 10.112.0.0/12 # same as CNI CIDR
+    kubeProxy:
+      enabled: false # set to false for Cilium to work
+
+# Enable SmartX features
+# TODO(user): Configure it!
+features:
+  - nvidia.com/gpu
+  - nvidia.com/gpu/dynamic-resource-allocation
+  - nvidia.com/network
+  - org.ulagbulag.io/acceleration
+  - org.ulagbulag.io/acceleration/storage
+  - org.ulagbulag.io/ai
+  - org.ulagbulag.io/ai/llm
+  - org.ulagbulag.io/ai/llm/openwebui
+  - org.ulagbulag.io/auth
+  - org.ulagbulag.io/auth/keycloak
+  - org.ulagbulag.io/auth/sync
+  - org.ulagbulag.io/bare-metal-provisioning
+  - org.ulagbulag.io/bare-metal-provisioning/kiss
+  - org.ulagbulag.io/batch/scheduling
+  - org.ulagbulag.io/batch/scheduling/kueue
+  - org.ulagbulag.io/cni
+  - org.ulagbulag.io/cni/multus
+  - org.ulagbulag.io/csi
+  - org.ulagbulag.io/csi/block
+  - org.ulagbulag.io/csi/filesystem
+  - org.ulagbulag.io/csi/object
+  - org.ulagbulag.io/desktop-environment
+  - org.ulagbulag.io/desktop-environment/vine
+  - org.ulagbulag.io/dev
+  - org.ulagbulag.io/distributed-storage-cluster
+  - org.ulagbulag.io/distributed-storage-cluster/ceph
+  - org.ulagbulag.io/git
+  - org.ulagbulag.io/git/github
+  - org.ulagbulag.io/git/gitlab
+  - org.ulagbulag.io/gitops
+  - org.ulagbulag.io/ingress
+  - org.ulagbulag.io/messenger
+  - org.ulagbulag.io/monitoring
+  - org.ulagbulag.io/object-store
+  - org.ulagbulag.io/object-store/minio
+  - org.ulagbulag.io/observability
+  - org.ulagbulag.io/registry
+  - org.ulagbulag.io/registry/container
+  - org.ulagbulag.io/registry/container/harbor
+  - org.ulagbulag.io/tower
+  - org.ulagbulag.io/visualization
+  - org.ulagbulag.io/visualization/grafana
+  - org.ulagbulag.io/vm
+  - org.ulagbulag.io/vm/kubevirt
+  - org.ulagbulag.io/workflow
+  - org.ulagbulag.io/workflow/argo
+
+# TODO(user): Configure it!
+ingress:
+  domainName: example.com
+  loadBalancerIPs:
+    gitlab: 0.0.0.0
+    ingress: 0.0.0.0
+    ns1: 0.0.0.0
+    ns2: 0.0.0.0
+
+# TODO(user): Configure it!
+# OpenARK KISS Configuration
+kiss:
+  # Bare-metal Box Authentication Configuration
+  auth:
+    ssh:
+      key:
+        private: ""
+        public: ""
+      # TODO: Allow support for dynamic username
+      username: kiss
+
+  # Bare-metal Box Commissioning Configuration
+  commission:
+    allowCriticalCommands: false
+    allowPruningNetworkInterfaces: true
+
+  # ETCD Cluster Configuration
+  etcd:
+    maxNodes: 5
+
+  # Bare-metal Box Grouping Configuration
+  group:
+    enableDefaultCluster: false
+    enforceAnsibleControlPlanes: false
+    forceReset: false
+    forceResetOS: false
+    resetStorage: false
+
+  # Kubespray Image Configuration
+  image:
+    # FIXME: Wait for this PR to be merged: https://github.com/kubernetes-sigs/kubespray/pull/11994
+    repo: quay.io/ulagbulag/kubespray
+    tag: v2.27.1
+
+  # OS Configuration
+  os:
+    dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
+    version: "24.04"
+    kernel: edge # One of: edge (default), stable
+
+  # Bare-metal Power Configuration
+  power:
+    # Bare-metal Box Intel AMT Configuration
+    intelAmt:
+      username: ""
+      password: ""
+
+    # Bare-metal Box IPMI Configuration
+    ipmi:
+      username: ""
+      password: ""
+
+# Optional Kubespray Configuration
+kubespray:
+  ## Container runtime
+  ## docker for docker, crio for cri-o and containerd for containerd.
+  ## Additionally you can set this to kubeadm if you want to install etcd using kubeadm
+  ## Kubeadm etcd deployment is experimental and only available for new deployments
+  ## If this is not set, container manager will be inherited from the Kubespray defaults
+  ## and not from k8s_cluster/k8s-cluster.yml, which might not be what you want.
+  ## Also this makes possible to use different container manager for etcd nodes.
+  container_manager: containerd
+
+# Bare-metal Network Configuration
+# TODO(user): Configure it!
+network:
+  interface:
+    mtu: 9000 # enable Jumbo Frames
+  ipv4:
+    dhcp:
+      duration: 7d
+      range:
+        begin: 10.32.0.0
+        end: 10.32.255.254
+    gateway: 10.47.255.254
+    subnet: 10.32.0.0/12
+
+  # Upstream dns servers
+  nameservers:
+    ns1: 1.1.1.1
+    ns2: 1.0.0.1
+
+  # Wireless Network Configuration
+  wireless:
+    wifi:
+      ssid: ""
+      key:
+        mgmt: ""
+        psk: ""
+
+# OpenARK Common Configuration
+openark:
+  labels:
+    org.ulagbulag.io/alias: dash.ulagbulag.io/alias
+    org.ulagbulag.io/bind: org.ulagbulag.io/bind
+    org.ulagbulag.io/bind.cpu: org.ulagbulag.io/bind.cpu
+    org.ulagbulag.io/bind.memory: org.ulagbulag.io/bind.memory
+    org.ulagbulag.io/bind.namespace: org.ulagbulag.io/bind.namespace
+    org.ulagbulag.io/bind.node: org.ulagbulag.io/bind.node
+    org.ulagbulag.io/bind.persistent: org.ulagbulag.io/bind.persistent
+    org.ulagbulag.io/bind.profile: org.ulagbulag.io/bind.profile
+    org.ulagbulag.io/bind.revision: org.ulagbulag.io/bind.revision
+    org.ulagbulag.io/bind.storage: org.ulagbulag.io/bind.storage
+    org.ulagbulag.io/bind.timestamp: org.ulagbulag.io/bind.timestamp
+    org.ulagbulag.io/bind.user: org.ulagbulag.io/bind.user
+    org.ulagbulag.io/category: org.ulagbulag.io/category
+    org.ulagbulag.io/compute-mode: org.ulagbulag.io/compute-mode
+    org.ulagbulag.io/description: org.ulagbulag.io/description
+    org.ulagbulag.io/is-external: ark.ulagbulag.io/is-external
+    org.ulagbulag.io/is-private: ark.ulagbulag.io/is-private
+    org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy
+    org.ulagbulag.io/signed-out: org.ulagbulag.io/signed-out
+    org.ulagbulag.io/title: org.ulagbulag.io/title
+
+# Cluster Performance Configuration
+optimization:
+  profile: performance # Options: [performance, balanced, power-save]
+
+# SmartX default repository
+repo:
+  baseUrl: https://github.com
+  owner: SmartX-Team
+  name: smartx-k8s
+  revision: main
+
+# SmartX Tower cluster
+# TODO(user): Configure it!
+tower:
+  cluster: smartx
+  group: ops
+
+# SmartX Digital Twin
+twin:
+  namespace: name-twin
+
+# TODO(user): Configure it!
+# OpenARK VINE Configuration
+vine:
+  session:
+    nodeSelector:
+      org.ulagbulag.io/session-version: "2"

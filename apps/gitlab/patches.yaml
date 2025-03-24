@@ -1,0 +1,49 @@
+---
+## The global properties are used to configure multiple charts at once.
+## https://docs.gitlab.com/charts/charts/globals
+global:
+  ## https://docs.gitlab.com/charts/charts/globals#configure-host-settings
+  hosts:
+    domain: {{ .Values.ingress.domainName | quote }}
+    kas:
+      name: "kas.gitlab.{{ .Values.ingress.domainName }}"
+    minio:
+      name: "minio.gitlab.{{ .Values.ingress.domainName }}"
+    registry:
+      name: "registry.gitlab.{{ .Values.ingress.domainName }}"
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-ingress-settings
+  ingress:
+    class: "gitlab.{{ .Values.ingress.domainName }}"
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+  ## https://docs.gitlab.com/charts/charts/globals#configure-appconfig-settings
+  ## Rails based portions of this chart share many settings
+  appConfig:
+    ## https://docs.gitlab.com/charts/charts/globals#omniauth
+    omniauth:
+      providers:
+        - secret: "gitlab-auth-provider-{{ .Values.ingress.domainName }}"
+
+## https://docs.gitlab.com/charts/charts/nginx/
+## https://docs.gitlab.com/charts/architecture/decisions#nginx-ingress
+## Installation & configuration of charts/ingress-nginx:
+nginx-ingress:
+  controller:
+    ## This section refers to the creation of the IngressClass resource
+    ## IngressClass resources are supported since k8s >= 1.18 and required since k8s >= 1.19
+    ingressClassResource:
+      # -- Name of the ingressClass
+      name: "gitlab.{{ .Values.ingress.domainName }}"
+      controllerValue: "k8s.io/ingress-nginx/gitlab.{{ .Values.ingress.domainName }}"
+
+    # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+    # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    ingressClass: "gitlab.{{ .Values.ingress.domainName }}"
+
+    service:
+      # -- Labels to be added to both controller services.
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+      loadBalancerIP: {{ .Values.ingress.loadBalancerIPs.gitlab | quote }}

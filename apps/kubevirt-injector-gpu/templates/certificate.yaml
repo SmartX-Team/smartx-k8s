@@ -1,0 +1,15 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  secretName: "{{ include "helm.fullname" $ }}-certs"
+  dnsNames:
+    - "{{ include "helm.fullname" $ }}.{{ .Release.Namespace }}.svc"
+    - "{{ include "helm.fullname" $ }}.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}"
+  issuerRef:
+    name: {{ include "helm.fullname" $ | quote }}

@@ -1,0 +1,109 @@
+---
+## @section Common parameters
+
+buckets:
+{{- if has "org.ulagbulag.io/git/gitlab" .Values.features }}
+  - name: gitlab
+    quota: 1Ti
+    anonymous:
+      read: true
+      write: false
+{{- end }}
+
+# gitlab: {{ has "org.ulagbulag.io/git/gitlab" .Values.features }}
+# grafana: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+# harbor: {{ has "org.ulagbulag.io/registry/container/harbor" .Values.features }}
+# openwebui: {{ has "org.ulagbulag.io/ai/llm/openwebui" .Values.features }}
+# prometheus: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+## @param clusterDomain Default Kubernetes cluster domain
+##
+clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+## @section MinIO&reg; deployment/statefulset parameters
+
+## MinIO&reg; provisioning
+##
+provisioning:
+  ## @param provisioning.extraVolumes Optionally specify extra list of additional volumes for MinIO&reg; provisioning pod
+  ##
+  extraVolumes:
+    - name: openark-minio-provisioning
+      secret:
+        secretName: minio-openark-provisioning
+        defaultMode: 365 # 0o555
+
+## @section Traffic exposure parameters
+
+## Configure the ingress resource that allows you to access the
+## MinIO&reg; Console. Set up the URL
+## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+##
+ingress:
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster.
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  ## @param ingress.hostname Default host for the ingress resource
+  ##
+  hostname: "minio.{{ .Values.ingress.domainName }}"
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+## Configure the ingress resource that allows you to access the
+## MinIO&reg; API. Set up the URL
+## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+##
+apiIngress:
+  ## @param apiIngress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster.
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  ## @param apiIngress.hostname Default host for the ingress resource
+  ##
+  hostname: "api.minio.{{ .Values.ingress.domainName }}"
+  ## @param apiIngress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+## @section Metrics parameters
+
+metrics:
+  ## @param metrics.enabled Enable the export of Prometheus metrics
+  ##
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    ## @param metrics.serviceMonitor.enabled If the operator is installed in your cluster, set to true to create a Service Monitor Entry
+    ##
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  ## Prometheus Operator PrometheusRule configuration
+  ##
+  prometheusRule:
+    ## @param metrics.prometheusRule.enabled Create a Prometheus Operator PrometheusRule (also requires `metrics.enabled` to be `true` and `metrics.prometheusRule.rules`)
+    ##
+    enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}

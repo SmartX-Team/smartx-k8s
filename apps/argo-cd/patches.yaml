@@ -1,0 +1,82 @@
+---
+## Globally shared configuration
+global:
+  # -- Default domain used by all components
+  ## Used for ingresses, certificates, SSO, notifications, etc.
+  domain: "cd.argo.{{ .Values.ingress.domainName }}"
+
+## Argo Configs
+configs:
+  # Argo CD configuration parameters
+  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cmd-params-cm.yaml
+  params:
+    # -- Enables [Applications in any namespace]
+    ## List of additional namespaces where applications may be created in and reconciled from.
+    ## The namespace where Argo CD is installed to will always be allowed.
+    ## Set comma-separated list. (e.g. app-team-one, app-team-two)
+    application.namespaces: >
+{{- $_ := set $ "applicationNamespaces" list }}
+{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+{{- $_ := set $ "applicationNamespaces" ( append $.applicationNamespaces "vine-session" ) }}
+{{- end }}
+{{- $.applicationNamespaces | join "," | nindent 6 }}
+{{- $_ := unset $ "applicationNamespaces" }}
+
+  # Argo CD RBAC policy configuration
+  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/rbac.md
+  rbac:
+    # -- File containing user-defined policies and role definitions.
+    # @default -- `''` (See [values.yaml])
+    policy.csv: |
+      g, {{ .Values.group.name }}, role:admin
+      g, {{ .Values.cluster.name }}, role:readonly
+
+## Application controller
+controller:
+  ## Application controller metrics configuration
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+## Redis
+redis:
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+## Server
+server:
+  ## Server metrics service configuration
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  # Argo CD server ingress configuration
+  ingress:
+    # -- Additional ingress annotations
+    ## Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+    # -- Defines which ingress controller will implement the resource
+    ingressClassName: {{ .Values.ingress.domainName | quote }}
+
+## Repo Server
+repoServer:
+  ## Repo server metrics service configuration
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+## ApplicationSet controller
+applicationSet:
+  ## Metrics service configuration
+  metrics:
+    # -- Deploy metrics service
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+## Notifications controller
+notifications:
+  metrics:
+    # -- Enables prometheus metrics server
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

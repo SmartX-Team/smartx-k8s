@@ -1,0 +1,26 @@
+---
+- name: Create config directory | cloud-init
+  ansible.builtin.file:
+    path: /etc/cloud/cloud.cfg.d
+    state: directory
+
+- name: Disable | cloud-init
+  template:
+    src: ./template_cloud-init_99-disable.cfg.j2
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+
+- name: Remove netplan config | cloud-init
+  ansible.builtin.file:
+    path: /etc/netplan
+    state: absent
+    force: true
+
+- name: Create config directory | NetworkManager
+  ansible.builtin.file:
+    path: /etc/NetworkManager/conf.d
+    state: directory
+
+- name: Enable device managing | NetworkManager
+  template:
+    src: ./template_network-manager_10-globally-managed-devices.j2
+    dest: /etc/NetworkManager/conf.d/10-globally-managed-devices.conf

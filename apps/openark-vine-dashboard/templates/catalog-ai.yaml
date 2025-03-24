@@ -1,0 +1,18 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: openwebui
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Open WebUI
+    org.ulagbulag.io/description: >
+      Open WebUI is an extensible, feature-rich, and user-friendly self-hosted AI platform designed to operate entirely offline.
+      It supports various LLM runners like Ollama and OpenAI-compatible APIs, with built-in inference engine for RAG, making it a powerful AI deployment solution.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: ai
+spec:
+  type: Link
+  thumbnailUrl: https://github.com/open-webui/open-webui/raw/main/demo.gif
+  url: "https://ask.{{ .Values.ingress.domainName }}"

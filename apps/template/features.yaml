@@ -1,0 +1,301 @@
+---
+# Available features
+nvidia.com/gpu:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/monitoring
+
+nvidia.com/gpu/dynamic-resource-allocation:
+  requires:
+    - nvidia.com/gpu
+  optional:
+    - org.ulagbulag.io/monitoring
+
+nvidia.com/network:
+  requires:
+    - nvidia.com/gpu
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/acceleration:
+  requires: []
+
+org.ulagbulag.io/acceleration/storage:
+  requires:
+    - org.ulagbulag.io/acceleration
+    - org.ulagbulag.io/csi
+  optional:
+    - org.ulagbulag.io/distributed-storage-cluster
+
+org.ulagbulag.io/ai:
+  requires:
+    - nvidia.com/gpu
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/batch/scheduling/kueue
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/filesystem
+  optional:
+    - nvidia.com/network
+    - org.ulagbulag.io/csi/object
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/ai/llm:
+  requires:
+    - org.ulagbulag.io/ai
+
+org.ulagbulag.io/ai/llm/openwebui:
+  requires:
+    - org.ulagbulag.io/ai/llm
+
+org.ulagbulag.io/auth:
+  requires:
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/ingress
+  optional:
+    - nvidia.com/network
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/auth/keycloak:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/ingress
+
+org.ulagbulag.io/auth/sync:
+  requires:
+    - org.ulagbulag.io/auth
+
+org.ulagbulag.io/bare-metal-provisioning:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/bare-metal-provisioning/kiss:
+  requires:
+    - org.ulagbulag.io/bare-metal-provisioning
+    - org.ulagbulag.io/gitops
+    - org.ulagbulag.io/workflow/argo
+
+org.ulagbulag.io/batch/scheduling:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/object
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/batch/scheduling/kueue:
+  requires:
+    - org.ulagbulag.io/batch/scheduling
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/cni:
+  requires: []
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/cni/multus:
+  requires:
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/csi:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/csi/block:
+  requires:
+    - org.ulagbulag.io/csi
+
+org.ulagbulag.io/csi/filesystem:
+  requires:
+    - org.ulagbulag.io/csi
+
+org.ulagbulag.io/csi/object:
+  requires:
+    - org.ulagbulag.io/csi
+
+org.ulagbulag.io/distributed-storage-cluster:
+  requires:
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/distributed-storage-cluster/ceph:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/distributed-storage-cluster
+  optional:
+    - org.ulagbulag.io/ingress
+    - org.ulagbulag.io/monitoring
+  provides:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+    # - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/desktop-environment:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+  optional:
+    - org.ulagbulag.io/ai
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/desktop-environment/vine:
+  requires:
+    - org.ulagbulag.io/desktop-environment
+    - org.ulagbulag.io/gitops
+    - org.ulagbulag.io/vm/kubevirt
+    - org.ulagbulag.io/workflow/argo
+
+org.ulagbulag.io/dev:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+
+org.ulagbulag.io/git:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/git/github:
+  requires:
+    - org.ulagbulag.io/git
+
+org.ulagbulag.io/git/gitlab:
+  requires:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/git
+  optional:
+    - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/gitops:
+  requires:
+    - org.ulagbulag.io/git
+
+org.ulagbulag.io/ingress:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/messenger:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/monitoring:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+  optional:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/object-store:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/monitoring
+  provides:
+    - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/object-store/minio:
+  requires:
+    - org.ulagbulag.io/distributed-storage-cluster/ceph
+    - org.ulagbulag.io/object-store
+
+org.ulagbulag.io/observability:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+  optional:
+    - org.ulagbulag.io/csi/object
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/registry:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+    - org.ulagbulag.io/ingress
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/registry/container:
+  requires:
+    - org.ulagbulag.io/registry
+
+org.ulagbulag.io/registry/container/harbor:
+  requires:
+    - org.ulagbulag.io/registry/container
+
+org.ulagbulag.io/tower:
+  requires:
+    - org.ulagbulag.io/auth/keycloak
+    - org.ulagbulag.io/gitops
+    - org.ulagbulag.io/ingress
+    - org.ulagbulag.io/observability
+    - org.ulagbulag.io/visualization
+    - org.ulagbulag.io/workflow/argo
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/visualization:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/filesystem
+  optional:
+    - org.ulagbulag.io/csi/object
+    - org.ulagbulag.io/observability
+
+org.ulagbulag.io/visualization/grafana:
+  requires:
+    - org.ulagbulag.io/monitoring
+    - org.ulagbulag.io/visualization
+  optional:
+    - org.ulagbulag.io/auth
+
+org.ulagbulag.io/vm:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi/block
+  optional:
+    - nvidia.com/gpu
+    - nvidia.com/network
+    - org.ulagbulag.io/cni/multus
+    - org.ulagbulag.io/csi/filesystem
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/vm/kubevirt:
+  requires:
+    - org.ulagbulag.io/vm
+
+org.ulagbulag.io/workflow:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/csi/object
+    - org.ulagbulag.io/git
+    - org.ulagbulag.io/monitoring
+    - org.ulagbulag.io/observability
+
+org.ulagbulag.io/workflow/argo:
+  requires:
+    - org.ulagbulag.io/workflow

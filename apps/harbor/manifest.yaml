@@ -1,0 +1,91 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.harbor
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: harbor
+    patched: true
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/registry/container/harbor
+    ignoreDifferences:
+      - kind: Secret
+        name: harbor-core
+        jsonPointers:
+          - /data/CSRF_KEY
+          - /data/secret
+          - /data/tls.crt
+          - /data/tls.key
+      - kind: Secret
+        name: harbor-ingress
+        jsonPointers:
+          - /data/ca.crt
+          - /data/tls.crt
+          - /data/tls.key
+      - kind: Secret
+        name: harbor-jobservice
+        jsonPointers:
+          - /data/JOBSERVICE_SECRET
+      - kind: Secret
+        name: harbor-registry
+        jsonPointers:
+          - /data/REGISTRY_HTTP_SECRET
+      - kind: Secret
+        name: harbor-registry-htpasswd
+        jsonPointers:
+          - /data/REGISTRY_HTPASSWD
+      - group: apps
+        kind: Deployment
+        name: harbor-core
+        jsonPointers:
+          - /spec/template/metadata/annotations/checksum~1secret
+          - /spec/template/metadata/annotations/checksum~1secret-jobservice
+      - group: apps
+        kind: Deployment
+        name: harbor-jobservice
+        jsonPointers:
+          - /spec/template/metadata/annotations/checksum~1secret
+          - /spec/template/metadata/annotations/checksum~1secret-core
+      - group: apps
+        kind: Deployment
+        name: harbor-registry
+        jsonPointers:
+          - /spec/template/metadata/annotations/checksum~1secret
+          - /spec/template/metadata/annotations/checksum~1secret-core
+          - /spec/template/metadata/annotations/checksum~1secret-jobservice
+      - group: apps
+        kind: StatefulSet
+        name: harbor-database
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+      - group: apps
+        kind: StatefulSet
+        name: harbor-redis
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+      - group: apps
+        kind: StatefulSet
+        name: harbor-trivy
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: harbor
+    repoUrl: "https://helm.goharbor.io"
+    version: 1.16.2

@@ -1,0 +1,45 @@
+{{/* Load manifest */}}
+{{- range $path, $_ := $.Files.Glob "manifest.yaml" }}
+{{- $_ := set $ "Manifest" ( tpl ( $.Files.Get $path ) $ | fromYaml ) }}
+{{- range $name := $.Manifest.metadata.name | split "." }}
+{{- $_ := set $.Release "Name" $name }}
+{{- end }}
+{{- $_ := set $.Release "Namespace" $.Manifest.spec.containerImage.namespace }}
+{{- end }}
+
+{{/* Load cluster-wide values */}}
+{{- $_ := set $ "Cluster" dict }}
+{{- $_ := set $.Cluster "Chart" $.Chart }}
+{{- $_ := set $.Cluster "Release" $.Release }}
+{{- $_ := set $.Cluster "Values" dict }}
+{{- range $path, $_ := $.Files.Glob "clusters/*.yaml" }}
+{{- $_ := set $.Cluster "Values" ( $.Files.Get $path | fromYaml | merge $.Cluster.Values ) }}
+{{- end }}
+
+{{/* Apply patches */}}
+{{- range $path, $_ := $.Files.Glob "patches.yaml" }}
+{{- $_ := set $ "Values" ( tpl ( $.Files.Get $path ) $.Cluster | fromYaml | merge $.Values ) }}
+{{- end }}
+
+{{/* Patch base image */}}
+{{- $_ := set $.Values "baseImage" $.Cluster.Values.baseImage }}
+
+{{/* Create a Containerfile ConfigMap */}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    images.ulagbulag.io/base.repo: {{ $.Values.baseImage.repo | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/version: {{
+      $.Manifest.spec.containerImage.version
+        | default $.Chart.AppVersion
+        | quote
+    }}
+data:
+  Containerfile: |
+{{- tpl ( $.Files.Get "template.containerfile" ) $ | nindent 4 }}

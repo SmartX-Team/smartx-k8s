@@ -1,0 +1,18 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: CatalogItem
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    org.ulagbulag.io/title: Keycloak
+    org.ulagbulag.io/description: >
+      Add authentication to applications and secure services with minimum effort. No need to deal with storing users or authenticating users.
+      Keycloak provides user federation, strong authentication, user management, fine-grained authorization, and more.
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    org.ulagbulag.io/category: auth
+spec:
+  type: Link
+  thumbnailUrl: https://www.cerberauth.com/_astro/keycloak.DBqhkiKA_Z2mBmdp.avif
+  url: "https://auth.{{ .Values.ingress.domainName }}"

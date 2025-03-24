@@ -1,0 +1,64 @@
+---
+kubevirt:
+  # Holds kubevirt configurations. Same as the virt-configMap.
+  configuration:
+    # DeveloperConfiguration holds developer options
+    developerConfiguration:
+      featureGates:
+        - AlignCPUs
+        - CPUManager
+        - ExpandDisks
+        - GPU
+        - HostDevices
+        - HotplugVolumes
+        - NUMA
+        - Sidecar
+        - VMLiveUpdateFeatures
+
+    # PermittedHostDevices holds inforamtion about devices allowed for passthrough
+    permittedHostDevices:
+      # PciHostDevice represents a host PCI device allowed for passthrough
+      pciHostDevices:
+        # NVIDIA Corporation GA104 [GeForce RTX 3070 Lite Hash Rate]
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:2488
+          resourceName: nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE
+        # NVIDIA Corporation GA104 High Definition Audio Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:228b
+          resourceName: nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE_Audio
+        # Intel Corporation Thunderbolt 4 USB Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:1138
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-1138
+        # Intel Corporation Tiger Lake-H USB 3.2 Gen 2x1 xHCI Host Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:43ed
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-43ed
+        # Intel Corporation Alder Lake-S PCH USB 3.2 Gen 2x2 XHCI Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:7ae0
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-7ae0
+        # Intel Corporation Tiger Lake-H Thunderbolt 4 USB Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:9a17
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-9a17
+
+    # VMRolloutStrategy defines how changes to a VM object propagate to its VMI
+    vmRolloutStrategy: LiveUpdate
+
+  customizeComponents:
+    flags:
+      controller:
+        launcher-image: quay.io/ulagbulag/virt-launcher:v1.4.0
+    patches:
+      - resourceType: Deployment
+        resourceName: virt-controller
+        # Change "--launcher-image"
+        patch: >
+          [{
+            "op": "replace",
+            "path": "/spec/template/spec/containers/0/args/1",
+            "value": "quay.io/ulagbulag/virt-launcher:v1.4.0"
+          }]
+        type: json

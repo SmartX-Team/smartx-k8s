@@ -1,0 +1,24 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.gateway-api
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kube-system
+    patched: false
+    unsafe: true # CNI
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/cni
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true

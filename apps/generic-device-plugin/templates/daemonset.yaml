@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+{{- include "helm.selectorLabels" $ | nindent 8 }}
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              # All compute nodes
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+              # All VM sessions
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Dashboard
+                      - Desktop
+                  - key: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}
+                    operator: In
+                    values:
+                      - container
+      containers:
+        - name: generic-device-plugin
+          image: "{{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          args:
+            - --device
+            - |
+              name: fuse
+              groups:
+                - count: 256
+                  paths:
+                    - path: /dev/fuse
+          ports:
+            - name: http-metrics
+              protocol: TCP
+              containerPort: 8080
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 10Mi
+            limits:
+              cpu: 50m
+              memory: 20Mi
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: device-plugins
+              mountPath: /var/lib/kubelet/device-plugins
+      priorityClassName: system-node-critical
+      volumes:
+        - name: dev
+          hostPath:
+            path: /dev
+        - name: device-plugins
+          hostPath:
+            path: /var/lib/kubelet/device-plugins

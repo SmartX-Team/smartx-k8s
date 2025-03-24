@@ -1,0 +1,8 @@
+---
+## @param tolerations Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations:
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+    operator: Exists
+    effect: NoExecute

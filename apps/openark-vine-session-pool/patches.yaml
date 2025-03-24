@@ -1,0 +1,16 @@
+---
+auth:
+  domainName: {{ .Values.auth.domainName | quote }}
+
+cluster:
+  domainName: {{ .Values.cluster.domainName | quote }}
+
+features:
+  vm: {{ has "org.ulagbulag.io/vm/kubevirt" .Values.features }}
+
+openark:
+  labels:
+    org.ulagbulag.io/bind: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+    org.ulagbulag.io/bind.node: {{ index .Values.openark.labels "org.ulagbulag.io/bind.node" | quote }}
+    org.ulagbulag.io/bind.user: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
+    org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}

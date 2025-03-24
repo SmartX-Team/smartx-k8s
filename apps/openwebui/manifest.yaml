@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openwebui
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: api
+    patched: true
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/ai/llm/openwebui
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: open-webui
+    repoUrl: "https://open-webui.github.io/helm-charts"
+    version: 5.19.0

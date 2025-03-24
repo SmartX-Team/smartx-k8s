@@ -1,0 +1,20 @@
+[Unit]
+Description=Open an OpenARK VINE Greeter
+Wants=network-online.target
+After=containerd.service
+After=network-online.target
+Before=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/openark-vine-greeter.sh
+ExecStop=/usr/bin/env nerdctl stop -t 30 openark-vine-greeter
+Environment="IMAGE={{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+Restart=on-failure
+RestartSec=5
+Slice=kubepods.slice
+TimeoutStopSec=30s
+
+[Install]
+WantedBy=getty.target
+DefaultInstance=tty1

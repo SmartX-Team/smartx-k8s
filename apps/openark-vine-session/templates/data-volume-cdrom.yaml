@@ -1,0 +1,69 @@
+{{- define "helm.vmDataVolumeCdRomCapacity" -}}
+storage: 8Gi
+{{- end -}}
+
+{{- if and
+  .Values.vm.enabled
+  ( regexMatch "^windows-[0-9]+$" .Values.vm.os )
+}}
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{ include "helm.localPVName" $ }}-vm-cdrom-{{ .Values.vm.os }}"
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+{{- include "helm.vmDataVolumeCdRomCapacity" $ | nindent 4 }}
+  hostPath:
+    path: {{ include "helm.localPVPath.vm.cdrom" $ | quote }}
+    type: Directory
+  nodeAffinity:
+{{- include "helm.localPVNodeAffinity" $ | nindent 4 }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ include "helm.localPVName" $ | quote }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{ include "helm.localPVName" $ }}-vm-cdrom-{{ .Values.vm.os }}-scratch"
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+{{- include "helm.vmDataVolumeCdRomCapacity" $ | nindent 4 }}
+  hostPath:
+    path: {{ include "helm.localPVPath.vm.cdrom.scratch" $ | quote }}
+    type: Directory
+  nodeAffinity:
+{{- include "helm.localPVNodeAffinity" $ | nindent 4 }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ include "helm.localPVName" $ | quote }}
+---
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: "{{ include "helm.localPVCName" $ }}-vm-cdrom-{{ .Values.vm.os }}"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+spec:
+  pvc:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+{{- include "helm.vmDataVolumeCdRomCapacity" $ | nindent 8 }}
+    storageClassName: {{ include "helm.localPVName" $ | quote }}
+    volumeName: "{{ include "helm.localPVName" $ }}-vm-cdrom-{{ .Values.vm.os }}"
+  source:
+    http:
+      url: {{ .Values.vm.windows.source.url | quote }}
+
+{{- end }}

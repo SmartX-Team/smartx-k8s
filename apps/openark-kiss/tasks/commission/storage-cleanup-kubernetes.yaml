@@ -1,0 +1,42 @@
+---
+- name: Set common facts for resetting
+  set_fact:
+    containerd_bin_dir: "{{ containerd_bin_dir | default(bin_dir) }}"
+    deploy_container_engine: "{{ deploy_container_engine | default(inventory_hostname in groups['k8s_cluster'] or etcd_deployment_type == 'docker') }}"
+    is_fedora_coreos: "{{ is_fedora_coreos | default(False) }}"
+
+- name: Gather information about installed services
+  service_facts:
+
+- include_role:
+    name: kubespray-defaults
+
+- include_role:
+    name: kubespray-defaults
+
+- when:
+    - dns_mode is defined and dns_mode != 'none'
+    - resolvconf_mode is defined and resolvconf_mode == 'host_resolvconf'
+  include_role:
+    name: kubernetes/preinstall
+  vars:
+    dns_early: true
+  tags: resolvconf
+
+- name: Reset the kubespray node
+  include_role:
+    name: reset
+  vars:
+    flush_iptables: true
+    reset_restart_network: true
+  tags: reset
+
+- name: Reset | Cleanup DNS
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/NetworkManager/conf.d/dns.conf
+  ignore_errors: true # noqa ignore-errors
+  tags:
+    - files

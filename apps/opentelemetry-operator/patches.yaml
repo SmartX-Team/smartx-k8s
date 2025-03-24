@@ -1,0 +1,19 @@
+---
+## Provide OpenTelemetry Operator manager container image and resources.
+##
+manager:
+  # For more details see: https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/apps/opentelemetry-operator/UPGRADING.md#0553-to-0560
+  collectorImage:
+    repository: otel/opentelemetry-collector-k8s
+
+  ## Adds additional environment variables
+  ## e.g ENV_VAR: env_value
+  # env:
+  #   ENABLE_WEBHOOKS: "true"
+
+  ## Enable ServiceMonitor for Prometheus metrics scrape
+  serviceMonitor:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  prometheusRule:
+    enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}

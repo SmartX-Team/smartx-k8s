@@ -1,0 +1,9 @@
+---
+- name: Provision NICs
+  include_tasks: network-adaptor.yaml
+
+- name: Provision Ethernet Interfaces
+  include_tasks: network-ethernet.yaml
+
+- name: Provision Network Tuning
+  include_tasks: network-tuned.yaml

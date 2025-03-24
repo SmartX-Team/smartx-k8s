@@ -1,0 +1,28 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.nvidia-gpu-dra
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: gpu-nvidia
+    patched: false
+    unsafe: true # H/W
+    useClusterValues: false
+    features:
+      - nvidia.com/gpu/dynamic-resource-allocation
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: nvidia-dra-driver-gpu
+    repoUrl: "https://helm.ngc.nvidia.com/nvidia"
+    version: 25.3.0-rc.1

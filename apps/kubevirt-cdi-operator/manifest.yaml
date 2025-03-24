@@ -1,0 +1,36 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.kubevirt-cdi-operator
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: kubevirt
+    patched: false
+    unsafe: true # RuntimeClass
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/vm/kubevirt
+    ignoreDifferences:
+      - group: apiextensions.k8s.io
+        kind: CustomResourceDefinition
+        name: cdis.cdi.kubevirt.io
+        jsonPointers:
+          - /spec/versions/0/name
+          - /spec/versions/0/storage
+          - /spec/versions/1
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: cdi
+    repoUrl: "https://suse-edge.github.io/charts"
+    version: 0.4.0

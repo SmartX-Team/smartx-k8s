@@ -1,0 +1,45 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.nvidia-gpu-operator
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: gpu-nvidia
+    patched: false
+    unsafe: true # H/W
+    useClusterValues: false
+    features:
+      - nvidia.com/gpu
+    ignoreDifferences:
+      - group: apiextensions.k8s.io
+        kind: CustomResourceDefinition
+        name: nodefeaturerules.nfd.k8s-sigs.io
+        jsonPointers:
+          - /metadata/annotations/controller-gen.kubebuilder.io~1version
+          - /spec/versions/0/schema/openAPIV3Schema
+      - group: apiextensions.k8s.io
+        kind: CustomResourceDefinition
+        name: nodefeatures.nfd.k8s-sigs.io
+        jsonPointers:
+          - /metadata/annotations/controller-gen.kubebuilder.io~1version
+          - /spec/versions/0/schema/openAPIV3Schema
+      - kind: ConfigMap
+        name: nvidia-gpu-operator-node-feature-discovery-topology-updater-conf
+        jqPathExpressions:
+          - .
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: false
+  source:
+    chart: gpu-operator
+    repoUrl: "https://helm.ngc.nvidia.com/nvidia"
+    version: v24.9.2

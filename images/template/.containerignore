@@ -1,0 +1,59 @@
+# Build
+/container-image/
+
+# Containerfile
+/*.containerfile
+/*.dockerfile
+/.containerignore
+/.dockerignore
+/Containerfile
+/Dockerfile
+
+# Dev
+/api/
+/**/.env
+/**/.token
+/**/*.crt
+/**/*.key
+/**/*.pem
+/**/dist/
+
+# Editor
+/**/.DS_Store
+/.idea/
+
+# GitOps
+/**/.git
+/**/.gitconfig
+/**/.gitignore
+/**/.gitkeep
+/**/.svn
+
+# GitOps
+/clusters/
+/manifest.yaml
+
+# JS
+/**/node_modules/
+/**/output.css
+/**/package-lock.json
+
+# Helm
+/Chart.yaml
+/patches.yaml
+/templates/
+/values.yaml
+
+# Temporary files
+/**/.build/
+/**/.buildlog/
+/**/.env*
+/**/.swiftpm/
+/**/*.bak
+/**/*.class
+/**/*.log
+/**/*.pem
+/**/*.pyc
+/**/*.swp
+/**/*.tmp
+/**/*.token

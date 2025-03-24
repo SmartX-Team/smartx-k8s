@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ntpd
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: ntpd
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: ntpd
+  template:
+    metadata:
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: ntpd
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ntpd
+          image: "{{ .Values.ntpd.image.repo }}:{{ .Values.ntpd.image.tag }}"
+          ports:
+            - name: ntp
+              protocol: UDP
+              containerPort: 123
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 50m
+              memory: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ntpd
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-proxy" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: ntpd
+spec:
+  type: ClusterIP
+  selector:
+{{- include "helm.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: ntpd
+  ports:
+    - name: ntp
+      protocol: UDP
+      port: 123
+      targetPort: 123
+  # TODO: migrate into kiss config
+  loadBalancerIP: 10.112.0.2

@@ -1,0 +1,4 @@
+---
+openark:
+  labels:
+    org.ulagbulag.io/compute-mode: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}

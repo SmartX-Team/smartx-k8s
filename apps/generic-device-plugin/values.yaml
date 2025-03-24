@@ -1,0 +1,8 @@
+---
+image:
+  repo: docker.io/squat/generic-device-plugin
+  tag: ""
+  pullPolicy: Always
+
+openark:
+  labels: {}

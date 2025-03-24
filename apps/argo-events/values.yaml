@@ -1,0 +1,90 @@
+---
+## Argo Events configuration
+## Ref: https://github.com/argoproj/argo-events
+##
+
+# -- Deploy on OpenShift
+openshift: false
+
+# -- Create clusterroles that extend existing clusterroles to interact with argo-events crds
+# Only applies for cluster-wide installation (`controller.rbac.namespaced: false`)
+## Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
+createAggregateRoles: true
+
+## Custom resource configuration
+crds:
+  # -- Keep CRDs on chart uninstall
+  keep: true
+
+# -- Array of extra K8s manifests to deploy
+## Note: Supports use of custom Helm templates
+extraObjects:
+  []
+  # - apiVersion: secrets-store.csi.x-k8s.io/v1
+  #   kind: SecretProviderClass
+  #   metadata:
+  #     name: argo-events-secrets-store
+  #   spec:
+  #     provider: aws
+  #     parameters:
+  #       objects: |
+  #         - objectName: "argo-events"
+  #           objectType: "secretsmanager"
+  #           jmesPath:
+  #               - path: "client_id"
+  #                 objectAlias: "client_id"
+  #               - path: "client_secret"
+  #                 objectAlias: "client_secret"
+  #     secretObjects:
+  #     - data:
+  #       - key: client_id
+  #         objectName: client_id
+  #       - key: client_secret
+  #         objectName: client_secret
+  #       secretName: argo-events-secrets-store
+  #       type: Opaque
+  #       labels:
+  #         app.kubernetes.io/part-of: argocd
+
+## Argo Events controller
+controller:
+  # -- Assign custom [affinity] rules to the deployment
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  ## Events controller metrics configuration
+  metrics:
+    serviceMonitor:
+      # -- Prometheus ServiceMonitor namespace
+      namespace: monitoring
+
+## Argo Events admission webhook
+webhook:
+  # -- Enable admission webhook. Applies only for cluster-wide installation
+  enabled: true
+  # -- Assign custom [affinity] rules to the deployment
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane

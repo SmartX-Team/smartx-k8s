@@ -1,0 +1,10 @@
+---
+openark:
+  base:
+    image:
+      repo: docker.io/library/debian
+      tag: bookworm
+  builder:
+    image:
+      repo: docker.io/library/rust
+      tag: "1"

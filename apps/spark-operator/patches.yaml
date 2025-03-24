@@ -1,0 +1,4 @@
+---
+metrics:
+  # -- Enable prometheus metric scraping
+  enable: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

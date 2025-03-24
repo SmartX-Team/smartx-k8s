@@ -1,0 +1,21 @@
+---
+- hosts: target
+  tasks:
+    # Step 1 - Test connection
+    - include_tasks: ping.yaml
+    # Step 2 - Configure base
+    - include_tasks: hostname.yaml
+    # Step 3 - Configure kernel and system
+    - include_tasks: system.yaml
+    # Step 4 - Configure storage
+    - include_tasks: storage.yaml
+    # Step 5 - Configure devices
+    - include_tasks: power.yaml
+    - include_tasks: network.yaml
+    # # Step 6 - Configure devices
+    # - include_tasks: "domain-{{ kiss_group_role | lower }}.yaml"
+    #   when:
+    #     - kiss_group_role_is_domain_specific is defined
+    #     - kiss_group_role_is_domain_specific
+    # Step 7. Submit
+    - include_tasks: submit.yaml

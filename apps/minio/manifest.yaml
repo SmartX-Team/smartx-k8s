@@ -1,0 +1,41 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.minio
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: minio
+    patched: true
+    unsafe: true # CSI
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/object-store/minio
+    ignoreDifferences:
+      - kind: Secret
+        name: minio
+        jsonPointers:
+          - /data/root-password
+      - group: apps
+        kind: StatefulSet
+        name: minio
+        jsonPointers:
+          - /spec/template/metadata/annotations/checksum~1credentials-secret
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: minio
+    repoUrl: registry-1.docker.io/bitnamicharts
+    version: 15.0.7
+

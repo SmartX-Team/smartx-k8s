@@ -1,0 +1,141 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: operator
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: operator
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      containers:
+        - name: operator
+          image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - openark-vine-session-operator
+          env:
+            - name: CONTROLLER_NAME
+              value: {{ .Chart.Name | quote }}
+            - name: CONTROLLER_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: INSTALL_CRDS
+              value: "true"
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPENARK_AUTH_DOMAIN_NAME
+              value: {{ .Values.auth.domainName | quote }}
+            - name: OPENARK_FEATURE_VM
+              value: {{ .Values.features.vm | quote }}
+            - name: OPENARK_INGRESS_DOMAIN_NAME
+              value: {{ .Values.ingress.domainName | quote }}
+            - name: OPENARK_LABEL_ALIAS
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
+            - name: OPENARK_LABEL_BIND
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+            - name: OPENARK_LABEL_BIND_CPU
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.cpu" | quote }}
+            - name: OPENARK_LABEL_BIND_MEMORY
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.memory" | quote }}
+            - name: OPENARK_LABEL_BIND_NAMESPACE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.namespace" | quote }}
+            - name: OPENARK_LABEL_BIND_NODE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.node" | quote }}
+            - name: OPENARK_LABEL_BIND_PERSISTENT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.persistent" | quote }}
+            - name: OPENARK_LABEL_BIND_PROFILE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+            - name: OPENARK_LABEL_BIND_REVISION
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.revision" | quote }}
+            - name: OPENARK_LABEL_BIND_STORAGE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.storage" | quote }}
+            - name: OPENARK_LABEL_BIND_TIMESTAMP
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.timestamp" | quote }}
+            - name: OPENARK_LABEL_BIND_USER
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
+            - name: OPENARK_LABEL_COMPUTE_MODE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}
+            - name: OPENARK_LABEL_SELECTOR
+              value: >
+{{- $_ := set $ "NodeSelector" list }}
+{{- range $key, $value := .Values.nodeSelector | default dict }}
+{{- $_ := set $ "NodeSelector" ( append $.NodeSelector ( printf "%s=%s" $key $value ) ) }}
+{{- end }}
+{{- $.NodeSelector | join "," | nindent 16 }}
+{{- $_ := unset $ "NodeSelector" }}
+            - name: OPENARK_LABEL_IS_PRIVATE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
+            - name: OPENARK_LABEL_SIGNED_OUT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+            - name: OPENARK_SOURCE_PATH
+              value: apps/openark-vine-session
+            - name: OPENARK_SOURCE_REPO_REVISION
+              value: {{ .Values.smartx.repo.revision | quote }}
+            - name: OPENARK_SOURCE_REPO_URL
+              value: "{{ .Values.smartx.repo.baseUrl }}/{{ .Values.smartx.repo.owner }}/{{ .Values.smartx.repo.name }}.git"
+            - name: RUST_LOG
+              value: INFO
+            - name: SESSION_NAMESPACE
+              value: {{ .Values.session.defaultNamespace | default .Release.Namespace | quote }}
+            - name: UPGRADE_CRDS
+              value: "true"
+{{- if .Values.volumes.public.enabled }}
+            - name: VOLUME_NAME_PUBLIC
+              value: "{{ include "helm.fullname" $ }}-public"
+{{- end }}
+{{- if .Values.volumes.static.enabled }}
+            - name: VOLUME_NAME_STATIC
+              value: "{{ include "helm.fullname" $ }}-static"
+{{- end }}
+          resources:
+            requests:
+              cpu: 30m
+              memory: 20Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ include "helm.fullname" $ | quote }}

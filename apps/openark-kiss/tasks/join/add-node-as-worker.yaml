@@ -1,0 +1,2 @@
+---
+- import_playbook: /kubespray/scale.yml

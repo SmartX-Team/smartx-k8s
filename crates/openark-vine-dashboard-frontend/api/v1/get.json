@@ -1,0 +1,202 @@
+{
+  "metadata": {
+    "name": "example",
+    "title": "Example App"
+  },
+  "spec": {
+    "catalog": [
+      {
+        "name": "data",
+        "children": [
+          {
+            "type": "Link",
+            "name": "rook-ceph",
+            "title": "Ceph",
+            "description": "A Scalable Distributed Storage System",
+            "thumbnailUrl": "https://repository-images.githubusercontent.com/2310495/c84a2edb-6a86-4388-a7a1-4df83bc391d0",
+            "url": "https://github.com/ceph/ceph"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          }
+        ]
+      },
+      {
+        "name": "network",
+        "children": [
+          {
+            "type": "Link",
+            "name": "rook-ceph",
+            "title": "Ceph",
+            "description": "A Scalable Distributed Storage System",
+            "thumbnailUrl": "https://repository-images.githubusercontent.com/2310495/c84a2edb-6a86-4388-a7a1-4df83bc391d0",
+            "url": "https://github.com/ceph/ceph"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          }
+        ]
+      },
+      {
+        "name": "ai",
+        "title": "AI",
+        "children": [
+          {
+            "type": "Link",
+            "name": "rook-ceph",
+            "title": "Ceph",
+            "description": "A Scalable Distributed Storage System",
+            "thumbnailUrl": "https://repository-images.githubusercontent.com/2310495/c84a2edb-6a86-4388-a7a1-4df83bc391d0",
+            "url": "https://github.com/ceph/ceph"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          },
+          {
+            "type": "Link",
+            "name": "minio",
+            "title": "MinIO",
+            "description": "Hyperscale Object Store for AI",
+            "thumbnailUrl": "https://thomascenni.com/images/minio.png",
+            "url": "https://min.io"
+          }
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "kind": "Table",
+        "namespace": "vine-dashboard",
+        "name": "sessions",
+        "description": "Manage your sessions"
+      }
+    ]
+  }
+}

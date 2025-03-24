@@ -1,0 +1,61 @@
+---
+smartx:
+  auth:
+    domainName: {{ .Values.auth.domainName | quote }}
+  ingress:
+    domainName: {{ .Values.ingress.domainName | quote }}
+
+## @param clusterDomain Default Kubernetes cluster domain
+##
+clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+## Keycloak authentication parameters
+## ref: https://github.com/bitnami/containers/tree/main/bitnami/keycloak#admin-credentials
+##
+auth:
+  ## @param auth.adminUser Keycloak administrator user
+  ##
+  adminUser: {{ .Values.cluster.name | quote }}
+
+## Keycloak ingress parameters
+## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+##
+ingress:
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  ## @param ingress.hostname Default host for the ingress record (evaluated as template)
+  ##
+  hostname: {{ .Values.auth.domainName | quote }}
+  ## @param ingress.annotations [object] Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+## Metrics configuration
+##
+metrics:
+  ## @param metrics.enabled Enable exposing Keycloak statistics
+  ## ref: https://github.com/bitnami/containers/tree/main/bitnami/keycloak#enabling-statistics
+  ##
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    ## @param metrics.serviceMonitor.enabled Create ServiceMonitor Resource for scraping metrics using PrometheusOperator
+    ##
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  ## Prometheus Operator alert rules configuration
+  ##
+  prometheusRule:
+    ## @param metrics.prometheusRule.enabled Create PrometheusRule Resource for scraping metrics using PrometheusOperator
+    ##
+    enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}

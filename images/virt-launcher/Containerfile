@@ -1,0 +1,45 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for building
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS builder-edk2
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        build-essential \
+        git \
+        iasl \
+        nasm \
+        python-is-python3 \
+        python3-pip \
+        uuid-dev \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build edk2
+SHELL ["/bin/bash", "-c"]
+WORKDIR /src
+RUN git clone "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ .Values.edk2.repo.name }}.git" \
+    && cd {{ .Values.edk2.repo.name | quote }} \
+    && git checkout {{ .Values.edk2.repo.revision | quote }} \
+    && git submodule update --init \
+    # Build
+    && make -C 'BaseTools' \
+    && source edksetup.sh \
+    && export EDK_TOOLS_PATH="$(pwd)/BaseTools" \
+    && build -a X64 -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -b RELEASE \
+        -D SECURE_BOOT_ENABLE=TRUE \
+        -D TPM_ENABLE=TRUE \
+    && cd './Build/OvmfX64/RELEASE_GCC5/FV' \
+    && cp 'OVMF_CODE.fd' 'OVMF_CODE.secboot.fd' \
+    && cp 'OVMF_VARS.fd' 'OVMF_VARS.secboot.fd'
+
+# Be ready for serving
+FROM "{{ .Values.virtLauncher.image.repo }}:{{ .Values.virtLauncher.image.tag | default .Manifest.spec.containerImage.version }}" AS server
+
+# Replace edk2
+COPY --chmod=444 --from=builder-edk2 \
+    "/src/{{ .Values.edk2.repo.name }}/Build/OvmfX64/RELEASE_GCC5/FV/*.fd" \
+    "/usr/share/edk2/ovmf/"

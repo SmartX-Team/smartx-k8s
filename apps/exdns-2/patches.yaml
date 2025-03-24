@@ -1,0 +1,10 @@
+---
+domain: {{ .Values.ingress.domainName | quote }}
+secondary: "exdns-1-k8s-gateway.{{ .Values.ingress.nameserver }}"
+
+service:
+  annotations:
+    coredns.io/hostname: "ns2.{{ .Values.ingress.domainName }}"
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+  loadBalancerIP: {{ .Values.ingress.loadBalancerIPs.ns2 | quote }}

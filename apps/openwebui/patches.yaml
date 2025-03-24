@@ -1,0 +1,40 @@
+---
+ollama:
+  # Configure the ingress resource that allows you to access the
+  ingress:
+    class: {{ .Values.ingress.domainName | quote }}
+    # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+      # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+    host: "ollama.ask.{{ .Values.ingress.domainName }}"
+
+pipelines:
+  # -- Value of cluster domain
+  clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+  # Configure the ingress resource that allows you to access the
+  ingress:
+    class: {{ .Values.ingress.domainName | quote }}
+    # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+      # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+    host: "pipelines.ask.{{ .Values.ingress.domainName }}"
+
+# -- Value of cluster domain
+clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+ingress:
+  class: {{ .Values.ingress.domainName | quote }}
+  # -- Use appropriate annotations for your Ingress controller, e.g., for NGINX:
+  # nginx.ingress.kubernetes.io/rewrite-target: /
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+    # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+    # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+  host: "ask.{{ .Values.ingress.domainName }}"

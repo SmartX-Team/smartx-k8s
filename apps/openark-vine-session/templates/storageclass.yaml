@@ -1,0 +1,17 @@
+{{- if or
+  .Values.vm.enabled
+  ( eq .Values.volumes.home.type "LocalOwned" )
+  ( eq .Values.volumes.home.type "LocalShared" )
+}}
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ include "helm.localPVName" $ | quote }}
+  labels:
+{{- include "helm.localPVLabels" $ | nindent 4 }}
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+{{- end }}

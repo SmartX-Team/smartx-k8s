@@ -1,0 +1,196 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Package Manager Configuration
+ARG DEBIAN_FRONTEND='noninteractive'
+
+# Import PPAs
+RUN install -d -m 0755 /etc/apt/keyrings \
+    # Install dependencies
+    && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        software-properties-common \
+    # Import Mozilla APT repository
+    && add-apt-repository ppa:mozillateam/ppa -y \
+    # Prioritize Mozilla APT repository
+    && echo 'Package: *' >/etc/apt/preferences.d/mozilla \
+    && echo 'Pin: release o=LP-PPA-mozillateam' >>/etc/apt/preferences.d/mozilla \
+    && echo 'Pin-Priority: 1000' >>/etc/apt/preferences.d/mozilla \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        # Audio
+        alsa-firmware-loaders \
+        alsa-tools \
+        alsa-topology-conf \
+        alsa-ucm-conf \
+        alsa-utils \
+        firmware-sof-signed \
+        libldacbt-abr2 libldacbt-enc2 \
+        libpipewire-0.3-common \
+        libspa-0.2-bluetooth \
+        pipewire \
+        pipewire-audio-client-libraries \
+        pipewire-media-session- \
+        pipewire-pulse \
+        pulseaudio-module-bluetooth- \
+        pulseaudio-utils \
+        wireplumber \
+        # Bluetooth
+        blueman \
+        bluez \
+        # Camera
+        libcamera-ipa \
+        libcamera-tools \
+        libcamera-v4l2 \
+        pipewire-libcamera \
+        # DBus
+        dbus-user-session \
+        dbus-x11 \
+        xdg-dbus-proxy \
+        # Fonts
+        fonts-noto \
+        fonts-noto-cjk-extra \
+        fonts-noto-color-emoji \
+        fonts-noto-extra \
+        fonts-noto-mono \
+        fonts-noto-ui-core \
+        fonts-noto-ui-extra \
+        fonts-noto-unhinted \
+        # Graphics
+        libegl1-mesa-dev \
+        libgles2-mesa-dev \
+        libglu1-mesa \
+        libnsl2 \
+        libosmesa6 \
+        libvulkan1 \
+        mesa-utils \
+        pciutils \
+        vdpau-driver-all \
+        vulkan-icd \
+        vulkan-tools \
+        # GStreamer
+        gstreamer1.0-alsa \
+        gstreamer1.0-gl \
+        gstreamer1.0-gtk3 \
+        gstreamer1.0-libav \
+        gstreamer1.0-pipewire \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-pulseaudio \
+        gstreamer1.0-qt5 \
+        gstreamer1.0-tools \
+        gstreamer1.0-vaapi \
+        gstreamer1.0-x \
+        libges-1.0-dev \
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-bad1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libgstrtspserver-1.0-dev \
+        # Internet Browsers
+        firefox \
+        firefox-locale-ko \
+        # Printer
+        cups \
+        cups-browsed \
+        cups-bsd \
+        cups-filters \
+        hp-ppd \
+        hpijs-ppds \
+        hplip \
+        ipp-usb \
+        openprinting-ppds \
+        printer-driver-* \
+        printer-driver-cups-pdf \
+        # Scanner
+        sane \
+        sane-airscan \
+        sane-utils \
+        # Scheduler
+        rtkit \
+        # Utility
+        curl \
+        # Xorg
+        mesa-vulkan-drivers \
+        x11-utils \
+        x11-xserver-utils \
+        xdg-dbus-proxy \
+        xdg-desktop-portal-gtk \
+        xdg-user-dirs \
+        xdotool \
+        xserver-xorg \
+        # TODO: Enable it and implement gpu vendor auto-detection
+        # xserver-xorg-video-all \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install nerdctl
+ADD --chmod=400 \
+    ./bin/install-nerdctl.sh \
+    /opt/patches/install-nerdctl.sh
+RUN /usr/bin/env bash /opt/patches/install-nerdctl.sh
+
+# Patch paths
+RUN true \
+    # Link nvidia modules
+    && ln -sf \
+        /usr/lib64/xorg/modules/drivers/nvidia_drv.so \
+        /usr/lib/xorg/modules/drivers/nvidia_drv.so \
+    && ln -sf \
+        /usr/lib64/xorg/modules/extensions/libglxserver_nvidia.so \
+        /usr/lib/xorg/modules/extensions/libglxserver_nvidia.so
+
+# Add a user
+ENV XDG_RUNTIME_DIR="/run/user/{{ .Values.user.uid }}"
+RUN /sbin/ldconfig.real \
+    && groupadd -g {{ .Values.user.gid | quote }} -o {{ .Values.user.name | quote }} \
+    && useradd -u {{ .Values.user.uid | quote }} -g {{ .Values.user.gid | quote }} \
+        -G {{ .Values.user.groups | join "," | quote }} \
+        -s "/bin/{{ .Values.user.shell }}" -m -o {{ .Values.user.name | quote }} \
+    && printf "{{ .Values.user.uid }}:{{ add 1 .Values.user.gid }}:65535" > /etc/subuid \
+    && printf "{{ .Values.user.gid }}:{{ add 1 .Values.user.gid }}:65535" > /etc/subgid \
+    && mkdir -p "${XDG_RUNTIME_DIR}" \
+    && chmod -R 700 "${XDG_RUNTIME_DIR}" \
+    && chown -R "{{ .Values.user.uid }}:{{ .Values.user.gid }}" \
+        /etc/X11 \
+        "${XDG_RUNTIME_DIR}"
+USER {{ .Values.user.name | quote }}
+
+# Add firefox preferences
+ADD ./firefox/autoconfig.js /usr/lib64/firefox/defaults/pref/
+ADD ./firefox/firefox.cfg /usr/lib64/firefox/
+
+# Add xorg.conf
+ADD ./xorg.conf.d/*.conf /etc/X11/xorg.conf.d/
+ADD ./xorg.conf.d/desktop /opt/X11/xorg.conf.d/desktop
+ADD ./xorg.conf.d/kiosk /opt/X11/xorg.conf.d/kiosk
+
+# Add entrypoint
+ADD --chmod=500 \
+    ./bin/entrypoint.sh \
+    "/opt/{{ .Release.Name }}/entrypoint.sh"
+ADD --chmod=500 \
+    ./bin/gpu-*.sh \
+    "/opt/{{ .Release.Name }}/"
+ADD --chmod=500 \
+    ./bin/pci-*.sh \
+    "/opt/{{ .Release.Name }}/"
+ADD --chmod=500 \
+    ./bin/usb-*.sh \
+    "/opt/{{ .Release.Name }}/"
+ENTRYPOINT [ "/usr/bin/env", "/opt/{{ .Release.Name }}/entrypoint.sh" ]
+WORKDIR "/opt/{{ .Release.Name }}"
+
+# Configure environment variables
+ENV DISPLAY=":0"
+ENV IMAGE="{{ .Values.baseImage.repo }}/{{ .Release.Name }}:latest"
+ENV URL="http://bastion.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}/print/install_os"

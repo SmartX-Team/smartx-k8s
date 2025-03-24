@@ -1,0 +1,19 @@
+{{- if and
+  .Values.vm.enabled
+  .Values.persistence.enabled
+}}
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+{{- include "helm.podMetadata" $ | nindent 2 }}
+spec:
+  running: true
+  template:
+    metadata:
+{{- include "helm.vmiMetadata" $ | nindent 6 }}
+    spec:
+{{- include "helm.vmiTemplate" $ | nindent 6 }}
+{{- end }}

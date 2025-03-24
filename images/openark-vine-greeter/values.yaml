@@ -1,0 +1,21 @@
+---
+cluster:
+  domainName: ""
+
+debian:
+  image:
+    repo: docker.io/library/ubuntu
+    tag: "24.04"
+
+user:
+  uid: 2000
+  gid: 2000
+  name: user
+  groups:
+    - audio
+    - cdrom
+    - input
+    - render
+    - tty
+    - video
+  shell: bash

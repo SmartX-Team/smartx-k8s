@@ -1,0 +1,28 @@
+{{/*
+KubeVirt Virtual Machine Sysprep Name
+*/}}
+{{- define "helm.vm.sysprepName" -}}
+{{- printf "%s-vm-sysprep" ( include "helm.fullname" $ ) }}
+{{- end }}
+
+{{- if and
+  .Values.vm.enabled
+  ( regexMatch "^windows-[0-9]+$" .Values.vm.os )
+}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helm.vm.sysprepName" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+{{- range $path, $_ := $.Files.Glob "sysprep/*.xml" }}
+  {{ base $path | quote }}: |
+{{- tpl ( $.Files.Get $path ) $ | trim | nindent 4 }}
+{{- end }}
+
+{{- end }}

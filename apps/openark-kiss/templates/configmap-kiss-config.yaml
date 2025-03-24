@@ -1,0 +1,87 @@
+{{- define "configmaps.kiss-config" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiss-config
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+  ###########################################################################
+  # Bare-metal Box Authentication Configuration
+  ###########################################################################
+  auth_ssh_key_id_ed25519_public: {{ .Values.kiss.auth.ssh.key.public | quote }}
+  auth_ssh_username: {{ .Values.kiss.auth.ssh.username | quote }}
+
+  ###########################################################################
+  # Bare-metal Box Commissioning Configuration
+  ###########################################################################
+  allow_critical_commands: {{ .Values.kiss.commission.allowCriticalCommands | quote }}
+  allow_pruning_network_interfaces: {{ .Values.kiss.commission.allowPruningNetworkInterfaces | quote }}
+
+  ###########################################################################
+  # Bare-metal Box Grouping Configuration
+  ###########################################################################
+  group_enable_default_cluster: {{ .Values.kiss.group.enableDefaultCluster | quote }}
+  group_enforce_ansible_control_planes: {{ .Values.kiss.group.enforceAnsibleControlPlanes | quote }}
+  group_force_reset: {{ .Values.kiss.group.forceReset | quote }}
+  group_force_reset_os: {{ .Values.kiss.group.forceResetOS | quote }}
+  group_reset_storage: {{ .Values.kiss.group.resetStorage | quote }}
+
+  ###########################################################################
+  # Bootstrapper Node Configuration
+  ###########################################################################
+  bootstrapper_auth_ssh_key_path: {{ .Values.bootstrapper.auth.ssh.keyPath.private | quote }}
+  bootstrapper_kubernetes_config_path: {{ .Values.bootstrapper.kubernetes.config.path | quote }}
+  bootstrapper_kubernetes_reuse: {{ .Values.bootstrapper.kubernetes.reuse | quote }}
+  bootstrapper_kubespray_config_path: {{ .Values.bootstrapper.kubespray.config.path | quote }}
+  bootstrapper_kubespray_config_all_path: {{ .Values.bootstrapper.kubespray.config.allPath | quote }}
+  bootstrapper_kubespray_config_template_path: {{ .Values.bootstrapper.kubespray.config.templatePath | quote }}
+  bootstrapper_network_dns_server_ns1: {{ .Values.network.nameservers.ns1 | quote }}
+  bootstrapper_network_dns_server_ns2: {{ .Values.network.nameservers.ns2 | quote }}
+  bootstrapper_network_ipv4_address: {{ .Values.bootstrapper.network.address.ipv4 | quote }}
+  bootstrapper_node_data_kubernetes_path: {{ .Values.bootstrapper.node.kubernetes.path | quote }}
+  bootstrapper_node_image: "{{ .Values.bootstrapper.node.image.repo }}:{{ .Values.bootstrapper.node.image.tag }}"
+  bootstrapper_node_name: {{ .Values.bootstrapper.node.name | quote }}
+  bootstrapper_node_reuse_container: {{ .Values.bootstrapper.node.reuse.container | quote }}
+  bootstrapper_node_reuse_data_kubernetes: {{ .Values.bootstrapper.node.reuse.kubernetes | quote }}
+
+  ###########################################################################
+  # ETCD Cluster Configuration
+  ###########################################################################
+  etcd_nodes_max: {{ .Values.kiss.etcd.maxNodes | quote }}
+
+  ###########################################################################
+  # KISS Configuration
+  ###########################################################################
+  kiss_cluster_name: {{ .Values.cluster.group | quote }}
+
+  ###########################################################################
+  # Kubespray Configuration
+  ###########################################################################
+  kubespray_image: "{{ .Values.kiss.image.repo }}:{{ .Values.kiss.image.tag }}"
+
+  ###########################################################################
+  # Network Configuration
+  ###########################################################################
+  network_interface_mtu_size: {{ .Values.network.interface.mtu | quote }}
+  network_ipv4_dhcp_duration: {{ .Values.network.ipv4.dhcp.duration | quote }}
+  network_ipv4_dhcp_range_begin: {{ .Values.network.ipv4.dhcp.range.begin | quote }}
+  network_ipv4_dhcp_range_end: {{ .Values.network.ipv4.dhcp.range.end | quote }}
+  network_ipv4_gateway: {{ .Values.network.ipv4.gateway | quote }}
+  network_ipv4_subnet: {{ .Values.network.ipv4.subnet | quote }}
+  network_nameserver_incluster_ipv4: {{ .Values.cluster.nameservers.ipv4 | quote }}
+
+  ###########################################################################
+  # OS Configuration
+  ###########################################################################
+  os_default: "{{ .Values.kiss.os.dist }}{{ .Values.kiss.os.version | replace "." "" }}"
+  os_dist: {{ .Values.kiss.os.dist | quote }}
+  os_kernel: {{ .Values.kiss.os.kernel | quote }}
+  os_version: {{ .Values.kiss.os.version | quote }}
+
+{{- end }}
+{{- include "configmaps.kiss-config" $ }}

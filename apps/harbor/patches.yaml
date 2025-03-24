@@ -1,0 +1,32 @@
+---
+expose:
+  ingress:
+    hosts:
+      core: "harbor.{{ .Values.ingress.domainName }}"
+    className: {{ .Values.ingress.domainName | quote }}
+    annotations:
+      cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+
+# The external URL for Harbor core service. It is used to
+# 1) populate the docker/helm commands showed on portal
+# 2) populate the token service URL returned to docker client
+#
+# Format: protocol://domain[:port]. Usually:
+# 1) if "expose.type" is "ingress", the "domain" should be
+# the value of "expose.ingress.hosts.core"
+# 2) if "expose.type" is "clusterIP", the "domain" should be
+# the value of "expose.clusterIP.name"
+# 3) if "expose.type" is "nodePort", the "domain" should be
+# the IP address of k8s node
+#
+# If Harbor is deployed behind the proxy, set it as the URL of proxy
+externalURL: "https://harbor.{{ .Values.ingress.domainName }}"
+
+metrics:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  ## Create prometheus serviceMonitor to scrape harbor metrics.
+  ## This requires the monitoring.coreos.com/v1 CRD. Please see
+  ## https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/getting-started.md
+  ##
+  serviceMonitor:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

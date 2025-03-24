@@ -1,0 +1,11 @@
+---
+- name: Define supported architechures
+  when:
+    - kiss_allow_critical_commands | default(False)
+  set_fact:
+    mellanox_architectures:
+      aarch64: Arm
+      x86_64: x64
+
+- include_tasks: network-adaptor-mellanox-firmware.yaml
+# - include_tasks: network-adaptor-mellanox-driver.yaml

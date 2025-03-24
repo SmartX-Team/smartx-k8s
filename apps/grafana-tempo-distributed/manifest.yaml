@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.grafana-tempo-distributed
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: monitoring
+    patched: false
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi/block
+      - org.ulagbulag.io/monitoring
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: tempo-distributed
+    repoUrl: "https://grafana.github.io/helm-charts"
+    version: 1.32.0

@@ -1,0 +1,190 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            # KISS normal control plane nodes should be preferred
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+            # KISS gateway nodes should be more preferred
+            - weight: 2
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Gateway
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Gateway
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:latest
+          imagePullPolicy: Always
+          args:
+            - --email-domain=*
+            - --cookie-secure=false
+            - --insecure-oidc-allow-unverified-email=true
+            - --code-challenge-method=S256
+          env:
+            - name: OAUTH2_PROXY_ALLOWED_GROUPS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: allowedGroups
+            - name: OAUTH2_PROXY_APPROVAL_PROMPT
+              value: "none"
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: clientId
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: clientSecret
+            - name: OAUTH2_PROXY_COOKIE_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: cookieDomains
+            # - name: OAUTH2_PROXY_COOKIE_EXPIRE
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+            #       key: cookieExpire
+            - name: OAUTH2_PROXY_COOKIE_REFRESH
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: cookieRefresh
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: cookieSecret
+            - name: OAUTH2_PROXY_COOKIE_SECURE
+              value: "false"
+            - name: OAUTH2_PROXY_EMAIL_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: emailDomain
+            - name: OAUTH2_PROXY_HTTP_ADDRESS
+              value: 0.0.0.0:4180
+            - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: oidcIssuerUrl
+            - name: OAUTH2_PROXY_PASS_ACCESS_TOKEN
+              value: "true"
+            - name: OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER
+              value: "true"
+            - name: OAUTH2_PROXY_PASS_BASIC_AUTH
+              value: "true"
+            - name: OAUTH2_PROXY_PASS_HOST_HEADERS
+              value: "true"
+            - name: OAUTH2_PROXY_PASS_USER_HEADERS
+              value: "true"
+            - name: OAUTH2_PROXY_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: provider
+            - name: OAUTH2_PROXY_REDIRECT_URL
+              value: "https://{{ .Values.smartx.auth.domainName }}/oauth2/callback"
+            - name: OAUTH2_PROXY_SET_AUTHORIZATION_HEADER
+              value: "true"
+            - name: OAUTH2_PROXY_SET_XAUTHREQUEST
+              value: "true"
+            - name: OAUTH2_PROXY_UPSTREAM
+              value: file:///dev/null
+            - name: OAUTH2_PROXY_WHITELIST_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                  key: whitelistDomains
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 4180
+          resources:
+            requests:
+              cpu: "1"
+              memory: 500Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  selector:
+    app: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 4180
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.smartx.ingress.domainName | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.smartx.ingress.domainName | quote }}
+  tls:
+    - secretName: "{{ .Values.smartx.auth.domainName }}-tls"
+      hosts:
+        - {{ .Values.smartx.auth.domainName | quote }}
+  rules:
+    - host: {{ .Values.smartx.auth.domainName | quote }}
+      http:
+        paths:
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
+                port:
+                  number: 80
