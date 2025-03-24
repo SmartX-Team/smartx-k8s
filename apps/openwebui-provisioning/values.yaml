@@ -1,0 +1,30 @@
+---
+# Prefetched models
+models:
+  defaultAccessControlProfile: public # Options: [private, public]
+  # Pull official Ollama library models
+  # - Library: https://ollama.com/library
+  pull:
+    - name: deepseek-r1:70b
+    - name: exaone3.5:32b
+    - name: gemma3:27b-it-fp16
+    - name: llama3.2-vision:90b
+    - name: llama3.3:70b
+    - name: openthinker:32b
+    - name: r1-1776:70b
+
+# -- Affinity for pod assignment
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+
+image:
+  repo: quay.io/ulagbulag/openark
+  tag: ""
+  pullPolicy: Always

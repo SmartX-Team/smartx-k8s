@@ -1,0 +1,47 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: provisioning
+spec:
+  template:
+    metadata:
+      labels:
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: provisioning
+    spec:
+      affinity:
+{{- .Values.affinity | toYaml | nindent 8 }}
+      containers:
+        - name: download-models
+          image: "{{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - /opt/openark/openwebui/provisioning.sh
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-admin
+                  key: API_KEY
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          volumeMounts:
+            - name: script
+              mountPath: /opt/openark/openwebui
+      restartPolicy: OnFailure
+      volumes:
+        - name: script
+          secret:
+            secretName: {{ include "helm.fullname" $ | quote }}
+            defaultMode: 365 # 0o555
