@@ -29,6 +29,9 @@
 /**/node_modules/
 /**/package-lock.json
 
+# Python
+/**/__pycache__/
+
 # Temporary files
 /**/*.bak
 /**/*.swp

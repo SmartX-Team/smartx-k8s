@@ -40,16 +40,6 @@
 /.git
 /.gitignore
 
-# JS
-/*/node_modules/
-/*/package-lock.json
-
-# Temporary files
-/*/*.bak
-/*/*.swp
-/*/*.tmp
-/*/*.token
-
 # Helm
 /.helmignore
 /apps/*/*.md
@@ -57,3 +47,16 @@
 /apps/README.md
 /apps/template/manifest.yaml
 /apps/template/values.yaml
+
+# JS
+/*/node_modules/
+/*/package-lock.json
+
+# Python
+/*/__pycache__/
+
+# Temporary files
+/*/*.bak
+/*/*.swp
+/*/*.tmp
+/*/*.token
