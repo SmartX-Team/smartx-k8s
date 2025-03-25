@@ -1,0 +1,72 @@
+---
+name: Bug Report
+description: Report a bug encountered
+labels:
+  - kind/bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please, be ready for followup questions, and please respond in a timely
+        manner.  If we can't reproduce a bug or think a feature already exists, we
+        might close your issue.  If we're wrong, PLEASE feel free to reopen it and
+        explain why.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: |
+        Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How can we reproduce it (as minimally and precisely as possible)?
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: "### Environment"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Flatcar Container Linux
+        - RHEL 9
+        - Ubuntu 24
+        - Ubuntu 22
+        - Other|Unsupported
+    validations:
+      required: true
+
+  - type: textarea
+    id: openark_version
+    attributes:
+      label: Version of OpenARK
+      placeholder: rolling-release
+    validations:
+      required: true
+
+  - type: textarea
+    id: anything_else
+    attributes:
+      label: Anything else we need to know
+      description: |
+        By running scripts/collect-info.yaml you can get a lot of useful informations.
+        Script can be started by:
+        ansible-playbook -i <inventory_file_path> -u <ssh_user> -e ansible_ssh_user=<ssh_user> -b --become-user=root -e dir=`pwd` scripts/collect-info.yaml
+        (If you using CoreOS remember to add '-e ansible_python_interpreter=/opt/bin/python').
+        After running this command you can find logs in `pwd`/logs.tar.gz. You can even upload somewhere entire file and paste link here
