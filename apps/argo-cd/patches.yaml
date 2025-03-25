@@ -22,6 +22,16 @@ configs:
 {{- $.applicationNamespaces | join "," | nindent 6 }}
 {{- $_ := unset $ "applicationNamespaces" }}
 
+{{- if has "org.ulagbulag.io/cni" .Values.features }}
+    resource.exclusions: |
+      - apiGroups:
+          - cilium.io
+        kinds:
+          - CiliumIdentity
+        clusters:
+          - "*"
+{{- end }}
+
   # Argo CD RBAC policy configuration
   ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/rbac.md
   rbac:

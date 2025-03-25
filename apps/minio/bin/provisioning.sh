@@ -10,7 +10,6 @@ set -e -o pipefail
 
 # Register alias
 mc alias set provisioning "${MINIO_SCHEME}://minio:9000" "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
-mc admin service restart provisioning --wait --json
 
 function restart() {
     # Restart server

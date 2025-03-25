@@ -1,0 +1,8 @@
+---
+github:
+  app:
+    appID: ""
+    installationID: ""
+
+ingress:
+  domainName: ""

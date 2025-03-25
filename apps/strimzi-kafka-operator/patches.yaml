@@ -1,0 +1,5 @@
+---
+kubernetesServiceDnsDomain: {{ .Values.cluster.domainName | quote }}
+
+dashboards:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

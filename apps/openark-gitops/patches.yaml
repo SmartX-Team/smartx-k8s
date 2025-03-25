@@ -1,0 +1,3 @@
+---
+ingress:
+  domainName: {{ .Values.ingress.domainName | quote }}

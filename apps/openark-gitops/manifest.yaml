@@ -2,25 +2,24 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.apps.openark-vine-session-pool
+  name: smartx.apps.openark-gitops
 spec:
-  enabled: false
   group: ops
   phase: stable
-  scale: medium
+  scale: small
   users:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: vine-session
-    patched: false
+    namespace: gitops
+    patched: true
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/desktop-environment/vine
+      - org.ulagbulag.io/gitops
     ignoreDifferences: []
     sync:
-      createNamespace: false
+      createNamespace: true
       respectIgnoreDifferences: true
       serverSideApply: true

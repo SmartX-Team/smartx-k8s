@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "helm.fullname" $ }}-webhook"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  tls:
+    - secretName: "gitops.workflows.{{ .Values.ingress.domainName }}-tls"
+      hosts:
+        - "gitops.workflows.{{ .Values.ingress.domainName }}"
+  rules:
+    - host: "gitops.workflows.{{ .Values.ingress.domainName }}"
+      http:
+        paths:
+          - path: /api/v1/github/webhook
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "helm.fullname" $ }}-github-eventsource-svc"
+                port:
+                  number: 12000

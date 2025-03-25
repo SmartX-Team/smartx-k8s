@@ -23,9 +23,9 @@ if [ -z "${GITHUB_PRIVATE_KEY_PATH}" ]; then
     exit 1
 fi
 
+export CLIENT_ID="${GITHUB_CLIENT_ID}"
+export PRIVATE_KEY_PATH="${GITHUB_PRIVATE_KEY_PATH}"
 GITHUB_JWT="$(
-    CLIENT_ID="${GITHUB_CLIENT_ID}"
-    PRIVATE_KEY_PATH="${GITHUB_PRIVATE_KEY_PATH}"
     "$(dirname "$0")/generate-jwt.sh"
 )"
 

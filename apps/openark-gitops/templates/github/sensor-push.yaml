@@ -1,0 +1,90 @@
+---
+# Documentation: https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: "{{ include "helm.fullname" $ }}-github-push"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  eventBusName: {{ include "helm.fullname" $ | quote }}
+  template:
+    serviceAccountName: "{{ include "helm.fullname" $ }}-ci"
+  dependencies:
+    - name: github
+      eventSourceName: "{{ include "helm.fullname" $ }}-github"
+      eventName: webhook
+      filters:
+        data:
+          # Type of Github event that triggered the delivery: [pull_request, push, issues, label, ...]
+          # https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+          # - path: headers.X-GitHub-Event
+          #   type: string
+          #   value:
+          #     - push
+
+          # Push on the branches
+          - path: body.ref
+            type: string
+            value:
+              - ^refs/heads/.+$
+          # - path: body.ref
+          #   type: string
+          #   value:
+          #     - refs/heads/main
+  triggers:
+    - template:
+        name: "{{ include "helm.fullname" $ }}-github-push-workflow-trigger"
+        k8s:
+          operation: create
+          parameters:
+            # body
+            - dest: spec.arguments.parameters.1.value
+              src:
+                dependencyName: github
+                dataKey: body
+            # commit_branch
+            - dest: spec.arguments.parameters.2.value
+              src:
+                dependencyName: github
+                dataTemplate: {{ "{{ .Input.body.ref | substr 11 ( .Input.body.ref | len ) }}" | quote }}
+            # commit_sha
+            - dest: spec.arguments.parameters.3.value
+              src:
+                dependencyName: github
+                dataKey: body.after
+            # repo_name
+            - dest: spec.arguments.parameters.4.value
+              src:
+                dependencyName: github
+                dataKey: body.repository.name
+            # repo_owner
+            - dest: spec.arguments.parameters.5.value
+              src:
+                dependencyName: github
+                dataKey: body.repository.owner.login
+            # Append pull request number and short sha to dynamically assign workflow name <github-21500-2c065a>
+            - dest: metadata.name
+              src:
+                dependencyName: github
+                dataTemplate: {{ printf "github-push-%s" "{{ .Input.body.after | substr 0 7 }}" | quote }}
+              operation: append
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              spec:
+                arguments:
+                  parameters:
+                    - name: base_url
+                      value: https://github.com
+                    - name: body
+                    - name: commit_branch
+                    - name: commit_sha
+                    - name: repo_name
+                    - name: repo_owner
+                workflowTemplateRef:
+                  name: "{{ include "helm.fullname" $ }}-ci"
+      retryStrategy:
+        steps: 3

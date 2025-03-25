@@ -41,7 +41,7 @@ spec:
         name: cilium-agent
         jsonPointers:
           - /spec/endpoints/0/relabelings/0/action
-          - /spec/endpoints/1/relabelings/0/action
+          - /spec/endpoints/1
       - group: monitoring.coreos.com
         kind: ServiceMonitor
         name: cilium-envoy

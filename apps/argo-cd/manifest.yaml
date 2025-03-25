@@ -27,6 +27,7 @@ spec:
           - /data/oidc.openid_connect.clientID
           - /data/oidc.openid_connect.clientSecret
           - /data/server.secretkey
+          - /data/webhook.github.secret
     sync:
       createNamespace: true
       respectIgnoreDifferences: true

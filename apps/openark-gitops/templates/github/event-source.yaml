@@ -1,0 +1,55 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: "{{ include "helm.fullname" $ }}-github"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  eventBusName: {{ include "helm.fullname" $ | quote }}
+  service:
+    ports:
+      - name: webhook
+        protocol: TCP
+        port: 12000
+        targetPort: 12000
+
+  github:
+    webhook:
+      repositories:
+        - # Github application auth. Instead of using personal token `apiToken` use app PEM
+          githubApp:
+            privateKey:
+              name: "{{ include "helm.fullname" $ }}-argo-ci"
+              key: private-key.pem
+            appID: {{ .Values.github.app.appID | quote }}
+            installationID: {{ .Values.github.app.installationID | quote }}
+
+      # Github will send events to following port and endpoint
+      webhook:
+        # endpoint to listen to events on
+        endpoint: /api/v1/github/webhook
+        # port to run internal HTTP server on
+        port: "12000"
+        # HTTP request method to allow. In this case, only POST requests are accepted
+        method: POST
+        # url the event-source will use to register at Github.
+        # This url must be reachable from outside the cluster.
+        # The name for the service is in `<event-source-name>-eventsource-svc` format.
+        # You will need to create an Ingress or Openshift Route for the event-source service so that it can be reached from GitHub.
+        url: "https://workflows.argo.{{ .Values.ingress.domainName }}"
+
+      # type of events to listen to.
+      # following listens to everything, hence *
+      # You can find more info on https://developer.github.com/v3/activity/events/types/
+      events:
+        - "*"
+
+      # type of the connection between event-source and Github.
+      # You should set it to false to avoid man-in-the-middle and other attacks.
+      insecure: false
+      # Determines if notifications are sent when the webhook is triggered
+      active: true
+      # The media type used to serialize the payloads
+      contentType: json

@@ -9,6 +9,10 @@ buckets:
       read: true
       write: false
 {{- end }}
+{{- if has "org.ulagbulag.io/gitops" .Values.features }}
+  - name: openark-gitops
+    quota: 10Gi
+{{- end }}
 
 # gitlab: {{ has "org.ulagbulag.io/git/gitlab" .Values.features }}
 # grafana: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

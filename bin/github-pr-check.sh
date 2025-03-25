@@ -37,22 +37,34 @@ if [ -z "${CHECK_CONCLUSION}" ]; then
     exit 1
 fi
 
+if [ -z "${GIT_CI_SUMMARY}" ]; then
+    echo 'No such environment variable: GIT_CI_SUMMARY' >&2
+    exit 1
+fi
+if [ -z "${GIT_CI_TEXT}" ]; then
+    echo 'No such environment variable: GIT_CI_TEXT' >&2
+    exit 1
+fi
+
 ###########################################################
 #   Generate Access Token                                 #
 ###########################################################
 
-output='{
-    "title": "Mighty Readme report",
-    "summary": "Hello Summary",
-    "text": "# Hello World!"
-}'
 payload='{
-    "name": "Example context",
+    "name": "SmartX GitOps",
     "head_sha": "'"${COMMIT_SHA}"'",
     "status": "'"${CHECK_STATUS}"'",
     "conclusion": "'"${CHECK_CONCLUSION}"'",
-    "output": '"${output}"'
+    "output": {
+        "title": "Validate PR",
+        "summary": "'"${GIT_CI_SUMMARY}"'",
+        "text": "'"${GIT_CI_TEXT}"'"
+    }
 }'
+
+###########################################################
+#   Submit Checks                                         #
+###########################################################
 
 exec curl -s -X POST \
     -d "${payload}" \

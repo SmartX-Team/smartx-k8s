@@ -17,8 +17,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/messenger
-      - org.ulagbulag.io/monitoring
+      - org.ulagbulag.io/messenger/nats
     ignoreDifferences:
       - group: apiextensions.k8s.io
         kind: CustomResourceDefinition

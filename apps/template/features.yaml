@@ -178,6 +178,7 @@ org.ulagbulag.io/git/gitlab:
 org.ulagbulag.io/gitops:
   requires:
     - org.ulagbulag.io/git
+    - org.ulagbulag.io/workflow
 
 org.ulagbulag.io/ingress:
   requires:
@@ -191,6 +192,16 @@ org.ulagbulag.io/messenger:
     - org.ulagbulag.io/cni
   optional:
     - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/messenger/kafka:
+  requires:
+    - org.ulagbulag.io/messenger
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/messenger/nats:
+  requires:
+    - org.ulagbulag.io/messenger
     - org.ulagbulag.io/monitoring
 
 org.ulagbulag.io/monitoring:
@@ -289,6 +300,7 @@ org.ulagbulag.io/vm/kubevirt:
 org.ulagbulag.io/workflow:
   requires:
     - org.ulagbulag.io/cni
+    - org.ulagbulag.io/messenger
   optional:
     - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/object
