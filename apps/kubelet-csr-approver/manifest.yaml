@@ -12,7 +12,7 @@ spec:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: kueue-system
+    namespace: kube-system
     patched: false
     unsafe: true # kube-system
     useClusterValues: false

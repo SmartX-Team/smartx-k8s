@@ -4,7 +4,6 @@ kind: Manifest
 metadata:
   name: smartx.apps.openark-vine-session-pool
 spec:
-  enabled: false
   group: ops
   phase: stable
   scale: medium
@@ -14,7 +13,7 @@ spec:
   app:
     autoSync: true
     namespace: vine-session
-    patched: false
+    patched: true
     unsafe: false
     useClusterValues: false
     features:

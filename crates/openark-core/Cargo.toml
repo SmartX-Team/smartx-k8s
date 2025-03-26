@@ -55,16 +55,17 @@ opentelemetry-trace = [
 ]
 
 # TLS
-openssl-tls = [
+tls = ["dep:rustls"]
+
+# TLS CryptoProviders
+tls-aws-lc-rs = ["rustls?/aws_lc_rs", "tls"]
+tls-openssl = [
     "kube?/openssl-tls",
-    "openark-core-opentelemetry?/openssl-tls",
+    "openark-core-opentelemetry?/tls-openssl",
     "std",
+    "tls",
 ]
-rustls-tls = [
-    "kube?/rustls-tls",
-    "openark-core-opentelemetry?/rustls-tls",
-    "rustls/ring",
-]
+tls-ring = ["rustls?/ring", "tls"]
 
 # Tracing
 tracing = ["dep:tracing"]
@@ -84,5 +85,5 @@ clap = { workspace = true, optional = true, features = [
     "usage",
 ] }
 kube = { workspace = true, optional = true }
-rustls = { workspace = true, optional = true, features = ["ring", "tls12"] }
+rustls = { workspace = true, optional = true, features = ["tls12"] }
 tracing = { workspace = true, optional = true }

@@ -15,7 +15,7 @@ grafana:
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
       nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
-      nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+      nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
 
     ## Hostnames.
     ## Must be provided if Ingress is enable.

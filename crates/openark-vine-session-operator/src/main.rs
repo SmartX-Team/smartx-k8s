@@ -30,7 +30,7 @@ use kube_custom_resources_rs::argoproj_io::v1alpha1::applications::{
 use openark_core::operator::{OperatorArgs, install_crd};
 use openark_vine_session_api::{
     NodeSession, ProfileState,
-    binding::SessionBindingCrd,
+    binding::{SessionBindingCrd, SessionBindingSpec},
     owned_profile::{
         OwnedFeaturesSpec, OwnedOpenArkSpec, OwnedSessionProfileSpec, OwnedUserSpec,
         OwnedVMHostDeviceSpec, OwnedVMSpec,
@@ -142,7 +142,8 @@ fn build_owned_session_profile(
     ctx: &Context,
     node: &Node,
     session: &NodeSession,
-    spec: &SessionProfileSpec,
+    binding: &SessionBindingSpec,
+    profile: &SessionProfileSpec,
 ) -> Result<OwnedSessionProfileSpec, AppState> {
     let SessionProfileSpec {
         features,
@@ -153,7 +154,7 @@ fn build_owned_session_profile(
         user,
         vm,
         volumes,
-    } = spec.clone();
+    } = profile.clone();
 
     let features = features.unwrap_or_default();
     let vm = vm.unwrap_or_default();
@@ -240,8 +241,8 @@ fn build_owned_session_profile(
         services: services.unwrap_or_default(),
         session: session_spec,
         user: OwnedUserSpec {
+            binding: binding.user.clone(),
             data: user.unwrap_or_default(),
-            name: None,
         },
         vm: OwnedVMSpec {
             data: vm,
@@ -275,14 +276,16 @@ fn build_app(
     ctx: &Context,
     node: &Node,
     session: &NodeSession,
+    binding: &SessionBindingCrd,
     profile: &SessionProfileCrd,
 ) -> Result<Result<Application, AppState>> {
     let name = build_app_name(node);
     let namespace = ctx.args.session_namespace.clone();
-    let owned_spec = match build_owned_session_profile(ctx, node, session, &profile.spec) {
-        Ok(spec) => spec,
-        Err(state) => return Ok(Err(state)),
-    };
+    let owned_spec =
+        match build_owned_session_profile(ctx, node, session, &binding.spec, &profile.spec) {
+            Ok(spec) => spec,
+            Err(state) => return Ok(Err(state)),
+        };
 
     Ok(Ok(Application {
         metadata: ObjectMeta {
@@ -299,6 +302,7 @@ fn build_app(
             owner_references: Some(vec![
                 build_owner_reference(node),
                 build_owner_reference(profile),
+                build_owner_reference(binding),
             ]),
             ..Default::default()
         },
@@ -372,9 +376,10 @@ async fn create_app(
     ctx: &Context,
     node: &Node,
     session: &NodeSession,
+    binding: &SessionBindingCrd,
     profile: &SessionProfileCrd,
 ) -> Result<AppState> {
-    let app = match build_app(ctx, node, session, profile)? {
+    let app = match build_app(ctx, node, session, binding, profile)? {
         Ok(app) => app,
         Err(state) => return Ok(state),
     };
@@ -547,11 +552,13 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     // Update session application
     let app_state = match profile_state {
         ProfileState::Changed(_) => delete_app(&ctx, &node).await?,
-        ProfileState::Created(next_profile) => create_app(&ctx, &node, &next, next_profile).await?,
+        ProfileState::Created { binding, profile } => {
+            create_app(&ctx, &node, &next, binding, profile).await?
+        }
         ProfileState::Deleted(Some(_)) => delete_app(&ctx, &node).await?,
         ProfileState::Deleted(None) => AppState::Deleted,
-        ProfileState::Unchanged(last_profile) => {
-            create_app(&ctx, &node, &next, last_profile).await?
+        ProfileState::Unchanged { binding, profile } => {
+            create_app(&ctx, &node, &next, binding, profile).await?
         }
     };
 

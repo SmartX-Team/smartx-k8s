@@ -697,7 +697,11 @@ c.ServerApp.autoreload = False
 #                         Leading and trailing slashes can be omitted,
 #                         and will automatically be added.
 #  Default: '/'
+{{- if empty .Values.node.name }}
 c.ServerApp.base_url = '/'
+{{- else }}
+c.ServerApp.base_url = '/sessions/notebook/node/{{ .Values.node.name }}'
+{{- end }}
 
 ## Specify what command to use to invoke a web
 #                        browser when starting the server. If not specified, the

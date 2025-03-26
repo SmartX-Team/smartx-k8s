@@ -22,7 +22,7 @@ workspace = true
 [features]
 default = ["production"]
 production = [
-    "default-tls",
+    "tls-default",
     "opentelemetry-all",
     # "opentelemetry-otlp",
     "ttl",
@@ -47,9 +47,9 @@ opentelemetry-metrics = ["openark-core/opentelemetry-metrics", "opentelemetry"]
 opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
-default-tls = ["rustls-tls"]
-openssl-tls = ["openark-vine-dashboard-api/openssl-tls"]
-rustls-tls = ["openark-vine-dashboard-api/rustls-tls"]
+tls-default = ["tls-aws-lc-rs"]
+tls-aws-lc-rs = ["openark-vine-dashboard-api/tls-aws-lc-rs"]
+tls-openssl = ["openark-vine-dashboard-api/tls-openssl"]
 
 # Tracing
 tracing = [

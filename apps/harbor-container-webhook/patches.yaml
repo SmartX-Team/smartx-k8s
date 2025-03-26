@@ -4,6 +4,22 @@ tolerations:
     operator: Exists
     effect: NoExecute
 
+webhook:
+  namespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+{{- if has "org.ulagbulag.io/gitops" .Values.features }}
+          - argo
+{{- end }}
+          - harbor
+{{- if has "org.ulagbulag.io/ingress" .Values.features }}
+          - {{ .Values.ingress.namespace | quote }}
+{{- end }}
+          - kube-system
+  failurePolicy: Ignore
+
 ## configures the webhook rules, which are evaluated for each image in a pod
 rules:
   - name: Replace docker.io

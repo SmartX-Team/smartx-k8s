@@ -104,6 +104,7 @@ fn convert(app: Application) -> Option<Session> {
         node: profile.node.clone(),
         user: profile
             .user
+            .binding
             .name
             .map(|name| SessionUser { name })
             .unwrap_or_default(),
@@ -172,8 +173,9 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://notebook.{}.node.sessions.{}",
-                    &profile.node.name, &profile.ingress.domain_name,
+                    "https://{domain_name}/sessions/notebook/node/{node_name}",
+                    domain_name = &profile.ingress.domain_name,
+                    node_name = &profile.node.name,
                 )
                 .parse()
                 .ok()
@@ -188,8 +190,9 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://rdp.{}.node.sessions.{}",
-                    &profile.node.name, &profile.ingress.domain_name,
+                    "https://{domain_name}/sessions/rdp/node/{node_name}",
+                    domain_name = &profile.ingress.domain_name,
+                    node_name = &profile.node.name,
                 )
                 .parse()
                 .ok()
@@ -204,8 +207,9 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://vnc.{}.node.sessions.{}",
-                    &profile.node.name, &profile.ingress.domain_name,
+                    "https://{domain_name}/sessions/vnc/node/{node_name}",
+                    domain_name = &profile.ingress.domain_name,
+                    node_name = &profile.node.name,
                 )
                 .parse()
                 .ok()

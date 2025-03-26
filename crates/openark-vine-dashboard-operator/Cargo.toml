@@ -21,7 +21,7 @@ workspace = true
 
 [features]
 default = [
-    "default-tls",
+    "tls-default",
     "opentelemetry-all",
     # "opentelemetry-otlp",
 ]
@@ -42,9 +42,10 @@ opentelemetry-metrics = ["openark-core/opentelemetry-metrics", "opentelemetry"]
 opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
-default-tls = ["rustls-tls"]
-openssl-tls = ["kube/openssl-tls", "openark-core/openssl-tls"]
-rustls-tls = ["kube/rustls-tls", "openark-core/rustls-tls"]
+tls-default = ["tls-aws-lc-rs"]
+tls-aws-lc-rs = ["kube/rustls-tls", "openark-core/tls-aws-lc-rs"]
+tls-openssl = ["kube/openssl-tls", "openark-core/tls-openssl"]
+tls-ring = ["kube/rustls-tls", "openark-core/tls-ring"]
 
 # Tracing
 tracing = ["dep:tracing", "openark-core/tracing"]

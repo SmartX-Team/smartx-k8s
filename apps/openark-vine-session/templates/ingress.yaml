@@ -2,41 +2,21 @@
 {{- printf "sessions.%s" .Values.ingress.domainName }}
 {{- end }}
 
-{{- define "helm.ingress.rules" -}}
-rules:
+{{- define "helm.ingress.paths" -}}
+paths:
 
 {{- /********************************/}}
 {{- if and
   .Values.services.notebook.enabled
   ( not ( empty .Values.node.name ) )
 }}
-  - host: "notebook.{{ .Values.node.name }}.node.sessions.{{ .Values.ingress.domainName }}"
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ include "helm.fullname" $ | quote }}
-              port:
-                number: 8888
-{{- end }}
-
-{{- /********************************/}}
-{{- if and
-  .Values.services.notebook.enabled
-  ( not ( empty .Values.user.name ) )
-}}
-  - host: "notebook.{{ .Values.user.name }}.user.sessions.{{ .Values.ingress.domainName }}"
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ include "helm.fullname" $ | quote }}
-              port:
-                number: 8888
+  - path: /sessions/notebook/node/{{ .Values.node.name }}
+    pathType: ImplementationSpecific
+    backend:
+      service:
+        name: {{ include "helm.fullname" $ | quote }}
+        port:
+          number: 8888
 {{- end }}
 
 {{- /********************************/}}
@@ -44,52 +24,25 @@ rules:
   .Values.services.novnc.enabled
   ( not ( empty .Values.node.name ) )
 }}
-  - host: "vnc.{{ .Values.node.name }}.node.sessions.{{ .Values.ingress.domainName }}"
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ include "helm.fullname" $ | quote }}
-              port:
-                number: 6080
-{{- end }}
-
-{{- /********************************/}}
-{{- if and
-  .Values.services.novnc.enabled
-  ( not ( empty .Values.user.name ) )
-}}
-  - host: "vnc.{{ .Values.user.name }}.user.sessions.{{ .Values.ingress.domainName }}"
-    http:
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: {{ include "helm.fullname" $ | quote }}
-              port:
-                number: 6080
+  - path: /sessions/vnc/node/{{ .Values.node.name }}
+    pathType: ImplementationSpecific
+    backend:
+      service:
+        name: {{ include "helm.fullname" $ | quote }}
+        port:
+          number: 6080
 {{- end }}
 
 {{- end }}
 
-{{- define "helm.tls" -}}
-{{- $_ := set $ "TLS" list }}
-{{- range $_, $_ := index ( include "helm.ingress.rules" $ | fromYaml ) "rules" }}
-{{- $_ := set $ "TLS" ( append $.TLS .host ) }}
-{{- end }}
-{{- range $_ := $.TLS | uniq | sortAlpha }}
-- secretName: "{{ . }}-cert"
+{{- define "helm.ingress.tls" -}}
+- secretName: "{{ .Values.ingress.domainName }}-tls"
   hosts:
-    - {{ . | quote }}
-{{- end }}
-{{- $_ := unset $ "TLS" }}
+    - {{ .Values.ingress.domainName | quote }}
 {{- end }}
 
-{{- $rules := index ( include "helm.ingress.rules" $ | fromYaml ) "rules" }}
-{{- if not ( empty $rules ) }}
+{{- $paths := index ( include "helm.ingress.paths" $ | fromYaml ) "paths" }}
+{{- if not ( empty $paths ) }}
 
 {{- if empty .Values.auth.domainName }}
 {{- fail "auth.domainName is required to enable ingress" }}
@@ -107,14 +60,11 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
-    nginx.ingress.kubernetes.io/auth-response-headers: Authorization, X-Auth-Request-Email, X-Auth-Request-Preferred-Username
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization, X-Auth-Request-Email, X-Auth-Request-Groups, X-Auth-Request-Preferred-Username
     nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
 {{- if not ( empty .Values.user.name ) }}
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($http_x_auth_request_preferred_username !~ "({{ .Values.user.name }})") {
-        return 403;
-      }
+{{- /* TODO: to be implemented! */}}
 {{- end }}
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
@@ -123,8 +73,11 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.domainName | quote }}
   tls:
-{{- include "helm.tls" $ | trim | nindent 4}}
+{{- include "helm.ingress.tls" $ | trim | nindent 4}}
   rules:
-{{- $rules | toYaml | nindent 4 }}
+    - host: {{ .Values.ingress.domainName | quote }}
+      http:
+        paths:
+{{- $paths | toYaml | nindent 10 }}
 
 {{- end }}

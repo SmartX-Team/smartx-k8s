@@ -1,0 +1,47 @@
+{{- range $_ := .Values.profiles | default list }}
+{{- if eq .kind "VirtualMachine" }}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  features:
+    desktopEnvironment: true
+    devicePassthrough: true
+    hostAudio: true
+    hostDisplay: true
+    hostUdev: true
+  persistence:
+    enabled: true
+  services:
+    novnc:
+      enabled: false
+    ssh:
+      enabled: false
+    x11vnc:
+      enabled: false
+  vm:
+    enabled: true
+    os: {{ .name | quote }}
+    windows:
+      eula: {{ .windows.eula }}
+      source:
+        url: "https://api.minio.{{ $.Values.ingress.domainName }}/openark-vine-session/vm/cdrom/{{ .cdrom.filename }}"
+  volumes:
+    home:
+      type: LocalShared
+    vm:
+      type: LocalShared
+
+    public:
+      enabled: false
+    static:
+      enabled: false
+
+{{- end }}
+{{- end }}

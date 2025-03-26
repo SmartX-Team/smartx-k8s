@@ -22,7 +22,7 @@ workspace = true
 [features]
 default = [
     "cors-allow-any",
-    "default-tls",
+    "tls-default",
     "opentelemetry-all",
     # "opentelemetry-otlp",
 ]
@@ -53,19 +53,26 @@ opentelemetry-metrics = [
 opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
-default-tls = ["rustls-tls"]
-openssl-tls = [
-    "actix-web/openssl",
-    "kube/openssl-tls",
-    "openark-core/openssl-tls",
-    "openark-vine-oauth/openssl-tls",
-    "reqwest/native-tls",
-]
-rustls-tls = [
+tls-default = ["tls-aws-lc-rs"]
+tls-aws-lc-rs = [
     "actix-web/rustls-0_23",
     "kube/rustls-tls",
-    "openark-core/rustls-tls",
-    "openark-vine-oauth/rustls-tls",
+    "openark-core/tls-aws-lc-rs",
+    "openark-vine-oauth/tls-aws-lc-rs",
+    "reqwest/rustls-tls",
+]
+tls-openssl = [
+    "actix-web/openssl",
+    "kube/openssl-tls",
+    "openark-core/tls-openssl",
+    "openark-vine-oauth/tls-openssl",
+    "reqwest/native-tls",
+]
+tls-ring = [
+    "actix-web/rustls-0_23",
+    "kube/rustls-tls",
+    "openark-core/tls-ring",
+    "openark-vine-oauth/tls-ring",
     "reqwest/rustls-tls",
 ]
 

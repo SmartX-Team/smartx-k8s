@@ -141,8 +141,9 @@ session:
   #     nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE: "1"
 
 user:
+  kind: Guest # Options: [Guest, User]
   name: ""
-  role: "" # Options: Ops, Viewer
+  role: "" # Options: [Ops, Viewer]
   shell: zsh
 
 vm:

@@ -89,9 +89,9 @@ opentelemetry-trace = [
 ]
 
 # TLS
-default-tls = ["rustls-tls"]
-openssl-tls = ["opentelemetry-otlp?/reqwest-client", "std"]
-rustls-tls = ["opentelemetry-otlp?/reqwest-rustls"]
+tls-default = ["tls-aws-lc-rs"]
+tls-aws-lc-rs = ["opentelemetry-otlp?/reqwest-rustls"]
+tls-openssl = ["opentelemetry-otlp?/reqwest-client", "std"]
 
 [dependencies]
 opentelemetry = { workspace = true, optional = true }

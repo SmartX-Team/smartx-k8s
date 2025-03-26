@@ -571,7 +571,7 @@ impl NodeSession {
                         if last_profile == binding.spec.profile.as_str()
                             && self.metadata.bind_revision == *next_revision
                         {
-                            ProfileState::Unchanged(profile)
+                            ProfileState::Unchanged { binding, profile }
                         } else {
                             self.metadata.bind_timestamp = None;
                             ProfileState::Changed(last_profile.into())
@@ -579,7 +579,7 @@ impl NodeSession {
                     }
                     None => {
                         self.metadata.bind_timestamp = None;
-                        ProfileState::Created(profile)
+                        ProfileState::Created { binding, profile }
                     }
                 };
 
@@ -770,9 +770,15 @@ impl NodeSession {
 #[must_use]
 pub enum ProfileState<'a> {
     Changed(String),
-    Created(&'a SessionProfileCrd),
+    Created {
+        binding: &'a SessionBindingCrd,
+        profile: &'a SessionProfileCrd,
+    },
     Deleted(Option<String>),
-    Unchanged(&'a SessionProfileCrd),
+    Unchanged {
+        binding: &'a SessionBindingCrd,
+        profile: &'a SessionProfileCrd,
+    },
 }
 
 #[cfg(feature = "kube")]

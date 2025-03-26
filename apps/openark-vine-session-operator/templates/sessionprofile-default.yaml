@@ -28,6 +28,7 @@ spec:
 {{- $_ := unset $profile.services.novnc "image" }}
 {{- $_ := unset $profile.services.x11vnc "image" }}
 {{- $_ := unset $profile.session "priorityClassName" }}
+{{- $_ := unset $profile.user "kind" }}
 {{- $_ := unset $profile.user "name" }}
 {{- $_ := unset $profile.user "role" }}
 {{- $_ := unset $profile.vm "hostDevices" }}

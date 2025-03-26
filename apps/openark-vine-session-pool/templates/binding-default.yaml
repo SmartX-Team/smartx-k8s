@@ -1,0 +1,18 @@
+{{- if not ( empty .Values.defaultProfileName ) }}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionBinding
+metadata:
+  name: default
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  priority: 999
+  profile: {{ .Values.defaultProfileName | quote }}
+  user:
+    kind: Guest
+    name: null
+
+{{- end }}

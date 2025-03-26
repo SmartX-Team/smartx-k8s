@@ -1,0 +1,19 @@
+{{- range $_ := .Values.bindings | default list }}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionBinding
+metadata:
+  name: {{ printf "%s-%s" .profileName ( . | toYaml | b64enc | lower | substr 0 7 ) | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  nodeSelector:
+{{- .nodeSelector | default dict | toYaml | nindent 4 }}
+  priority: {{ .priority | int | default 0 }}
+  profile: {{ .profileName | quote }}
+  user:
+{{- .user | default dict | toYaml | nindent 4 }}
+
+{{- end }}

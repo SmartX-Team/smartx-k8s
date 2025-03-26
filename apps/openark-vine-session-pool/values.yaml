@@ -1,21 +1,25 @@
 ---
-defaultFeatures:
-  vm: false
+defaultProfileName: ""
 
 profiles:
-  - name: default
+  - kind: Notebook # Options: [Desktop, Notebook, VirtualMachine]
+    name: pytorch
+    image:
+      repo: nvcr.io/nvidia/pytorch
+      tag: 25.02-py3
 
-  - name: container
-    vm:
-      enabled: false
+  - kind: VirtualMachine # Options: [Desktop, Notebook, VirtualMachine]
+    name: windows-11
+    cdrom:
+      filename: Win11_24H2_Korean_x64.iso
+    windows:
+      eula: false
 
-  - name: windows-11
-    user:
-      kind: Guest # Options: Guest, User
-      nodeSelector:
-        org.ulagbulag.io/session-version: "2"
-    vm:
-      enabled: true
-      os: windows-11
-      windows:
-        eula: true
+bindings:
+  []
+  # - profileName: pytorch
+  #   priority: 0 # Default: 0
+  #   nodeSelector: {}
+  #   user:
+  #     kind: Guest # Options: [Guest, User]
+  #     name: ""

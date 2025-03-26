@@ -8,7 +8,7 @@ ollama:
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
       # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
-      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
     host: "ollama.ask.{{ .Values.ingress.domainName }}"
 
 pipelines:
@@ -23,7 +23,7 @@ pipelines:
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
       # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
-      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+      # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
     host: "pipelines.ask.{{ .Values.ingress.domainName }}"
 
 # -- Value of cluster domain
@@ -36,5 +36,5 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
     # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
-    # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=$escaped_request_uri"
+    # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
   host: "ask.{{ .Values.ingress.domainName }}"

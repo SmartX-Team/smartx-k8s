@@ -6,9 +6,12 @@ use schemars::JsonSchema;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::profile::{
-    FeaturesSpec, GreeterSpec, PersistenceSpec, ServicesSpec, SessionSpec, UserSpec, VMSpec,
-    VolumesSpec,
+use crate::{
+    binding::SessionBindingUserSpec,
+    profile::{
+        FeaturesSpec, GreeterSpec, PersistenceSpec, ServicesSpec, SessionSpec, UserSpec, VMSpec,
+        VolumesSpec,
+    },
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -148,13 +151,10 @@ pub struct OwnedOpenArkLabelsSpec {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct OwnedUserSpec {
     #[cfg_attr(feature = "serde", serde(default, flatten))]
-    pub data: UserSpec,
+    pub binding: SessionBindingUserSpec,
 
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub name: Option<String>,
+    #[cfg_attr(feature = "serde", serde(default, flatten))]
+    pub data: UserSpec,
 }
 
 impl ops::Deref for OwnedUserSpec {
