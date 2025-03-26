@@ -7,6 +7,7 @@ models:
   pull:
     - name: deepseek-r1:70b
     - name: exaone3.5:32b
+    - name: gemma3:27b
     - name: gemma3:27b-it-fp16
     - name: llama3.2-vision:90b
     - name: llama3.3:70b
