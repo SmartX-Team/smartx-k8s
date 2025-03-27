@@ -7,5 +7,5 @@ On the root of the repository,
 ```bash
 cluster_name='default'  # TODO(user): change your own cluster name
 
-./bin/chart-install.sh "${cluster_name}" ./apps/nats-operator
+./hack/chart-install.sh "${cluster_name}" ./apps/nats-operator
 ```

@@ -5,16 +5,16 @@
 # Build and push an image within ./images
 build-image NAME:
     clear
-    IMAGE_NAME={{ NAME }} ./bin/image-build.sh
+    IMAGE_NAME={{ NAME }} ./hack/image-build.sh
 
 # Execute a command in the boxes
 batch COMMAND *ARGS:
-    ./bin/box-batch.sh {{ COMMAND }} {{ ARGS }}
+    ./hack/box-batch.sh {{ COMMAND }} {{ ARGS }}
 
 # List all boxes
 box *ARGS:
-    ./bin/box-ls.sh {{ ARGS }}
+    ./hack/box-ls.sh {{ ARGS }}
 
 # Execute a command in a box
 ssh BOX *ARGS:
-    ./bin/box-ssh.sh {{ BOX }} {{ ARGS }}
+    ./hack/box-ssh.sh {{ BOX }} {{ ARGS }}

@@ -71,7 +71,7 @@ spec:
             arguments:
               parameters:
                 - name: command
-                  value: ./bin/git-ci.sh
+                  value: ./hack/git-ci.sh
 
     - name: execute
       inputs:
