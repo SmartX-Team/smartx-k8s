@@ -26,4 +26,4 @@ spec:
   source:
     chart: multus-cni
     repoUrl: registry-1.docker.io/bitnamicharts
-    version: 2.2.7
+    version: 2.2.9

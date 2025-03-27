@@ -39,4 +39,4 @@ spec:
   source:
     chart: loki-distributed
     repoUrl: "https://grafana.github.io/helm-charts"
-    version: 0.80.1
+    version: 0.80.2

@@ -18,3 +18,7 @@ box *ARGS:
 # Execute a command in a box
 ssh BOX *ARGS:
     ./hack/box-ssh.sh {{ BOX }} {{ ARGS }}
+
+# Update all
+update:
+    ./hack/update-app.sh
