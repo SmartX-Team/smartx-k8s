@@ -14,8 +14,10 @@ spec:
     desktopEnvironment: true
     devicePassthrough: true
     hostAudio: true
+    hostDBus: true
     hostDisplay: true
     hostUdev: true
+    ipcPassthrough: true
   persistence:
     enabled: true
   services:

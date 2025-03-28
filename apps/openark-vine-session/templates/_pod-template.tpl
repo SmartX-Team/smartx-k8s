@@ -141,6 +141,13 @@ initContainers:
   - {{- include "podTemplate.init-check-permissions" $ | nindent 4 }}
 
 {{- /********************************
+    Driver Loader
+*************************************/}}
+{{- if .Values.features.hostDisplay }}
+  - {{- include "podTemplate.init-driver" $ | nindent 4 }}
+{{- end }}
+
+{{- /********************************
     DBus Daemon
 *************************************/}}
 {{- if not .Values.features.hostDBus }}

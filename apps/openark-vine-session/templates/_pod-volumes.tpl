@@ -134,6 +134,18 @@
           path: machine-id
 
 {{- /********************************/}}
+  - name: modules
+{{- if .Values.features.hostDisplay }}
+    emptyDir: null
+    hostPath:
+      path: /lib/modules
+      type: Directory
+{{- else }}
+    emptyDir: {}
+    hostPath: null
+{{- end }}
+
+{{- /********************************/}}
   - name: logs
     emptyDir: {}
 
