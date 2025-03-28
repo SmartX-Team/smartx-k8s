@@ -2,6 +2,12 @@
 defaultProfileName: ""
 
 profiles:
+  - kind: Desktop # Options: [Desktop, Notebook, VirtualMachine]
+    name: ubuntu-24.04
+    session:
+      context:
+        hostNetwork: true
+
   - kind: Notebook # Options: [Desktop, Notebook, VirtualMachine]
     name: pytorch
     image:

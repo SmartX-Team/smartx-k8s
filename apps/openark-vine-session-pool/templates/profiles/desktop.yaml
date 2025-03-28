@@ -1,5 +1,5 @@
 {{- range $_ := .Values.profiles | default list }}
-{{- if eq .kind "Notebook" }}
+{{- if eq .kind "Desktop" }}
 
 ---
 apiVersion: org.ulagbulag.io/v1alpha1
@@ -11,30 +11,30 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   features:
-    audio: false
-    desktopEnvironment: false
+    desktopEnvironment: true
     devicePassthrough: true
-    hostAudio: false
-    hostDisplay: false
+    hostAudio: true
+    hostDisplay: true
     hostUdev: true
   persistence:
     enabled: true
   services:
-    notebook:
-      enabled: true
-      image:
-{{- .image | default dict | toYaml | nindent 8 }}
     novnc:
-      enabled: false
-    rdp:
-      enabled: false
+      enabled: true
     ssh:
       enabled: false
     x11vnc:
-      enabled: false
+      enabled: true
+  session:
+{{- .session | default dict | toYaml | nindent 4 }}
   volumes:
     home:
-      type: LocalOwned
+      type: LocalShared
+
+    public:
+      enabled: false
+    static:
+      enabled: false
 
 {{- end }}
 {{- end }}
