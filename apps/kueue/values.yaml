@@ -15,3 +15,9 @@ controllerManager:
     image:
       # This should be set to 'IfNotPresent' for released version
       pullPolicy: IfNotPresent
+
+# kueueviz dashboard
+enableKueueViz: true
+kueueViz:
+  backend: {}
+  frontend: {}

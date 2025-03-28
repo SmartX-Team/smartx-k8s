@@ -27,4 +27,4 @@ spec:
   source:
     chart: kueue
     repoUrl: "registry.k8s.io/kueue/charts"
-    version: v0.10.1
+    version: 0.11.1
