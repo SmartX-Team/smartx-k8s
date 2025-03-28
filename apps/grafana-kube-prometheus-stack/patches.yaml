@@ -55,8 +55,8 @@ prometheus:
 ##
 prometheus-node-exporter:
   tolerations:
-    - effect: NoSchedule
-      operator: Exists
+    - operator: Exists
+      effect: NoSchedule
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
       operator: Exists
       effect: NoExecute

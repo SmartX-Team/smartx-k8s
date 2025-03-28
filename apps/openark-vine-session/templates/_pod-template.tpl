@@ -256,9 +256,9 @@ shareProcessNamespace: true
 terminationGracePeriodSeconds: 60
 tolerations:
   - operator: Exists
-    effect: NoExecute
-  - operator: Exists
     effect: NoSchedule
+  - operator: Exists
+    effect: NoExecute
 
 {{- /********************************
     Volumes

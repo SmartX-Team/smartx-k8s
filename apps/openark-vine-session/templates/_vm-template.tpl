@@ -219,6 +219,11 @@ networks:
     pod: {}
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
 terminationGracePeriodSeconds: 30
+tolerations:
+  - operator: Exists
+    effect: NoSchedule
+  - operator: Exists
+    effect: NoExecute
 volumes:
 {{- /********************************/}}
   - name: cdrom-iso

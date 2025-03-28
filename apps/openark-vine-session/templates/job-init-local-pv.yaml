@@ -57,8 +57,8 @@ spec:
               cpu: 50m
               memory: 20Mi
             limits:
-              cpu: 50m
-              memory: 50Mi
+              cpu: "1"
+              memory: 1Gi
           securityContext:
             privileged: false
             runAsNonRoot: false
@@ -68,6 +68,11 @@ spec:
               mountPath: {{ include "helm.localPVPath" $ | quote }}
           workingDir: {{ include "helm.localPVPath" $ | quote }}
       restartPolicy: OnFailure
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
       volumes:
         - name: data
           hostPath:
