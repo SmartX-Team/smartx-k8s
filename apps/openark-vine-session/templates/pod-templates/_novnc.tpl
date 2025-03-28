@@ -7,7 +7,7 @@ env:
 {{- if empty .Values.node.name }}
     value: /
 {{- else }}
-    value: "/sessions/vnc/node/{{ .Values.node.name }}"
+    value: "/sessions/vnc/node/{{ .Values.node.name }}/"
 {{- end }}
 ports:
   - name: novnc

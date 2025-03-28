@@ -14,7 +14,7 @@ spec:
     autoSync: true
     namespace: kube-system
     patched: false
-    unsafe: true # CNI
+    unsafe: false
     useClusterValues: false
     features:
       - org.ulagbulag.io/cni

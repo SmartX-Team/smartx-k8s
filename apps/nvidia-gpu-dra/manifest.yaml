@@ -15,7 +15,7 @@ spec:
     autoSync: true
     namespace: gpu-nvidia
     patched: false
-    unsafe: true # H/W
+    unsafe: false
     useClusterValues: false
     features:
       - nvidia.com/gpu/dynamic-resource-allocation
