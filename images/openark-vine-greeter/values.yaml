@@ -1,4 +1,7 @@
 ---
+bastion:
+  baseUrl: /
+
 cluster:
   domainName: ""
 
