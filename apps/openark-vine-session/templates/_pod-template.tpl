@@ -251,6 +251,11 @@ hostNetwork: {{ .Values.session.context.hostNetwork }}
 hostname: "{{ include "helm.fullname" $ }}-{{ .Release.Namespace }}"
 restartPolicy: {{ .Values.persistence.enabled | ternary "Always" "Never" | quote }}
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
+securityContext:
+  appArmorProfile:
+    type: Unconfined
+  seccompProfile:
+    type: Unconfined
 serviceAccount: {{ include "helm.serviceAccountName" $ | quote }}
 shareProcessNamespace: true
 terminationGracePeriodSeconds: 60

@@ -16,10 +16,6 @@ resources:
     memory: 100Mi
 restartPolicy: Always
 securityContext:
-  capabilities:
-    add:
-      - apparmor:unconfined
-      - seccomp:unconfined
   privileged: true
   runAsNonRoot: false
   runAsUser: 0

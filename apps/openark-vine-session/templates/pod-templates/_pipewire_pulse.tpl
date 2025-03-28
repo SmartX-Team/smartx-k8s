@@ -28,10 +28,6 @@ readinessProbe:
   periodSeconds: 15
 restartPolicy: Always
 securityContext:
-  capabilities:
-    add:
-      - apparmor:unconfined
-      - seccomp:unconfined
   privileged: false
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
   runAsUser: {{ include "helm.userId" $ }}

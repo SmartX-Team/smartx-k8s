@@ -24,10 +24,6 @@ resources:
     nvidia.com/gpu: "1"
 restartPolicy: Always
 securityContext:
-  capabilities:
-    add:
-      - apparmor:unconfined
-      - seccomp:unconfined
   # FIXME: How to disable privileged permission?
   # FIXME: Maybe related to: /proc/asound/cards
   privileged: true # required to access to: /dev/snd (ALSA)

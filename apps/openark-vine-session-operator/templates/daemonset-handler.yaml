@@ -89,10 +89,6 @@ spec:
               cpu: 50m
               memory: 100Mi
           securityContext:
-            capabilities:
-              add:
-                - apparmor:unconfined
-                - seccomp:unconfined
             privileged: true
             runAsNonRoot: false
             runAsUser: 0
@@ -101,8 +97,10 @@ spec:
               mountPath: /run
       priorityClassName: system-node-critical
       securityContext:
+        appArmorProfile:
+          type: Unconfined
         seccompProfile:
-          type: RuntimeDefault
+          type: Unconfined
       serviceAccountName: "{{ include "helm.fullname" $ }}-handler"
       terminationGracePeriodSeconds: 30
       tolerations:

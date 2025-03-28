@@ -37,10 +37,6 @@ resources:
     nvidia.com/gpu: "1"
 restartPolicy: Always
 securityContext:
-  capabilities:
-    add:
-      - apparmor:unconfined
-      - seccomp:unconfined
   # FIXME: How to disable privileged permission?
   privileged: true # required to access to: /dev/input
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}

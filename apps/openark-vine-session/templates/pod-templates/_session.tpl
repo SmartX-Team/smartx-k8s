@@ -88,10 +88,6 @@
     Session Security Context
 *************************************/}}
 {{- define "podTemplate.session.securityContext" -}}
-capabilities:
-  add:
-    - apparmor:unconfined
-    - seccomp:unconfined
 privileged: {{ .Values.session.context.privileged }}
 runAsNonRoot: {{ not ( .Values.session.context.root | default .Values.session.context.sudo ) }}
 runAsUser: {{ include "helm.userId" $ }}
