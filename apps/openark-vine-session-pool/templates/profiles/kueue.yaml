@@ -1,0 +1,40 @@
+{{- if .Values.kueue.enabled }}
+{{- range $_ := .Values.profiles | default list }}
+{{- if eq .kind "Kueue" -}}
+
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SessionProfile
+metadata:
+  name: {{ .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  features:
+    audio: false
+    desktopEnvironment: false
+    devicePassthrough: false
+    hostAudio: false
+    hostDisplay: false
+    hostUdev: false
+  persistence:
+    enabled: true
+  services:
+    notebook:
+      enabled: false
+    novnc:
+      enabled: false
+    rdp:
+      enabled: false
+    ssh:
+      enabled: false
+    x11vnc:
+      enabled: false
+  volumes:
+    home:
+      type: LocalShared
+
+{{- end }}
+{{- end }}
+{{- end }}

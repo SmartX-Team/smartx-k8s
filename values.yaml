@@ -280,6 +280,8 @@ openark:
     org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy
     org.ulagbulag.io/signed-out: org.ulagbulag.io/signed-out
     org.ulagbulag.io/title: org.ulagbulag.io/title
+    org.ulagbulag.io/topology-block: org.ulagbulag.io/topology-block
+    org.ulagbulag.io/topology-rack: org.ulagbulag.io/topology-rack
 
 # Cluster Performance Configuration
 optimization:

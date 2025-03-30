@@ -1,3 +1,39 @@
 ---
+daemonsets:
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+      operator: Exists
+      effect: NoExecute
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+      operator: Exists
+      effect: NoExecute
+
+node-feature-discovery:
+  worker:
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Equal
+        value: ""
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Equal
+        value: ""
+        effect: NoSchedule
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+        operator: Exists
+        effect: NoExecute
+
 operator:
   defaultRuntime: {{ .Values.kubespray.container_manager | quote }}

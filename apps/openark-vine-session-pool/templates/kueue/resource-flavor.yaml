@@ -1,0 +1,32 @@
+{{- if .Values.kueue.enabled }}
+{{- range $_ := .Values.profiles | default list }}
+{{- if eq .kind "Kueue" -}}
+
+---
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: ResourceFlavor
+metadata:
+  name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  nodeLabels:
+    {{ index $.Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+    {{ index $.Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}: {{ .name | quote }}
+    {{ index $.Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}: "false"
+  tolerations:
+    # FIXME: add support for tainting binded nodes
+    - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+      operator: Equal
+      value: "true"
+      effect: NoExecute
+    - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+      operator: Equal
+      value: {{ .name | quote }}
+      effect: NoExecute
+  # TODO: Add support for topology
+  # topologyName: {{ include "helm.kueueClusterNamePrefix" $ | quote }}
+
+{{- end }}
+{{- end }}
+{{- end }}

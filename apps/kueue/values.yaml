@@ -8,9 +8,9 @@ enableVisibilityAPF: true
 
 # Customize controllerManager
 controllerManager:
-  #featureGates:
-  #  - name: PartialAdmission
-  #    enabled: true
+  featureGates:
+    - name: TopologyAwareScheduling
+      enabled: true
   manager:
     image:
       # This should be set to 'IfNotPresent' for released version

@@ -14,6 +14,7 @@ metadata:
   name: "{{ include "helm.localPVName" $ }}-vm-cdrom-{{ .Values.vm.os }}"
   labels:
 {{- include "helm.localPVLabels" $ | nindent 4 }}
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
@@ -33,6 +34,7 @@ metadata:
   name: "{{ include "helm.localPVName" $ }}-vm-cdrom-{{ .Values.vm.os }}-scratch"
   labels:
 {{- include "helm.localPVLabels" $ | nindent 4 }}
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
     - ReadWriteOnce
@@ -53,6 +55,7 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
 {{- include "helm.localPVLabels" $ | nindent 4 }}
+    helm.sh/resource-policy: keep
 spec:
   pvc:
     accessModes:

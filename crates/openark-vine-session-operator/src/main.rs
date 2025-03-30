@@ -543,7 +543,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
         };
         binding.zip(profile)
     };
-    let profile_state = next.apply_profile(next_profile.as_ref(), timestamp);
+    let profile_state = next.apply_profile(&ctx.args.api, next_profile.as_ref(), timestamp);
 
     // Sign out if the node is not ready
     let must_sign_out = profile_state.has_changed() || next.unreachable();

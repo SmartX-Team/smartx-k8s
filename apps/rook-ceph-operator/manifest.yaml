@@ -27,4 +27,4 @@ spec:
   source:
     chart: rook-ceph
     repoUrl: "https://charts.rook.io/release"
-    version: v1.15.5
+    version: 1.16.6

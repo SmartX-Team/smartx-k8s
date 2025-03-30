@@ -61,7 +61,7 @@ services:
     enabled: false
     image:
       repo: nvcr.io/nvidia/pytorch
-      tag: 25.02-py3
+      tag: 25.03-py3
       pullPolicy: IfNotPresent
   novnc:
     enabled: true

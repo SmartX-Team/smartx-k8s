@@ -1,0 +1,17 @@
+{{- if .Values.kueue.enabled }}
+
+---
+apiVersion: kueue.x-k8s.io/v1alpha1
+kind: Topology
+metadata:
+  name: {{ include "helm.kueueClusterNamePrefix" $ | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  levels:
+    - nodeLabel: {{ index $.Values.openark.labels "org.ulagbulag.io/topology-block" | quote }}
+    - nodeLabel: {{ index $.Values.openark.labels "org.ulagbulag.io/topology-rack" | quote }}
+    - nodeLabel: node-role.kubernetes.io/kiss
+    - nodeLabel: kubernetes.io/hostname
+
+{{- end }}

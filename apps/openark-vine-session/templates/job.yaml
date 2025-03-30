@@ -1,6 +1,10 @@
 {{- if and
   ( not .Values.vm.enabled )
   ( not .Values.persistence.enabled )
+  ( or
+    .Values.features.desktopEnvironment
+    .Values.services.notebook.enabled
+  )
 }}
 ---
 apiVersion: batch/v1

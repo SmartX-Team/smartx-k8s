@@ -2,20 +2,24 @@
 defaultProfileName: ""
 
 profiles:
-  - kind: Desktop # Options: [Desktop, Notebook, VirtualMachine]
+  - kind: Desktop # Options: [Desktop, Kueue, Notebook, VirtualMachine]
     name: ubuntu-24.04
     session:
       context:
         hostNetwork: true
         privileged: true # FIXME: how to use webcams WITHOUT privileged containers?
 
-  - kind: Notebook # Options: [Desktop, Notebook, VirtualMachine]
+  - kind: Kueue # Options: [Desktop, Kueue, Notebook, VirtualMachine]
+    name: default-kueue
+    extraFlavors: []
+
+  - kind: Notebook # Options: [Desktop, Kueue, Notebook, VirtualMachine]
     name: pytorch
     image:
       repo: nvcr.io/nvidia/pytorch
-      tag: 25.02-py3
+      tag: 25.03-py3
 
-  - kind: VirtualMachine # Options: [Desktop, Notebook, VirtualMachine]
+  - kind: VirtualMachine # Options: [Desktop, Kueue, Notebook, VirtualMachine]
     name: windows-11
     cdrom:
       filename: Win11_24H2_Korean_x64.iso
@@ -30,3 +34,10 @@ bindings:
   #   user:
   #     kind: Guest # Options: [Guest, User]
   #     name: ""
+
+kueue:
+  enabled: false
+  namespaceSelector: {}
+
+openark:
+  labels: {}

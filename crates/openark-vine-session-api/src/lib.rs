@@ -560,6 +560,7 @@ impl NodeSession {
     #[cfg(feature = "kube")]
     pub fn apply_profile<'a>(
         &mut self,
+        args: &VineSessionArgs,
         profile: Option<&'a (SessionBindingCrd, SessionProfileCrd)>,
         timestamp: DateTime<Utc>,
     ) -> ProfileState<'a> {
@@ -605,6 +606,12 @@ impl NodeSession {
                         Some(true) => ComputeMode::VM,
                         Some(false) | None => ComputeMode::Container,
                     });
+                self.set_taint(&args.label_bind, "true".into(), timestamp);
+                self.set_taint(
+                    &args.label_bind_profile,
+                    binding.spec.profile.clone(),
+                    timestamp,
+                );
                 state
             }
             None => {
@@ -615,6 +622,8 @@ impl NodeSession {
                 self.metadata.bind_revision = None;
                 self.metadata.bind_timestamp = None;
                 self.metadata.bind_user = None;
+                self.remove_taint(&args.label_bind);
+                self.remove_taint(&args.label_bind_profile);
                 ProfileState::Deleted(last_profile)
             }
         }
@@ -624,6 +633,19 @@ impl NodeSession {
     ///
     pub fn remove_session_revision(&mut self) {
         self.metadata.bind_revision = None;
+    }
+
+    fn remove_taint(&mut self, key: &str) {
+        let index = self
+            .taints
+            .iter()
+            .enumerate()
+            .find(|&(_, taint)| taint.key == key && taint.effect == "NoExecute")
+            .map(|(index, _)| index);
+
+        if let Some(index) = index {
+            self.taints.remove(index);
+        }
     }
 
     /// Set the session's signing state.
@@ -651,41 +673,45 @@ impl NodeSession {
 
         // Update taints
         {
-            let last_taint = self
-                .taints
-                .iter_mut()
-                .find(|taint| taint.key == args.label_signed_out && taint.effect == "NoExecute");
-
             if sign_out {
-                match last_taint {
-                    Some(taint) => {
-                        taint.value = Some(true.to_string());
-                        match taint.time_added.as_ref().map(|time| time.0) {
-                            Some(time_added) => {
-                                let time_completed = time_added + Self::DURATION_SIGN_OUT;
-                                if time_completed > timestamp {
-                                    Some(time_completed - timestamp)
-                                } else {
-                                    None
-                                }
-                            }
-                            None => None,
-                        }
-                    }
-                    None => {
-                        let time_added = Some(Time(timestamp));
-                        self.taints.push(Taint {
-                            key: args.label_signed_out.clone(),
-                            value: Some(true.to_string()),
-                            effect: "NoExecute".into(),
-                            time_added: time_added.clone(),
-                        });
-                        Some(Self::DURATION_SIGN_OUT)
-                    }
+                let time_added = self.set_taint(&args.label_signed_out, "true".into(), timestamp);
+                let time_completed = time_added + Self::DURATION_SIGN_OUT;
+                if time_completed > timestamp {
+                    Some(time_completed - timestamp)
+                } else {
+                    None
                 }
             } else {
                 // NOTE: untainting should be handled by handler daemonset
                 None
+            }
+        }
+    }
+
+    fn set_taint(&mut self, key: &str, value: String, timestamp: DateTime<Utc>) -> DateTime<Utc> {
+        let last_taint = self
+            .taints
+            .iter_mut()
+            .find(|taint| taint.key == key && taint.effect == "NoExecute");
+
+        match last_taint {
+            Some(taint) => {
+                taint.value = Some(value);
+                taint
+                    .time_added
+                    .as_ref()
+                    .map(|time| time.0)
+                    .unwrap_or(timestamp)
+            }
+            None => {
+                let time_added = Some(Time(timestamp));
+                self.taints.push(Taint {
+                    key: key.into(),
+                    value: Some(value),
+                    effect: "NoExecute".into(),
+                    time_added: time_added.clone(),
+                });
+                timestamp
             }
         }
     }
