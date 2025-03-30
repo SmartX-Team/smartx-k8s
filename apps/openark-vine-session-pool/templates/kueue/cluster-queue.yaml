@@ -33,13 +33,13 @@ spec:
         - name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
           resources:
             - name: cpu
-              nominalQuota: 100
+              nominalQuota: 1000000 # infinity quotas
             - name: ephemeral-storage
-              nominalQuota: 100Ti
+              nominalQuota: 1000000Ti # infinity quotas
             - name: memory
-              nominalQuota: 100Gi
+              nominalQuota: 1000000Gi # infinity quotas
             - name: nvidia.com/gpu
-              nominalQuota: 100
+              nominalQuota: 1000000 # infinity quotas
         # extra flavors
 {{- range $_ := .extraFlavors | default list }}
         -

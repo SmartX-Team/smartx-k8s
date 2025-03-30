@@ -117,5 +117,9 @@ spec:
       prune: true
 {{- end }}
 {{- end }}
+{{- if not ( empty .Manifest.ManagedNamespaceMetadata ) }}
+    managedNamespaceMetadata:
+{{- .Manifest.ManagedNamespaceMetadata | toYaml | nindent 6 }}
+{{- end }}
     syncOptions:
 {{- .Manifest.SyncOptions | toYaml | nindent 6 }}

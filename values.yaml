@@ -123,6 +123,7 @@ features:
   - org.ulagbulag.io/bare-metal-provisioning/kiss
   - org.ulagbulag.io/batch/scheduling
   - org.ulagbulag.io/batch/scheduling/kueue
+  - org.ulagbulag.io/batch/scheduling/ray
   - org.ulagbulag.io/cni
   - org.ulagbulag.io/cni/multus
   - org.ulagbulag.io/csi

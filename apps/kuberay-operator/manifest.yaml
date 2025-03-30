@@ -2,27 +2,28 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.apps.openark-vine-session-pool
+  name: smartx.apps.kuberay-operator
 spec:
   group: ops
   phase: stable
-  scale: medium
+  scale: small
   users:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: vine-session
-    patched: true
+    namespace: kuberay-operator
+    patched: false
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/desktop-environment/vine
+      - org.ulagbulag.io/batch/scheduling/ray
     ignoreDifferences: []
     sync:
       createNamespace: true
-      managedNamespaceMetadata:
-        labels:
-          {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
       respectIgnoreDifferences: true
       serverSideApply: true
+  source:
+    chart: kuberay-operator
+    repoUrl: "https://ray-project.github.io/kuberay-helm"
+    version: 1.3.1

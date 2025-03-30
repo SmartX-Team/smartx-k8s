@@ -1,0 +1,7 @@
+
+# Environment variables
+env:
+  # If not set or set to "", kuberay will pick up the default k8s cluster domain `cluster.local`
+  # Otherwise, kuberay will use your custom domain
+  - name: CLUSTER_DOMAIN
+    value: {{ .Values.cluster.domainName | quote }}

@@ -91,6 +91,12 @@ org.ulagbulag.io/batch/scheduling/kueue:
     - org.ulagbulag.io/batch/scheduling
     - org.ulagbulag.io/monitoring
 
+org.ulagbulag.io/batch/scheduling/ray:
+  requires:
+    - org.ulagbulag.io/batch/scheduling
+  optional:
+    - org.ulagbulag.io/batch/scheduling/kueue
+
 org.ulagbulag.io/cni:
   requires: []
   optional:
