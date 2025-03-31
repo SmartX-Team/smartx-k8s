@@ -173,7 +173,7 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://{domain_name}/sessions/notebook/node/{node_name}",
+                    "https://notebook.{node_name}.node.sessions.{domain_name}",
                     domain_name = &profile.ingress.domain_name,
                     node_name = &profile.node.name,
                 )
@@ -190,7 +190,7 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://{domain_name}/sessions/rdp/node/{node_name}/",
+                    "https://rdp.{node_name}.node.sessions.{domain_name}",
                     domain_name = &profile.ingress.domain_name,
                     node_name = &profile.node.name,
                 )
@@ -207,7 +207,7 @@ fn convert(app: Application) -> Option<Session> {
                 .unwrap_or(false)
             {
                 format!(
-                    "https://{domain_name}/sessions/vnc/node/{node_name}/",
+                    "https://vnc.{node_name}.node.sessions.{domain_name}",
                     domain_name = &profile.ingress.domain_name,
                     node_name = &profile.node.name,
                 )

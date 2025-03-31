@@ -4,11 +4,7 @@ image: "{{ .Values.services.novnc.image.repo }}:{{ .Values.services.novnc.image.
 imagePullPolicy: {{ .Values.services.novnc.image.pullPolicy | quote }}
 env:
   - name: NOVNC_VNC_PATH
-{{- if empty .Values.node.name }}
     value: /
-{{- else }}
-    value: "/sessions/vnc/node/{{ .Values.node.name }}/"
-{{- end }}
 ports:
   - name: novnc
     protocol: TCP

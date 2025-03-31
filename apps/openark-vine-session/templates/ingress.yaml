@@ -2,21 +2,24 @@
 {{- printf "sessions.%s" .Values.ingress.domainName }}
 {{- end }}
 
-{{- define "helm.ingress.paths" -}}
-paths:
+{{- define "helm.ingress.rules" -}}
+rules:
 
 {{- /********************************/}}
 {{- if and
   .Values.services.notebook.enabled
   ( not ( empty .Values.node.name ) )
 }}
-  - path: /sessions/notebook/node/{{ .Values.node.name }}
-    pathType: ImplementationSpecific
-    backend:
-      service:
-        name: {{ include "helm.fullname" $ | quote }}
-        port:
-          number: 8888
+  - host: "notebook.{{ .Values.node.name }}.node.sessions.{{ .Values.ingress.domainName }}"
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ include "helm.fullname" $ | quote }}
+              port:
+                number: 8888
 {{- end }}
 
 {{- /********************************/}}
@@ -24,25 +27,35 @@ paths:
   .Values.services.novnc.enabled
   ( not ( empty .Values.node.name ) )
 }}
-  - path: /sessions/vnc/node/{{ .Values.node.name }}
-    pathType: ImplementationSpecific
-    backend:
-      service:
-        name: {{ include "helm.fullname" $ | quote }}
-        port:
-          number: 6080
+  - host: "vnc.{{ .Values.node.name }}.node.sessions.{{ .Values.ingress.domainName }}"
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ include "helm.fullname" $ | quote }}
+              port:
+                number: 6080
 {{- end }}
 
 {{- end }}
 
-{{- define "helm.ingress.tls" -}}
-- secretName: "{{ .Values.ingress.domainName }}-tls"
+{{- define "helm.tls" -}}
+{{- $_ := set $ "TLS" list }}
+{{- range $_, $_ := index ( include "helm.ingress.rules" $ | fromYaml ) "rules" }}
+{{- $_ := set $ "TLS" ( append $.TLS .host ) }}
+{{- end }}
+{{- range $_ := $.TLS | uniq | sortAlpha }}
+- secretName: "{{ . }}-cert"
   hosts:
-    - {{ .Values.ingress.domainName | quote }}
+    - {{ . | quote }}
+{{- end }}
+{{- $_ := unset $ "TLS" }}
 {{- end }}
 
-{{- $paths := index ( include "helm.ingress.paths" $ | fromYaml ) "paths" }}
-{{- if not ( empty $paths ) }}
+{{- $rules := index ( include "helm.ingress.rules" $ | fromYaml ) "rules" }}
+{{- if not ( empty $rules ) }}
 
 {{- if empty .Values.auth.domainName }}
 {{- fail "auth.domainName is required to enable ingress" }}
@@ -73,11 +86,8 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.domainName | quote }}
   tls:
-{{- include "helm.ingress.tls" $ | trim | nindent 4}}
+{{- include "helm.tls" $ | trim | nindent 4 }}
   rules:
-    - host: {{ .Values.ingress.domainName | quote }}
-      http:
-        paths:
-{{- $paths | toYaml | nindent 10 }}
+{{- $rules | toYaml | nindent 4 }}
 
 {{- end }}
