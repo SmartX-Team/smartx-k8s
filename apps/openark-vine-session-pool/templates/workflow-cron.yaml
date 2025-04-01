@@ -1,0 +1,65 @@
+{{- range $binding := .Values.bindings | default list }}
+{{- range $_ := .schedule | default list }}
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: {{ printf "%s-%s-%s-start"
+      $binding.profileName
+      ( $binding | toYaml | b64enc | lower | substr 0 7 )
+      ( . | toYaml | b64enc | lower | substr 0 7 )
+    | quote
+  }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  schedules:
+    - {{ .start | quote }}
+  timezone: {{ .timezone | default "UTC" | quote }}
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  workflowSpec:
+    arguments:
+      parameters:
+        - name: name
+          value: {{ printf "%s-%s" $binding.profileName ( $binding | toYaml | b64enc | lower | substr 0 7 ) | quote }}
+        - name: enabled
+          value: "true"
+    workflowTemplateRef:
+      name: {{ include "helm.fullname" $ | quote }}
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: {{ printf "%s-%s-%s-stop"
+      $binding.profileName
+      ( $binding | toYaml | b64enc | lower | substr 0 7 )
+      ( . | toYaml | b64enc | lower | substr 0 7 )
+    | quote
+  }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  schedules:
+    - {{ .end | quote }}
+  timezone: {{ .timezone | default "UTC" | quote }}
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  workflowSpec:
+    arguments:
+      parameters:
+        - name: name
+          value: {{ printf "%s-%s" $binding.profileName ( $binding | toYaml | b64enc | lower | substr 0 7 ) | quote }}
+        - name: enabled
+          value: "false"
+    workflowTemplateRef:
+      name: {{ include "helm.fullname" $ | quote }}
+
+{{- end }}
+{{- end }}

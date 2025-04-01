@@ -40,6 +40,12 @@ use serde::{Deserialize, Serialize};
     )
 )]
 pub struct SessionBindingSpec {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub enabled: Option<bool>,
+
     #[cfg_attr(feature = "serde", serde(default))]
     pub node_selector: Option<BTreeMap<String, String>>,
 

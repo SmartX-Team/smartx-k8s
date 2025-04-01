@@ -9,6 +9,9 @@ metadata:
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
+{{- if empty ( .schedule | default list ) }}
+  enabled: true
+{{- end }}
   nodeSelector:
 {{- .nodeSelector | default dict | toYaml | nindent 4 }}
   priority: {{ .priority | int | default 0 }}

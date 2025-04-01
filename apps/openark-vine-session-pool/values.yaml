@@ -1,5 +1,5 @@
 ---
-defaultProfileName: ""
+defaultProfileName: default-kueue # Replace to empty "" for disabling
 
 profiles:
   - kind: Desktop # Options: [Desktop, Kueue, Notebook, VirtualMachine]
@@ -34,6 +34,10 @@ bindings:
   #   user:
   #     kind: Guest # Options: [Guest, User]
   #     name: ""
+  #   schedule:
+  #     - timezone: Asia/Seoul
+  #       start: "0 9 * * *" # 09:00
+  #       end: "0 18 * * *" # 18:00
 
 kueue:
   enabled: false
