@@ -1,5 +1,5 @@
 [package]
-name = "openark-vine-session-backend"
+name = "openark-cli"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -21,20 +21,13 @@ workspace = true
 
 [features]
 default = [
-    "cors-allow-any",
     "tls-default",
     "opentelemetry-all",
     # "opentelemetry-otlp",
 ]
 
-cors-allow-any = ["dep:actix-cors"]
-
 # OpenTelemetry
-opentelemetry = [
-    "dep:actix-web-opentelemetry",
-    "openark-core/opentelemetry",
-    "tracing",
-]
+opentelemetry = ["openark-core/opentelemetry", "tracing"]
 opentelemetry-all = [
     "openark-core/opentelemetry-all",
     "opentelemetry-logs",
@@ -45,79 +38,42 @@ opentelemetry-otlp = ["openark-core/opentelemetry-otlp", "opentelemetry"]
 
 # OpenTelemetry pillars and functions
 opentelemetry-logs = ["openark-core/opentelemetry-logs", "opentelemetry"]
-opentelemetry-metrics = [
-    "actix-web-opentelemetry?/metrics",
-    "openark-core/opentelemetry-metrics",
-    "opentelemetry",
-]
+opentelemetry-metrics = ["openark-core/opentelemetry-metrics", "opentelemetry"]
 opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
 tls-default = ["tls-aws-lc-rs"]
 tls-aws-lc-rs = [
-    "actix-web/rustls-0_23",
     "kube/rustls-tls",
     "openark-core/tls-aws-lc-rs",
-    "openark-vine-oauth/tls-aws-lc-rs",
     "openark-vine-session-exec/tls-aws-lc-rs",
-    "reqwest/rustls-tls",
 ]
 tls-openssl = [
-    "actix-web/openssl",
     "kube/openssl-tls",
     "openark-core/tls-openssl",
-    "openark-vine-oauth/tls-openssl",
     "openark-vine-session-exec/tls-openssl",
-    "reqwest/native-tls",
 ]
 tls-ring = [
-    "actix-web/rustls-0_23",
     "kube/rustls-tls",
     "openark-core/tls-ring",
-    "openark-vine-oauth/tls-ring",
     "openark-vine-session-exec/tls-ring",
-    "reqwest/rustls-tls",
 ]
 
 # Tracing
 tracing = [
     "dep:tracing",
     "openark-core/tracing",
-    "openark-vine-oauth/tracing",
     "openark-vine-session-exec/tracing",
 ]
 
 [dependencies]
 openark-core = { workspace = true, features = ["clap", "std"] }
-openark-vine-oauth = { workspace = true, features = [
-    "actix-web",
-    "clap",
-    "kube",
-    "std",
-] }
-openark-vine-session-api = { workspace = true, features = [
-    "kube",
-    "serde",
-    "std",
-] }
-openark-vine-session-exec = { workspace = true, features = ["serde", "std"] }
+openark-vine-session-exec = { workspace = true, features = ["clap", "std"] }
 
-actix-cors = { workspace = true, optional = true }
-actix-web = { workspace = true }
-actix-web-opentelemetry = { workspace = true, optional = true }
 anyhow = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
-itertools = { workspace = true, features = ["use_std"] }
-jsonwebtoken = { workspace = true }
-k8s-openapi = { workspace = true, features = [
-    # "std",
-] }
-kube = { workspace = true, features = ["admission"] }
-kube-custom-resources-rs = { workspace = true, features = ["argoproj_io"] }
-kube-quantity = { workspace = true }
-reqwest = { workspace = true }
-serde = { workspace = true, features = ["derive", "std"] }
-serde-json = { workspace = true, features = ["std"] }
+tokio = { workspace = true, features = ["full"] }
+kube = { workspace = true, features = ["client"] }
 tracing = { workspace = true, optional = true, features = [
     "attributes",
     "std",

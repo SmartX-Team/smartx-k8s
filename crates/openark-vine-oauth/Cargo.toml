@@ -40,7 +40,7 @@ std = [
 ]
 
 actix-web = ["dep:actix-web", "reqwest", "send", "serde", "std"]
-clap = ["dep:clap"]
+clap = ["dep:clap", "std"]
 client = [
     "dep:anyhow",
     "dep:async-trait",
