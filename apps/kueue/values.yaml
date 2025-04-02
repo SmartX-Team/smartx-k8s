@@ -17,7 +17,7 @@ controllerManager:
       pullPolicy: IfNotPresent
 
 # kueueviz dashboard
-enableKueueViz: true
+enableKueueViz: false
 kueueViz:
   backend: {}
   frontend: {}
