@@ -1,0 +1,19 @@
+---
+node:
+  tolerateAllTaints: false
+  defaultTolerations: true
+  tolerations: []
+  affinity:
+    nodeAffinity: {}
+
+mountpointPod:
+  namespace: csi-s3
+
+awsAccessSecret:
+  name: s3-credential
+  keyId: key_id
+  accessKey: access_key
+  sessionToken: session_token
+
+experimental:
+  podMounter: false

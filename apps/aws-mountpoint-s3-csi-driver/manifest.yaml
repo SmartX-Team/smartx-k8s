@@ -1,0 +1,31 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.aws-mountpoint-s3-csi-driver
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: csi-s3
+    patched: false
+    unsafe: true # CSI
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi/block
+      - org.ulagbulag.io/csi/filesystem
+      - org.ulagbulag.io/csi/object
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: aws-mountpoint-s3-csi-driver
+    repoUrl: "https://awslabs.github.io/mountpoint-s3-csi-driver"
+    version: 1.13.0
