@@ -1,0 +1,44 @@
+[package]
+name = "connected-data-lake-api"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+alloc = ["serde?/alloc"]
+std = ["libc?/std", "serde?/std", "thiserror/std", "tracing?/std"]
+
+datafusion = ["dep:datafusion"]
+fuse = ["dep:fuser", "dep:libc", "dep:tokio", "std", "tokio/rt"]
+schemars = ["dep:schemars", "serde"]
+serde = ["alloc", "dep:serde", "fuser?/serializable"]
+
+# Tracing
+tracing = ["dep:tracing"]
+
+[dependencies]
+async-trait = { workspace = true }
+datafusion = { workspace = true, optional = true }
+fuser = { workspace = true, optional = true }
+libc = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true, features = ["derive"] }
+serde = { workspace = true, optional = true, features = ["derive"] }
+thiserror = { workspace = true }
+tokio = { workspace = true, optional = true }
+tracing = { workspace = true, optional = true }

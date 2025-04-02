@@ -24,6 +24,10 @@ version = "2.0.0-alpha.1"
 blocks_in_conditions = "allow" # opentelemetry tracing macro would be noisy
 
 [workspace.dependencies]
+connected-data-lake-api = { path = "crates/connected-data-lake-api" }
+connected-data-lake-backend-fs = { path = "crates/connected-data-lake-backend-fs" }
+connected-data-lake-backend-object-store = { path = "crates/connected-data-lake-backend-object-store" }
+connected-data-lake-layer-delta-lake = { path = "crates/connected-data-lake-layer-delta-lake" }
 openark-admission-openapi = { path = "crates/openark-admission-openapi" }
 openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }
@@ -47,6 +51,7 @@ actix-web = { version = "4.10", default-features = false, features = [
 ] }
 actix-web-opentelemetry = { version = "0.21", default-features = false }
 anyhow = { version = "1.0", default-features = false }
+arrow = { version = "54", default-features = false, features = ["chrono-tz"] }
 async-trait = { version = "0.1", default-features = false }
 base64 = { version = "0.22", default-features = false }
 chrono = { version = "0.4", default-features = false }
@@ -54,6 +59,8 @@ clap = { version = "4.5", default-features = false }
 cookie = { version = "0.18", default-features = false }
 codesnake = { version = "0.2", default-features = false }
 convert-case = { package = "convert_case", version = "0.8", default-features = false }
+datafusion = { version = "46", default-features = false }
+fuser = { version = "0.15", default-features = false, features = ["abi-7-31"] }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.3", default-features = false }
 gloo-net = { version = "0.6", default-features = false }
@@ -73,6 +80,7 @@ kube = { version = "0.99", default-features = false }
 kube-custom-resources-rs = { git = "https://github.com/ulagbulag/kube-custom-resources-rs.git", branch = "main" }
 # kube-custom-resources-rs = { version = "2024.11.1", default-features = false }
 kube-quantity = { package = "kube_quantity", version = "0.8", default-features = false }
+libc = { version = "0.2", default-features = false }
 opentelemetry = { version = "0.28", default-features = false }
 opentelemetry-appender-tracing = { version = "0.28", default-features = false }
 opentelemetry-otlp = { version = "0.28", default-features = false }

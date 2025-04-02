@@ -1,0 +1,59 @@
+[package]
+name = "connected-data-lake-layer-delta-lake"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+alloc = ["connected-data-lake-api/alloc", "serde?/alloc"]
+std = ["arrow/prettyprint", "connected-data-lake-api/std", "serde?/std"]
+full = ["compression", "parquet"]
+
+# File Formats
+parquet = ["datafusion/parquet"]
+
+# Utilities
+compression = ["datafusion/compression"]
+
+fuse = ["connected-data-lake-api/fuse", "dep:fuser"]
+schemars = ["dep:schemars", "connected-data-lake-api/schemars", "serde"]
+serde = [
+    "alloc",
+    "connected-data-lake-api/serde",
+    "datafusion/serde",
+    "dep:serde",
+]
+
+[dependencies]
+connected-data-lake-api = { workspace = true, features = ["datafusion", "std"] }
+
+arrow = { workspace = true }
+async-trait = { workspace = true }
+datafusion = { workspace = true, features = [
+    "datetime_expressions",
+    "encoding_expressions",
+    "nested_expressions",
+    "regex_expressions",
+    "string_expressions",
+    "unicode_expressions",
+] }
+fuser = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true, features = ["derive"] }
+serde = { workspace = true, optional = true, features = ["derive"] }
+tokio = { workspace = true, features = ["sync"] }
