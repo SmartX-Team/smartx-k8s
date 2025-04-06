@@ -1,19 +1,5 @@
 use arrow::datatypes::{DataType, Field, Schema, SchemaBuilder};
-
-pub(crate) mod types {
-    use arrow::datatypes::{DataType, TimeUnit};
-
-    pub(crate) type BlockDeviceIndex = u64;
-
-    pub(super) const BLOCK_DEVICE_INDEX: DataType = DataType::UInt64;
-    pub(super) const BLOCK_DEVICE_DATA: DataType = DataType::Binary;
-
-    pub(crate) type InodeIndex = u64;
-
-    pub(super) const INODE_INDEX: DataType = DataType::UInt64;
-
-    pub(super) const TIMESPEC: DataType = DataType::Time64(TimeUnit::Nanosecond);
-}
+use connected_data_lake_api::types;
 
 /// Append block device schema.
 ///

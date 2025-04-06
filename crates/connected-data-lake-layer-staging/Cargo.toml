@@ -1,5 +1,5 @@
 [package]
-name = "connected-data-lake-api"
+name = "connected-data-lake-layer-staging"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -21,31 +21,16 @@ workspace = true
 
 [features]
 default = []
-alloc = ["serde?/alloc"]
-std = [
-    "arrow?/prettyprint",
-    "libc?/std",
-    "serde?/std",
-    "thiserror/std",
-    "tracing?/std",
-]
+alloc = ["connected-data-lake-api/alloc", "serde?/alloc"]
+std = ["connected-data-lake-api/std", "serde?/std"]
 
-arrow = ["dep:arrow"]
-datafusion = ["arrow", "dep:datafusion"]
-fuse = ["dep:fuser", "dep:libc", "std"]
-schemars = ["dep:schemars", "serde"]
-serde = ["alloc", "dep:serde", "fuser?/serializable"]
-
-# Tracing
-tracing = ["dep:tracing"]
+fuse = ["connected-data-lake-api/fuse", "dep:fuser"]
+schemars = ["dep:schemars", "connected-data-lake-api/schemars", "serde"]
+serde = ["alloc", "connected-data-lake-api/serde", "dep:serde"]
 
 [dependencies]
-arrow = { workspace = true, optional = true }
-async-trait = { workspace = true }
-datafusion = { workspace = true, optional = true }
+connected-data-lake-api = { workspace = true, features = ["datafusion", "std"] }
+
 fuser = { workspace = true, optional = true }
-libc = { workspace = true, optional = true }
 schemars = { workspace = true, optional = true, features = ["derive"] }
 serde = { workspace = true, optional = true, features = ["derive"] }
-thiserror = { workspace = true }
-tracing = { workspace = true, optional = true }

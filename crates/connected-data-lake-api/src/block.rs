@@ -1,5 +1,3 @@
-use async_trait::async_trait;
-
 use crate::error::Result;
 
 /// An old style MBR partition table starts after `512` bytes.
@@ -39,19 +37,18 @@ where
 
 impl<T> BlockDeviceMetadataExt for T where Self: BlockDeviceMetadata {}
 
-#[async_trait]
 pub trait BlockDevice
 where
     Self: BlockDeviceMetadata,
 {
-    async fn read_one(
-        &self,
+    fn read_one(
+        &mut self,
         index: <Self as BlockDeviceMetadata>::Index,
         buf: &mut [u8],
     ) -> Result<usize>;
 
-    async fn write_one(
-        &self,
+    fn write_one(
+        &mut self,
         index: <Self as BlockDeviceMetadata>::Index,
         buf: &[u8],
     ) -> Result<usize>;

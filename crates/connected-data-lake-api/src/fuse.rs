@@ -1,66 +1,68 @@
-use std::{ffi::OsStr, time::Duration};
+use std::{borrow::Borrow, ffi::OsStr, os::unix::ffi::OsStrExt, path::Path, time::Duration};
 
-use fuser::{ReplyAttr, ReplyEntry, Request};
+use fuser::{ReplyAttr, ReplyData, ReplyEntry, Request};
 use libc::ENOENT;
-use tokio::runtime::Runtime;
 
-use crate::{
-    error::Result,
-    fs::{Filesystem, FilesystemMetadata},
-};
+use crate::fs::{Filesystem, FilesystemMetadata};
 
 pub struct FuseFilesystem<T> {
     fs: T,
-    rt: Runtime,
     ttl: Duration,
 }
 
 impl<T> FuseFilesystem<T> {
-    pub(crate) fn try_new(fs: T) -> Result<Self>
+    pub(crate) fn new(fs: T) -> Self
     where
         T: FilesystemMetadata,
     {
         let ttl = fs.ttl();
-        let rt = Runtime::new()?;
-
-        Ok(Self { fs, rt, ttl })
+        Self { fs, ttl }
     }
 }
 
 impl<T> ::fuser::Filesystem for FuseFilesystem<T>
 where
     T: Filesystem + FilesystemMetadata<Inode = u64>,
+    <T as FilesystemMetadata>::Path: AsRef<Path>,
 {
     fn lookup(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEntry) {
         match name.to_str() {
-            Some(name) => {
-                let handle = self.rt.handle();
-                match handle.block_on(self.fs.lookup(parent, name)) {
-                    Ok(attr) => reply.entry(&self.ttl, &attr, 0),
-                    Err(error) => {
-                        #[cfg(feature = "tracing")]
-                        {
-                            ::tracing::error!(
-                                "lookup(parent: {parent:#x?}, name {name:?}): {error}"
-                            )
-                        };
-                        let _ = error;
-                        reply.error(ENOENT)
-                    }
+            Some(name) => match self.fs.lookup(parent, name) {
+                Ok(attr) => reply.entry(&self.ttl, &attr, 0),
+                Err(error) => {
+                    #[cfg(feature = "tracing")]
+                    {
+                        ::tracing::error!("lookup(parent: {parent:#x?}, name {name:?}): {error}")
+                    };
+                    let _ = error;
+                    reply.error(ENOENT)
                 }
-            }
+            },
             None => reply.error(ENOENT),
         }
     }
 
     fn getattr(&mut self, _req: &Request, ino: u64, fh: Option<u64>, reply: ReplyAttr) {
-        let handle = self.rt.handle();
-        match handle.block_on(self.fs.getattr(ino)) {
+        match self.fs.getattr(ino) {
             Ok(attr) => reply.attr(&self.ttl, &attr),
             Err(error) => {
                 #[cfg(feature = "tracing")]
                 {
                     ::tracing::error!("getattr(ino: {ino:#x?}, fh: {fh:#x?}): {error}")
+                };
+                let _ = error;
+                reply.error(ENOENT)
+            }
+        }
+    }
+
+    fn readlink(&mut self, _req: &Request<'_>, ino: u64, reply: ReplyData) {
+        match self.fs.readlink(ino) {
+            Ok(path) => reply.data(path.borrow().as_ref().as_os_str().as_bytes()),
+            Err(error) => {
+                #[cfg(feature = "tracing")]
+                {
+                    ::tracing::error!("readlink(ino: {ino:#x?}): {error}")
                 };
                 let _ = error;
                 reply.error(ENOENT)

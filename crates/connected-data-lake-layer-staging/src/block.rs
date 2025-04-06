@@ -1,45 +1,27 @@
-use std::{collections::BTreeMap, sync::Arc};
+use std::collections::BTreeMap;
 
-use async_trait::async_trait;
 use connected_data_lake_api::{
     block::BlockDeviceMetadata,
     error::{Error, Result},
+    types,
 };
-use datafusion::{catalog::TableProvider, datasource::MemTable};
-use tokio::sync::Mutex;
 
-use crate::schema::{schema_block_device, types};
-
+#[derive(Debug, Default)]
 pub struct BlockDevice {
-    staging: Mutex<BTreeMap<types::BlockDeviceIndex, Vec<u8>>>,
-    table: Arc<dyn TableProvider>,
-}
-
-impl BlockDevice {
-    pub fn new_inmemory() -> Result<Self> {
-        let schema = Arc::new(schema_block_device());
-        let table = Arc::new(MemTable::try_new(schema, vec![vec![]])?);
-
-        Ok(Self {
-            staging: Default::default(),
-            table,
-        })
-    }
+    staging: BTreeMap<types::BlockDeviceIndex, Vec<u8>>,
 }
 
 impl BlockDeviceMetadata for BlockDevice {
     type Index = types::BlockDeviceIndex;
 }
 
-#[async_trait]
 impl ::connected_data_lake_api::block::BlockDevice for BlockDevice {
-    async fn read_one(
-        &self,
+    fn read_one(
+        &mut self,
         index: <Self as BlockDeviceMetadata>::Index,
         buf: &mut [u8],
     ) -> Result<usize> {
-        let staging = self.staging.lock().await;
-        staging
+        self.staging
             .get(&index)
             .map(|data| {
                 buf.copy_from_slice(data);
@@ -77,15 +59,14 @@ impl ::connected_data_lake_api::block::BlockDevice for BlockDevice {
         // }
     }
 
-    async fn write_one(
-        &self,
+    fn write_one(
+        &mut self,
         index: <Self as BlockDeviceMetadata>::Index,
         buf: &[u8],
     ) -> Result<usize> {
         let len = buf.len();
         {
-            let staging = self.staging.lock().await;
-            self.staging.lock().await.insert(index, buf.to_vec());
+            self.staging.insert(index, buf.to_vec());
         }
         Ok(len)
     }

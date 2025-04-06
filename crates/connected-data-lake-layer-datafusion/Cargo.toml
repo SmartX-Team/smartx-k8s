@@ -1,5 +1,5 @@
 [package]
-name = "connected-data-lake-layer-delta-lake"
+name = "connected-data-lake-layer-datafusion"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -22,7 +22,7 @@ workspace = true
 [features]
 default = []
 alloc = ["connected-data-lake-api/alloc", "serde?/alloc"]
-std = ["arrow/prettyprint", "connected-data-lake-api/std", "serde?/std"]
+std = ["connected-data-lake-api/std", "serde?/std"]
 full = ["compression", "parquet"]
 
 # File Formats
@@ -41,7 +41,11 @@ serde = [
 ]
 
 [dependencies]
-connected-data-lake-api = { workspace = true, features = ["datafusion", "std"] }
+connected-data-lake-api = { workspace = true, features = [
+    "arrow",
+    "datafusion",
+    "std",
+] }
 
 arrow = { workspace = true }
 async-trait = { workspace = true }

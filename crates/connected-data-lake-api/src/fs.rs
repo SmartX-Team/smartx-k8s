@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use async_trait::async_trait;
 #[cfg(feature = "fuse")]
 use fuser::FileAttr;
 
@@ -10,7 +9,7 @@ use crate::fuse::FuseFilesystem;
 
 pub trait FilesystemMetadata {
     type Inode;
-    type Path: ?Sized;
+    type Path: ?Sized + ToOwned;
 
     /// Return the TTL of fuse filesystem.
     ///
@@ -22,53 +21,49 @@ pub trait FilesystemMetadata {
     }
 }
 
-#[async_trait]
 pub trait Filesystem
 where
     Self: FilesystemMetadata,
 {
     #[cfg(feature = "fuse")]
-    async fn lookup(
-        &self,
+    fn lookup(
+        &mut self,
         parent: <Self as FilesystemMetadata>::Inode,
         name: &str,
     ) -> Result<FileAttr>;
 
     #[cfg(feature = "fuse")]
-    async fn getattr(&self, ino: <Self as FilesystemMetadata>::Inode) -> Result<FileAttr>;
-
-    async fn read(
-        &self,
-        path: &<Self as FilesystemMetadata>::Path,
-        buf: &mut [u8],
-    ) -> Result<usize>;
-
-    async fn write(&self, path: &<Self as FilesystemMetadata>::Path, buf: &[u8]) -> Result<usize>;
+    fn getattr(&mut self, ino: <Self as FilesystemMetadata>::Inode) -> Result<FileAttr>;
 
     #[cfg(feature = "fuse")]
-    #[inline]
-    fn try_into_fuse(self) -> Result<FuseFilesystem<Self>>
-    where
-        Self: Sized,
-    {
-        FuseFilesystem::try_new(self)
-    }
+    fn readlink(
+        &mut self,
+        ino: <Self as FilesystemMetadata>::Inode,
+    ) -> Result<<<Self as FilesystemMetadata>::Path as ToOwned>::Owned>;
 }
 
-#[async_trait]
 pub trait FilesystemExt
 where
     Self: Filesystem,
 {
+    fn read(&mut self, path: &<Self as FilesystemMetadata>::Path, buf: &mut [u8]) -> Result<usize> {
+        todo!()
+    }
+
+    fn write(&mut self, path: &<Self as FilesystemMetadata>::Path, buf: &[u8]) -> Result<usize> {
+        todo!()
+    }
+
+    /// Convert filesystem into [`FuseFilesystem`].
+    ///
     #[cfg(feature = "fuse")]
     #[inline]
-    fn try_into_fuse(self) -> Result<FuseFilesystem<Self>>
+    fn into_fuse(self) -> FuseFilesystem<Self>
     where
         Self: Sized,
     {
-        FuseFilesystem::try_new(self)
+        FuseFilesystem::new(self)
     }
 }
 
-#[async_trait]
 impl<T> FilesystemExt for T where Self: Filesystem {}

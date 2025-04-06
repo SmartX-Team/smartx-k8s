@@ -27,7 +27,8 @@ blocks_in_conditions = "allow" # opentelemetry tracing macro would be noisy
 connected-data-lake-api = { path = "crates/connected-data-lake-api" }
 connected-data-lake-backend-fs = { path = "crates/connected-data-lake-backend-fs" }
 connected-data-lake-backend-object-store = { path = "crates/connected-data-lake-backend-object-store" }
-connected-data-lake-layer-delta-lake = { path = "crates/connected-data-lake-layer-delta-lake" }
+connected-data-lake-layer-datafusion = { path = "crates/connected-data-lake-layer-datafusion" }
+connected-data-lake-layer-staging = { path = "crates/connected-data-lake-layer-staging" }
 openark-admission-openapi = { path = "crates/openark-admission-openapi" }
 openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }

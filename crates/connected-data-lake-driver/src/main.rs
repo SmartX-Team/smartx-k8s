@@ -36,8 +36,10 @@ fn try_main(args: Args) -> Result<()> {
         directory: mountpoint,
     } = args;
 
-    let filesystem =
-        ::connected_data_lake_layer_delta_lake::fs::Filesystem::new_inmemory()?.try_into_fuse()?;
+    let filesystem = ::connected_data_lake_layer_staging::fs::Filesystem::<
+        ::connected_data_lake_layer_staging::block::BlockDevice,
+    >::default()
+    .into_fuse();
 
     ::fuser::mount2(
         filesystem,

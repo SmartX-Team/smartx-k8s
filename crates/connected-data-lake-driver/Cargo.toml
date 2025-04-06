@@ -46,8 +46,12 @@ connected-data-lake-backend-fs = { workspace = true, features = ["std"] }
 connected-data-lake-backend-object-store = { workspace = true, features = [
     "std",
 ] }
-connected-data-lake-layer-delta-lake = { workspace = true, features = [
+connected-data-lake-layer-datafusion = { workspace = true, features = [
     "full",
+    "fuse",
+    "std",
+] }
+connected-data-lake-layer-staging = { workspace = true, features = [
     "fuse",
     "std",
 ] }
