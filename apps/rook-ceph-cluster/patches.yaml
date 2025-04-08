@@ -37,6 +37,13 @@ ingress:
     # to set the ingress class
     ingressClassName: {{ .Values.ingress.domainName | quote }}
 
+monitoring:
+  # -- Enable Prometheus integration, will also create necessary RBAC rules to allow Operator to create ServiceMonitors.
+  # Monitoring requires Prometheus to be pre-installed
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  # -- Whether to create the Prometheus rules for Ceph alerts
+  createPrometheusRules: {{ has "org.ulagbulag.io/observability" .Values.features }}
+
 # -- A list of CephBlockPool configurations to deploy
 # @default -- See [below](#ceph-block-pools)
 cephBlockPools:

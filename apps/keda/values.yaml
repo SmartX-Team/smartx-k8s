@@ -1,0 +1,39 @@
+---
+# -- Defines Kubernetes namespaces to watch to scale their workloads. Default watches all namespaces
+watchNamespace: ""
+
+networkPolicy:
+  # -- Enable network policies
+  enabled: true
+  # -- Flavor of the network policies (cilium)
+  flavor: cilium
+
+# -- [Affinity] for pod scheduling for KEDA operator, Metrics API Server and KEDA admission webhooks.
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+        weight: 1
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - ControlPlane
+
+prometheus:
+  operator:
+    prometheusRules:
+      # -- Scraping namespace for KEDA Operator using prometheusRules crd (prometheus operator)
+      namespace: monitoring
+  webhooks:
+    prometheusRules:
+      # -- Scraping namespace for KEDA admission webhooks using prometheusRules crd (prometheus operator)
+      namespace: monitoring

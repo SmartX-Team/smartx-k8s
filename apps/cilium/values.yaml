@@ -124,12 +124,6 @@ cni:
   # agent downtime.
   exclusive: false
 
-# -- Grafana dashboards for cilium-agent
-# grafana can import dashboards based on the label and value
-# ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
-dashboards:
-  enabled: true
-
 debug:
   # -- Enable debug logging
   enabled: false
@@ -200,17 +194,6 @@ envoy:
         - NET_BIND_SERVICE
       # -- Keep capability `NET_BIND_SERVICE` for Envoy process.
       keepCapNetBindService: true
-  # -- Configure Cilium Envoy Prometheus options.
-  # Note that some of these apply to either cilium-agent or cilium-envoy.
-  prometheus:
-    # -- Enable prometheus metrics for cilium-envoy
-    enabled: true
-    serviceMonitor:
-      # -- Enable service monitors.
-      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
-      # Note that this setting applies to both cilium-envoy _and_ cilium-agent
-      # with Envoy enabled.
-      enabled: true
 
 externalIPs:
   # -- Enable ExternalIPs service support.
@@ -285,14 +268,6 @@ hubble:
     enabled: true
     # -- Roll out Hubble Relay pods automatically when configmap is updated.
     rollOutPods: true
-    # -- Enable prometheus metrics for hubble-relay on the configured port at
-    # /metrics
-    prometheus:
-      enabled: true
-      serviceMonitor:
-        # -- Enable service monitors.
-        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
-        enabled: true
 
   ui:
     # -- Whether to enable the Hubble UI.
@@ -472,19 +447,6 @@ operator:
   #         labelSelector:
   #           matchLabels:
   #             io.cilium/app: operator
-  # -- Enable prometheus metrics for cilium-operator on the configured port at
-  # /metrics
-  prometheus:
-    enabled: true
-    serviceMonitor:
-      # -- Enable service monitors.
-      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
-      enabled: true
-  # -- Grafana dashboards for cilium-operator
-  # grafana can import dashboards based on the label and value
-  # ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
-  dashboards:
-    enabled: true
 
 # @schema
 # type: [null, string, array]
@@ -497,16 +459,6 @@ policyCIDRMatchMode:
 preflight:
   # -- Enable Cilium pre-flight resources (required for upgrade)
   enabled: false
-
-# -- Configure prometheus metrics on the configured port at /metrics
-prometheus:
-  enabled: true
-  serviceMonitor:
-    # -- Enable service monitors.
-    # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
-    enabled: true
-    # -- Set to `true` and helm will not check for monitoring.coreos.com/v1 CRDs before deploying
-    trustCRDsExist: true
 
 # -- Enable native-routing mode or tunneling mode.
 # Possible values:

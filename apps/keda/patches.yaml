@@ -1,0 +1,32 @@
+---
+# -- Kubernetes cluster name. Used in features such as emitting CloudEvents
+clusterName: {{ .Values.cluster.name | quote }}
+
+# -- Kubernetes cluster domain
+clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+prometheus:
+  metricServer:
+    # -- Enable metric server Prometheus metrics expose
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enables ServiceMonitor creation for the Prometheus Operator
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  operator:
+    # -- Enable KEDA Operator prometheus metrics expose
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enables ServiceMonitor creation for the Prometheus Operator
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    prometheusRules:
+      # -- Enables PrometheusRules creation for the Prometheus Operator
+      enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}
+  webhooks:
+    # -- Enable KEDA admission webhooks prometheus metrics expose
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enables ServiceMonitor creation for the Prometheus Operator
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    prometheusRules:
+      # -- Enables PrometheusRules creation for the Prometheus Operator
+      enabled: {{ has "org.ulagbulag.io/observability" .Values.features }}
