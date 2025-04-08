@@ -109,7 +109,9 @@ function main() {
     cd inventory
 
     # Get KISS Kubespray configurations
-    cat "${BASEDIR}/apps/openark-kiss/values.yaml" | yq '.kubespray' >./all.yaml
+    helm template "${BASEDIR}/apps/openark-kiss" \
+        --values ../values.yaml |
+        yq 'select(.metadata.name == "ansible-control-planes-default") | .data."defaults.yaml"' >./all.yaml
 
     # Register bootstrapper node(s)
     local node_name="$(cat ../values.yaml | yq '.bootstrapper.node.name')"
@@ -122,8 +124,6 @@ function main() {
         yq ".all.hosts.${node_name}.ip = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
         yq ".all.hosts.${node_name}.name = \"${node_name}\"" |
         yq ".etcd.hosts.${node_name} = {}" |
-        yq ".k8s_cluster.children.kube_control_plane = {}" |
-        yq ".k8s_cluster.children.kube_node = {}" |
         yq ".kube_control_plane.hosts.${node_name} = {}" |
         yq ".kube_node.hosts.${node_name} = {}" |
         cat >./hosts.yaml
@@ -156,7 +156,7 @@ function main() {
         ansible-playbook \
         --become \
         --become-user 'root' \
-        --extra-vars '@/inventory/all.yaml' \
+        --inventory '/inventory/all.yaml' \
         --inventory '/inventory/hosts.yaml' \
         --private-key '/root/.ssh/key' \
         ${@:2}
