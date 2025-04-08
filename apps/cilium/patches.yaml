@@ -121,6 +121,11 @@ prometheus:
     # -- Set to `true` and helm will not check for monitoring.coreos.com/v1 CRDs before deploying
     trustCRDsExist: true
 
+# -- Configure socket LB
+socketLB:
+  # -- Disable socket lb for non-root ns. This is used to enable Istio routing rules.
+  hostNamespaceOnly: {{ has "org.ulagbulag.io/cni/istio" .Values.features }}
+
 # -- Node tolerations for agent scheduling to nodes with taints
 # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 tolerations:

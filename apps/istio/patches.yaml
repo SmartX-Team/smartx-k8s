@@ -1,0 +1,106 @@
+---
+tolerations:
+  - operator: Exists
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+    operator: Exists
+    effect: NoExecute
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+    operator: Exists
+    effect: NoExecute
+  - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+    operator: Exists
+    effect: NoExecute
+
+## Mesh config settings
+
+telemetry:
+    # Indicate if prometheus stats filter is enabled or not
+    prometheus:
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+# meshConfig defines runtime configuration of components, including Istiod and istio-agent behavior
+# See https://istio.io/docs/reference/config/istio.mesh.v1alpha1/ for all available options
+meshConfig:
+  enablePrometheusMerge: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+  proxy:
+    # CAUTION: It is important to ensure that all Istio helm charts specify the same clusterDomain value
+    # cluster domain. Default value is "cluster.local".
+    clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+  ##############################################################################################
+  # The following values are found in other charts. To effectively modify these values, make   #
+  # make sure they are consistent across your Istio helm charts                                #
+  ##############################################################################################
+
+  # Enable control of remote clusters.
+  externalIstiod: false
+
+  # Configure a remote cluster as the config cluster for an external istiod.
+  configCluster: false
+
+  # Mesh ID means Mesh Identifier. It should be unique within the scope where
+  # meshes will interact with each other, but it is not required to be
+  # globally/universally unique. For example, if any of the following are true,
+  # then two meshes must have different Mesh IDs:
+  # - Meshes will have their telemetry aggregated in one place
+  # - Meshes will be federated together
+  # - Policy will be written referencing one mesh from the other
+  #
+  # If an administrator expects that any of these conditions may become true in
+  # the future, they should ensure their meshes have different Mesh IDs
+  # assigned.
+  #
+  # Within a multicluster mesh, each cluster must be (manually or auto)
+  # configured to have the same Mesh ID value. If an existing cluster 'joins' a
+  # multicluster mesh, it will need to be migrated to the new mesh ID. Details
+  # of migration TBD, and it may be a disruptive operation to change the Mesh
+  # ID post-install.
+  #
+  # If the mesh admin does not specify a value, Istio will use the value of the
+  # mesh's Trust Domain. The best practice is to select a proper Trust Domain
+  # value.
+  meshID: ""
+
+  # Configure the mesh networks to be used by the Split Horizon EDS.
+  #
+  # The following example defines two networks with different endpoints association methods.
+  # For `network1` all endpoints that their IP belongs to the provided CIDR range will be
+  # mapped to network1. The gateway for this network example is specified by its public IP
+  # address and port.
+  # The second network, `network2`, in this example is defined differently with all endpoints
+  # retrieved through the specified Multi-Cluster registry being mapped to network2. The
+  # gateway is also defined differently with the name of the gateway service on the remote
+  # cluster. The public IP for the gateway will be determined from that remote service (only
+  # LoadBalancer gateway service type is currently supported, for a NodePort type gateway service,
+  # it still need to be configured manually).
+  #
+  # meshNetworks:
+  #   network1:
+  #     endpoints:
+  #     - fromCidr: "192.168.0.1/24"
+  #     gateways:
+  #     - address: 1.1.1.1
+  #       port: 80
+  #   network2:
+  #     endpoints:
+  #     - fromRegistry: reg1
+  #     gateways:
+  #     - registryServiceName: istio-ingressgateway.istio-system.svc.cluster.local
+  #       port: 443
+  #
+  meshNetworks: {}
+
+  multiCluster:
+    # Set to true to connect two kubernetes clusters via their respective
+    # ingressgateway services when pods in each cluster cannot directly
+    # talk to one another. All clusters should be using Istio mTLS and must
+    # have a shared root CA for this model to work.
+    enabled: false
+    # Should be set to the name of the cluster this installation will run in. This is required for sidecar injection
+    # to properly label proxies
+    clusterName: {{ .Values.cluster.name | quote }}
+
+  # Network defines the network this cluster belong to. This name
+  # corresponds to the networks in the map of mesh networks.
+  network: ""
