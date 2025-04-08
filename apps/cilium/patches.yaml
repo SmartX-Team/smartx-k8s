@@ -10,6 +10,26 @@ clustermesh:
         # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
         enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
 
+# -- Grafana dashboards for cilium-agent
+# grafana can import dashboards based on the label and value
+# ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+dashboards:
+  enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+# Configure Cilium Envoy options.
+envoy:
+  # -- Configure Cilium Envoy Prometheus options.
+  # Note that some of these apply to either cilium-agent or cilium-envoy.
+  prometheus:
+    # -- Enable prometheus metrics for cilium-envoy
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enable service monitors.
+      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      # Note that this setting applies to both cilium-envoy _and_ cilium-agent
+      # with Envoy enabled.
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
 hubble:
   # -- Hubble metrics configuration.
   # See https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics
@@ -30,6 +50,16 @@ hubble:
     # -- The cluster domain to use to query the Hubble Peer service. It should
     # be the local cluster.
     clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+  relay:
+    # -- Enable prometheus metrics for hubble-relay on the configured port at
+    # /metrics
+    prometheus:
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+      serviceMonitor:
+        # -- Enable service monitors.
+        # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+        enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
 
 ipam:
   operator:
@@ -65,6 +95,31 @@ k8sServicePort: {{ regexReplaceAll "^https://[0-9a-z.]+:([0-9]+).*$" .Values.clu
 # Valid options are "true" or "false".
 # ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/
 kubeProxyReplacement: {{ not .Values.cluster.services.kubeProxy.enabled }}
+
+operator:
+  # -- Enable prometheus metrics for cilium-operator on the configured port at
+  # /metrics
+  prometheus:
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    serviceMonitor:
+      # -- Enable service monitors.
+      # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  # -- Grafana dashboards for cilium-operator
+  # grafana can import dashboards based on the label and value
+  # ref: https://github.com/grafana/helm-charts/tree/main/apps/grafana#sidecar-for-dashboards
+  dashboards:
+    enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+# -- Configure prometheus metrics on the configured port at /metrics
+prometheus:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  serviceMonitor:
+    # -- Enable service monitors.
+    # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
+    enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+    # -- Set to `true` and helm will not check for monitoring.coreos.com/v1 CRDs before deploying
+    trustCRDsExist: true
 
 # -- Node tolerations for agent scheduling to nodes with taints
 # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/

@@ -66,6 +66,14 @@ org.ulagbulag.io/auth/sync:
   requires:
     - org.ulagbulag.io/auth
 
+org.ulagbulag.io/autoscaling:
+  requires:
+    - org.ulagbulag.io/observability
+
+org.ulagbulag.io/autoscaling/keda:
+  requires:
+    - org.ulagbulag.io/autoscaling
+
 org.ulagbulag.io/bare-metal-provisioning:
   requires:
     - org.ulagbulag.io/cni

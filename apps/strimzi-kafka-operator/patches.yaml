@@ -2,4 +2,4 @@
 kubernetesServiceDnsDomain: {{ .Values.cluster.domainName | quote }}
 
 dashboards:
-  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+  enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
