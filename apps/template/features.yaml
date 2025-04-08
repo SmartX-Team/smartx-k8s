@@ -83,7 +83,6 @@ org.ulagbulag.io/bare-metal-provisioning:
 org.ulagbulag.io/bare-metal-provisioning/kiss:
   requires:
     - org.ulagbulag.io/bare-metal-provisioning
-    - org.ulagbulag.io/gitops
     - org.ulagbulag.io/workflow/argo
 
 org.ulagbulag.io/batch/scheduling:

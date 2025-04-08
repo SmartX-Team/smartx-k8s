@@ -18,6 +18,7 @@ spec:
     useClusterValues: false
     features:
       - org.ulagbulag.io/auth
+      - org.ulagbulag.io/desktop-environment/vine
     ignoreDifferences: []
     sync:
       createNamespace: true
