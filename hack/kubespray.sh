@@ -148,7 +148,7 @@ function main() {
     cd - >/dev/null
 
     # Deploy a k8s cluster
-    docker run --rm \
+    docker run --rm -it \
         --mount type=bind,source="${WORKDIR}/inventory/",dst=/inventory \
         --mount type=bind,source="${WORKDIR}/ssh/",dst=/root/.ssh,readonly \
         --net host \
