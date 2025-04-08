@@ -520,7 +520,7 @@ impl NodeSession {
                 .and_then(|q| q.to_bytes_u32())
             {
                 // Subtract required cores
-                let cpu_cores = cpu_cores.checked_sub(3).unwrap_or_default(); // hypervisor + 
+                let cpu_cores = cpu_cores.checked_sub(4).unwrap_or_default(); // hypervisor + 
                 self.metadata.bind_cpu = Some(Quantity(cpu_cores.to_string()));
             }
 
