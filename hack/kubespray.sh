@@ -112,20 +112,22 @@ function main() {
     cat "${BASEDIR}/apps/openark-kiss/values.yaml" | yq '.kubespray' >./all.yaml
 
     # Register bootstrapper node(s)
+    local node_name="$(cat ../values.yaml | yq '.bootstrapper.node.name')"
     echo '{}' |
-        yq ".all.hosts.bootstrapper.ansible_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.bootstrapper.ansible_host_key_checking = false" |
-        yq ".all.hosts.bootstrapper.ansible_ssh_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.bootstrapper.ansible_ssh_port = 22" |
-        yq ".all.hosts.bootstrapper.ansible_ssh_user = \"$(cat ../values.yaml | yq '.kiss.auth.ssh.username')\"" |
-        yq ".all.hosts.bootstrapper.ip = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.bootstrapper.name = \"$(cat ../values.yaml | yq '.bootstrapper.node.name')\"" |
-        yq ".etcd.hosts.bootstrapper = {}" |
+        yq ".all.hosts.${node_name}.ansible_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
+        yq ".all.hosts.${node_name}.ansible_host_key_checking = false" |
+        yq ".all.hosts.${node_name}.ansible_ssh_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
+        yq ".all.hosts.${node_name}.ansible_ssh_port = 22" |
+        yq ".all.hosts.${node_name}.ansible_ssh_user = \"$(cat ../values.yaml | yq '.kiss.auth.ssh.username')\"" |
+        yq ".all.hosts.${node_name}.ip = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
+        yq ".all.hosts.${node_name}.name = \"${node_name}\"" |
+        yq ".etcd.hosts.${node_name} = {}" |
         yq ".k8s_cluster.children.kube_control_plane = {}" |
         yq ".k8s_cluster.children.kube_node = {}" |
-        yq ".kube_control_plane.hosts.bootstrapper = {}" |
-        yq ".kube_node.hosts.bootstrapper = {}" |
+        yq ".kube_control_plane.hosts.${node_name} = {}" |
+        yq ".kube_node.hosts.${node_name} = {}" |
         cat >./hosts.yaml
+    unset node_name
 
     # Complete building kubespray inventory
     cd - >/dev/null
