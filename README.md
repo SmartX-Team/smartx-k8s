@@ -16,3 +16,4 @@ Please browse [apps/openark-kiss/values.yaml](apps/openark-kiss/values.yaml) for
 | ------------ | ----- | ------ | ----------------- | ---- | ---------------------------- |
 | system.slice | 1000m | 5Gi    | 2Gi               | 4000 | systemd-systemd.service, ... |
 | kube.slice   | 1000m | 2Gi    | 2Gi               | 2000 | sshd.service, ...            |
+| (Daemonsets) | 2000m | 1Gi    | 2Gi               | 2000 | CSI, GPU, KubeVirt, ...      |
