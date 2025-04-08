@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.istio-gateway
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: istio-system
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/cni/istio
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: gateway
+    repoUrl: "https://istio-release.storage.googleapis.com/charts"
+    version: 1.25.1

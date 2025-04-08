@@ -1,0 +1,26 @@
+---
+# Whether to use an existing CNI installation
+cni:
+  enabled: true
+  provider: cilium
+
+## Mesh config settings
+
+telemetry:
+  enabled: true
+  v2:
+    # For Null VM case now.
+    # This also enables metadata exchange.
+    enabled: true
+    # stackdriver filter settings.
+    stackdriver:
+      enabled: false
+# gatewayClasses allows customizing the configuration of the default deployment of Gateways per GatewayClass.
+# For example:
+# gatewayClasses:
+#   istio:
+#     service:
+#       spec:
+#         type: ClusterIP
+# Per-Gateway configuration can also be set in the `Gateway.spec.infrastructure.parametersRef` field.
+# gatewayClasses: {}

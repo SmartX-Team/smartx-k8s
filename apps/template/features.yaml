@@ -110,6 +110,10 @@ org.ulagbulag.io/cni:
   optional:
     - org.ulagbulag.io/monitoring
 
+org.ulagbulag.io/cni/istio:
+  requires:
+    - org.ulagbulag.io/cni
+
 org.ulagbulag.io/cni/multus:
   requires:
     - org.ulagbulag.io/cni

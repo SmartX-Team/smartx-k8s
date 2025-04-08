@@ -17,6 +17,9 @@ webhook:
 {{- if has "org.ulagbulag.io/ingress" .Values.features }}
           - {{ .Values.ingress.namespace | quote }}
 {{- end }}
+{{- if has "org.ulagbulag.io/cni/istio" .Values.features }}
+          - istio-system
+{{- end }}
           - kube-system
   failurePolicy: Ignore
 

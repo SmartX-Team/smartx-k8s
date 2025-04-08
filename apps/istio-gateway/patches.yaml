@@ -1,0 +1,9 @@
+---
+# Labels to apply to all resources
+labels:
+  # By default, don't enroll gateways into the ambient dataplane
+  istio.io/dataplane-mode: none
+  {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
+
+# If specified, the gateway will act as a network gateway for the given network.
+networkGateway: ""

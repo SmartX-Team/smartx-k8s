@@ -1,0 +1,14 @@
+---
+# Settings for multicluster
+multiCluster:
+  # The name of the cluster we are installing in. Note this is a user-defined name, which must be consistent
+  # with Istiod configuration.
+  clusterName: {{ .Values.cluster.name | quote }}
+
+# meshConfig defines runtime configuration of components.
+# For ztunnel, only defaultConfig is used, but this is nested under `meshConfig` for consistency with other
+# components.
+# TODO: https://github.com/istio/istio/issues/43248
+meshConfig:
+  defaultConfig:
+    proxyMetadata: {}

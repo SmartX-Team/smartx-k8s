@@ -1,0 +1,35 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.istio-ztunnel
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: istio-system
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/cni/istio
+    ignoreDifferences:
+      - group: apps
+        kind: DaemonSet
+        name: istio-ztunnel
+        jsonPointers:
+          - /metadata/annotations
+          - /metadata/annotations/deprecated.daemonset.template.generation
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: ztunnel
+    repoUrl: "https://istio-release.storage.googleapis.com/charts"
+    version: 1.25.1

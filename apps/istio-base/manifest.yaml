@@ -1,0 +1,34 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.istio-base
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: istio-system
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/cni/istio
+    ignoreDifferences:
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        name: istiod-default-validator
+        jsonPointers:
+          - /webhooks/0/failurePolicy
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: base
+    repoUrl: "https://istio-release.storage.googleapis.com/charts"
+    version: 1.25.1

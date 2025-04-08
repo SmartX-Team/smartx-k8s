@@ -1,0 +1,25 @@
+---
+service:
+  # Type of service. Set to "None" to disable the service entirely
+  type: LoadBalancer
+  ## Set LoadBalancer class (only for LoadBalancers).
+  # loadBalancerClass: ""
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Gateway
+        weight: 1
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - Gateway
