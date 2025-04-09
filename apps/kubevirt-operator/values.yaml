@@ -39,6 +39,14 @@ kubevirt:
         - externalResourceProvider: false
           pciVendorSelector: 8086:7ae0
           resourceName: org.ulagbulag.io/pci-usb_controller-8086-7ae0
+        # Intel Corporation Meteor Lake-P USB 3.2 Gen 2x1 xHCI Host Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:7e7d
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-7e7d
+        # Intel Corporation Meteor Lake-P Thunderbolt 4 USB Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:7ec0
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-7ec0
         # Intel Corporation Tiger Lake-H Thunderbolt 4 USB Controller
         - externalResourceProvider: false
           pciVendorSelector: 8086:9a17
