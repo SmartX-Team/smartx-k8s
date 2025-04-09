@@ -1,3 +1,4 @@
 ---
 ingress:
   domainName: {{ .Values.ingress.domainName | quote }}
+  enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}

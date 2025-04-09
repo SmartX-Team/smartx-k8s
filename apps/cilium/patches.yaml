@@ -96,6 +96,17 @@ k8sServicePort: {{ regexReplaceAll "^https://[0-9a-z.]+:([0-9]+).*$" .Values.clu
 # ref: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/
 kubeProxyReplacement: {{ not .Values.cluster.services.kubeProxy.enabled }}
 
+{{- if has "org.ulagbulag.io/acceleration" .Values.features }}
+# -- Configure service load balancing
+loadBalancer:
+  # -- acceleration is the option to accelerate service handling via XDP
+  # Applicable values can be: disabled (do not use XDP), native (XDP BPF
+  # program is run directly out of the networking driver's early receive
+  # path), or best-effort (use native mode XDP acceleration on devices
+  # that support it).
+  acceleration: best-effort
+{{- end }}
+
 operator:
   # -- Enable prometheus metrics for cilium-operator on the configured port at
   # /metrics

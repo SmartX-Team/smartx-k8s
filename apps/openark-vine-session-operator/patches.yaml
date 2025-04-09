@@ -1,8 +1,20 @@
 ---
+apiserver:
+  enabled: {{ has "org.ulagbulag.io/auth" .Values.features }}
+
+{{- if has "org.ulagbulag.io/tower" .Values.features }}
+argo:
+  destination:
+    name: {{ .Values.cluster.name | quote }}
+    server: {{ .Values.cluster.name | quote }}
+{{- end }}
+
 auth:
   domainName: {{ .Values.auth.domainName | quote }}
 
 features:
+  gateway: {{ has "org.ulagbulag.io/servicemesh" .Values.features }}
+  ingress: {{ has "org.ulagbulag.io/ingress" .Values.features }}
   vm: {{ has "org.ulagbulag.io/vm/kubevirt" .Values.features }}
 
 ingress:
@@ -38,3 +50,10 @@ smartx:
     owner: {{ .Values.repo.owner | quote }}
     name: {{ .Values.repo.name | quote }}
     revision: {{ .Values.repo.revision | quote }}
+
+volumes:
+  public:
+    enabled: {{ has "org.ulagbulag.io/csi/filesystem" .Values.features }}
+
+  static:
+    enabled: {{ has "org.ulagbulag.io/csi/filesystem" .Values.features }}

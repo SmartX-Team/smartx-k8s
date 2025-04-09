@@ -50,9 +50,9 @@ org.ulagbulag.io/ai/llm/openwebui:
 org.ulagbulag.io/auth:
   requires:
     - org.ulagbulag.io/cni
-    - org.ulagbulag.io/ingress
   optional:
     - nvidia.com/network
+    - org.ulagbulag.io/ingress
     - org.ulagbulag.io/monitoring
 
 org.ulagbulag.io/auth/keycloak:
@@ -61,6 +61,11 @@ org.ulagbulag.io/auth/keycloak:
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/ingress
+
+org.ulagbulag.io/auth/kubernetes:
+  requires:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/cni
 
 org.ulagbulag.io/auth/sync:
   requires:
@@ -112,6 +117,8 @@ org.ulagbulag.io/cni:
 org.ulagbulag.io/cni/istio:
   requires:
     - org.ulagbulag.io/cni
+  provides:
+    - org.ulagbulag.io/servicemesh/istio
 
 org.ulagbulag.io/cni/multus:
   requires:
@@ -136,30 +143,15 @@ org.ulagbulag.io/csi/object:
   requires:
     - org.ulagbulag.io/csi
 
-org.ulagbulag.io/distributed-storage-cluster:
-  requires:
-    - org.ulagbulag.io/cni
-
-org.ulagbulag.io/distributed-storage-cluster/ceph:
-  requires:
-    - org.ulagbulag.io/auth
-    - org.ulagbulag.io/distributed-storage-cluster
-  optional:
-    - org.ulagbulag.io/ingress
-    - org.ulagbulag.io/monitoring
-  provides:
-    - org.ulagbulag.io/csi/block
-    - org.ulagbulag.io/csi/filesystem
-    # - org.ulagbulag.io/csi/object
-
 org.ulagbulag.io/desktop-environment:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
-    - org.ulagbulag.io/csi/block
-    - org.ulagbulag.io/csi/filesystem
   optional:
     - org.ulagbulag.io/ai
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+    - org.ulagbulag.io/gitops
     - org.ulagbulag.io/monitoring
 
 org.ulagbulag.io/desktop-environment/vine:
@@ -171,15 +163,33 @@ org.ulagbulag.io/desktop-environment/vine:
 
 org.ulagbulag.io/dev:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/csi/filesystem
+  optional:
+    - org.ulagbulag.io/auth
+
+org.ulagbulag.io/distributed-storage-cluster:
+  requires:
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/distributed-storage-cluster/ceph:
+  requires:
+    - org.ulagbulag.io/distributed-storage-cluster
+  optional:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/ingress
+    - org.ulagbulag.io/monitoring
+  provides:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/csi/filesystem
+    # - org.ulagbulag.io/csi/object
 
 org.ulagbulag.io/git:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/auth
 
 org.ulagbulag.io/git/github:
   requires:
@@ -205,9 +215,9 @@ org.ulagbulag.io/ingress:
 
 org.ulagbulag.io/messenger:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/monitoring
 
@@ -223,33 +233,34 @@ org.ulagbulag.io/messenger/nats:
 
 org.ulagbulag.io/monitoring:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/block
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/csi/object
 
 org.ulagbulag.io/object-store:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/monitoring
   provides:
     - org.ulagbulag.io/csi/object
 
 org.ulagbulag.io/object-store/minio:
   requires:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/distributed-storage-cluster/ceph
     - org.ulagbulag.io/object-store
 
 org.ulagbulag.io/observability:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/block
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/object
     - org.ulagbulag.io/monitoring
 
@@ -271,6 +282,16 @@ org.ulagbulag.io/registry/container/harbor:
   requires:
     - org.ulagbulag.io/registry/container
 
+org.ulagbulag.io/servicemesh:
+  requires:
+    - org.ulagbulag.io/cni
+  optional:
+    - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/servicemesh/istio:
+  requires:
+    - org.ulagbulag.io/servicemesh
+
 org.ulagbulag.io/tower:
   requires:
     - org.ulagbulag.io/auth/keycloak
@@ -284,10 +305,10 @@ org.ulagbulag.io/tower:
 
 org.ulagbulag.io/visualization:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/filesystem
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/object
     - org.ulagbulag.io/observability
 
@@ -300,12 +321,12 @@ org.ulagbulag.io/visualization/grafana:
 
 org.ulagbulag.io/vm:
   requires:
-    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni
     - org.ulagbulag.io/csi/block
   optional:
     - nvidia.com/gpu
     - nvidia.com/network
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/cni/multus
     - org.ulagbulag.io/csi/filesystem
     - org.ulagbulag.io/monitoring

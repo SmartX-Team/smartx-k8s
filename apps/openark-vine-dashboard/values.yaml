@@ -28,6 +28,7 @@ gateway:
 
 ingress:
   domainName: ""
+  enabled: false
 
 openark:
   labels:

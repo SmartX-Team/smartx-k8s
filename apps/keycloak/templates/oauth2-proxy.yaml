@@ -161,6 +161,7 @@ spec:
       port: 80
       protocol: TCP
       targetPort: 4180
+{{- if .Values.smartx.ingress.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -188,3 +189,4 @@ spec:
                 name: "{{ include "helm.fullname" $ }}-oauth2-proxy"
                 port:
                   number: 80
+{{- end }}

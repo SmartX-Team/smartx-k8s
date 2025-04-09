@@ -53,6 +53,12 @@ pub struct VineSessionArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_AUTH_DOMAIN_NAME"))]
     auth_domain_name: String,
 
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_GATEWAY"))]
+    feature_gateway: bool,
+
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_INGRESS"))]
+    feature_ingress: bool,
+
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_VM"))]
     feature_vm: bool,
 
@@ -115,6 +121,20 @@ pub struct VineSessionArgs {
 }
 
 impl VineSessionArgs {
+    /// Return `true` if gateway feature is enabled.
+    ///
+    #[must_use]
+    pub const fn feature_gateway(&self) -> bool {
+        self.feature_ingress
+    }
+
+    /// Return `true` if ingress feature is enabled.
+    ///
+    #[must_use]
+    pub const fn feature_ingress(&self) -> bool {
+        self.feature_ingress
+    }
+
     /// Return `true` if VM feature is enabled.
     ///
     #[must_use]

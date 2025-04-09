@@ -78,9 +78,17 @@ spec:
               path: /_health
               port: http
           resources:
+{{- if .Values.kiss.assets.proxy.enabled }}
             limits:
               cpu: "4"
               memory: 4Gi
+{{- else }}
+            requests:
+              cpu: 50m
+            limits:
+              cpu: 200m
+              memory: 100Mi
+{{- end }}
           volumeMounts:
             - name: assets
               mountPath: /usr/share/nginx/html/assets

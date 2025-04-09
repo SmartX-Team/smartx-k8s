@@ -14,10 +14,12 @@ features:
   containers: true
   desktopEnvironment: true
   devicePassthrough: false
+  gateway: false
   hostAudio: false
   hostDBus: false
   hostDisplay: false
   hostUdev: false
+  ingress: false
   ipcPassthrough: false
   vm: false
 

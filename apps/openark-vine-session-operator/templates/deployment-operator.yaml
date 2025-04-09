@@ -58,6 +58,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: DESTINATION_NAME
+              value: {{ .Values.argo.destination.name | quote }}
             - name: INSTALL_CRDS
               value: "true"
             - name: NAMESPACE
@@ -66,6 +68,10 @@ spec:
                   fieldPath: metadata.namespace
             - name: OPENARK_AUTH_DOMAIN_NAME
               value: {{ .Values.auth.domainName | quote }}
+            - name: OPENARK_FEATURE_GATEWAY
+              value: {{ .Values.features.gateway | quote }}
+            - name: OPENARK_FEATURE_INGRESS
+              value: {{ .Values.features.ingress | quote }}
             - name: OPENARK_FEATURE_VM
               value: {{ .Values.features.vm | quote }}
             - name: OPENARK_INGRESS_DOMAIN_NAME
@@ -114,6 +120,8 @@ spec:
               value: {{ .Values.smartx.repo.revision | quote }}
             - name: OPENARK_SOURCE_REPO_URL
               value: "{{ .Values.smartx.repo.baseUrl }}/{{ .Values.smartx.repo.owner }}/{{ .Values.smartx.repo.name }}.git"
+            - name: PROJECT_NAME
+              value: {{ include "helm.fullname" $ | quote }}
             - name: RUST_LOG
               value: INFO
             - name: SESSION_NAMESPACE

@@ -17,8 +17,7 @@ spec:
     unsafe: true # RBAC
     useClusterValues: false
     features:
-      - org.ulagbulag.io/auth
-      - org.ulagbulag.io/desktop-environment/vine
+      - org.ulagbulag.io/auth/kubernetes
     ignoreDifferences: []
     sync:
       createNamespace: true

@@ -1,0 +1,22 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: argo
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  description: OpenARK VINE Session Operator
+  destinations:
+    - name: {{ .Values.argo.destination.name | quote }}
+      namespace: {{ .Release.Namespace | quote }}
+      server: {{ .Values.argo.destination.server | quote }}
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  sourceNamespaces:
+    - {{ .Release.Namespace | quote }}
+  sourceRepos:
+    - '*'

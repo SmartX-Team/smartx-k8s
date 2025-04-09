@@ -461,3 +461,10 @@ kubespray:
   drain_nodes: false
   drain_pod_selector: serviceType!=ansible-task
   upgrade_node_fail_if_drain_fails: false
+
+  #####################################
+  # (others)
+  #####################################
+
+  ipv4_stack: true
+  ipv6_stack: true

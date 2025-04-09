@@ -4,6 +4,7 @@ smartx:
     domainName: {{ .Values.auth.domainName | quote }}
   ingress:
     domainName: {{ .Values.ingress.domainName | quote }}
+    enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
 
 ## @param clusterDomain Default Kubernetes cluster domain
 ##

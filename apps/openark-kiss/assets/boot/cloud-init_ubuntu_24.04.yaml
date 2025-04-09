@@ -71,7 +71,7 @@ autoinstall:
     - |
       cat <<EOF >>/etc/systemd/resolved.conf
       [Resolve]
-      DNS=10.64.0.3
+      DNS={{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
       EOF
       systemctl restart systemd-resolved.service
     - |
@@ -106,6 +106,7 @@ autoinstall:
   late-commands:
     # Execute Post-installation Scripts
     - dhcpcd || true # Keep DHCP
+    - echo "nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}" >/etc/resolv.conf # Keep DNS
 {{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
 {{- $filename := base $path }}
     - >

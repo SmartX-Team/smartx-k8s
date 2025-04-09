@@ -17,7 +17,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/gitops
+      - org.ulagbulag.io/tower
     ignoreDifferences: []
     sync:
       createNamespace: true

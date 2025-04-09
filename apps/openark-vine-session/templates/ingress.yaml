@@ -55,7 +55,10 @@ rules:
 {{- end }}
 
 {{- $rules := index ( include "helm.ingress.rules" $ | fromYaml ) "rules" }}
-{{- if not ( empty $rules ) }}
+{{- if and
+  .Values.features.ingress
+  ( not ( empty $rules ) )
+}}
 
 {{- if empty .Values.auth.domainName }}
 {{- fail "auth.domainName is required to enable ingress" }}

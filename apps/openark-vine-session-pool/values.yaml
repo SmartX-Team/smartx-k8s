@@ -45,3 +45,9 @@ kueue:
 
 openark:
   labels: {}
+
+volumes:
+  public:
+    enabled: true
+  static:
+    enabled: true

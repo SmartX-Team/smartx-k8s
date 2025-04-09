@@ -34,9 +34,9 @@ spec:
       type: LocalShared
 
     public:
-      enabled: true
+      enabled: {{ $.Values.volumes.public.enabled }}
     static:
-      enabled: true
+      enabled: {{ $.Values.volumes.static.enabled }}
 
 {{- end }}
 {{- end }}

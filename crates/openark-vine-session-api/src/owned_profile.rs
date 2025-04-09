@@ -72,6 +72,8 @@ pub struct OwnedFeaturesSpec {
     #[cfg_attr(feature = "serde", serde(default, flatten))]
     pub data: FeaturesSpec,
 
+    pub gateway: bool,
+    pub ingress: bool,
     pub vm: bool,
 }
 

@@ -73,7 +73,7 @@ data:
   network_ipv4_dhcp_range_end: {{ .Values.network.ipv4.dhcp.range.end | quote }}
   network_ipv4_gateway: {{ .Values.network.ipv4.gateway | quote }}
   network_ipv4_subnet: {{ .Values.network.ipv4.subnet | quote }}
-  network_nameserver_incluster_ipv4: {{ .Values.cluster.nameservers.ipv4 | quote }}
+  network_nameserver_incluster_ipv4: {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 | quote }}
 
   ###########################################################################
   # OS Configuration

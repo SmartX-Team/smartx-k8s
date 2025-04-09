@@ -39,7 +39,7 @@
     ".gitignore": "gitignore",
     ".helmignore": "gitignore",
     "Cargo.toml": "toml",
-    "nginx.conf": "nginx",
+    "nginx.conf": "jinja-nginx",
     "values.yaml": "yaml"
   },
   "chat.agent.enabled": false,

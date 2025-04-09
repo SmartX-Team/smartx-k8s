@@ -15,3 +15,9 @@ openark:
     org.ulagbulag.io/signed-out: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
     org.ulagbulag.io/topology-block: {{ index .Values.openark.labels "org.ulagbulag.io/topology-block" | quote }}
     org.ulagbulag.io/topology-rack: {{ index .Values.openark.labels "org.ulagbulag.io/topology-rack" | quote }}
+
+volumes:
+  public:
+    enabled: {{ has "org.ulagbulag.io/csi/filesystem" .Values.features }}
+  static:
+    enabled: {{ has "org.ulagbulag.io/csi/filesystem" .Values.features }}

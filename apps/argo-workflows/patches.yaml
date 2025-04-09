@@ -32,6 +32,8 @@ server:
   ## Ingress configuration.
   # ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
   ingress:
+    # -- Enable an ingress resource
+    enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
     # -- Additional ingress annotations
     annotations:
       cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}

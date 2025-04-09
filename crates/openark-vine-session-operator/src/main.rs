@@ -49,6 +49,9 @@ struct Args {
     #[arg(long, env = "CONTROLLER_POD_NAME")]
     controller_pod_name: Option<String>,
 
+    #[arg(long, env = "DESTINATION_NAME")]
+    destination_name: String,
+
     #[arg(long, env = "INSTALL_CRDS")]
     install_crds: bool,
 
@@ -60,6 +63,9 @@ struct Args {
 
     #[command(flatten)]
     operator: OperatorArgs,
+
+    #[arg(long, env = "PROJECT_NAME")]
+    project_name: String,
 
     #[arg(long, env = "SESSION_NAMESPACE")]
     session_namespace: String,
@@ -229,6 +235,8 @@ fn build_owned_session_profile(
         auth: ctx.args.api.to_openark_auth_spec(),
         features: OwnedFeaturesSpec {
             data: features,
+            gateway: ctx.args.api.feature_gateway(),
+            ingress: ctx.args.api.feature_ingress(),
             vm: ctx.args.api.feature_vm(),
         },
         greeter: greeter.unwrap_or_default(),
@@ -309,7 +317,7 @@ fn build_app(
         // TODO: to be implemented
         spec: ApplicationSpec {
             destination: ApplicationDestination {
-                name: Some("mobilex".into()),
+                name: Some(ctx.args.destination_name.clone()),
                 namespace: Some(namespace),
                 server: None,
             },
@@ -323,7 +331,7 @@ fn build_app(
                 ..Default::default()
             }]),
             info: None,
-            project: "mobilex-openark-vine-session".into(),
+            project: ctx.args.project_name.clone(),
             revision_history_limit: None,
             source: None,
             sources: Some(vec![ApplicationSources {

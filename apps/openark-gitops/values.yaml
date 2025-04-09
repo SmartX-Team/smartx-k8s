@@ -6,3 +6,4 @@ github:
 
 ingress:
   domainName: ""
+  enabled: false

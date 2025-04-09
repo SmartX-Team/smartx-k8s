@@ -17,7 +17,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/desktop-environment/vine
+      - org.ulagbulag.io/tower
     ignoreDifferences: []
     sync:
       createNamespace: true

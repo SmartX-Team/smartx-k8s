@@ -371,7 +371,7 @@ k8s:
 # -- Configure L2 announcements
 l2announcements:
   # -- Enable L2 announcements
-  enabled: false
+  enabled: true
 
 l2NeighDiscovery:
   # -- Enable L2 neighbor discovery in the agent
@@ -390,13 +390,6 @@ loadBalancer:
   # -- mode is the operation mode of load balancing for remote backends
   # e.g. snat, dsr, hybrid
   mode: dsr
-
-  # -- acceleration is the option to accelerate service handling via XDP
-  # Applicable values can be: disabled (do not use XDP), native (XDP BPF
-  # program is run directly out of the networking driver's early receive
-  # path), or best-effort (use native mode XDP acceleration on devices
-  # that support it).
-  acceleration: best-effort
 
   # -- L7 LoadBalancer
   l7:

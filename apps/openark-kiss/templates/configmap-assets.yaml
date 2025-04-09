@@ -21,7 +21,7 @@ metadata:
 data:
 {{- range $assetPath, $_ := $.Files.Glob "assets/*" }}
   {{ base $assetPath }}: |
-{{- $.Files.Get $assetPath | trim | nindent 4 }}
+{{- tpl ( $.Files.Get $assetPath ) $ | trim | nindent 4 }}
 {{- end }}
 {{- range $assetKind := $.AssetKinds }}
 ---

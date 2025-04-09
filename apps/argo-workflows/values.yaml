@@ -136,12 +136,6 @@ server:
   authModes:
     - sso
 
-  ## Ingress configuration.
-  # ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
-  ingress:
-    # -- Enable an ingress resource
-    enabled: true
-
   ## Create a Google Backendconfig  for use with the GKE Ingress Controller
   ## https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_backendconfig_parameters
   GKEbackendConfig:

@@ -36,5 +36,10 @@ spec:
     home:
       type: LocalOwned
 
+    public:
+      enabled: {{ $.Values.volumes.public.enabled }}
+    static:
+      enabled: {{ $.Values.volumes.static.enabled }}
+
 {{- end }}
 {{- end }}

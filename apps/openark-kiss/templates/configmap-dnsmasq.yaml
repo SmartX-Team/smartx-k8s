@@ -12,7 +12,7 @@ metadata:
     app.kubernetes.io/component: dnsmasq
 data:
   resolv.conf: |
-    nameserver {{ .Values.cluster.nameservers.ipv4 }}
+    nameserver {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
     nameserver {{ .Values.network.nameservers.ns1 }}
     nameserver {{ .Values.network.nameservers.ns2 }}
     options timeout:2 attempts:3 rotate single-request-reopen

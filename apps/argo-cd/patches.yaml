@@ -63,6 +63,8 @@ server:
 
   # Argo CD server ingress configuration
   ingress:
+    # -- Enable an ingress resource for the Argo CD server
+    enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
     # -- Additional ingress annotations
     ## Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough
     annotations:
