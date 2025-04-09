@@ -11,11 +11,6 @@ openshift:
   # -- enables using arbitrary uid for argo repo server
   enabled: false
 
-## Globally shared configuration
-global:
-  # -- Add Prometheus scrape annotations to all metrics services. This can be used as an alternative to the ServiceMonitors.
-  addPrometheusAnnotations: true
-
 ## Argo Configs
 configs:
   # General Argo CD configuration
@@ -32,22 +27,6 @@ configs:
     # -- Enable Status Badge
     ## Ref: https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/
     statusbadge.enabled: true
-
-    # OIDC configuration as an alternative to dex (optional).
-    oidc.config: |
-      name: $oidc.openid_connect.name
-      issuer: $oidc.openid_connect.issuer
-      clientID: $oidc.openid_connect.clientID
-      clientSecret: $oidc.openid_connect.clientSecret
-      enablePKCEAuthentication: false
-      requestedIDTokenClaims:
-        groups:
-          essential: true
-      requestedScopes:
-        - openid
-        - profile
-        - email
-        - groups
 
   # Argo CD configuration parameters
   ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cmd-params-cm.yaml

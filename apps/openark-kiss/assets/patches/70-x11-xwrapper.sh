@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Desktop Environment Configuration
-# Enable user-level virtual console (xf86) acccess
+# Enable user-level virtual console (xf86) access
 
 # Prehibit errors
 set -e -o pipefail

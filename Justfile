@@ -26,3 +26,8 @@ ssh BOX *ARGS:
 # Update all
 update:
     @./hack/update-app.sh
+
+# Validate project
+validate:
+    ./hack/git-ci-validate.sh
+    typos

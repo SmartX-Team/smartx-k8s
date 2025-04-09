@@ -44,7 +44,7 @@
   set_fact:
     kiss_os_dirty: "{{ kiss_dirty_file.stat.exists }}"
 
-- name: Collect brief device informations
+- name: Collect brief device information
   loop: "{{ ansible_devices.items() }}"
   # filter the devices that has 1 or more physical IDs
   when: >-

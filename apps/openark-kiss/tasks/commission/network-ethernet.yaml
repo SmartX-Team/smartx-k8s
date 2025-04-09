@@ -42,7 +42,7 @@
     all_interfaces_indexed: []
     interfaces: []
 
-- name: Collect network interface informations
+- name: Collect network interface information
   loop: "{{ ansible_interfaces }}"
   # filter the physical devices that has connected to the specific network as ethernet
   when: >
@@ -72,7 +72,7 @@
         'uuid': item | to_uuid,
       }] }}
 
-- name: Collect running network interface informations
+- name: Collect running network interface information
   loop: "{{ ansible_interfaces }}"
   # filter the physical devices that has connected to the specific network as ethernet
   when: >
@@ -121,7 +121,7 @@
         'uuid': item | to_uuid,
       }] }}
 
-- name: Collect network bond informations
+- name: Collect network bond information
   loop: "{{ ansible_interfaces }}"
   # filter the physical devices that has connected to the specific network as ethernet
   when: >

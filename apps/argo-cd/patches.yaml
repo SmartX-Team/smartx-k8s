@@ -5,6 +5,9 @@ global:
   ## Used for ingresses, certificates, SSO, notifications, etc.
   domain: "cd.argo.{{ .Values.ingress.domainName }}"
 
+  # -- Add Prometheus scrape annotations to all metrics services. This can be used as an alternative to the ServiceMonitors.
+  addPrometheusAnnotations: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
 ## Argo Configs
 configs:
   # Argo CD configuration parameters
@@ -21,6 +24,24 @@ configs:
 {{- end }}
 {{- $.applicationNamespaces | join "," | nindent 6 }}
 {{- $_ := unset $ "applicationNamespaces" }}
+
+{{- if has "org.ulagbulag.io/auth" .Values.features }}
+    # OIDC configuration as an alternative to dex (optional).
+    oidc.config: |
+      name: $oidc.openid_connect.name
+      issuer: $oidc.openid_connect.issuer
+      clientID: $oidc.openid_connect.clientID
+      clientSecret: $oidc.openid_connect.clientSecret
+      enablePKCEAuthentication: false
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+{{- end }}
 
 {{- if has "org.ulagbulag.io/cni" .Values.features }}
     resource.exclusions: |

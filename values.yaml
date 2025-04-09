@@ -115,6 +115,7 @@ features:
   - nvidia.com/gpu/dynamic-resource-allocation
   - nvidia.com/network
   - org.ulagbulag.io/acceleration
+  - org.ulagbulag.io/acceleration/networking
   - org.ulagbulag.io/acceleration/storage
   - org.ulagbulag.io/ai
   - org.ulagbulag.io/ai/llm

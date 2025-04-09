@@ -3,7 +3,7 @@
   shell: wipefs --all --force /dev/{{ item[0] }} && sync
   ignore_errors: true
 
-- name: Wipe GUID partiton table (GPT) | {{ item[0] }}
+- name: Wipe GUID partition table (GPT) | {{ item[0] }}
   shell: sgdisk --zap-all /dev/{{ item[0] }} && sync
   ignore_errors: true
 

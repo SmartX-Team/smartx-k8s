@@ -15,7 +15,7 @@ kubevirt:
         - Sidecar
         - VMLiveUpdateFeatures
 
-    # PermittedHostDevices holds inforamtion about devices allowed for passthrough
+    # PermittedHostDevices holds information about devices allowed for passthrough
     permittedHostDevices:
       # PciHostDevice represents a host PCI device allowed for passthrough
       pciHostDevices:

@@ -59,7 +59,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: DESTINATION_NAME
-              value: {{ .Values.argo.destination.name | quote }}
+              value: {{ include "helm.appDestinationName" $ | quote }}
             - name: INSTALL_CRDS
               value: "true"
             - name: NAMESPACE
@@ -121,7 +121,7 @@ spec:
             - name: OPENARK_SOURCE_REPO_URL
               value: "{{ .Values.smartx.repo.baseUrl }}/{{ .Values.smartx.repo.owner }}/{{ .Values.smartx.repo.name }}.git"
             - name: PROJECT_NAME
-              value: {{ include "helm.fullname" $ | quote }}
+              value: {{ include "helm.appProjectName" $ | quote }}
             - name: RUST_LOG
               value: INFO
             - name: SESSION_NAMESPACE

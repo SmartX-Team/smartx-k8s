@@ -6,7 +6,7 @@ rbacEnabled: true
 
 ## Operator scope
 ## NOTE: If true
-## * Make sure that no othe NATS operator is running in the cluster
+## * Make sure that no other NATS operator is running in the cluster
 ## * The Release namespace must be "nats-io"
 clusterScoped: true
 

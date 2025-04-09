@@ -52,8 +52,17 @@ server:
         hosts:
           - "workflows.argo.{{ .Values.ingress.domainName }}"
 
+{{- if has "org.ulagbulag.io/auth" .Values.features }}
+  # -- A list of supported authentication modes. Available values are `server`, `client`, or `sso`. If you provide sso, please configure `.Values.server.sso` as well.
+  ## Ref: https://argo-workflows.readthedocs.io/en/stable/argo-server-auth-mode/
+  authModes:
+    - sso
+{{- end }}
+
   # SSO configuration when SSO is specified as a server auth mode.
   sso:
+    # -- Create SSO configuration. If you set `true` , please also set `.Values.server.authMode` as `sso`.
+    enabled: {{ has "org.ulagbulag.io/auth" .Values.features }}
     # -- The root URL of the OIDC identity provider
     issuer: "https://{{ .Values.auth.domainName }}/realms/{{ .Values.auth.realms.name }}"
     # -- The OIDC redirect URL. Should be in the form <argo-root-url>/oauth2/callback.

@@ -9,7 +9,7 @@ apiserver:
 
 argo:
   destination:
-    name: in-cluster
+    name: "" # default: in-cluster
     server: https://kubernetes.default.svc
 
 auth:
