@@ -106,6 +106,7 @@ org.ulagbulag.io/batch/scheduling:
 org.ulagbulag.io/batch/scheduling/kueue:
   requires:
     - org.ulagbulag.io/batch/scheduling
+  optional:
     - org.ulagbulag.io/monitoring
 
 org.ulagbulag.io/batch/scheduling/ray:

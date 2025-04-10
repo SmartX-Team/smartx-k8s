@@ -18,7 +18,6 @@ spec:
     useClusterValues: false
     features:
       - org.ulagbulag.io/batch/scheduling/kueue
-      - org.ulagbulag.io/monitoring
     ignoreDifferences: []
     sync:
       createNamespace: true
