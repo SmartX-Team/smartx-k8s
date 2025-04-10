@@ -27,6 +27,14 @@ kubevirt:
         - externalResourceProvider: false
           pciVendorSelector: 10de:228b
           resourceName: nvidia.com/GA104_GEFORCE_RTX_3070_LITE_HASH_RATE_Audio
+        # NVIDIA Corporation AD107M [GeForce RTX 4060 Max-Q / Mobile]
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:28a0
+          resourceName: nvidia.com/AD107M_GEFORCE_RTX_4060_MAXQ___MOBILE
+        # NVIDIA Corporation Device
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:22be
+          resourceName: nvidia.com/AD107M_GEFORCE_RTX_4060_MAXQ___MOBILE_Audio
         # Intel Corporation Thunderbolt 4 USB Controller
         - externalResourceProvider: false
           pciVendorSelector: 8086:1138
