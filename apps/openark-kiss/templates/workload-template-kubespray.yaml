@@ -1,0 +1,404 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: "{{ include "helm.fullname" $ }}-kubespray"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+spec:
+  affinity:
+    # Node affinity rules
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                operator: DoesNotExist
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+  podGC:
+    strategy: OnPodCompletion
+  serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
+  ttlStrategy:
+    secondsAfterCompletion: 3600 # 1 hour
+
+  arguments:
+    parameters:
+      - name: action
+        default: "upgrade"
+        enum:
+          # - commission
+          # - join
+          # - ping
+          # - reset
+          - upgrade
+      - name: ansible_host
+        default: ""
+      - name: control_planes
+        default: ""
+      - name: etcd_nodes
+        default: ""
+      - name: group_role
+        enum:
+          - ControlPlane
+          - Worker
+      - name: new_cluster
+        default: "false"
+        enum:
+          - "false"
+          - "true"
+      - name: worker_nodes
+        default: ""
+
+  entrypoint: entrypoint
+  templates:
+    - name: entrypoint
+      steps:
+        - - name: load-cluster-info
+            template: load-cluster-info
+
+        - - name: kubespray
+            template: kubespray
+            arguments:
+              parameters:
+                - name: ansible_host
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.ansible_host }}" | quote }}
+                - name: ansible_host_id
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.ansible_host_id }}" | quote }}
+                - name: ansible_host_uuid
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.ansible_host_uuid }}" | quote }}
+                - name: ansible_ssh_host
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.ansible_ssh_host }}" | quote }}
+                - name: control_planes
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.control_planes }}" | quote }}
+                - name: etcd_nodes
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.etcd_nodes }}" | quote }}
+                - name: worker_nodes
+                  value: {{ "{{ steps.load-cluster-info.outputs.parameters.worker_nodes }}" | quote }}
+
+    - name: load-cluster-info
+      inputs:
+        parameters:
+          - name: action
+            value: {{ "{{ workflow.parameters.action }}" | quote }}
+          - name: ansible_host
+            value: {{ "{{ workflow.parameters.ansible_host }}" | quote }}
+          - name: control_planes
+            value: {{ "{{ workflow.parameters.control_planes }}" | quote }}
+          - name: etcd_nodes
+            value: {{ "{{ workflow.parameters.etcd_nodes }}" | quote }}
+          - name: group_role
+            value: {{ "{{ workflow.parameters.group_role }}" | quote }}
+          - name: new_cluster
+            value: {{ "{{ workflow.parameters.new_cluster }}" | quote }}
+          - name: worker_nodes
+            value: {{ "{{ workflow.parameters.worker_nodes }}" | quote }}
+      outputs:
+        parameters:
+          - name: ansible_host
+            valueFrom:
+              path: /tmp/ansible_host.txt
+          - name: ansible_host_id
+            valueFrom:
+              path: /tmp/ansible_host_id.txt
+          - name: ansible_host_uuid
+            valueFrom:
+              path: /tmp/ansible_host_uuid.txt
+          - name: ansible_ssh_host
+            valueFrom:
+              path: /tmp/ansible_ssh_host.txt
+          - name: control_planes
+            valueFrom:
+              path: /tmp/control_planes.txt
+          - name: etcd_nodes
+            valueFrom:
+              path: /tmp/etcd_nodes.txt
+          - name: worker_nodes
+            valueFrom:
+              path: /tmp/worker_nodes.txt
+      retryStrategy:
+        limit: "6"
+      container:
+        image: "{{ .Values.workflow.image.repo }}:{{ .Values.workflow.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.workflow.image.pullPolicy | quote }}
+        command:
+          - /usr/bin/env
+          - bash
+        args:
+          - -c
+          - |
+{{- .Files.Get "bin/load-cluster-info.sh" | trim | nindent 14 }}
+        env:
+          - name: ansible_host
+            value: {{ "{{ inputs.parameters.ansible_host }}" | quote }}
+          - name: kiss_ansible_task_name
+            value: {{ "{{ inputs.parameters.action }}" | quote }}
+          - name: kiss_cluster_control_planes
+            value: {{ "{{ inputs.parameters.control_planes }}" | quote }}
+          - name: kiss_cluster_etcd_nodes
+            value: {{ "{{ inputs.parameters.etcd_nodes }}" | quote }}
+          - name: kiss_cluster_name
+            value: {{ .Values.cluster.group | quote }}
+          - name: kiss_cluster_worker_nodes
+            value: {{ "{{ inputs.parameters.worker_nodes }}" | quote }}
+          - name: kiss_etcd_nodes_max
+            valueFrom:
+              configMapKeyRef:
+                key: etcd_nodes_max
+                name: kiss-config
+          - name: kiss_group_role
+            value: {{ "{{ inputs.parameters.group_role }}" | quote }}
+        workingDir: /tmp
+
+    - name: kubespray
+      inputs:
+        parameters:
+          - name: action
+            value: {{ "{{ workflow.parameters.action }}" | quote }}
+          - name: ansible_host
+          - name: ansible_host_id
+          - name: ansible_host_uuid
+          - name: ansible_ssh_host
+          - name: control_planes
+          - name: etcd_nodes
+          - name: group_role
+            value: {{ "{{ workflow.parameters.group_role }}" | quote }}
+          - name: new_cluster
+            value: {{ "{{ workflow.parameters.new_cluster }}" | quote }}
+          - name: worker_nodes
+      container:
+        image: "{{ .Values.kiss.image.repo }}:{{ .Values.kiss.image.tag }}"
+        command:
+          - ansible-playbook
+        args:
+          - --become
+          - --become-user=root
+          - --inventory
+          - /root/inventory/default/defaults.yaml
+          - --inventory
+          - /root/inventory/default/all.yaml
+          - --inventory
+          - /root/inventory/cluster/config.yaml
+          - --inventory
+          - /root/inventory/cluster/hosts.yaml
+          - /opt/playbook/playbook-control_plane.yaml
+          - {{ "{{= \"ControlPlane\" == inputs.parameters.group_role ? \"/opt/playbook/playbook-control_plane.yaml\" : \"/opt/playbook/playbook-worker.yaml\" }}" | quote }}
+        env:
+          - name: ansible_host
+            value: {{ "{{ inputs.parameters.ansible_host }}" | quote }}
+          - name: ansible_host_id
+            value: {{ "{{ inputs.parameters.ansible_host_id }}" | quote }}
+          - name: ansible_host_uuid
+            value: {{ "{{ inputs.parameters.ansible_host_uuid }}" | quote }}
+          - name: ansible_ssh_host
+            value: {{ "{{ inputs.parameters.ansible_ssh_host }}" | quote }}
+          - name: ansible_ssh_private_key_file
+            value: /root/.ssh/id_ed25519
+          - name: ansible_user
+            valueFrom:
+              configMapKeyRef:
+                key: auth_ssh_username
+                name: kiss-config
+          - name: kiss_allow_critical_commands
+            valueFrom:
+              configMapKeyRef:
+                key: allow_critical_commands
+                name: kiss-config
+          - name: kiss_allow_pruning_network_interfaces
+            valueFrom:
+              configMapKeyRef:
+                key: allow_pruning_network_interfaces
+                name: kiss-config
+          - name: kiss_ansible_task_name
+            value: {{ "{{ inputs.parameters.action }}" | quote }}
+          - name: kiss_cluster_control_planes
+            value: {{ "{{ inputs.parameters.control_planes }}" | quote }}
+          - name: kiss_cluster_etcd_nodes
+            value: {{ "{{ inputs.parameters.etcd_nodes }}" | quote }}
+          - name: kiss_cluster_name
+            valueFrom:
+              configMapKeyRef:
+                key: kiss_cluster_name
+                name: kiss-config
+          - name: kiss_cluster_name_snake_case
+            value: {{ .Values.cluster.group | snakecase | quote }}
+          - name: kiss_cluster_domain
+            value: {{ .Values.cluster.domainBase | snakecase | quote }}
+          - name: kiss_cluster_is_default
+            value: {{ eq "default" .Values.cluster.group | quote }}
+          - name: kiss_cluster_is_new
+            value: {{ "{{ inputs.parameters.new_cluster }}" | quote }}
+          - name: kiss_cluster_worker_nodes
+            value: {{ "{{ inputs.parameters.worker_nodes }}" | quote }}
+          - name: kiss_group_enable_default_cluster
+            valueFrom:
+              configMapKeyRef:
+                key: group_enable_default_cluster
+                name: kiss-config
+          - name: kiss_group_force_reset
+            valueFrom:
+              configMapKeyRef:
+                key: group_force_reset
+                name: kiss-config
+          - name: kiss_group_force_reset_os
+            valueFrom:
+              configMapKeyRef:
+                key: group_force_reset_os
+                name: kiss-config
+          - name: kiss_group_reset_storage
+            valueFrom:
+              configMapKeyRef:
+                key: group_reset_storage
+                name: kiss-config
+          - name: kiss_group_role
+            value: {{ "{{ inputs.parameters.group_role }}" | quote }}
+          - name: kiss_group_role_is_domain_specific
+            value: "false" # One of: [Robot]
+          - name: kiss_group_role_is_member
+            value: "false" # One of: [ExternalWorker]
+          - name: kiss_network_interface_mtu_size
+            valueFrom:
+              configMapKeyRef:
+                key: network_interface_mtu_size
+                name: kiss-config
+          - name: kiss_network_ipv4_dhcp_duration
+            valueFrom:
+              configMapKeyRef:
+                key: network_ipv4_dhcp_duration
+                name: kiss-config
+          - name: kiss_network_ipv4_dhcp_range_begin
+            valueFrom:
+              configMapKeyRef:
+                key: network_ipv4_dhcp_range_begin
+                name: kiss-config
+          - name: kiss_network_ipv4_dhcp_range_end
+            valueFrom:
+              configMapKeyRef:
+                key: network_ipv4_dhcp_range_end
+                name: kiss-config
+          - name: kiss_network_ipv4_gateway
+            valueFrom:
+              configMapKeyRef:
+                key: network_ipv4_gateway
+                name: kiss-config
+          - name: kiss_network_ipv4_subnet
+            valueFrom:
+              configMapKeyRef:
+                key: network_ipv4_subnet
+                name: kiss-config
+          - name: kiss_network_ipv4_subnet_address
+            value: {{ index ( .Values.network.ipv4.subnet | split "/" ) "_0" | quote }}
+          - name: kiss_network_ipv4_subnet_mask
+            value: {{ include "cidrToMask" ( index ( .Values.network.ipv4.subnet | split "/" ) "_1" ) | quote }}
+          - name: kiss_network_ipv4_subnet_mask_prefix
+            value: {{ index ( .Values.network.ipv4.subnet | split "/" ) "_1" | quote }}
+          - name: kiss_network_nameserver_incluster_ipv4
+            valueFrom:
+              configMapKeyRef:
+                key: network_nameserver_incluster_ipv4
+                name: kiss-config
+          - name: kiss_network_wireless_wifi_key_mgmt
+            valueFrom:
+              secretKeyRef:
+                key: network_wireless_wifi_key_mgmt
+                name: kiss-config
+          - name: kiss_network_wireless_wifi_key_psk
+            valueFrom:
+              secretKeyRef:
+                key: network_wireless_wifi_key_psk
+                name: kiss-config
+          - name: kiss_network_wireless_wifi_ssid
+            valueFrom:
+              secretKeyRef:
+                key: network_wireless_wifi_ssid
+                name: kiss-config
+          - name: kiss_os_default
+            valueFrom:
+              configMapKeyRef:
+                key: os_default
+                name: kiss-config
+          - name: kiss_os_kernel
+            valueFrom:
+              configMapKeyRef:
+                key: os_kernel
+                name: kiss-config
+          - name: kiss_power_intel_amt_host
+          - name: kiss_power_intel_amt_username
+            valueFrom:
+              secretKeyRef:
+                key: power_intel_amt_username
+                name: kiss-config
+          - name: kiss_power_intel_amt_password
+            valueFrom:
+              secretKeyRef:
+                key: power_intel_amt_password
+                name: kiss-config
+          - name: kiss_power_ipmi_username
+            valueFrom:
+              secretKeyRef:
+                key: power_ipmi_username
+                name: kiss-config
+          - name: kiss_power_ipmi_password
+            valueFrom:
+              secretKeyRef:
+                key: power_ipmi_password
+                name: kiss-config
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+          - name: ansible-task
+            mountPath: /opt/playbook/tasks
+          - name: ansible-task-common
+            mountPath: /opt/playbook
+          - name: inventory-cluster
+            mountPath: /root/inventory/cluster
+          - name: inventory-default
+            mountPath: /root/inventory/default
+          - name: ssh
+            mountPath: /root/.ssh
+      dnsConfig:
+        nameservers:
+          - {{ .Values.network.nameservers.ns1 | quote }}
+          - {{ .Values.network.nameservers.ns2 | quote }}
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      restartPolicy: OnFailure
+      tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+      volumes:
+        - name: ansible-task
+          configMap:
+            name: {{ "ansible-task-{{ workflow.parameters.action }}" | quote }}
+            defaultMode: 256 # 0o400
+        - name: ansible-task-common
+          configMap:
+            name: ansible-task-common
+            defaultMode: 256 # 0o400
+        - name: inventory-cluster
+          configMap:
+            name: {{ printf "ansible-control-planes-%s" ( .Values.cluster.group | snakecase ) | quote }}
+            defaultMode: 256 # 0o400
+        - name: inventory-default
+          configMap:
+            name: ansible-control-planes-default
+            defaultMode: 256 # 0o400
+        - name: ssh
+          secret:
+            secretName: kiss-config
+            defaultMode: 256 # 0o400
+            items:
+              - key: auth_ssh_key_id_ed25519
+                path: id_ed25519

@@ -1,6 +1,0 @@
----
-- name: Router | Add BGP peers
-  hosts: global_rr
-  gather_facts: false
-  tasks:
-    - include_tasks: ./bgp-add-router-zebos.yaml

@@ -164,7 +164,8 @@ Create a SmartX application
 {{- $_ := set $.Values.auth "realms" ( $.Values.auth.realms | default dict ) }}
 {{- $_ := set $.Values.auth.realms "name" ( $.Values.auth.realms.name | default $clusterName ) }}
 {{- $_ := set $.Values "cluster" ( $.Values.cluster | default dict ) }}
-{{- $_ := set $.Values.cluster "domainName" ( $.Values.cluster.domainName ) }}
+{{- $_ := set $.Values.cluster "domainBase" ( $.Values.cluster.domainBase | default "openark" ) }}
+{{- $_ := set $.Values.cluster "domainName" ( printf "ops.%s" $.Values.cluster.domainBase ) }}
 {{- $_ := set $.Manifest.Raw.metadata "annotations" ( $.Manifest.Raw.metadata.annotations | default dict ) }}
 {{- $_ := set $.Manifest.Raw.metadata "labels" ( $.Manifest.Raw.metadata.labels | default dict ) }}
 {{- $baseFullName := ( index $.Manifest.Raw.metadata.labels "org.ulagbulag.io/base" | default $.Manifest.Raw.metadata.name ) }}

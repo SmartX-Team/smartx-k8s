@@ -77,4 +77,108 @@ upstream_dns_servers:
   - {{ .Values.network.nameservers.ns1 | quote }}
   - {{ .Values.network.nameservers.ns2 | quote }}
 
+## List of key=value pairs that describe feature gates for
+## the k8s cluster.
+{{- $_ := set $ "AvailableKubeadmFeatures" ( list
+  "ControlPlaneKubeletLocalMode"
+  "NodeLocalCRISocket"
+  "WaitForAllControlPlaneComponents"
+) }}
+
+{{- $_ := set $ "KubeFeatures" ( list
+  "ControlPlaneKubeletLocalMode"
+  "ImageVolume"
+  "PodLevelResources"
+  "ProcMountType"
+  "ResourceHealthStatus"
+  "RotateKubeletServerCertificate"
+  "UserNamespacesSupport"
+) }}
+
+{{- if has "org.ulagbulag.io/acceleration" .Values.features }}
+{{- $_ := set $ "KubeFeatures" ( concat $.KubeFeatures ( list
+  "CPUManagerPolicyAlphaOptions"
+  "DRAResourceClaimDeviceStatus"
+  "DynamicResourceAllocation"
+  "HPAScaleToZero"
+  "InPlacePodVerticalScaling"
+  "InPlacePodVerticalScalingAllocatedStatus"
+  "InPlacePodVerticalScalingExclusiveCPUs"
+  "KubeletPodResourcesDynamicResources"
+  "MemoryQoS"
+  "SchedulerAsyncPreemption"
+) ) }}
+{{- end }}
+
+kube_feature_gates: []
+kube_proxy_feature_gates: []
+
+{{- if $.KubeFeatures }}
+{{- $_ := set $ "KubeFeatures" ( $.KubeFeatures | uniq | sortAlpha ) }}
+
+kube_apiserver_feature_gates:
+{{- range $_ := $.KubeFeatures }}
+{{- if not ( has . $.AvailableKubeadmFeatures ) }}
+  - {{ printf "%s=true" . | quote }}
+{{- end }}
+{{- end }}
+kube_controller_feature_gates:
+{{- range $_ := $.KubeFeatures }}
+{{- if not ( has . $.AvailableKubeadmFeatures ) }}
+  - {{ printf "%s=true" . | quote }}
+{{- end }}
+{{- end }}
+kube_scheduler_feature_gates:
+{{- range $_ := $.KubeFeatures }}
+{{- if not ( has . $.AvailableKubeadmFeatures ) }}
+  - {{ printf "%s=true" . | quote }}
+{{- end }}
+{{- end }}
+kubelet_feature_gates:
+{{- range $_ := $.KubeFeatures }}
+{{- if not ( has . $.AvailableKubeadmFeatures ) }}
+  - {{ printf "%s=true" . | quote }}
+{{- end }}
+{{- end }}
+kubeadm_feature_gates:
+{{- range $_ := $.KubeFeatures }}
+{{- if has . $.AvailableKubeadmFeatures }}
+  - {{ printf "%s=true" . | quote }}
+{{- end }}
+{{- end }}
+
+#####################################
+# k8s-cluster / kubelet / advanced
+#####################################
+
+{{- if has "org.ulagbulag.io/acceleration" .Values.features }}
+## NUMA-aware scheduling
+kubelet_cpu_manager_policy: static
+kubelet_cpu_manager_policy_options:
+  distribute-cpus-across-numa: "true"
+  full-pcpus-only: "true"
+  prefer-align-cpus-by-uncorecache: "true"
+{{- end }}
+
+#####################################
+# kubernetes / node
+#####################################
+
+{{- if has "org.ulagbulag.io/acceleration" .Values.features }}
+# Set to empty to avoid cgroup creation
+kubelet_enforce_node_allocatable: pods,kube-reserved,system-reserved
+
+# Set systemd service hardening features
+kubelet_systemd_hardening: true
+
+# Reserve this space for kube resources
+# Whether to run kubelet and container-engine daemons in a dedicated cgroup. (Not required for resource reservations).
+kube_reserved: true
+
+# Set to true to reserve resources for system daemons
+system_reserved: true
+{{- end }}
+
+{{- end }}
+
 {{- end }}

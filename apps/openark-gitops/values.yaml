@@ -1,4 +1,9 @@
 ---
+ci:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+
 github:
   app:
     appID: ""

@@ -11,7 +11,7 @@ set -e -o pipefail
 set -x
 
 # Configure Git
-git config --global init.defaultBranch "{{ workflow.parameters.commit_branch }}"
+git config --global init.defaultBranch "{{ inputs.parameters.commit_branch }}"
 git config --global --add safe.directory "/home/user{{ workflow.parameters.workdir }}"
 
 # Init a workdir
@@ -20,7 +20,7 @@ cd "/home/user{{ workflow.parameters.workdir }}"
 
 # Pull a repository
 git init
-git remote add origin "{{ workflow.parameters.base_url }}/{{ workflow.parameters.repo_owner }}/{{ workflow.parameters.repo_name }}"
-git pull origin "{{ workflow.parameters.commit_branch }}"
-git switch "{{ workflow.parameters.commit_branch }}"
-git branch --set-upstream-to "origin/{{ workflow.parameters.commit_branch }}" "{{ workflow.parameters.commit_branch }}"
+git remote add origin "{{ inputs.parameters.base_url }}/{{ inputs.parameters.repo_owner }}/{{ inputs.parameters.repo_name }}"
+git pull origin "{{ inputs.parameters.commit_branch }}"
+git switch "{{ inputs.parameters.commit_branch }}"
+git branch --set-upstream-to "origin/{{ inputs.parameters.commit_branch }}" "{{ inputs.parameters.commit_branch }}"

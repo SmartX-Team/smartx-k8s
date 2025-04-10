@@ -53,6 +53,11 @@ spec:
 
   arguments:
     parameters:
+      - name: base_url
+      - name: commit_branch
+      - name: commit_sha
+      - name: repo_name
+      - name: repo_owner
       - name: workdir
         value: /workdir
 
@@ -77,14 +82,22 @@ spec:
       inputs:
         parameters:
           - name: command
+          - name: commit_branch
+            value: {{ "{{ workflow.parameters.commit_branch }}" | quote }}
+          - name: commit_sha
+            value: {{ "{{ workflow.parameters.commit_sha }}" | quote }}
+          - name: repo_name
+            value: {{ "{{ workflow.parameters.repo_name }}" | quote }}
+          - name: repo_owner
+            value: {{ "{{ workflow.parameters.repo_owner }}" | quote }}
       container:
-        image: quay.io/ulagbulag/openark:devel
+        image: "{{ .Values.ci.image.repo }}:{{ .Values.ci.image.tag | default .Chart.AppVersion }}"
         command:
           - /usr/bin/env
           - {{ "{{ inputs.parameters.command }}" | quote }}
         env:
           - name: COMMIT_SHA
-            value: {{ "{{ workflow.parameters.commit_sha }}" | quote }}
+            value: {{ "{{ inputs.parameters.commit_sha }}" | quote }}
           - name: GITHUB_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -98,9 +111,9 @@ spec:
           - name: GITHUB_PRIVATE_KEY_PATH
             value: /run/secrets/ulagbulag.io/argo-ci/private-key.pem
           - name: REPO_OWNER
-            value: {{ "{{ workflow.parameters.repo_owner }}" | quote }}
+            value: {{ "{{ inputs.parameters.repo_owner }}" | quote }}
           - name: REPO_NAME
-            value: {{ "{{ workflow.parameters.repo_name }}" | quote }}
+            value: {{ "{{ inputs.parameters.repo_name }}" | quote }}
         volumeMounts:
           - name: secret-argo-ci
             mountPath: /run/secrets/ulagbulag.io/argo-ci/private-key.pem
@@ -111,8 +124,20 @@ spec:
         workingDir: {{ printf "/home/user%s" "{{ workflow.parameters.workdir }}" | quote }}
 
     - name: pull
+      inputs:
+        parameters:
+          - name: base_url
+            value: {{ "{{ workflow.parameters.base_url }}" | quote }}
+          - name: commit_branch
+            value: {{ "{{ workflow.parameters.commit_branch }}" | quote }}
+          - name: commit_sha
+            value: {{ "{{ workflow.parameters.commit_sha }}" | quote }}
+          - name: repo_name
+            value: {{ "{{ workflow.parameters.repo_name }}" | quote }}
+          - name: repo_owner
+            value: {{ "{{ workflow.parameters.repo_owner }}" | quote }}
       container:
-        image: quay.io/ulagbulag/openark:devel
+        image: "{{ .Values.ci.image.repo }}:{{ .Values.ci.image.tag | default .Chart.AppVersion }}"
         command:
           - /usr/bin/env
           - bash

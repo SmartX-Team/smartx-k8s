@@ -49,7 +49,8 @@ bootstrapper:
 cluster:
   # DNS configuration.
   # Kubernetes cluster name, also will be used as DNS domain
-  domainName: ops.openark # append `ops.` to prevent `openark.` from begin TLD
+  domainBase: openark
+  domainName: "" # append `ops.` to prevent `openark.` from begin TLD
   name: smartx
   group: default
   singleNode: false

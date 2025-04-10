@@ -40,6 +40,9 @@ spec:
     parameters:
       - name: name
       - name: enabled
+        enum:
+          - "false"
+          - "true"
 
   entrypoint: entrypoint
   templates:

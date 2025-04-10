@@ -47,6 +47,12 @@ operator:
     tag: ""
     pullPolicy: Always
 
+workflow:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: devel
+    pullPolicy: Always
+
 kubespray:
   #####################################
   # adduser
@@ -323,31 +329,6 @@ kubespray:
     - name: vm.nr_hugepages
       value: 0
 
-  ## List of key=value pairs that describe feature gates for
-  ## the k8s cluster.
-  kube_feature_gates: []
-  kube_apiserver_feature_gates:
-    - AppArmor=true
-    - DRAResourceClaimDeviceStatus=true
-    - DynamicResourceAllocation=true
-  kube_controller_feature_gates:
-    - AppArmor=true
-    - DRAResourceClaimDeviceStatus=true
-    - DynamicResourceAllocation=true
-    - RotateKubeletServerCertificate=true
-  kube_scheduler_feature_gates:
-    - AppArmor=true
-    - DRAResourceClaimDeviceStatus=true
-    - DynamicResourceAllocation=true
-  kube_proxy_feature_gates: []
-  kubelet_feature_gates:
-    - CPUManagerPolicyAlphaOptions=true
-    - DRAResourceClaimDeviceStatus=true
-    - DynamicResourceAllocation=true
-    - RotateKubeletServerCertificate=true
-  kubeadm_feature_gates:
-    - ControlPlaneKubeletLocalMode=true
-
   # Sets the eventRecordQPS parameter in kubelet-config.yaml.
   # Setting it to 0 allows unlimited requests per second.
   kubelet_event_record_qps: 1
@@ -363,21 +344,9 @@ kubespray:
   kubelet_make_iptables_util_chains: true
   kubelet_seccomp_default: true
 
-  ## NUMA-aware scheduling
-  kubelet_cpu_manager_policy: static
-  kubelet_cpu_manager_policy_options:
-    distribute-cpus-across-numa: "true"
-    full-pcpus-only: "true"
-
   #####################################
   # kubernetes / node
   #####################################
-
-  # Set to empty to avoid cgroup creation
-  kubelet_enforce_node_allocatable: pods,kube-reserved,system-reserved
-
-  # Set systemd service hardening features
-  kubelet_systemd_hardening: true
 
   # In case you have multiple interfaces in your
   # control plane nodes and you want to specify the right
@@ -388,14 +357,12 @@ kubespray:
 
   # Reserve this space for kube resources
   # Whether to run kubelet and container-engine daemons in a dedicated cgroup. (Not required for resource reservations).
-  kube_reserved: true
   kube_cpu_reserved: 1000m
   kube_memory_reserved: 2Gi # heuristic minimal peak: 1Gi for ContainerD, 1Gi for kubelet
   kube_ephemeral_storage_reserved: 2Gi
   kube_pid_reserved: "2000" # heuristic minimal peak: 1000
 
   # Set to true to reserve resources for system daemons
-  system_reserved: true
   system_cpu_reserved: 1000m
   system_memory_reserved: 5Gi # heuristic minimal peak: 3Gi for ETCD, 2Gi for the others
   system_ephemeral_storage_reserved: 2Gi
@@ -467,4 +434,4 @@ kubespray:
   #####################################
 
   ipv4_stack: true
-  ipv6_stack: true
+  ipv6_stack: false
