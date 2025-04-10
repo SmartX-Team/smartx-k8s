@@ -162,6 +162,7 @@ org.ulagbulag.io/desktop-environment:
 
 org.ulagbulag.io/desktop-environment/vine:
   requires:
+    - org.ulagbulag.io/acceleration
     - org.ulagbulag.io/desktop-environment
     - org.ulagbulag.io/gitops
     - org.ulagbulag.io/vm/kubevirt
