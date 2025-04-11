@@ -13,11 +13,19 @@ ports:
   - name: notebook
     protocol: TCP
     containerPort: 8888
+{{- /* Resources */}}
+{{- if $.Values.session.resources.limits }}
+resources:
+  limits:
+{{- range $key, $value := $.Values.session.resources.limits }}
+{{- if not ( has $key ( list "cpu" "memory" ) ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
 securityContext:
 {{- include "podTemplate.session.securityContext" $ | nindent 2 }}
 workingDir: {{ include "helm.userHome" $ | quote }}
 volumeMounts:
 {{- include "podTemplate.session.volumeMounts" $ | nindent 2 }}
-resources:
-{{- .Values.session.resources | toYaml | nindent 6 }}
 {{- end }}

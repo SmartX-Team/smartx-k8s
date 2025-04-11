@@ -9,8 +9,4 @@ ports:
   - name: novnc
     protocol: TCP
     containerPort: 6080
-resources:
-  limits:
-    cpu: "1"
-    memory: 500Mi
 {{- end }}

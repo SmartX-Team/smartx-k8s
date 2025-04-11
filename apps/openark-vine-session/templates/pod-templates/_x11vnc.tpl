@@ -15,10 +15,6 @@ ports:
   - name: x11vnc
     protocol: TCP
     containerPort: 5900
-resources:
-  limits:
-    cpu: "1"
-    memory: 500Mi
 securityContext:
   runAsNonRoot: {{ not ( .Values.session.context.root | default .Values.session.context.sudo ) }}
   runAsUser: {{ include "helm.userId" $ }}

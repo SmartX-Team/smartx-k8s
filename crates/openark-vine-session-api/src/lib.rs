@@ -20,7 +20,7 @@ use clap::Parser;
 #[cfg(feature = "serde")]
 use k8s_openapi::Resource;
 use k8s_openapi::{
-    api::core::v1::{Node, Taint},
+    api::core::v1::{Node, Pod, Taint},
     apimachinery::pkg::{
         api::resource::Quantity,
         apis::meta::v1::{ObjectMeta, Time},
@@ -44,11 +44,8 @@ use crate::{
     profile::SessionProfileCrd,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "clap", derive(Parser))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VineSessionArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_AUTH_DOMAIN_NAME"))]
     auth_domain_name: String,
@@ -241,11 +238,9 @@ impl ComputeMode {
 /// A struct storing an session metadata.
 ///
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct Metadata {
+pub struct Metadata<'a> {
     alias: Option<String>,
+    args: &'a VineSessionArgs,
     bind: Option<bool>,
     bind_cpu: Option<Quantity>,
     bind_memory: Option<Quantity>,
@@ -262,16 +257,17 @@ pub struct Metadata {
     signed_out: Option<bool>,
 }
 
-impl Metadata {
+impl<'a> Metadata<'a> {
     /// Load session metadata from kubernetes object metadata.
     ///
-    pub fn load(args: &VineSessionArgs, metadata: &ObjectMeta) -> Self {
+    pub fn load(args: &'a VineSessionArgs, metadata: &ObjectMeta) -> Self {
         let labels = metadata.labels.as_ref();
         Self {
             alias: labels
                 .and_then(|map| map.get(&args.label_alias))
                 .filter(|&value| !value.is_empty())
                 .cloned(),
+            args,
             bind: labels
                 .and_then(|map| map.get(&args.label_bind))
                 .and_then(|value| value.parse().ok()),
@@ -329,69 +325,69 @@ impl Metadata {
     }
 
     #[must_use]
-    fn build_labels(&self, args: &VineSessionArgs) -> BTreeMap<String, String> {
+    fn build_labels(&self) -> BTreeMap<String, String> {
         fn to_patch_resource(res: &Option<Quantity>) -> String {
             res.as_ref().map(|res| res.0.clone()).unwrap_or_default()
         }
 
         let mut map = BTreeMap::default();
         map.insert(
-            args.label_alias.clone(),
+            self.args.label_alias.clone(),
             self.alias.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_bind.clone(),
+            self.args.label_bind.clone(),
             self.bind.unwrap_or(false).to_string(),
         );
         map.insert(
-            args.label_bind_cpu.clone(),
+            self.args.label_bind_cpu.clone(),
             to_patch_resource(&self.bind_cpu),
         );
         map.insert(
-            args.label_bind_memory.clone(),
+            self.args.label_bind_memory.clone(),
             to_patch_resource(&self.bind_memory),
         );
         map.insert(
-            args.label_bind_namespace.clone(),
+            self.args.label_bind_namespace.clone(),
             self.bind_namespace.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_bind_node.clone(),
+            self.args.label_bind_node.clone(),
             self.bind_node.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_bind_persistent.clone(),
+            self.args.label_bind_persistent.clone(),
             self.bind_persistent.unwrap_or(false).to_string(),
         );
         map.insert(
-            args.label_bind_profile.clone(),
+            self.args.label_bind_profile.clone(),
             self.bind_profile.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_bind_revision.clone(),
+            self.args.label_bind_revision.clone(),
             self.bind_revision.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_bind_storage.clone(),
+            self.args.label_bind_storage.clone(),
             to_patch_resource(&self.bind_storage),
         );
         map.insert(
-            args.label_bind_timestamp.clone(),
+            self.args.label_bind_timestamp.clone(),
             self.bind_timestamp
                 .as_ref()
                 .map(|time| time.0.timestamp_millis().to_string())
                 .unwrap_or_default(),
         );
         map.insert(
-            args.label_bind_user.clone(),
+            self.args.label_bind_user.clone(),
             self.bind_user.clone().unwrap_or_default(),
         );
         map.insert(
-            args.label_compute_mode.clone(),
+            self.args.label_compute_mode.clone(),
             self.compute_mode.unwrap_or_default().to_string(),
         );
         map.insert(
-            args.label_signed_out.clone(),
+            self.args.label_signed_out.clone(),
             self.signed_out.unwrap_or(true).to_string(),
         );
         map.insert("nvidia.com/gpu.replicas".into(), "256".into());
@@ -408,9 +404,9 @@ impl Metadata {
 
     #[cfg(feature = "serde")]
     #[must_use]
-    fn to_patch(&self, args: &VineSessionArgs) -> Value {
+    fn to_patch(&self) -> Value {
         json!({
-            "labels": self.build_labels(args),
+            "labels": self.build_labels(),
             "name": &self.name,
         })
     }
@@ -419,16 +415,14 @@ impl Metadata {
 /// A struct storing a node's session state.
 ///
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct NodeSession {
-    metadata: Metadata,
+pub struct NodeSession<'a> {
+    metadata: Metadata<'a>,
+    node: &'a Node,
     taints: Vec<Taint>,
     unreachable: bool,
 }
 
-impl NodeSession {
+impl<'a> NodeSession<'a> {
     /// Duration for signing out nodes.
     pub const DURATION_SIGN_OUT: Duration = Duration::seconds(Self::DURATION_SIGN_OUT_SECONDS as _);
 
@@ -441,11 +435,12 @@ impl NodeSession {
 
     /// Load node state from kubernetes object.
     ///
-    pub fn load(args: &VineSessionArgs, node: &Node) -> Self {
+    pub fn load(args: &'a VineSessionArgs, node: &'a Node) -> Self {
         let metadata = &node.metadata;
         let spec = node.spec.as_ref();
         Self {
             metadata: Metadata::load(args, metadata),
+            node,
             taints: spec
                 .and_then(|spec| spec.taints.clone())
                 .unwrap_or_default(),
@@ -478,15 +473,11 @@ impl NodeSession {
 
     /// Get remaining signing-out duration.
     #[must_use]
-    pub fn signing_out(
-        &self,
-        args: &VineSessionArgs,
-        timestamp: DateTime<Utc>,
-    ) -> Option<Duration> {
+    pub fn signing_out(&self, timestamp: DateTime<Utc>) -> Option<Duration> {
         let time_added = self
             .taints
             .iter()
-            .find(|&taint| filter_taint(taint, &args.label_signed_out))?
+            .find(|&taint| filter_taint(taint, &self.metadata.args.label_signed_out))?
             .time_added
             .as_ref()?
             .0;
@@ -514,12 +505,8 @@ impl NodeSession {
     /// Append node labels.
     ///
     #[must_use]
-    pub fn append_labels(
-        &self,
-        args: &VineSessionArgs,
-        mut labels: BTreeMap<String, String>,
-    ) -> BTreeMap<String, String> {
-        for (key, value) in self.metadata.build_labels(args) {
+    pub fn append_labels(&self, mut labels: BTreeMap<String, String>) -> BTreeMap<String, String> {
+        for (key, value) in self.metadata.build_labels() {
             labels.insert(key, value);
         }
         labels
@@ -527,40 +514,64 @@ impl NodeSession {
 
     /// Set the node's name.
     ///
-    pub fn apply_node(&mut self, node: &Node) {
-        if let Some(allocatable) = node
+    pub fn apply_node(&mut self, pods: &[Pod]) {
+        // Collect metrics
+        let pods = pods.iter().filter(|&pod| {
+            !pod.labels()
+                .contains_key(&self.metadata.args.label_bind_node)
+        });
+        let metrics = NodeMetrics {
+            cpu: collect_resource_limits(pods.clone(), "cpu"),
+            memory: collect_resource_limits(pods, "memory"),
+        };
+
+        if let Some(allocatable) = self
+            .node
             .status
             .as_ref()
             .and_then(|status| status.allocatable.as_ref())
         {
             // Bind CPU
-            if let Some(cpu_cores) = allocatable
-                .get("cpu")
-                .and_then(|q| ParsedQuantity::try_from(q).ok())
-                .and_then(|q| q.to_bytes_u32())
             {
-                // Subtract required cores
-                let cpu_cores = cpu_cores.checked_sub(4).unwrap_or_default(); // hypervisor + 
-                self.metadata.bind_cpu = Some(Quantity(cpu_cores.to_string()));
+                let cpu = allocatable
+                    .get("cpu")
+                    .and_then(|q| ParsedQuantity::try_from(q).ok())
+                    .and_then(|q| (q - metrics.cpu).to_bytes_f64())
+                    .unwrap_or_default();
+
+                // Subtract required cpu
+                let cpu = (cpu - 1.0).floor(); // 1 core
+                let cpu = if cpu.is_finite() && cpu.is_sign_positive() {
+                    cpu as u32
+                } else {
+                    0
+                };
+                self.metadata.bind_cpu = Some(Quantity(cpu.to_string()));
             }
 
             // Bind Memory
-            if let Some(memory) = allocatable
-                .get("memory")
-                .and_then(|q| ParsedQuantity::try_from(q).ok())
-                .and_then(|q| q.to_bytes_u128())
             {
+                let memory = allocatable
+                    .get("memory")
+                    .and_then(|q| ParsedQuantity::try_from(q).ok())
+                    .and_then(|q| (q - metrics.memory).to_bytes_i128());
+
                 // Subtract required memory
-                let memory = memory.checked_sub(7 << 30 /* 7 Gi */).unwrap_or_default();
+                let memory = memory
+                    .and_then(|v| v.checked_sub(2 << 30 /* 2 Gi */))
+                    .filter(|&v| v >= 0)
+                    .unwrap_or_default();
                 self.metadata.bind_memory = Some(Quantity(memory.to_string()));
             }
 
             // Bind Storage
-            if let Some(storage) = allocatable
-                .get("ephemeral-storage")
-                .and_then(|q| ParsedQuantity::try_from(q).ok())
-                .and_then(|q| q.to_bytes_f64())
             {
+                let storage = allocatable
+                    .get("ephemeral-storage")
+                    .and_then(|q| ParsedQuantity::try_from(q).ok())
+                    .and_then(|q| q.to_bytes_f64())
+                    .unwrap_or_default();
+
                 // Subtract required storage size
                 let storage = (storage * 0.8 * 0.5).floor(); // both Container & VM
                 let storage = if storage.is_finite() && storage.is_sign_positive() {
@@ -571,19 +582,18 @@ impl NodeSession {
                 self.metadata.bind_storage = Some(Quantity(storage.to_string()));
             }
         }
-        self.metadata.bind_node = Some(node.name_any());
+        self.metadata.bind_node = self.metadata.name.clone();
     }
 
     /// Set the profile.
     /// Return `true` if the profile has been changed.
     ///
     #[cfg(feature = "kube")]
-    pub fn apply_profile<'a>(
+    pub fn apply_profile<'p>(
         &mut self,
-        args: &VineSessionArgs,
-        profile: Option<&'a (SessionBindingCrd, SessionProfileCrd)>,
+        profile: Option<&'p (SessionBindingCrd, SessionProfileCrd)>,
         timestamp: DateTime<Utc>,
-    ) -> ProfileState<'a> {
+    ) -> ProfileState<'p> {
         match profile {
             Some((binding, profile)) => {
                 let next_revision = &profile.metadata.resource_version;
@@ -626,9 +636,9 @@ impl NodeSession {
                         Some(true) => ComputeMode::VM,
                         Some(false) | None => ComputeMode::Container,
                     });
-                self.set_taint(&args.label_bind, "true".into(), timestamp);
+                self.set_taint(&self.metadata.args.label_bind, "true".into(), timestamp);
                 self.set_taint(
-                    &args.label_bind_profile,
+                    &self.metadata.args.label_bind_profile,
                     binding.spec.profile.clone(),
                     timestamp,
                 );
@@ -642,8 +652,8 @@ impl NodeSession {
                 self.metadata.bind_revision = None;
                 self.metadata.bind_timestamp = None;
                 self.metadata.bind_user = None;
-                self.remove_taint(&args.label_bind);
-                self.remove_taint(&args.label_bind_profile);
+                self.remove_taint(&self.metadata.args.label_bind);
+                self.remove_taint(&self.metadata.args.label_bind_profile);
                 ProfileState::Deleted(last_profile)
             }
         }
@@ -671,12 +681,7 @@ impl NodeSession {
     /// Set the session's signing state.
     ///
     #[must_use]
-    pub fn set_sign_out(
-        &mut self,
-        args: &VineSessionArgs,
-        timestamp: DateTime<Utc>,
-        sign_out: bool,
-    ) -> Option<Duration> {
+    pub fn set_sign_out(&mut self, timestamp: DateTime<Utc>, sign_out: bool) -> Option<Duration> {
         if sign_out {
             self.metadata.bind = Some(false);
             self.metadata.bind_revision = None;
@@ -694,7 +699,11 @@ impl NodeSession {
         // Update taints
         {
             if sign_out {
-                let time_added = self.set_taint(&args.label_signed_out, "true".into(), timestamp);
+                let time_added = self.set_taint(
+                    &self.metadata.args.label_signed_out,
+                    "true".into(),
+                    timestamp,
+                );
                 let time_completed = time_added + Self::DURATION_SIGN_OUT;
                 if time_completed > timestamp {
                     Some(time_completed - timestamp)
@@ -740,11 +749,11 @@ impl NodeSession {
     ///
     #[cfg(feature = "serde")]
     #[must_use]
-    pub fn to_patch(&self, args: &VineSessionArgs) -> Value {
+    pub fn to_patch(&self) -> Value {
         json!({
             "apiVersion": Node::API_VERSION,
             "kind": Node::KIND,
-            "metadata": self.metadata.to_patch(args),
+            "metadata": self.metadata.to_patch(),
             "spec": {
                 "taints": &self.taints,
                 "unschedulable": self.unreachable,
@@ -755,7 +764,7 @@ impl NodeSession {
     /// Convert to a computing resource limits.
     ///
     #[must_use]
-    pub fn to_resources_compute(&self, node: &Node) -> BTreeMap<String, Quantity> {
+    pub fn to_resources_compute(&self) -> BTreeMap<String, Quantity> {
         let mut map = BTreeMap::default();
         if let Some(value) = self.metadata.bind_cpu.clone() {
             map.insert("cpu".into(), value);
@@ -765,7 +774,7 @@ impl NodeSession {
         }
 
         // Attach NVIDIA GPU
-        let labels = node.labels();
+        let labels = self.node.labels();
         if labels
             .get("nvidia.com/gpu.present")
             .and_then(|value| value.parse().ok())
@@ -776,7 +785,8 @@ impl NodeSession {
                     map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
                 }
                 Some(ComputeMode::VM) => {
-                    if let Some(allocatable) = node
+                    if let Some(allocatable) = self
+                        .node
                         .status
                         .as_ref()
                         .and_then(|status| status.allocatable.as_ref())
@@ -807,6 +817,39 @@ impl NodeSession {
         }
         map
     }
+}
+
+/// A node metrics struct.
+///
+struct NodeMetrics {
+    pub cpu: ParsedQuantity,
+    pub memory: ParsedQuantity,
+}
+
+#[must_use]
+fn collect_resource_limits<'a, I>(pods: I, key: &str) -> ParsedQuantity
+where
+    I: Iterator<Item = &'a Pod>,
+{
+    pods.filter_map(|pod| pod.spec.as_ref())
+        .flat_map(|spec| {
+            spec.init_containers
+                .iter()
+                .flat_map(|list| list.iter())
+                .filter(|&container| {
+                    container
+                        .restart_policy
+                        .as_ref()
+                        .is_some_and(|policy| policy == "Always")
+                })
+                .chain(spec.containers.iter())
+                .filter_map(|container| container.resources.as_ref())
+                .filter_map(|requirements| requirements.limits.as_ref())
+                .filter_map(|resources| resources.get(key))
+                .filter_map(|resource| ParsedQuantity::try_from(resource).ok())
+        })
+        .reduce(|a, b| a + b)
+        .unwrap_or_default()
 }
 
 /// An enumeration of available profile states.

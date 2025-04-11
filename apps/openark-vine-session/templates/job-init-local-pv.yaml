@@ -11,16 +11,14 @@ metadata:
   name: "{{ include "helm.localPVCName" $ }}-init"
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    helm.sh/hook: pre-install
     helm.sh/hook-weight: "-2"
-    helm.sh/hook-delete-policy: hook-succeeded
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
     app.kubernetes.io/component: "{{ include "helm.localPVCName" $ }}-init"
 spec:
   backoffLimit: 5
   suspend: false
-  ttlSecondsAfterFinished: 5
+  ttlSecondsAfterFinished: null
   template:
     metadata:
       labels:

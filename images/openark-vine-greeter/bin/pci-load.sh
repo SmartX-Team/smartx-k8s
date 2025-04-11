@@ -39,6 +39,12 @@ elif [ "x${driver}" == 'xgpu' ]; then
     esac
 fi
 
+# Wait until the device is disabled
+echo "DEBUG: Disable PCI device: ${pci_id}"
+until echo 0 >"${dev}/enable"; do
+    sleep 1
+done
+
 # Unload driver
 if [ -e "${dev}/driver" ] && [ -f "${dev}/driver_override" ]; then
     if [ "x$(cat "${dev}/driver_override")" != "x${driver}" ]; then

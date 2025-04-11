@@ -10,10 +10,6 @@ args:
 env:
   - name: USER
     value: "0"
-resources:
-  limits:
-    cpu: 100m
-    memory: 100Mi
 restartPolicy: Always
 securityContext:
   privileged: true

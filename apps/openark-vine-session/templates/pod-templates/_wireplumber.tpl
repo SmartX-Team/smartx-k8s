@@ -18,10 +18,16 @@ readinessProbe:
       - status
   initialDelaySeconds: 1
   periodSeconds: 15
+{{- /* Resources */}}
+{{- if $.Values.session.resources.limits }}
 resources:
   limits:
-    # TODO: scrap from session resources
-    nvidia.com/gpu: "1"
+{{- range $key, $value := $.Values.session.resources.limits }}
+{{- if has $key ( list "nvidia.com/gpu" ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
 restartPolicy: Always
 securityContext:
   # FIXME: How to disable privileged permission?

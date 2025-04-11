@@ -14,10 +14,6 @@ env:
     value: {{ include "helm.userHome" $ | quote }}
   - name: TARGET_UID
     value: {{ include "helm.userId" $ | quote }}
-resources:
-  limits:
-    cpu: "1"
-    memory: 100Mi
 securityContext:
   privileged: false
   runAsNonRoot: false

@@ -249,8 +249,29 @@ containers:
 hostIPC: {{ .Values.session.context.hostIPC }}
 hostNetwork: {{ .Values.session.context.hostNetwork }}
 hostname: "{{ include "helm.fullname" $ }}-{{ .Release.Namespace }}"
-restartPolicy: {{ .Values.persistence.enabled | ternary "Always" "Never" | quote }}
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
+resources:
+{{- if $.Values.session.resources.claims }}
+  claims:
+{{- $.Values.session.resources.claims | toYaml | nindent 4 }}
+{{- end }}
+{{- if $.Values.session.resources.limits }}
+  limits:
+{{- range $key, $value := $.Values.session.resources.limits }}
+{{- if has $key ( list "cpu" "memory" ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if $.Values.session.resources.requests }}
+  requests:
+{{- range $key, $value := $.Values.session.resources.requests }}
+{{- if has $key ( list "cpu" "memory" ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+restartPolicy: {{ .Values.persistence.enabled | ternary "Always" "Never" | quote }}
 securityContext:
   appArmorProfile:
     type: Unconfined

@@ -9,10 +9,6 @@ command:
 args:
   - |
 {{- .Files.Get "bin/init_driver.sh" | trim | nindent 4 }}
-resources:
-  limits:
-    cpu: "1"
-    memory: 100Mi
 securityContext:
   privileged: true
   runAsNonRoot: false

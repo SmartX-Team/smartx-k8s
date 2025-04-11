@@ -69,14 +69,15 @@ domain:
     isolateEmulatorThread: true
     # this passthrough the node CPU to the VM
     model: host-passthrough
-{{- if eq 0 ( mod ( .Values.session.resources.limits.cpu | int ) 2 ) }}
-    cores: {{ div ( .Values.session.resources.limits.cpu | int ) 2 }}
+{{- $cpu := sub ( .Values.session.resources.limits.cpu | int ) 1 }}
+{{- if eq 0 ( mod $cpu 2 ) }}
+    cores: {{ div $cpu 2 }}
     threads: 2
-{{- else if gt ( .Values.session.resources.limits.cpu | int ) 1 }}
-    cores: {{ ( div ( .Values.session.resources.limits.cpu | int ) 2 ) | int }}
+{{- else if gt $cpu 1 }}
+    cores: {{ ( div $cpu 2 ) | int }}
     threads: 2
 {{- else }}
-    cores: {{ .Values.session.resources.limits.cpu | int }}
+    cores: {{ $cpu }}
     threads: 2
 {{- end }}
     sockets: 1
@@ -218,7 +219,7 @@ networks:
   - name: default
     pod: {}
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
-terminationGracePeriodSeconds: 30
+terminationGracePeriodSeconds: 1800
 tolerations:
   - operator: Exists
     effect: NoSchedule

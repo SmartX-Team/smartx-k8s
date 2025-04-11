@@ -5,7 +5,8 @@ daemonsets:
       operator: Exists
       effect: NoSchedule
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
-      operator: Exists
+      operator: Equal
+      value: "true"
       effect: NoExecute
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
       operator: Exists
