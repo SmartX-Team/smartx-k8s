@@ -215,12 +215,7 @@ env:
 {{- include "podTemplate.session.env" $ | nindent 2 }}
 ports:
 {{- include "podTemplate.session.ports" $ | nindent 2 }}
-securityContext:
-{{- include "podTemplate.session.securityContext" $ | nindent 2 }}
-workingDir: {{ include "helm.userHome" $ | quote }}
-volumeMounts:
-{{- include "podTemplate.session.volumeMounts" $ | nindent 2 }}
-resources:
+{{- /* Resources */}}
 {{- if or
   .Values.features.containers
   .Values.volumes.public.enabled
@@ -229,5 +224,18 @@ resources:
 {{- $_ := set $.Values.session.resources "limits" ( .Values.session.resources.limits | default dict ) }}
 {{- $_ := set $.Values.session.resources.limits "squat.ai/fuse" "1" }}
 {{- end }}
-{{- $.Values.session.resources | toYaml | nindent 2 }}
+{{- if $.Values.session.resources.limits }}
+resources:
+  limits:
+{{- range $key, $value := $.Values.session.resources.limits }}
+{{- if not ( has $key ( list "cpu" "memory" ) ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+securityContext:
+{{- include "podTemplate.session.securityContext" $ | nindent 2 }}
+workingDir: {{ include "helm.userHome" $ | quote }}
+volumeMounts:
+{{- include "podTemplate.session.volumeMounts" $ | nindent 2 }}
 {{- end }}

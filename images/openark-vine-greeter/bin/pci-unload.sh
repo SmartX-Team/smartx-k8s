@@ -30,9 +30,10 @@ if [ -e "${dev}/driver/module" ]; then
 
     echo "DEBUG: Unbind PCI device: ${pci_id} <- ${driver}"
     echo "${pci_id}" >"${dev}/driver/unbind"
-    if [ "x$(cat "${dev}/enable")" == 'x1' ]; then
-        echo 0 >"${dev}/enable"
-    fi
+    until [ "x$(cat "${dev}/enable")" == 'x0' ]; do
+        echo 0 >"${dev}/enable" 2>/dev/null || true
+        sleep 0.2
+    done
     echo "INFO: Unbinded PCI device: ${pci_id} <- ${driver}"
 
     PCI_ID_PATTERN='^[0-9]{4}(:[0-9]{2}){2}\.[0-9]$'

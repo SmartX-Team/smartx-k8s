@@ -54,17 +54,17 @@ workflow:
     pullPolicy: Always
 
 kubespray:
-  #####################################
+  ##########################################
   # adduser
-  #####################################
+  ##########################################
 
   # additional configurations
   kube_owner: root
   kube_cert_group: root
 
-  #####################################
+  ##########################################
   # container-engine / containerd
-  #####################################
+  ##########################################
 
   # Containerd conf default dir
   containerd_storage_dir: "/var/lib/containerd"
@@ -75,9 +75,9 @@ kubespray:
   # TODO: newer major releases (containerd 2.x) have many compatibility issues for now: 2025-03-16
   containerd_version: 1.7.26
 
-  #####################################
+  ##########################################
   # etcd
-  #####################################
+  ##########################################
 
   # Settings for containerized control plane (etcd/kubelet/secrets)
   # deployment type for legacy etcd mode
@@ -88,9 +88,9 @@ kubespray:
   etcd_config_dir: /etc/etcd
   etcd_events_data_dir: /var/lib/etcd-events
 
-  #####################################
+  ##########################################
   # kubernetes / client
-  #####################################
+  ##########################################
 
   # Kubernetes configuration dirs and system namespace.
   # Those are where all the additional config stuff goes
@@ -99,9 +99,9 @@ kubespray:
   # Editing those values will almost surely break something.
   kube_config_dir: /etc/kubernetes
 
-  #####################################
+  ##########################################
   # kubernetes / control-plane
-  #####################################
+  ##########################################
 
   ## kube-controller-manager
   kube_controller_manager_bind_address: 127.0.0.1
@@ -194,12 +194,15 @@ kubespray:
   ## kube-scheduler
   kube_scheduler_bind_address: 127.0.0.1
 
-  #####################################
+  ##########################################
   # k8s-cluster / kubelet
-  #####################################
+  ##########################################
 
   ### fail with swap on (default true)
   kubelet_fail_swap_on: true
+
+  # FIXME: Wait for this PR to be merged: https://github.com/kubernetes/kubernetes/pull/131262
+  kube_version: 1.32.2
 
   ## Kube Proxy mode One of ['iptables','ipvs']
   kube_proxy_mode: ipvs
@@ -336,17 +339,24 @@ kubespray:
   # sysctl_file_path to add sysctl conf to
   sysctl_file_path: /etc/sysctl.d/99-sysctl.conf
 
-  #####################################
+  ##########################################
   # k8s-cluster / kubelet / advanced
-  #####################################
+  ##########################################
 
   kubelet_streaming_connection_idle_timeout: 5m
   kubelet_make_iptables_util_chains: true
   kubelet_seccomp_default: true
 
-  #####################################
+  ##########################################
+  # k8s-cluster / kubelet / download
+  ##########################################
+
+  # FIXME: Wait for this PR to be merged: https://github.com/kubernetes/kubernetes/pull/131262
+  kubeadm_image_repo: quay.io/ulagbulag
+
+  ##########################################
   # kubernetes / node
-  #####################################
+  ##########################################
 
   # In case you have multiple interfaces in your
   # control plane nodes and you want to specify the right
@@ -372,9 +382,9 @@ kubespray:
   # The maximum number of image pulls in parallel. Set it to a integer great than 1 to enable image pulling in parallel.
   kubelet_max_parallel_image_pulls: 5
 
-  #####################################
+  ##########################################
   # kubernetes / preinstall
-  #####################################
+  ##########################################
 
   nameservers: "{{ upstream_dns_servers }}"
 
@@ -383,9 +393,9 @@ kubespray:
 
   systemd_resolved_disable_stub_listener: true
 
-  #####################################
+  ##########################################
   # kubernetes-apps / ansible
-  #####################################
+  ##########################################
 
   # Limits for coredns
   coredns_affinity:
@@ -421,18 +431,18 @@ kubespray:
   # See upstream https://github.com/postfinance/kubelet-csr-approver
   kubelet_csr_approver_enabled: false
 
-  #####################################
+  ##########################################
   # upgrade / pre-upgrade
-  #####################################
+  ##########################################
 
   # TODO: Change the key name
   drain_nodes: false
   drain_pod_selector: serviceType!=ansible-task
   upgrade_node_fail_if_drain_fails: false
 
-  #####################################
+  ##########################################
   # (others)
-  #####################################
+  ##########################################
 
   ipv4_stack: true
   ipv6_stack: false

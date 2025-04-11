@@ -5,7 +5,7 @@ use clap::Parser;
 use convert_case::{Case, Casing};
 use futures::StreamExt;
 use k8s_openapi::{
-    api::core::v1::{Node, ObjectReference},
+    api::core::v1::{Node, ObjectReference, Pod},
     apimachinery::pkg::apis::meta::v1::{OwnerReference, Time},
 };
 use kube::{
@@ -82,6 +82,7 @@ struct Context {
     api_app: Api<Application>,
     api_binding: Api<SessionBindingCrd>,
     api_node: Api<Node>,
+    api_pod: Api<Pod>,
     api_profile: Api<SessionProfileCrd>,
     args: Args,
     delete_params: DeleteParams,
@@ -172,7 +173,7 @@ fn build_owned_session_profile(
             .get_or_insert_default()
             .limits
             .get_or_insert_default();
-        for (key, value) in session.to_resources_compute(node) {
+        for (key, value) in session.to_resources_compute() {
             limits.entry(key).or_insert(value);
         }
     }
@@ -300,7 +301,7 @@ fn build_app(
             annotations: Some(profile.annotations().clone()),
             labels: Some({
                 let labels = profile.labels().clone();
-                session.append_labels(&ctx.args.api, labels)
+                session.append_labels(labels)
             }),
             name: Some(name),
             namespace: Some(ctx.args.namespace.clone()),
@@ -383,7 +384,7 @@ fn build_app(
 async fn create_app(
     ctx: &Context,
     node: &Node,
-    session: &NodeSession,
+    session: &NodeSession<'_>,
     binding: &SessionBindingCrd,
     profile: &SessionProfileCrd,
 ) -> Result<AppState> {
@@ -504,7 +505,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
 
     // Do nothing while signing out
     if let Some(remaining) = current
-        .signing_out(&ctx.args.api, timestamp)
+        .signing_out(timestamp)
         .and_then(|delta| delta.to_std().ok())
     {
         {
@@ -520,9 +521,18 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
         return Ok(Action::requeue(NodeSession::DURATION_SIGN_OUT_STD));
     }
 
+    // Collect allocated pods
+    let pods = {
+        let lp = ListParams {
+            field_selector: Some(format!("spec.nodeName={name}")),
+            ..Default::default()
+        };
+        ctx.api_pod.list(&lp).await?.items
+    };
+
     // Clone the session and apply the static information
     let mut next = current.clone();
-    next.apply_node(&node);
+    next.apply_node(&pods);
 
     // Try signing in with a new profile
     let next_profile = {
@@ -552,11 +562,11 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
         };
         binding.zip(profile)
     };
-    let profile_state = next.apply_profile(&ctx.args.api, next_profile.as_ref(), timestamp);
+    let profile_state = next.apply_profile(next_profile.as_ref(), timestamp);
 
     // Sign out if the node is not ready
     let must_sign_out = profile_state.has_changed() || next.unreachable();
-    let mut sign_out_remaining = next.set_sign_out(&ctx.args.api, timestamp, must_sign_out);
+    let mut sign_out_remaining = next.set_sign_out(timestamp, must_sign_out);
 
     // Update session application
     let app_state = match profile_state {
@@ -584,7 +594,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     // Update if changed
     if current != next {
         // Apply patch
-        let patch = Patch::Strategic(next.to_patch(&ctx.args.api));
+        let patch = Patch::Strategic(next.to_patch());
         ctx.api_node.patch(&name, &ctx.patch_params, &patch).await?;
         {
             #[cfg(feature = "tracing")]
@@ -676,6 +686,7 @@ async fn try_main(args: Args) -> Result<()> {
     let api_app = Api::namespaced(client.clone(), &args.namespace);
     let api_binding = Api::namespaced(client.clone(), &args.namespace);
     let api_node = Api::all(client.clone());
+    let api_pod = Api::all(client.clone());
     let api_profile = Api::namespaced(client.clone(), &args.namespace);
 
     let delete_params = DeleteParams {
@@ -710,6 +721,7 @@ async fn try_main(args: Args) -> Result<()> {
         api_app,
         api_binding,
         api_node: api_node.clone(),
+        api_pod,
         api_profile,
         args,
         delete_params,

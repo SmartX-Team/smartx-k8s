@@ -60,7 +60,7 @@ if [ "${#kiss_cluster_worker_nodes}" == '0' ] && [ "x${kiss_ansible_task_name}" 
                 | select( .status.bindGroup.role != "ControlPlane" )
                 | select( .status.state | test("'"${state}"'") )
             ] | sort_by( .metadata.creationTimestamp, .metadata.name )[]
-            | "worker:" + .metadata.name + ":" + .status.access.primary.address
+            | "kube_node:" + .metadata.name + ":" + .status.access.primary.address
         '
     ))
     unset state

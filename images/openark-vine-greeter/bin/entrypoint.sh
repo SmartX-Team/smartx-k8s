@@ -10,6 +10,36 @@ set -e -o pipefail
 # Verbose
 set -x
 
+# Try detecting Primary GPU
+declare -g primary_dev="$($(dirname "$0")/gpu-primary.sh)"
+
+is_cleaned_up='false'
+function load_primary_gpu() {
+    driver="$1"
+    if [ "x${driver}" == 'x' ]; then
+        echo '* Usage: cleanup [driver]' >&2
+        exec false
+    fi
+
+    if [ "x${primary_dev}" != 'x' ]; then
+        if [ "x${is_cleaned_up}" == 'xfalse' ]; then
+            # Unload all the other GPU devices
+            "$(dirname "$0")/gpu-load-except.sh" "${primary_dev}" 'vfio-pci' >&2
+
+            # Reset Primary GPU device: We want to kick off VGA Arbiter
+            "$(dirname "$0")/pci-reset.sh" "${primary_dev}" >&2
+            sleep 2 # Some GPU drivers (e.g. nouveau) needsome time to finish uninit
+        fi
+
+        # Load Primary GPU device
+        "$(dirname "$0")/pci-load.sh" "${primary_dev}" "${driver}" >&2
+        sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
+
+        # Unload all USB devices
+        "$(dirname "$0")/usb-load-all.sh" 'vfio-pci' >&2
+    fi
+}
+
 function terminate() {
     # Stop app
     if [ "x${pid_firefox}" != 'x' ]; then
@@ -23,32 +53,16 @@ function terminate() {
         wait "${pid_xorg}" || true
     fi
 
-    # Unload Primary GPU
-    if [ "x${primary_dev}" != 'x' ]; then
-        "$(dirname "$0")/pci-load.sh" "${primary_dev}" 'vfio-pci' >&2
-    fi
+    # Unload GPU driver from the Primary GPU
+    load_primary_gpu 'vfio-pci'
     exec true
 }
 
 trap -- 'terminate' SIGINT
 trap -- 'terminate' SIGTERM
 
-# Try detecting Primary GPU
-declare -g primary_dev="$($(dirname "$0")/gpu-primary.sh)"
-if [ "x${primary_dev}" != 'x' ]; then
-    # Unload all the other GPU devices
-    "$(dirname "$0")/gpu-load-except.sh" "${primary_dev}" 'vfio-pci' >&2
-
-    # Reset Primary GPU device: We want to kick off VGA Arbiter
-    "$(dirname "$0")/pci-reset.sh" "${primary_dev}" >&2
-
-    # Load Primary GPU device
-    "$(dirname "$0")/pci-load.sh" "${primary_dev}" 'gpu' >&2
-    sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
-
-    # Unload all USB devices
-    "$(dirname "$0")/usb-load-all.sh" 'vfio-pci' >&2
-fi
+# Load GPU driver in the Primary GPU
+load_primary_gpu 'gpu'
 
 # Check GPU drivers
 if ! find /dev/dri -mindepth 1 -maxdepth 1 -name "card*" -type c >/dev/null; then

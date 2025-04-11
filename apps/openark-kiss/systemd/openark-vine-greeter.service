@@ -13,7 +13,7 @@ Environment="IMAGE={{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag
 Restart=on-failure
 RestartSec=5
 Slice=kubepods.slice
-TimeoutStopSec=30s
+TimeoutStopSec=300s
 
 [Install]
 WantedBy=getty.target

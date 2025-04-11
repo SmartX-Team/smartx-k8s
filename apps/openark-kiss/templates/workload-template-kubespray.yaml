@@ -173,8 +173,11 @@ spec:
           - name: new_cluster
             value: {{ "{{ workflow.parameters.new_cluster }}" | quote }}
           - name: worker_nodes
+      retryStrategy:
+        limit: "6"
       container:
         image: "{{ .Values.kiss.image.repo }}:{{ .Values.kiss.image.tag }}"
+        imagePullPolicy: "{{ .Values.kiss.image.pullPolicy }}"
         command:
           - ansible-playbook
         args:
@@ -188,7 +191,6 @@ spec:
           - /root/inventory/cluster/config.yaml
           - --inventory
           - /root/inventory/cluster/hosts.yaml
-          - /opt/playbook/playbook-control_plane.yaml
           - {{ "{{= \"ControlPlane\" == inputs.parameters.group_role ? \"/opt/playbook/playbook-control_plane.yaml\" : \"/opt/playbook/playbook-worker.yaml\" }}" | quote }}
         env:
           - name: ansible_host

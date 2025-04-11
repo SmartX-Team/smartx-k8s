@@ -25,12 +25,14 @@ fi
 for dev in $(
     find -L /sys/bus/pci/devices \
         -maxdepth 2 -mindepth 2 \
-        -name 'usb*' -type d -exec dirname {} \; |
+        -name class -type f -exec dirname {} \; |
         uniq
 ); do
-    if [ "x${dev}" == "x${primary_dev}" ]; then
+    # Find all USB controllers
+    if ! cat "${dev}/class" | grep -Posq '^0x0c03[0-9a-f]{2}$'; then
         continue
     fi
 
+    # Load driver
     "$(dirname "$0")/pci-load.sh" "${dev}" "${driver}"
 done

@@ -21,6 +21,18 @@ kube_oidc_url: "https://{{ .Values.auth.domainName | default ( printf "auth.%s" 
 # k8s-cluster / kubelet
 #####################################
 
+{{- if and
+  ( has "org.ulagbulag.io/cni" .Values.features )
+  ( not .Values.cluster.services.kubeProxy.enabled )
+}}
+## List of kubeadm init phases that should be skipped during control plane setup
+## By default 'addon/coredns' is skipped
+## 'addon/kube-proxy' gets skipped for some network plugins
+kubeadm_init_phases_skip_default:
+  - addon/coredns
+  - addon/kube-proxy
+{{- end }}
+
 # DNS configuration.
 # Kubernetes cluster name, also will be used as DNS domain
 cluster_name: {{ .Values.cluster.domainName | quote }}

@@ -39,24 +39,25 @@ elif [ "x${driver}" == 'xgpu' ]; then
     esac
 fi
 
-# Unload driver
-if [ -e "${dev}/driver" ] && [ -f "${dev}/driver_override" ]; then
-    if [ "x$(cat "${dev}/driver_override")" != "x${driver}" ]; then
-        "$(dirname "$0")/pci-unload.sh" "${dev}"
-        sleep 0.2
-    fi
-fi
+# Unload old driver
+"$(dirname "$0")/pci-unload.sh" "${dev}"
 
+# Load new driver
 if [ ! -d "/sys/bus/pci/drivers/${driver}" ]; then
     echo "DEBUG: Load driver: ${driver}"
     modprobe "${driver}"
     echo "INFO: Loaded driver: ${driver}"
 fi
 
+# Bind device
 echo "DEBUG: Bind PCI device: ${pci_id} -> ${driver}"
 if [ ! -e "/sys/bus/pci/drivers/${driver}/${pci_id}" ]; then
     echo "${driver}" >"${dev}/driver_override"
-    echo "${pci_id}" >"/sys/bus/pci/drivers/${driver}/bind"
+    if ! echo "${pci_id}" >"/sys/bus/pci/drivers/${driver}/bind"; then
+        echo "WARN: Cannot bind to PCI device: ${pci_id} -> ${driver}"
+        echo 1 >"${dev}/enable" 2>/dev/null || true
+        exec true
+    fi
 fi
 
 # Wait until the VGA card is loaded
@@ -84,6 +85,8 @@ if [ "x${driver}" != 'xvfio-pci' ]; then
 
 # Load vfio-pci to the devices in the same IOMMU group
 else
+    echo "INFO: Binded PCI device: ${pci_id} -> ${driver}"
+
     # Do not reexec
     propagate="$3"
     if [ "x${propagate}" == 'xfalse' ]; then
@@ -94,9 +97,11 @@ else
         find -L "${dev}/iommu_group/devices" -mindepth 1 -maxdepth 1 -type d |
             sort -V
     ); do
+        # Skip if the same device
         if [ "x$(realpath "${neighbor_dev}")" == "x$(realpath "${dev}")" ]; then
             continue
         fi
-        "$0" "${neighbor_dev}" "${driver}" "false"
+
+        "$0" "$(realpath "${neighbor_dev}")" "${driver}" "false"
     done
 fi

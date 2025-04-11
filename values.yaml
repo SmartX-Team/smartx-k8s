@@ -219,7 +219,10 @@ kiss:
   image:
     # FIXME: Wait for this PR to be merged: https://github.com/kubernetes-sigs/kubespray/pull/11994
     repo: quay.io/ulagbulag/kubespray
+    # NOTE: Before upgrading kubespray, please double-check the kubespary variables
+    # Especially: `kube_version`, `kubeadm_image_repo`
     tag: v2.27.1
+    pullPolicy: Always
 
   # OS Configuration
   os:

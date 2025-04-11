@@ -20,7 +20,7 @@ metadata:
 spec:
   backoffLimit: 5
   suspend: false
-  ttlSecondsAfterFinished: 5
+  ttlSecondsAfterFinished: null
   template:
     metadata:
       labels:

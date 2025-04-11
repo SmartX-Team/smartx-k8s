@@ -46,6 +46,7 @@ spec:
       nodeSelector:
         # control plane nodes should get ready for DHCP
         node-role.kubernetes.io/control-plane: ""
+      priorityClassName: k8s-cluster-critical
       securityContext:
         seccompProfile:
           type: RuntimeDefault

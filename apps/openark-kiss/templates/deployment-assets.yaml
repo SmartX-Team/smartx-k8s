@@ -109,6 +109,12 @@ spec:
             - name: patches
               mountPath: /usr/share/nginx/html/patches
               readOnly: true
+      dnsConfig:
+        nameservers:
+          - {{ .Values.network.nameservers.ns1 | quote }}
+          - {{ .Values.network.nameservers.ns2 | quote }}
+      dnsPolicy: ClusterFirst
+      priorityClassName: k8s-cluster-critical
       securityContext:
         seccompProfile:
           type: RuntimeDefault

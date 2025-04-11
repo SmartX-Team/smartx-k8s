@@ -42,6 +42,7 @@ spec:
                     operator: In
                     values:
                       - ControlPlane
+      priorityClassName: k8s-cluster-critical
       securityContext:
         seccompProfile:
           type: RuntimeDefault
