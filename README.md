@@ -12,8 +12,20 @@ Each node should have these **minimal requirements** below:
 
 Please browse [apps/openark-kiss/values.yaml](apps/openark-kiss/values.yaml) for more information.
 
+#### Control Plane + ETCD Nodes
+
+| group        | CPU   | Memory | Ephemeral Storage | PIDs | Children                                   |
+| ------------ | ----- | ------ | ----------------- | ---- | ------------------------------------------ |
+| system.slice | 1000m | 5Gi    | 2Gi               | 4000 | etcd.service, systemd-systemd.service, ... |
+| kube.slice   | 1000m | 2Gi    | 2Gi               | 2000 | sshd.service, ...                          |
+| (Daemonsets) | 2000m | 1Gi    | 2Gi               | 2000 | CSI, GPU, KubeVirt, ...                    |
+
+#### Worker Nodes
+
+Please browse [apps/openark-kiss/values.yaml](apps/openark-kiss/values.yaml) for more information.
+
 | group        | CPU   | Memory | Ephemeral Storage | PIDs | Children                     |
 | ------------ | ----- | ------ | ----------------- | ---- | ---------------------------- |
-| system.slice | 1000m | 5Gi    | 2Gi               | 4000 | systemd-systemd.service, ... |
+| system.slice | 1000m | 2Gi    | 2Gi               | 4000 | systemd-systemd.service, ... |
 | kube.slice   | 1000m | 2Gi    | 2Gi               | 2000 | sshd.service, ...            |
 | (Daemonsets) | 2000m | 1Gi    | 2Gi               | 2000 | CSI, GPU, KubeVirt, ...      |

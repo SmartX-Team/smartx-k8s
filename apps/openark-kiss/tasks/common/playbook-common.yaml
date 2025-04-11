@@ -111,6 +111,11 @@
         kube_pods_subnet: "{{ kube_child_pods_subnet }}"
         kube_service_addresses: "{{ kube_child_service_addresses }}"
 
+    - name: Change kubernetes configuration | Worker Nodes
+      when: inventory_hostname not in groups['kube_control_plane']
+      set_fact:
+        system_memory_reserved: "{{ system_memory_reserved_workers }}"
+
 - hosts: os_flatcar
   gather_facts: false
   tasks:

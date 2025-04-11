@@ -157,7 +157,6 @@ kubelet_cpu_manager_policy: static
 kubelet_cpu_manager_policy_options:
   distribute-cpus-across-numa: "true"
   full-pcpus-only: "true"
-  prefer-align-cpus-by-uncorecache: "true"
 {{- end }}
 
 #####################################

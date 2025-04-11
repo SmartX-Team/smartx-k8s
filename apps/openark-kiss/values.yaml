@@ -365,6 +365,7 @@ kubespray:
   # Set to true to reserve resources for system daemons
   system_cpu_reserved: 1000m
   system_memory_reserved: 5Gi # heuristic minimal peak: 3Gi for ETCD, 2Gi for the others
+  system_memory_reserved_workers: 2Gi # heuristic minimal peak: 2Gi for the others
   system_ephemeral_storage_reserved: 2Gi
   system_pid_reserved: "4000" # heuristic minimal peak: 3000
 
