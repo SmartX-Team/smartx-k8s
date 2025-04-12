@@ -165,7 +165,7 @@ async fn systemctl_exec(command: &str, service_name: &str) -> Result<()> {
     }
 }
 
-async fn try_main(args: Args) -> Result<()> {
+async fn try_main(args: &Args) -> Result<()> {
     // Enable the service for the next boot
     systemctl_exec("enable", &args.service_name).await?;
 
@@ -174,7 +174,7 @@ async fn try_main(args: Args) -> Result<()> {
 
     let mut service = Service {
         api: api.clone(),
-        args: &args,
+        args,
         patch_params: PatchParams {
             dry_run: args.dry_run,
             force: false,
@@ -215,5 +215,7 @@ async fn main() {
     #[cfg(feature = "tracing")]
     ::tracing::info!("Welcome to OpenARK VINE Session Handler!");
 
-    try_main(args).await.expect("running a handler")
+    loop {
+        try_main(&args).await.expect("running a handler")
+    }
 }
