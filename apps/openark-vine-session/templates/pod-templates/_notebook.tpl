@@ -21,6 +21,8 @@ resources:
 {{- if not ( has $key ( list "cpu" "memory" ) ) }}
     {{ $key | quote }}: {{ $value | quote }}
 {{- end }}
+    # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
+    {{ $key | quote }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
 securityContext:

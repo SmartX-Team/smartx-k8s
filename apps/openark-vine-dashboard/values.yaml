@@ -20,6 +20,9 @@ dashboard:
     tag: ""
     pullPolicy: Always
 
+features:
+  desktopEnvironment: false
+
 gateway:
   image:
     repo: quay.io/ulagbulag/openark

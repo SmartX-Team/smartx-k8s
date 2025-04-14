@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder, Scope, get, web};
+use actix_web::{HttpResponse, Responder, Scope, get, post, web};
 use itertools::Itertools;
 use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
 use kube::{Api, Client, ResourceExt, api::ListParams};
@@ -6,6 +6,7 @@ use kube_custom_resources_rs::argoproj_io::v1alpha1::applications::Application;
 use kube_quantity::ParsedQuantity;
 use openark_vine_oauth::User;
 use openark_vine_session_api::{
+    exec::ExecArgs,
     owned_profile::OwnedSessionProfileSpec,
     session::{
         Session, SessionLinks, SessionRegion, SessionResourceAnnotations, SessionResourceLabels,
@@ -18,24 +19,20 @@ use tracing::{Level, instrument, warn};
 use crate::LabelArgs;
 
 pub fn build() -> Scope {
-    web::scope("bindings").service(list)
+    web::scope("bindings").service(list).service(exec)
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 #[get("")]
 pub async fn list(
     labels: web::Data<LabelArgs>,
+    // Add support for guest users
     kube: web::Data<Client>,
     user: User,
 ) -> impl Responder {
     let api = Api::<Application>::default_namespaced(kube.as_ref().clone());
     let lp = ListParams {
-        label_selector: Some(format!(
-            "{k1}==true, {k2} in (, {v2})",
-            k1 = &labels.label_bind,
-            k2 = &labels.label_bind_user,
-            v2 = user.username(),
-        )),
+        label_selector: Some(build_label_selector(labels, None, &user)),
         ..Default::default()
     };
 
@@ -58,7 +55,7 @@ pub async fn list(
         Err(error) => {
             #[cfg(feature = "tracing")]
             warn!("Failed to list session bindings: {error}");
-            return HttpResponse::InternalServerError().finish();
+            HttpResponse::InternalServerError().finish()
         }
     }
 }
@@ -257,5 +254,55 @@ fn sum_quantity<'a>(quantities: impl Iterator<Item = &'a Quantity>) -> Option<Qu
             total += quantity;
         }
         Some(total.into())
+    }
+}
+
+#[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
+#[post("exec")]
+pub async fn exec(
+    labels: web::Data<LabelArgs>,
+    // Add support for guest users
+    kube: web::Data<Client>,
+    user: User,
+    args: web::Json<ExecArgs>,
+) -> impl Responder {
+    let web::Json(mut args) = args;
+    args.label_selector = Some(build_label_selector(
+        labels,
+        args.label_selector.as_deref(),
+        &user,
+    ));
+
+    match ::openark_vine_session_exec::exec(kube.as_ref().clone(), &args).await {
+        Ok(session) => {
+            session.join().await;
+            HttpResponse::Ok().json(())
+        }
+        Err(error) => {
+            #[cfg(feature = "tracing")]
+            warn!("Failed to exec: {error}");
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+fn build_label_selector(
+    labels: web::Data<LabelArgs>,
+    label_selector: Option<&str>,
+    user: &User,
+) -> String {
+    let mut appended_label_selector = format!(
+        "{k1}==true, {k2} in (, {v2})",
+        k1 = &labels.label_bind,
+        k2 = &labels.label_bind_user,
+        v2 = user.username(),
+    );
+
+    match label_selector {
+        Some(label_selector) => {
+            appended_label_selector.push_str(label_selector);
+            appended_label_selector
+        }
+        None => appended_label_selector,
     }
 }

@@ -100,7 +100,7 @@ openark-vine-session-api = { workspace = true, features = [
     "serde",
     "std",
 ] }
-openark-vine-session-exec = { workspace = true, features = ["serde", "std"] }
+openark-vine-session-exec = { workspace = true, features = ["std"] }
 
 actix-cors = { workspace = true, optional = true }
 actix-web = { workspace = true }

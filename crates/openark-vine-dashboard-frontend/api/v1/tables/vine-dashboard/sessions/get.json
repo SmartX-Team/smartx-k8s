@@ -2,7 +2,7 @@
   "kind": "Table",
   "namespace": "vine-dashboard",
   "name": "sessions",
-  "baseUrl": "http://localhost:9090/api/v1/bindings",
+  "baseUrl": "http://localhost:9090/api/v1/bindings/",
   "totalRows": 1,
   "services": {
     "create": { "enabled": true },

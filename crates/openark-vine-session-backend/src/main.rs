@@ -70,13 +70,14 @@ async fn try_main(args: Args) -> Result<()> {
         openid,
     } = args;
 
-    let client = Data::new({
+    let config = {
         let mut config = Config::infer().await?;
         if let Some(namespace) = namespace {
             config.default_namespace = namespace;
         }
-        Client::try_from(config)?
-    });
+        config
+    };
+    let client = Data::new(Client::try_from(config.clone())?);
     let labels = Data::new(labels);
     let openid = Data::new(openid);
     let reqwest = Data::new(::reqwest::Client::new());

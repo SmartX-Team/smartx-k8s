@@ -143,4 +143,37 @@ spec:
                 name: {{ include "helm.fullname" $ | quote }}
                 port:
                   number: 80
+{{- if .Values.features.desktopEnvironment }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "helm.fullname" $ }}-proxy"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+    nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: dashboard-proxy
+spec:
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  tls:
+    - secretName: "{{ .Values.ingress.domainName }}-tls"
+      hosts:
+        - {{ .Values.ingress.domainName | quote }}
+  rules:
+    - host: {{ .Values.ingress.domainName | quote }}
+      http:
+        paths:
+          - path: /u/tables/vine-dashboard/sessions
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "helm.fullname" $ | quote }}
+                port:
+                  number: 80
+{{- end }}
 {{- end }}

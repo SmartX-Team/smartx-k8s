@@ -117,8 +117,17 @@ Pod metadata
 labels:
 {{- include "helm.labels" $ | nindent 2 }}
   app.kubernetes.io/component: session
+  {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
 {{- if not ( empty .Values.node.name ) }}
   {{ index .Values.openark.labels "org.ulagbulag.io/bind.node" | quote }}: {{ .Values.node.name | quote }}
+{{- end }}
+{{- if eq "Guest" .Values.user.kind }}
+  {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}: ""
+{{- else }}
+  {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}: {{ .Values.user.name | quote }}
+{{- end }}
+{{- range $key, $value := .Values.features }}
+  {{ printf "org.ulagbulag.io/feature-%s" ( $key | kebabcase ) }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
 
@@ -250,24 +259,25 @@ hostIPC: {{ .Values.session.context.hostIPC }}
 hostNetwork: {{ .Values.session.context.hostNetwork }}
 hostname: "{{ include "helm.fullname" $ }}-{{ .Release.Namespace }}"
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
-resources:
+# TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
+# resources:
 {{- if $.Values.session.resources.claims }}
-  claims:
+  # claims:
 {{- $.Values.session.resources.claims | toYaml | nindent 4 }}
 {{- end }}
 {{- if $.Values.session.resources.limits }}
-  limits:
+  # limits:
 {{- range $key, $value := $.Values.session.resources.limits }}
 {{- if has $key ( list "cpu" "memory" ) }}
-    {{ $key | quote }}: {{ $value | quote }}
+    # {{ $key | quote }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- if $.Values.session.resources.requests }}
-  requests:
+  # requests:
 {{- range $key, $value := $.Values.session.resources.requests }}
 {{- if has $key ( list "cpu" "memory" ) }}
-    {{ $key | quote }}: {{ $value | quote }}
+    # {{ $key | quote }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
 {{- end }}

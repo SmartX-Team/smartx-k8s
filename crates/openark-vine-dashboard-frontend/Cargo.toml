@@ -69,6 +69,7 @@ openark-vine-oauth = { workspace = true, features = [
     "rand",
     "std",
 ] }
+openark-vine-session-api = { workspace = true, features = ["client", "std"] }
 
 anyhow = { workspace = true, features = ["std"] }
 async-trait = { workspace = true }
@@ -86,6 +87,7 @@ jaq-std = { workspace = true, features = [
     "std",
     "time",
 ] }
+regex = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["std"] }
 serde-json = { workspace = true, features = ["std"] }
 serde-urlencoded = { workspace = true }

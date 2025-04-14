@@ -68,7 +68,8 @@ tracing = [
 
 [dependencies]
 openark-core = { workspace = true, features = ["clap", "std"] }
-openark-vine-session-exec = { workspace = true, features = ["clap", "std"] }
+openark-vine-session-api = { workspace = true, features = ["clap", "std"] }
+openark-vine-session-exec = { workspace = true, features = ["std"] }
 
 anyhow = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }

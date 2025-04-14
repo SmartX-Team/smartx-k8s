@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use kube::Client;
-use openark_vine_session_exec::ExecArgs;
+use openark_vine_session_api::exec::ExecArgs;
 
 /// Execute a command into multiple vine sessions.
 #[derive(Parser)]

@@ -11,7 +11,7 @@ use openark_vine_oauth::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use tracing::{Level, debug};
+use tracing::Level;
 use url::Url;
 use web_sys::{RequestMode, RequestRedirect};
 use yew::{platform::spawn_local, prelude::*};
@@ -88,7 +88,7 @@ impl ::openark_vine_oauth::client::Client for Client {
                         Ok(json) => json,
                         Err(message) => return Err(Error::msg(message)),
                     };
-                    debug!("Response: {json:#?}");
+                    ::tracing::debug!("Response: {json:#?}");
                     ::serde_json::from_value(json).map_err(Into::into)
                 }
 

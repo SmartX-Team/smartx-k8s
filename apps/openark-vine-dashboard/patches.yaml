@@ -6,6 +6,9 @@ ingress:
   domainName: {{ .Values.ingress.domainName | quote }}
   enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
 
+features:
+  desktopEnvironment: {{ has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+
 openark:
   labels:
     org.ulagbulag.io/category: {{ index .Values.openark.labels "org.ulagbulag.io/category" | quote }}

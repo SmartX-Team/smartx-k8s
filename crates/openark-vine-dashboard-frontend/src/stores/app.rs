@@ -3,11 +3,12 @@ use std::{collections::BTreeMap, rc::Rc};
 use chrono::{DateTime, TimeDelta, Utc};
 use openark_vine_dashboard_api::{
     app::App,
-    client::ClientExt,
+    client::ClientExt as _,
     item::ItemMetadata,
     page::{PageRef, PageSpec as OwnedPageSpec},
     table::TableSession,
 };
+use openark_vine_session_api::{client::ClientExt as _, exec::ExecArgs};
 use serde_json::{Map, Value};
 use url::Url;
 use yew::prelude::*;
@@ -136,6 +137,16 @@ impl ApiStore<AppStore> {
             },
             ready: true,
             update: move |_: &mut AppStore, _| dialog.dispatch(DialogAction::Close),
+        })
+    }
+
+    pub fn vine_session_exec(self, base_url: Url, args: ExecArgs) {
+        self.call(Request {
+            fetch: move |client: Client| async move {
+                client.vine_session_exec(base_url.clone(), &args).await
+            },
+            ready: true,
+            update: move |_: &mut AppStore, _| (),
         })
     }
 }

@@ -16,3 +16,4 @@ openark:
     image:
       repo: docker.io/library/rust
       tag: "1"
+  labels: {}

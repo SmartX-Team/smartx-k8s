@@ -12,8 +12,10 @@ use openark_vine_dashboard_api::{
         TableSession,
     },
 };
+use openark_vine_session_api::exec::ExecArgs;
 use serde_json::Value;
 use url::Url;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 use crate::{
@@ -99,6 +101,7 @@ struct Context<'a> {
     page_ref: &'a PageRef,
     session: &'a TableSession,
     tab_index: &'a UseStateHandle<Option<usize>>,
+    tab_vnc_cmdline: UseStateHandle<String>,
 }
 
 impl Selections {
@@ -583,45 +586,113 @@ fn build_extra_service_tab_content_vnc(
     context: &Context,
     service: &TableExtraService,
     rows: &Value,
-) -> Html {
-    let items = rows
-        .as_array()
-        .map(|rows| {
-            #[inline]
-            fn get_str<'a>(row: &'a Value, key: &str) -> Option<&'a str> {
-                row.pointer(key).and_then(|value| value.as_str())
-            }
-
-            rows.iter()
-                .sorted_by_key(|&row| {
-                    (
-                        get_str(row, "/metadata/labels/dash.ulagbulag.io~1alias"),
-                        get_str(row, "/metadata/name"),
-                    )
-                })
-                .filter_map(|value| {
-                    build_extra_service_tab_content_vnc_item(context, service, value)
-                })
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-
-    if items.is_empty() {
-        return html! {};
+) -> Option<Html> {
+    #[inline]
+    fn get_str<'a>(row: &'a Value, key: &str) -> Option<&'a str> {
+        row.pointer(key).and_then(|value| value.as_str())
     }
 
-    let button_cmdline = html! {
-        <div class="flex join w-full">
-            <div class="w-full">
-                <label class="input join-item w-full">
-                    <input type="text" placeholder="Type here" required=true />
-                </label>
+    let json_path = service.json_path.as_deref()?;
+    let items = rows
+        .as_array()?
+        .iter()
+        .filter(|&row| row.pointer(json_path).is_some())
+        .sorted_by_key(|&row| {
+            (
+                get_str(
+                    row,
+                    &format!(
+                        "/metadata/labels/{}",
+                        env!("OPENARK_LABEL_ALIAS").replace('/', "~1")
+                    ),
+                ),
+                get_str(row, "/metadata/name"),
+            )
+        })
+        .filter_map(|value| build_extra_service_tab_content_vnc_item(context, service, value))
+        .collect::<Vec<_>>();
+
+    let button_cmdline = {
+        let submit = {
+            let api = context.api.clone();
+            let base_url = context.session.spec.base_url.clone();
+            let tab_vnc_cmdline = context.tab_vnc_cmdline.clone();
+            move |cmdline: String| {
+                let cmdline = cmdline.trim();
+                if cmdline.is_empty() {
+                    return;
+                }
+
+                // Split command by space
+                // TODO(HoKim98): implement advanced lexer
+                let re = ::regex::Regex::new(r#"\'([^\']*)\'|\"([^\"]*)\"|\S+"#).unwrap();
+                let command = re
+                    .find_iter(&cmdline)
+                    .map(|s| s.as_str().trim())
+                    .filter(|&s| !s.is_empty())
+                    .map(Into::into)
+                    .collect::<Vec<_>>();
+                if command.is_empty() {
+                    return;
+                }
+
+                // Flush prompt
+                #[cfg(feature = "tracing")]
+                {
+                    ::tracing::info!("Executing vine session command: {cmdline}");
+                }
+                tab_vnc_cmdline.set(Default::default());
+
+                // Build options
+                let args = ExecArgs {
+                    command,
+                    label_selector: None,
+                    namespace: None,
+                    terminal: true,
+                    wait: true,
+                };
+
+                // Execute via API
+                api.clone().vine_session_exec(base_url.clone(), args)
+            }
+        };
+
+        let tab_vnc_cmdline = context.tab_vnc_cmdline.clone();
+        let onkeypress = {
+            let submit = submit.clone();
+            move |event: KeyboardEvent| {
+                if let Some(input) = event
+                    .target_dyn_into::<HtmlInputElement>()
+                    .map(|e| e.value())
+                {
+                    tab_vnc_cmdline.set(input.clone());
+                    // Press ENTER to submit
+                    if event.key_code() == 0x0D {
+                        submit(input);
+                    }
+                }
+            }
+        };
+
+        let tab_vnc_cmdline = context.tab_vnc_cmdline.clone();
+        let onsubmit = move |_| submit((*tab_vnc_cmdline).clone());
+
+        let value = (*context.tab_vnc_cmdline).clone();
+        html! {
+            <div class="flex join w-full">
+                <div class="w-full">
+                    <label class="input join-item w-full">
+                        <input type="text" placeholder="Type here" required=true
+                            { onkeypress } { value }
+                        />
+                    </label>
+                </div>
+                <button class="btn btn-neutral join-item" onclick={ onsubmit }>{ "Enter" }</button>
             </div>
-            <button class="btn btn-neutral join-item">{ "Enter" }</button>
-        </div>
+        }
     };
 
-    html! {
+    Some(html! {
         <div class="flex flex-col p-4">
             { button_cmdline }
             <div class="divider" />
@@ -629,26 +700,22 @@ fn build_extra_service_tab_content_vnc(
                 { for items }
             </div>
         </div>
-    }
+    })
 }
 
-fn build_extra_service_tab_content(context: &Context, rows: &Value) -> Html {
+fn build_extra_service_tab_content(context: &Context, rows: &Value) -> Option<Html> {
     // Get a selected tab service
-    let service = match context
+    let service = context
         .session
         .spec
         .extra_services
-        .as_ref()
-        .and_then(|services| services.get(context.tab_index.unwrap_or_default()))
-    {
-        Some(service) => service,
-        None => return html! {},
-    };
+        .as_ref()?
+        .get((**context.tab_index)?)?;
 
     // Draw content
     match service.kind {
         TableExtraServiceKind::VNC => build_extra_service_tab_content_vnc(context, service, rows),
-        TableExtraServiceKind::Navigate => html! {},
+        TableExtraServiceKind::Navigate => None,
     }
 }
 
@@ -707,6 +774,8 @@ pub fn component(props: &TableWidgetProps) -> Html {
     let selections = use_reducer(Selections::default);
     let tab_index = use_state_eq(|| None);
 
+    let tab_vnc_cmdline = use_state_eq(Default::default);
+
     // Validate states
 
     let Cached {
@@ -732,6 +801,7 @@ pub fn component(props: &TableWidgetProps) -> Html {
         page_ref,
         session: &*session,
         tab_index: &tab_index,
+        tab_vnc_cmdline,
     };
 
     let floating_button = if tab_index.is_none()
@@ -751,7 +821,13 @@ pub fn component(props: &TableWidgetProps) -> Html {
             </table>
         }
     } else {
-        build_extra_service_tab_content(&context, &rows)
+        match build_extra_service_tab_content(&context, &rows) {
+            Some(content) => content,
+            None => {
+                tab_index.set(None);
+                html! {}
+            }
+        }
     };
 
     let tabs = build_extra_service_tabs(&context);

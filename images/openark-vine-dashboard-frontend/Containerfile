@@ -41,6 +41,7 @@ RUN . "${HOME}/.nvm/nvm.sh" \
     && npm clean-install
 
 # Build it!
+ENV OPENARK_LABEL_ALIAS={{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
 RUN \
     # Cache build outputs
     --mount=type=cache,target=/src/target \

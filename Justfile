@@ -32,11 +32,13 @@ run-openark-vine-dashboard-backend:
 
 # Run development package: openark-vine-dashboard-frontend
 run-openark-vine-dashboard-frontend:
-    @cd ./crates/openark-vine-dashboard-frontend && trunk serve
+    @cd ./crates/openark-vine-dashboard-frontend && \
+        env OPENARK_LABEL_ALIAS="$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/alias"')" \
+        trunk serve
 
 # Run development package: openark-vine-session-backend
 run-openark-vine-session-backend:
-    @cargo run --package openark-vine-session-backend -- \
+    cargo run --package openark-vine-session-backend -- \
         --base-url '/api/v1' \
         --label-bind "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind"')" \
         --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')"

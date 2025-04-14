@@ -4,6 +4,9 @@
 extern crate alloc as std;
 
 pub mod binding;
+#[cfg(feature = "client")]
+pub mod client;
+pub mod exec;
 pub mod owned_profile;
 pub mod profile;
 pub mod session;
@@ -38,7 +41,7 @@ use serde_json::{Value, json};
 use strum::{Display, EnumString};
 use url::Url;
 
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "kube", feature = "serde"))]
 use crate::{
     binding::{SessionBindingCrd, SessionBindingUserKind},
     profile::SessionProfileCrd,
@@ -225,7 +228,6 @@ pub enum ComputeMode {
 }
 
 impl ComputeMode {
-    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_workload_config(&self) -> &str {
         match self {
@@ -665,6 +667,7 @@ impl<'a> NodeSession<'a> {
         self.metadata.bind_revision = None;
     }
 
+    #[cfg(feature = "kube")]
     fn remove_taint(&mut self, key: &str) {
         let index = self
             .taints
