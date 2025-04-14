@@ -13,6 +13,7 @@ use openark_vine_dashboard_api::{
     },
 };
 use serde_json::Value;
+use url::Url;
 use yew::prelude::*;
 
 use crate::{
@@ -97,6 +98,7 @@ struct Context<'a> {
     selections: UseReducerHandle<Selections>,
     page_ref: &'a PageRef,
     session: &'a TableSession,
+    tab_index: &'a UseStateHandle<Option<usize>>,
 }
 
 impl Selections {
@@ -335,12 +337,12 @@ fn build_row_column(printer_column: &TablePrinterColumn, value: &Value) -> Html 
 }
 
 fn build_row_column_extra_service(service: &TableExtraService, value: &Value) -> Option<Html> {
-    if !service.single {
+    if !service.visible || !service.single {
         return None;
     }
 
     Some(match service.kind {
-        TableExtraServiceKind::Navigate => html! {
+        TableExtraServiceKind::Navigate | TableExtraServiceKind::VNC => html! {
             <button
                 class={
                     if service.side_effect {
@@ -490,14 +492,14 @@ fn build_row(context: &Context, index: usize, value: &Value) -> Html {
     }
 }
 
-fn build_body(context: Context, rows: &Value) -> Html {
+fn build_body(context: &Context, rows: &Value) -> Html {
     html! {
         <tbody>{
             rows.as_array()
                 .map(|rows| {
                     rows.iter().enumerate()
                         .map(|(index, value)| build_row(
-                            &context,
+                            context,
                             index,
                             value,
                         ))
@@ -505,6 +507,148 @@ fn build_body(context: Context, rows: &Value) -> Html {
                 })
                 .unwrap_or_default()
         }</tbody>
+    }
+}
+
+fn build_extra_service_tab(
+    context: &Context,
+    service: &TableExtraService,
+    index: usize,
+) -> Option<Html> {
+    if !service.visible || !service.multiple {
+        return None;
+    }
+
+    match service.kind {
+        TableExtraServiceKind::VNC => {
+            let class = if **context.tab_index == Some(index) {
+                "tab tab-active"
+            } else {
+                "tab"
+            };
+            let tab_index = context.tab_index.clone();
+            let onclick = move |_| tab_index.set(Some(index));
+            Some(html! {
+                <a role="tab" { class } { onclick }>
+                    { service.name.clone() }
+                </a>
+            })
+        }
+        TableExtraServiceKind::Navigate => None,
+    }
+}
+
+fn build_extra_service_tabs(context: &Context) -> Vec<Html> {
+    context
+        .session
+        .spec
+        .extra_services
+        .as_ref()
+        .map(|services| {
+            services
+                .iter()
+                .enumerate()
+                .filter_map(|(index, service)| build_extra_service_tab(context, service, index))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn build_extra_service_tab_content_vnc_item(
+    context: &Context,
+    service: &TableExtraService,
+    value: &Value,
+) -> Option<Html> {
+    let url: Url = value
+        .pointer(service.json_path.as_deref()?)?
+        .as_str()?
+        .parse()
+        .ok()?;
+
+    let base_url = &context.session.spec.base_url;
+    let host = url.host_str()?;
+    let port = url.port().unwrap_or(443);
+    let src = format!(
+        "{base_url}/vnc/?autoconnect=true&host={host}&port={port}&reconnect=true&resize=scale&shared=true&view_only=true&quality=5"
+    );
+
+    Some(html! {
+        <div class="mockup-window bg-base-100 border border-base-300">
+            <iframe class="aspect-video w-full" { src } />
+        </div>
+    })
+}
+
+fn build_extra_service_tab_content_vnc(
+    context: &Context,
+    service: &TableExtraService,
+    rows: &Value,
+) -> Html {
+    let items = rows
+        .as_array()
+        .map(|rows| {
+            #[inline]
+            fn get_str<'a>(row: &'a Value, key: &str) -> Option<&'a str> {
+                row.pointer(key).and_then(|value| value.as_str())
+            }
+
+            rows.iter()
+                .sorted_by_key(|&row| {
+                    (
+                        get_str(row, "/metadata/labels/dash.ulagbulag.io~1alias"),
+                        get_str(row, "/metadata/name"),
+                    )
+                })
+                .filter_map(|value| {
+                    build_extra_service_tab_content_vnc_item(context, service, value)
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    if items.is_empty() {
+        return html! {};
+    }
+
+    let button_cmdline = html! {
+        <div class="flex join w-full">
+            <div class="w-full">
+                <label class="input join-item w-full">
+                    <input type="text" placeholder="Type here" required=true />
+                </label>
+            </div>
+            <button class="btn btn-neutral join-item">{ "Enter" }</button>
+        </div>
+    };
+
+    html! {
+        <div class="flex flex-col p-4">
+            { button_cmdline }
+            <div class="divider" />
+            <div class="grid grid-cols-4 gap-4">
+                { for items }
+            </div>
+        </div>
+    }
+}
+
+fn build_extra_service_tab_content(context: &Context, rows: &Value) -> Html {
+    // Get a selected tab service
+    let service = match context
+        .session
+        .spec
+        .extra_services
+        .as_ref()
+        .and_then(|services| services.get(context.tab_index.unwrap_or_default()))
+    {
+        Some(service) => service,
+        None => return html! {},
+    };
+
+    // Draw content
+    match service.kind {
+        TableExtraServiceKind::VNC => build_extra_service_tab_content_vnc(context, service, rows),
+        TableExtraServiceKind::Navigate => html! {},
     }
 }
 
@@ -561,6 +705,7 @@ pub fn component(props: &TableWidgetProps) -> Html {
     let api = use_api();
     let rows = use_table_rows(api.clone(), page_ref.clone(), session.spec.base_url.clone());
     let selections = use_reducer(Selections::default);
+    let tab_index = use_state_eq(|| None);
 
     // Validate states
 
@@ -586,21 +731,54 @@ pub fn component(props: &TableWidgetProps) -> Html {
         selections,
         page_ref,
         session: &*session,
+        tab_index: &tab_index,
     };
 
-    let floating_button =
-        if session.spec.services.create.enabled && !session.spec.schema.fields.is_empty() {
-            Some(build_create_button(&context, page_ref))
-        } else {
-            None
+    let floating_button = if tab_index.is_none()
+        && session.spec.services.create.enabled
+        && !session.spec.schema.fields.is_empty()
+    {
+        Some(build_create_button(&context, page_ref))
+    } else {
+        None
+    };
+
+    let content = if tab_index.is_none() {
+        html! {
+            <table class="table">
+                { build_header(&context) }
+                { build_body(&context, &rows) }
+            </table>
+        }
+    } else {
+        build_extra_service_tab_content(&context, &rows)
+    };
+
+    let tabs = build_extra_service_tabs(&context);
+    let body = if tabs.is_empty() {
+        content
+    } else {
+        let class = match *tab_index {
+            Some(_) => "tab",
+            None => "tab tab-active",
         };
+        let onclick = move |_| tab_index.set(None);
+        html! {
+            <>
+                <div role="tablist" class="flex tabs tabs-border">
+                    <a role="tab" { class } { onclick } >{ "List" }</a>
+                    { tabs }
+                </div>
+                <div>
+                    { content }
+                </div>
+            </>
+        }
+    };
 
     html! {
         <div>
-            <table class="table">
-                { build_header(&context) }
-                { build_body(context, &rows) }
-            </table>
+            { body }
             { for floating_button }
         </div>
     }

@@ -32,11 +32,11 @@
     },
     {
       "name": "Remote Desktop",
-      "kind": "Navigate",
+      "kind": "VNC",
       "jsonPath": "/links/vnc",
       "description": "원격 데스크톱 화면으로 이동합니다.",
       "single": true,
-      "multiple": false,
+      "multiple": true,
       "sideEffect": false
     }
   ],

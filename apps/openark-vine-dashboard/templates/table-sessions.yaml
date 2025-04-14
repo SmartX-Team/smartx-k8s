@@ -26,6 +26,7 @@ spec:
       kind: Navigate
       jsonPath: /links/notebook
       description: Jupyter Notebook 화면으로 이동합니다.
+      visible: true
       single: true
       multiple: false
       sideEffect: false
@@ -33,15 +34,17 @@ spec:
       kind: Navigate
       jsonPath: /links/rdp
       description: 원격 데스크톱 화면으로 이동합니다.
+      visible: true
       single: true
       multiple: false
       sideEffect: false
     - name: Remote Desktop
-      kind: Navigate
+      kind: VNC
       jsonPath: /links/vnc
       description: 원격 데스크톱 화면으로 이동합니다.
+      visible: true
       single: true
-      multiple: false
+      multiple: true
       sideEffect: false
   printerColumns:
     - name: User

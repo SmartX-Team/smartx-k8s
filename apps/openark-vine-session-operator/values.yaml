@@ -31,6 +31,12 @@ ingress:
 
 nodeSelector: {}
 
+novnc:
+  image:
+    repo: quay.io/ulagbulag/openark-vine-novnc
+    tag: latest
+    pullPolicy: Always
+
 openark:
   labels: {}
 

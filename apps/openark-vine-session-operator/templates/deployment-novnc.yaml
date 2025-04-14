@@ -1,0 +1,138 @@
+{{- if .Values.apiserver.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "helm.fullname" $ }}-novnc"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: novnc
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: novnc
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: novnc
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+            # KISS compute nodes should be preferred
+            - weight: 2
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+            # KISS gateway nodes should be more preferred
+            - weight: 4
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Gateway
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Compute
+                      - Gateway
+      containers:
+        - name: novnc
+          image: "{{ .Values.novnc.image.repo }}:{{ .Values.novnc.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.novnc.image.pullPolicy | quote }}
+          env:
+            - name: NOVNC_VNC_PATH
+              value: /
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 6080
+          resources:
+            requests:
+              cpu: "1"
+              memory: 200Mi
+            limits:
+              cpu: "2"
+              memory: 500Mi
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "helm.fullname" $ }}-novnc"
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: novnc
+spec:
+  selector:
+{{- include "helm.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: novnc
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 6080
+{{- if .Values.features.ingress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "helm.fullname" $ }}-novnc"
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  labels:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: novnc
+spec:
+  ingressClassName: {{ .Values.ingress.domainName | quote }}
+  tls:
+    - secretName: "{{ .Values.ingress.domainName }}-tls"
+      hosts:
+        - {{ .Values.ingress.domainName | quote }}
+  rules:
+    - host: {{ .Values.ingress.domainName | quote }}
+      http:
+        paths:
+          - path: "{{ .Values.apiserver.baseUrl }}/bindings/vnc(/|$)(.*)"
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "helm.fullname" $ }}-novnc"
+                port:
+                  number: 80
+{{- end }}
+{{- end }}

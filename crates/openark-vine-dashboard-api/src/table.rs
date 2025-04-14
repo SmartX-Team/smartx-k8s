@@ -130,6 +130,9 @@ pub struct TableExtraService {
     )]
     pub description: Option<String>,
 
+    #[cfg_attr(feature = "serde", serde(default = "default_true"))]
+    pub visible: bool,
+
     #[cfg_attr(feature = "serde", serde(default))]
     pub single: bool,
 
@@ -147,6 +150,8 @@ pub struct TableExtraService {
 #[strum(serialize_all = "PascalCase")]
 pub enum TableExtraServiceKind {
     Navigate,
+    #[cfg_attr(feature = "serde", serde(rename = "VNC"))]
+    VNC,
 }
 
 #[derive(Clone, Debug)]
@@ -223,4 +228,9 @@ pub enum TablePrinterColumnKind {
     ImageUrl,
     Level,
     String,
+}
+
+#[inline]
+const fn default_true() -> bool {
+    true
 }
