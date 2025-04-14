@@ -16,8 +16,7 @@ dcgm:
   enabled: false
 
 dcgmExporter:
-  # TODO: enable either dcgm or dcgmExporter
-  enabled: false
+  enabled: true
 
 driver:
   enabled: true
