@@ -17,9 +17,7 @@ impl Args {
         let kube = Client::try_default().await?;
 
         let session = ::openark_vine_session_exec::exec(kube, &args).await?;
-        if args.wait {
-            session.join().await;
-        }
+        session.join().await;
         Ok(())
     }
 }
