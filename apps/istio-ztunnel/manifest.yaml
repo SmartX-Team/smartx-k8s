@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.istio-ztunnel
 spec:
+  enabled: false
   group: ops
   phase: stable
   scale: small
