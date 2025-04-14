@@ -44,7 +44,7 @@ pub struct ExecArgs {
     pub namespace: Option<String>,
 
     /// Whether to wait the attached processes.
-    #[arg(long)]
+    #[arg(short, long)]
     #[cfg_attr(feature = "serde", serde(default))]
     pub wait: bool,
 }
@@ -75,7 +75,7 @@ pub async fn exec(kube: Client, args: &ExecArgs) -> Result<ExecSession> {
         container: Some(container.into()),
         stdin: false,
         stdout: true,
-        stderr: true,
+        stderr: !wait,
         tty: wait,
         max_stdin_buf_size: None,
         max_stdout_buf_size: None,
