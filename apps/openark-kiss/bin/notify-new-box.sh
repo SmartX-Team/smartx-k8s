@@ -12,4 +12,4 @@ UUID="$(cat /sys/class/dmi/id/product_uuid)"
 
 # Submit to KISS Cluster
 exec curl --retry 5 --retry-delay 5 \
-    "http://gateway.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}/new?address=${ADDRESS}&uuid=${UUID}"
+    "http://gateway.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/new?address=${ADDRESS}&uuid=${UUID}"

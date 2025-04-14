@@ -59,3 +59,10 @@ Service Accounts
 {{- define "helm.serviceAccountSystemName" -}}
 {{- printf "kiss-system" }}
 {{- end }}
+
+{{/*
+Cluster Domain Name
+*/}}
+{{- define "helm.clusterDomainName" -}}
+{{- .Values.cluster.domainName | default ( printf "ops.%s" .Values.cluster.domainBase ) }}
+{{- end }}

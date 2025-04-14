@@ -35,7 +35,7 @@ kubeadm_init_phases_skip_default:
 
 # DNS configuration.
 # Kubernetes cluster name, also will be used as DNS domain
-cluster_name: {{ .Values.cluster.domainName | quote }}
+cluster_name: {{ include "helm.clusterDomainName" $ | quote }}
 
 # Vars for pointing to kubernetes api endpoints
 kube_apiserver_global_endpoint: {{ .Values.cluster.apiEndpoint | quote }}

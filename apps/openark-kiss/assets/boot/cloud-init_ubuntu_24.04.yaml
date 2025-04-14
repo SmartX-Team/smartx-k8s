@@ -102,7 +102,7 @@ autoinstall:
       nmcli connection down "${dev}" || true
       ; done
     - until netplan apply; do sleep 3; done
-    - until curl "http://assets.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}"; do netplan apply || true; sleep 30; done
+    - until curl "http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}"; do netplan apply || true; sleep 30; done
   late-commands:
     # Execute Post-installation Scripts
     - dhcpcd || true # Keep DHCP
@@ -111,7 +111,7 @@ autoinstall:
 {{- $filename := base $path }}
     - >
       curl -o "/target/tmp/{{ $filename }}"
-      "http://assets.{{ $.Release.Namespace }}.svc.{{ $.Values.cluster.domainName }}/patches/{{ $filename }}"
+      "http://assets.{{ $.Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/patches/{{ $filename }}"
       && chmod a+x "/target/tmp/{{ $filename }}"
       && curtin in-target --target=/target -- "/tmp/{{ $filename }}"
       && rm -f "/target/tmp/{{ $filename }}"

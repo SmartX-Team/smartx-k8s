@@ -12,9 +12,9 @@ set os_ver 24.04
 set os_rev .2
 # FIXME: the official cdimage repo does NOT match the versions between initrd and iso
 set repo http://cdimage.ubuntu.com/releases/${os_ver}/release
-iseq ${arch} amd64 && set repo http://assets.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}/assets/ubuntu-${os_ver} ||
+iseq ${arch} amd64 && set repo http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/assets/ubuntu-${os_ver} ||
 
-set cloud_config_url http://assets.{{ .Release.Namespace }}.svc.{{ .Values.cluster.domainName }}/boot/cloud-init_ubuntu_${os_ver}.yaml
+set cloud_config_url http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/boot/cloud-init_ubuntu_${os_ver}.yaml
 
 :kernel
 kernel --name vmlinuz ${repo}/netboot/${arch}/linux || goto kernel
