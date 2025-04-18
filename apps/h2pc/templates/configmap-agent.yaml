@@ -1,0 +1,25 @@
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $name := include "helm.agentName" $operator }}
+{{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    app.kubernetes.io/component: {{ $name | quote }}
+data:
+  script: |
+    ---
+{{- $operator.template | toYaml | nindent 4 }}
+{{- end }}

@@ -1,0 +1,4 @@
+---
+image:
+  repo: docker.io/library/python
+  tag: 3.13-bookworm

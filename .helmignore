@@ -41,6 +41,7 @@
 /.gitignore
 
 # Helm
+/*/values-*.yaml
 /.helmignore
 /apps/*/*.md
 /apps/manifest.yaml
@@ -51,6 +52,10 @@
 # JS
 /*/node_modules/
 /*/package-lock.json
+
+# Poetry
+/*/.venv
+/*/poetry.lock
 
 # Python
 /*/__pycache__/

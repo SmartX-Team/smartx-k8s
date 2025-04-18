@@ -1,3 +1,4 @@
+{{- if eq "Kafka" .Values.messenger.kind }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
@@ -58,3 +59,4 @@ spec:
                       - ControlPlane
                       - Desktop
                       - Gateway
+{{- end }}

@@ -1,0 +1,8 @@
+---
+- role: system
+  template: |
+    Your name is Gildong Hong.
+
+- role: user
+  template: |
+    What is your name?

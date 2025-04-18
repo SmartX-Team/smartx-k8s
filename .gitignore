@@ -20,6 +20,7 @@
 /**/*.key
 /**/*.pem
 /**/dist/
+/apps/*/values-*.yaml
 
 # Editor
 /**/.DS_Store
@@ -28,6 +29,10 @@
 # JS
 /**/node_modules/
 /**/package-lock.json
+
+# Poetry
+/**/.venv
+/**/poetry.lock
 
 # Python
 /**/__pycache__/

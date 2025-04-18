@@ -15,6 +15,7 @@
     "**/apps/*/templates/**/_*.yaml": "jinja-yaml",
     "**/apps/*/templates/**/*.yaml": "jinja-yaml",
     "**/apps/*/values.yaml": "yaml",
+    "**/apps/h2pc/operators/*.yaml": "jinja-yaml",
     "**/apps/minio/bin/*.sh": "jinja-shell",
     "**/apps/openark-kiss/assets/**/*.sh": "jinja-shell",
     "**/apps/openark-kiss/assets/**/*.yaml": "jinja-yaml",

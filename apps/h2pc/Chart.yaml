@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
-name: openark-gitops
-description: OpenARK GitOps Engine
+name: h2pc
+description: Cloud-native Hybrid Personal & High-Performance Computing
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,4 +22,4 @@ version: 2.0.0-alpha.1
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: devel
+appVersion: latest

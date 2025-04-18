@@ -1,0 +1,160 @@
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $kind := $operator.kind | kebabcase }}
+{{- $name := include "helm.agentName" $operator }}
+{{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+{{- $binPath := printf "/opt/%s/bin" ( include "helm.fullname" $ ) }}
+{{- $dataPath := printf "/opt/%s/data" ( include "helm.fullname" $ ) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    app.kubernetes.io/component: {{ $name | quote }}
+spec:
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name | quote }}
+  template:
+    metadata:
+      annotations:
+        checksum/configmaps-agent: {{ $operator.template | toYaml | sha256sum | quote }}
+{{- if eq "Kafka" $.Values.messenger.kind }}
+        checksum/configmaps-kafka: {{ include "helm.messengerKafka" $ | trim | sha256sum | quote }}
+{{- end }}
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+{{- include "helm.selectorLabels" $ | nindent 8 }}
+{{- include "helm.agentLabels" $operator | nindent 8 }}
+        app.kubernetes.io/component: {{ $name | quote }}
+    spec:
+      affinity:
+        # Node affinity rules
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Desktop
+              weight: 1
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+              weight: 2
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+                      - ControlPlane
+                      - Desktop
+{{- if eq "Kafka" $.Values.messenger.kind }}
+      initContainers:
+        - name: init-wait-kafka
+          image: "{{ $.Values.messenger.kafka.image.repo }}:{{ $.Values.messenger.kafka.image.tag }}"
+          imagePullPolicy: {{ $.Values.messenger.kafka.image.pullPolicy | quote }}
+          command:
+            - {{ printf "%s/wait.sh" $binPath | quote }}
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ include "helm.kafkaBootstrapperServer" $ | quote }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 200Mi
+          volumeMounts:
+            - name: bin
+              mountPath: {{ $binPath | quote }}
+{{- end }}
+      containers:
+        - name: agent
+          image: {{ printf "%s:%s"
+              ( index $.Values.agents $kind "image" "repo" )
+              ( index $.Values.agents $kind "image" "tag" | default $.Chart.AppVersion )
+            | quote
+          }}
+          imagePullPolicy: {{ index $.Values.agents $kind "image" "pullPolicy" | quote }}
+          env:
+{{- if eq "Kafka" $.Values.messenger.kind }}
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ include "helm.kafkaBootstrapperServer" $ | quote }}
+            - name: KAFKA_GROUP_ID
+              value: {{ $fullname | quote }}
+{{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
+{{- if not ( empty $srcs ) }}
+            - name: KAFKA_TOPIC_SRC
+              value: {{ include "helm.kafkaTopics" ( dict
+                  "chartName" ( include "helm.fullname" $ )
+                  "operator" $operator
+                  "topics" $srcs
+                ) | quote }}
+{{- end }}
+{{- $sinks := ne nil $operator.sinks | ternary $operator.sinks ( .sinks | default list ) }}
+{{- if not ( empty $sinks ) }}
+            - name: KAFKA_TOPIC_SINK
+              value: {{ include "helm.kafkaTopics" ( dict
+                  "chartName" ( include "helm.fullname" $ )
+                  "operator" $operator
+                  "topics" $sinks
+                ) | quote }}
+{{- end }}
+{{- end }}
+            - name: PROMPT_HOME
+              value: {{ $dataPath | quote }}
+{{- range $_ := $.Values.env | default list }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+{{- range $_ := $operator.env }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+{{- range $_ := .env | default list }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+          resources:
+{{- if not ( empty ( .resources | default dict ) ) }}
+{{- .resources | toYaml | nindent 12 }}
+{{- else if not ( empty $operator.resources ) }}
+{{- $operator.resources | toYaml | nindent 12 }}
+{{- else }}
+{{- index $.Values.agents $kind "resources" | default dict | toYaml | nindent 12 }}
+{{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ $dataPath | quote }}
+              readOnly: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+{{- if eq "Kafka" $.Values.messenger.kind }}
+        - name: bin
+          configMap:
+            name: {{ printf "%s-agent-kafka" ( include "helm.fullname" $ ) | quote }}
+            defaultMode: 365 # 0o555
+{{- end }}
+        - name: data
+          configMap:
+            name: {{ $fullname | quote }}
+            defaultMode: 256 # 0o400
+{{- if eq "LLM" $operator.kind }}
+            items:
+              - key: script
+                path: prompt.yaml
+{{- end }}
+{{- end }}

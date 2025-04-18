@@ -1,0 +1,6 @@
+{{- /*
+Validate messenger
+*/}}
+{{- if not ( has .Values.messenger.kind ( list "Kafka" ) ) }}
+{{- fail ( printf "Unsupported messenger kind: %s" .Values.messenger.kind ) }}
+{{- end }}

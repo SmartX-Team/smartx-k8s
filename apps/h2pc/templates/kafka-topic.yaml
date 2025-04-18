@@ -1,0 +1,30 @@
+{{- if eq "Kafka" .Values.messenger.kind }}
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $topics := ne nil $operator.sinks | ternary $operator.sinks ( .sinks | default list ) }}
+{{- if not ( empty $topics ) }}
+{{- range $_ := ( include "helm.kafkaTopics" ( dict
+  "chartName" ( include "helm.fullname" $ )
+  "operator" $operator
+  "topics" $topics
+) | split "," ) }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ . | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    strimzi.io/cluster: {{ include "helm.fullname" $ | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

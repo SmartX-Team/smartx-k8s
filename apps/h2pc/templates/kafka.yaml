@@ -1,3 +1,4 @@
+{{- if eq "Kafka" .Values.messenger.kind }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
@@ -27,6 +28,8 @@ spec:
       inter.broker.protocol.version: "3.9"
       min.insync.replicas: 2
       offsets.topic.replication.factor: 3
+      retention.ms: 7200000 # 2 hour
+      segment.bytes: 1073741824
       transaction.state.log.replication.factor: 3
       transaction.state.log.min.isr: 2
   # FIXME: Set node affinity for zookeepers and operator
@@ -40,3 +43,4 @@ spec:
   entityOperator:
     topicOperator: {}
     userOperator: {}
+{{- end }}

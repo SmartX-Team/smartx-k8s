@@ -17,8 +17,6 @@ spec:
     matchLabels:
 {{- include "helm.selectorLabels" $ | nindent 6 }}
       app.kubernetes.io/component: apiserver
-  strategy:
-    type: Recreate
   template:
     metadata:
       annotations:

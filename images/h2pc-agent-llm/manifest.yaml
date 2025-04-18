@@ -1,0 +1,16 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.images.h2pc-agent-llm
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  containerImage:
+    namespace: h2pc
+    period: "0 0 * * *"
+    version: latest
