@@ -221,6 +221,7 @@ impl VineSessionArgs {
 #[strum(serialize_all = "kebab-case")]
 pub enum ComputeMode {
     Container,
+    Kueue,
     #[default]
     #[cfg_attr(feature = "serde", serde(rename = "vm"))]
     #[strum(serialize = "vm")]
@@ -229,11 +230,45 @@ pub enum ComputeMode {
 
 impl ComputeMode {
     #[must_use]
+    const fn as_nvidia_gpu_replicas(&self) -> u32 {
+        match self {
+            Self::Container => 256,
+            Self::Kueue | Self::VM => 1,
+        }
+    }
+
+    #[must_use]
     const fn as_nvidia_gpu_workload_config(&self) -> &str {
         match self {
-            Self::Container => "container",
+            Self::Container | Self::Kueue => "container",
             Self::VM => "vm-passthrough",
         }
+    }
+}
+
+fn infer_compute_mode(profile: &SessionProfileCrd) -> ComputeMode {
+    if profile
+        .spec
+        .vm
+        .as_ref()
+        .is_some_and(|vm| vm.enabled.unwrap_or_default())
+    {
+        ComputeMode::VM
+    } else if profile
+        .spec
+        .features
+        .as_ref()
+        .is_some_and(|features| features.desktop_environment.unwrap_or_default())
+        || profile
+            .spec
+            .services
+            .as_ref()
+            .and_then(|services| services.notebook.as_ref())
+            .is_some_and(|service| service.enabled.unwrap_or_default())
+    {
+        ComputeMode::Container
+    } else {
+        ComputeMode::Kueue
     }
 }
 
@@ -392,8 +427,21 @@ impl<'a> Metadata<'a> {
             self.args.label_signed_out.clone(),
             self.signed_out.unwrap_or(true).to_string(),
         );
-        map.insert("nvidia.com/gpu.replicas".into(), "256".into());
-        map.insert("nvidia.com/gpu.sharing-strategy".into(), "256".into());
+        map.insert(
+            "nvidia.com/device-plugin.config".into(),
+            "kiss-Desktop".into(),
+        );
+        map.insert(
+            "nvidia.com/gpu.replicas".into(),
+            self.compute_mode
+                .unwrap_or_default()
+                .as_nvidia_gpu_replicas()
+                .to_string(),
+        );
+        map.insert(
+            "nvidia.com/gpu.sharing-strategy".into(),
+            "time-slicing".into(),
+        );
         map.insert(
             "nvidia.com/gpu.workload.config".into(),
             self.compute_mode
@@ -633,11 +681,7 @@ impl<'a> NodeSession<'a> {
                     SessionBindingUserKind::Guest => None,
                     SessionBindingUserKind::User => binding.spec.user.name.clone(),
                 };
-                self.metadata.compute_mode =
-                    Some(match profile.spec.vm.as_ref().and_then(|vm| vm.enabled) {
-                        Some(true) => ComputeMode::VM,
-                        Some(false) | None => ComputeMode::Container,
-                    });
+                self.metadata.compute_mode = Some(infer_compute_mode(&profile));
                 self.set_taint(&self.metadata.args.label_bind, "true".into(), timestamp);
                 self.set_taint(
                     &self.metadata.args.label_bind_profile,
@@ -784,7 +828,7 @@ impl<'a> NodeSession<'a> {
             .unwrap_or(false)
         {
             match self.metadata.compute_mode {
-                Some(ComputeMode::Container) => {
+                Some(ComputeMode::Container | ComputeMode::Kueue) => {
                     map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
                 }
                 Some(ComputeMode::VM) => {
