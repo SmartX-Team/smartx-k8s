@@ -22,5 +22,13 @@ spec:
     ignoreDifferences: []
     sync:
       createNamespace: true
+{{- if and
+  ( has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features )
+  ( has "org.ulagbulag.io/desktop-environment/vine" .Values.features )
+}}
+      managedNamespaceMetadata:
+        labels:
+          {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+{{- end }}
       respectIgnoreDifferences: true
       serverSideApply: true

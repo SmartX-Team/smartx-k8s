@@ -1,0 +1,20 @@
+{{- /* ConfigMap */}}
+{{- define "helm.agentBin" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-agent-bin" ( include "helm.fullname" $ ) | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+{{- range $path, $_ := $.Files.Glob "bin/*.sh" }}
+  {{ base $path }}: |
+{{- $.Files.Get $path | trim | nindent 4 }}
+{{- end }}
+{{- end }}
+
+{{- include "helm.agentBin" . }}

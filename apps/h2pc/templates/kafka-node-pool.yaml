@@ -9,6 +9,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
+{{- if $.Values.features.openark.vine.enabled }}
+    kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
     strimzi.io/cluster: {{ include "helm.fullname" $ | quote }}
 spec:
   replicas: 3
@@ -24,39 +27,8 @@ spec:
         deleteClaim: false
   template:
     pod:
-      affinity:
-        # Node affinity rules
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                matchExpressions:
-                  - key: node-role.kubernetes.io/kiss
-                    operator: In
-                    values:
-                      - ControlPlane
-              weight: 1
-            - preference:
-                matchExpressions:
-                  - key: node-role.kubernetes.io/kiss
-                    operator: In
-                    values:
-                      - Compute
-              weight: 2
-            - preference:
-                matchExpressions:
-                  - key: node-role.kubernetes.io/kiss
-                    operator: In
-                    values:
-                      - Gateway
-              weight: 4
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/kiss
-                    operator: In
-                    values:
-                      - Compute
-                      - ControlPlane
-                      - Desktop
-                      - Gateway
+      affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 8 }}
+      metadata:
+        labels:
+          kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
 {{- end }}

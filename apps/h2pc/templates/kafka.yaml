@@ -10,6 +10,9 @@ metadata:
     strimzi.io/node-pools: enabled
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
+{{- if $.Values.features.openark.vine.enabled }}
+    kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
 spec:
   kafka:
     version: 3.9.0
@@ -32,7 +35,12 @@ spec:
       segment.bytes: 1073741824
       transaction.state.log.replication.factor: 3
       transaction.state.log.min.isr: 2
-  # FIXME: Set node affinity for zookeepers and operator
+    template:
+      pod:
+        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
   zookeeper:
     replicas: 3
     storage:
@@ -40,7 +48,19 @@ spec:
       class: ceph-block
       size: 100Gi
       deleteClaim: false
+    template:
+      pod:
+        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
   entityOperator:
     topicOperator: {}
     userOperator: {}
+    template:
+      pod:
+        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        metadata:
+          labels:
+            kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
 {{- end }}

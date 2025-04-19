@@ -1,14 +1,26 @@
+{{- $ollama := .params.ollama | default false }}
 ---
 kind: LLM
 params:
   - name: modelName
     type: String
-    default: exaone3.5:32b
+    default: exaone-deep:32b
   - name: name
     type: String
+  - name: ollama
+    type: Boolean
+    default: false
 env:
+{{- if $ollama }}
+  - name: OLLAMA_BASE_URL
+    value: http://localhost:11434
+  - name: OLLAMA_MODEL_NAME
+    value: {{ .params.modelName | quote }}
+{{- end }}
   - name: OPENAI_MODEL_NAME
     value: {{ .params.modelName | quote }}
+features:
+  ollama: {{ $ollama }}
 resources: null
 srcs: null
 sinks:

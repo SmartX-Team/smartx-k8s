@@ -1,0 +1,8 @@
+---
+features:
+  openark:
+    vine:
+      enabled: {{ and
+        ( has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features )
+        ( has "org.ulagbulag.io/desktop-environment/vine" .Values.features )
+      }}

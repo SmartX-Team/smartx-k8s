@@ -6,6 +6,7 @@
 ) . ) | fromYaml }}
 {{- $kind := $operator.kind | kebabcase }}
 {{- $name := include "helm.agentName" $operator }}
+{{- $env := concat ( $.Values.env | default list ) $operator.env ( .env | default list ) }}
 {{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
 {{- $binPath := printf "/opt/%s/bin" ( include "helm.fullname" $ ) }}
 {{- $dataPath := printf "/opt/%s/data" ( include "helm.fullname" $ ) }}
@@ -19,6 +20,9 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 {{- include "helm.agentLabels" $operator | nindent 4 }}
     app.kubernetes.io/component: {{ $name | quote }}
+{{- if $.Values.features.openark.vine.enabled }}
+    kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
 spec:
   selector:
     matchLabels:
@@ -29,14 +33,18 @@ spec:
       annotations:
         checksum/configmaps-agent: {{ $operator.template | toYaml | sha256sum | quote }}
 {{- if eq "Kafka" $.Values.messenger.kind }}
-        checksum/configmaps-kafka: {{ include "helm.messengerKafka" $ | trim | sha256sum | quote }}
+        checksum/configmaps-kafka: {{ include "helm.agentBin" $ | trim | sha256sum | quote }}
 {{- end }}
         instrumentation.opentelemetry.io/inject-sdk: "true"
       labels:
 {{- include "helm.selectorLabels" $ | nindent 8 }}
 {{- include "helm.agentLabels" $operator | nindent 8 }}
         app.kubernetes.io/component: {{ $name | quote }}
+{{- if $.Values.features.openark.vine.enabled }}
+        kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
+{{- end }}
     spec:
+{{- if not $.Values.features.openark.vine.enabled }}
       affinity:
         # Node affinity rules
         nodeAffinity:
@@ -46,15 +54,8 @@ spec:
                   - key: node-role.kubernetes.io/kiss
                     operator: In
                     values:
-                      - Desktop
-              weight: 1
-            - preference:
-                matchExpressions:
-                  - key: node-role.kubernetes.io/kiss
-                    operator: In
-                    values:
                       - Compute
-              weight: 2
+              weight: 1
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
@@ -62,15 +63,15 @@ spec:
                     operator: In
                     values:
                       - Compute
-                      - ControlPlane
                       - Desktop
-{{- if eq "Kafka" $.Values.messenger.kind }}
+{{- end }}
       initContainers:
+{{- if eq "Kafka" $.Values.messenger.kind }}
         - name: init-wait-kafka
           image: "{{ $.Values.messenger.kafka.image.repo }}:{{ $.Values.messenger.kafka.image.tag }}"
           imagePullPolicy: {{ $.Values.messenger.kafka.image.pullPolicy | quote }}
           command:
-            - {{ printf "%s/wait.sh" $binPath | quote }}
+            - {{ printf "%s/wait-kafka.sh" $binPath | quote }}
           env:
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: {{ include "helm.kafkaBootstrapperServer" $ | quote }}
@@ -81,6 +82,55 @@ spec:
           volumeMounts:
             - name: bin
               mountPath: {{ $binPath | quote }}
+{{- end }}
+{{- if $operator.features.ollama | default false }}
+        - name: ollama
+          image: "{{ $.Values.features.ollama.image.repo }}:{{ $.Values.features.ollama.image.tag }}"
+          imagePullPolicy: {{ $.Values.features.ollama.image.pullPolicy | quote }}
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0:11434
+{{- range $_ := $env }}
+            - {{- . | toYaml | nindent 14 }}
+{{- end }}
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 11434
+          resources:
+{{- $.Values.features.ollama.resources | default dict | toYaml | nindent 12 }}
+          restartPolicy: Always
+          lifecycle:
+            postStart:
+              exec:
+                command: 
+                  - {{ printf "%s/pull-ollama-image.sh" $binPath | quote }}
+          livenessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: bin
+              mountPath: {{ $binPath | quote }}
+            - name: data
+              mountPath: /root/.ollama
+              subPath: ollama
 {{- end }}
       containers:
         - name: agent
@@ -117,13 +167,7 @@ spec:
 {{- end }}
             - name: PROMPT_HOME
               value: {{ $dataPath | quote }}
-{{- range $_ := $.Values.env | default list }}
-            - {{- . | toYaml | nindent 14 }}
-{{- end }}
-{{- range $_ := $operator.env }}
-            - {{- . | toYaml | nindent 14 }}
-{{- end }}
-{{- range $_ := .env | default list }}
+{{- range $_ := $env }}
             - {{- . | toYaml | nindent 14 }}
 {{- end }}
           resources:
@@ -135,20 +179,14 @@ spec:
 {{- index $.Values.agents $kind "resources" | default dict | toYaml | nindent 12 }}
 {{- end }}
           volumeMounts:
-            - name: data
+            - name: agent-data
               mountPath: {{ $dataPath | quote }}
               readOnly: true
       securityContext:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-{{- if eq "Kafka" $.Values.messenger.kind }}
-        - name: bin
-          configMap:
-            name: {{ printf "%s-agent-kafka" ( include "helm.fullname" $ ) | quote }}
-            defaultMode: 365 # 0o555
-{{- end }}
-        - name: data
+        - name: agent-data
           configMap:
             name: {{ $fullname | quote }}
             defaultMode: 256 # 0o400
@@ -157,4 +195,12 @@ spec:
               - key: script
                 path: prompt.yaml
 {{- end }}
+        - name: bin
+          configMap:
+            name: {{ printf "%s-agent-bin" ( include "helm.fullname" $ ) | quote }}
+            defaultMode: 365 # 0o555
+        - name: data
+          hostPath:
+            path: /opt/h2pc/data
+            type: DirectoryOrCreate
 {{- end }}

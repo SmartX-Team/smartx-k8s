@@ -26,7 +26,7 @@ Render an operator template
 {{- with $rendered }}
 
 {{- /* Validate the operator | Fields */}}
-{{- range $field := list "kind" "params" "env" "resources" "srcs" "sinks" "template" }}
+{{- range $field := list "kind" "params" "env" "features" "resources" "srcs" "sinks" "template" }}
 {{- if not ( hasKey $rendered . ) }}
 {{- fail ( printf "Missing operator field: %s.%s" $.name . ) }}
 {{- end }}
@@ -52,13 +52,20 @@ Render an operator template
 
 {{- /* Validate the operator | Parameters | Type */}}
 {{- $given := index $.params $expected.name }}
-{{- if eq "String" $expected.type }}
+{{- if eq "Boolean" $expected.type }}
+{{- $_ := set $.params $expected.name ( has ( $given | toString | lower ) ( list "1" "true" ) ) }}
+{{- else if eq "String" $expected.type }}
 {{- $_ := set $.params $expected.name ( $given | toString ) }}
 {{- else }}
 {{- fail ( printf "Unknown parameter type: %s" $expected.type ) }}
 {{- end }}
 
 {{- end }}
+{{- end }}
+
+{{- /* Re-render the raw template */}}
+{{- $rendered := tpl .template . | fromYaml }}
+{{- with $rendered }}
 
 {{- /* Format the output */}}
 {{- . | toYaml }}

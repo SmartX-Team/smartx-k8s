@@ -18,6 +18,7 @@ dag:
     operator: Prompt
     params:
       name: source
+      ollama: true
     # env: []
     # resources: {}
     # srcs: []
@@ -37,6 +38,8 @@ env: []
 #           default: exaone3.5:32b
 #         - name: name
 #           type: String
+#       features:
+#         ollama: true
 #       env:
 #         - name: OPENAI_MODEL_NAME
 #           value: {{ .params.modelName | quote }}
@@ -60,9 +63,59 @@ extraOperators: []
 #           What is your name?
 extraPrompts: []
 
+features:
+  ollama:
+    image:
+      repo: docker.io/ollama/ollama
+      tag: 0.6.6
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        nvidia.com/gpu: "1"
+
+  openark:
+    vine:
+      enabled: false
+      clusterQueueName: openark.vine-session.openark-vine-session-pool.default-kueue
+
 messenger:
   kind: Kafka # Options: [Kafka]
   kafka:
+    affinity:
+      # Node affinity rules
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - ControlPlane
+            weight: 1
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+            weight: 2
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Gateway
+            weight: 4
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+                    - ControlPlane
+                    - Desktop
+                    - Gateway
     image:
       repo: docker.io/ubuntu/kafka
       tag: latest

@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Iterable, Literal, final, override
 
 from kafka import KafkaConsumer, KafkaProducer
-# from ollama import Client
-from openai import Client
+from ollama import Client as OllamaClient, Message as OllamaMessage
+from openai import Client as OpenAIClient
 from openai.types import chat as openai_chat
 from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -109,6 +109,9 @@ class AgentSettings(BaseSettings):
     kafka_topic_src: str | None = None
     kafka_topic_sink: str | None = None
 
+    ollama_base_url: str | None = None
+    ollama_model_name: str | None = None
+
     openai_api_key: SecretStr | None = None
     openai_base_url: str = 'https://api.openai.com'
     openai_model_name: str | None = None
@@ -143,7 +146,13 @@ class PromptTemplate(BaseModel):
     template: str
     '''The content template of the message.'''
 
-    def build(self) -> openai_chat.ChatCompletionMessageParam:
+    def build_ollama(self) -> OllamaMessage:
+        return OllamaMessage(
+            role=self.role,
+            content=self.template,
+        )
+
+    def build_openai(self) -> openai_chat.ChatCompletionMessageParam:
         match self.role:
             case 'system':
                 return openai_chat.ChatCompletionSystemMessageParam(
@@ -184,11 +193,19 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
         else:
             self._producer = None
 
-        if self.settings.openai_model_name is not None:
-            self._llm = Client(
+        if self.settings.ollama_model_name is not None:
+            self._llm = OllamaClient(
+                host=self.settings.ollama_base_url,
+            )
+        elif self.settings.openai_model_name is not None:
+            self._llm = OpenAIClient(
                 api_key=self.settings.openai_api_key.get_secret_value(),
                 base_url=self.settings.openai_base_url,
             )
+        else:
+            self._llm = None
+
+        if self._llm is not None:
             with open(
                 file=self.settings.prompt_home.joinpath('prompt.yaml'),
                 encoding='utf-8',
@@ -203,7 +220,6 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
                     for p in prompt_data
                 ]
         else:
-            self._llm = None
             self._prompt = []
 
         self._topic_sink = topic_sink_list
@@ -229,35 +245,41 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
             return None
 
     @final
-    def _build_prompt(
+    def _build_ollama_prompt(
+        self,
+    ) -> Iterable[OllamaMessage]:
+        return (
+            message.build_ollama()
+            for message in self._prompt
+        )
+
+    @final
+    def _build_openai_prompt(
         self,
     ) -> Iterable[openai_chat.ChatCompletionMessageParam]:
         return (
-            message.build()
+            message.build_openai()
             for message in self._prompt
         )
 
     @final
     @override
     def _process(self, data: Message | None) -> Message | None:
-        if data is None:
-            if isinstance(self._llm, Client):
-                completion = self._llm.chat.completions.create(
-                    model=self.settings.openai_model_name,
-                    messages=self._build_prompt(),
-                )
-            else:
-                return super()._process(data)
+        if isinstance(self._llm, OllamaClient):
+            completion = self._llm.chat(
+                model=self.settings.ollama_model_name,
+                messages=self._build_ollama_prompt(),
+            )
+            content = completion.message.content
+        elif isinstance(self._llm, OpenAIClient):
+            completion = self._llm.chat.completions.create(
+                model=self.settings.openai_model_name,
+                messages=self._build_openai_prompt(),
+            )
+            content = completion.choices[0].message.content
         else:
-            if isinstance(self._llm, Client):
-                completion = self._llm.chat.completions.create(
-                    model=self.settings.openai_model_name,
-                    messages=self._build_prompt(),
-                )
-            else:
-                return super()._process(data)
+            return super()._process(data)
 
-        content = completion.choices[0].message.content
         if content is not None:
             return Message(
                 content=content,
