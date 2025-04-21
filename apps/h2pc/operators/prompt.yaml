@@ -25,7 +25,7 @@ resources: null
 srcs: null
 sinks:
   - kind: Stream # Options: [Stream]
-template:
+template: |
 
 {{- if not ( hasKey .params "name" ) }}
 {{- fail ( printf "Missing prompt name parameter: %s" .name ) }}
@@ -51,15 +51,10 @@ template:
 {{- if empty $context.template }}
 {{- $filePath := printf "prompts/%s.yaml" $context.name }}
 {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
-{{- $_ := set $context "template" ( $.Files.Get $filePath ) }}
+{{- $_ := set $context "template" ( $.Files.Get $filePath | trim ) }}
 {{- else }}
 {{- fail ( printf "No such prompt: %s" $context.name ) }}
 {{- end }}
-{{- end }}
-
-{{- /* Remove yaml document splitter */}}
-{{- if regexMatch "^---\n" $context.template }}
-{{- $_ := set $context "template" ( $context.template | substr 4 ( $context.template | len ) ) }}
 {{- end }}
 
 {{- /* Render a prompt template */}}

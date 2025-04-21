@@ -1,8 +1,10 @@
 ---
-- role: system
-  template: |
-    Your name is Gildong Hong.
+operator: Message
+inputs:
+  - role: system
+    content: |
+      Your name is Gildong Hong.
 
-- role: user
-  template: |
-    What is your name?
+  - role: user
+    content: |
+      What is your name?

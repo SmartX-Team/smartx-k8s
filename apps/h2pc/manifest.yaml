@@ -18,7 +18,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/autoscaling/keda
+      - org.ulagbulag.io/batch/h2pc
     ignoreDifferences: []
     sync:
       createNamespace: true

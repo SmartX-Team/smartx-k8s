@@ -16,6 +16,7 @@
     "**/apps/*/templates/**/*.yaml": "jinja-yaml",
     "**/apps/*/values.yaml": "yaml",
     "**/apps/h2pc/operators/*.yaml": "jinja-yaml",
+    "**/apps/h2pc/prompts/*.yaml": "jinja-yaml",
     "**/apps/minio/bin/*.sh": "jinja-shell",
     "**/apps/openark-kiss/assets/**/*.sh": "jinja-shell",
     "**/apps/openark-kiss/assets/**/*.yaml": "jinja-yaml",
@@ -31,6 +32,7 @@
     "**/images/*/manifest.yaml": "jinja-yaml",
     "**/images/*/patches.yaml": "jinja-yaml",
     "**/images/*/values.yaml": "yaml",
+    "**/images/h2pc-agent-llm/prompts/*.yaml": "jinja-yaml",
     "**/images/template/**/*.containerfile": "jinja-dockerfile",
     "**/images/template/defaults.yaml": "jinja-yaml",
     "**/images/template/templates/**/*.yaml": "jinja-yaml",
@@ -68,6 +70,8 @@
     "**/package-lock.json": true,
     "**/Thumbs.db": true
   },
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "standard",
   "search.exclude": {
     "apps/exdns-2/values.yaml": true,
     "apps/template/defaults.yaml": true,
@@ -75,7 +79,8 @@
     "images/*/Cargo.toml": true,
     "images/*/crates": true,
     "images/*/LICENSE": true,
-    "images/*/README.md": true
+    "images/*/README.md": true,
+    "images/h2pc/prompts": true
   },
   "tailwindCSS.includeLanguages": {
     "plaintext": "html",

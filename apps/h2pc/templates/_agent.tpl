@@ -45,19 +45,23 @@ Render an operator template
 {{- if not $expected.exists }}
 {{- if hasKey $expected "default" }}
 {{- $_ := set $.params $expected.name $expected.default }}
-{{- else }}
+{{- else if not ( $expected.optional | default false ) }}
 {{- fail ( printf "Missing parameter: %s -> %s" $.name $expected.name ) }}
 {{- end }}
 {{- end }}
 
 {{- /* Validate the operator | Parameters | Type */}}
 {{- $given := index $.params $expected.name }}
+{{- if $expected.exists }}
 {{- if eq "Boolean" $expected.type }}
 {{- $_ := set $.params $expected.name ( has ( $given | toString | lower ) ( list "1" "true" ) ) }}
+{{- else if eq "Integer" $expected.type }}
+{{- $_ := set $.params $expected.name ( $given | int ) }}
 {{- else if eq "String" $expected.type }}
 {{- $_ := set $.params $expected.name ( $given | toString ) }}
 {{- else }}
 {{- fail ( printf "Unknown parameter type: %s" $expected.type ) }}
+{{- end }}
 {{- end }}
 
 {{- end }}

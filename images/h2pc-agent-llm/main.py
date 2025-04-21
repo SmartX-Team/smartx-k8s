@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from typing import Iterable, Literal, final, override
 
+from jinja2 import Template
 from kafka import KafkaConsumer, KafkaProducer
 from ollama import Client as OllamaClient, Message as OllamaMessage
 from openai import Client as OpenAIClient
@@ -21,7 +22,27 @@ except ImportError:
     pass
 
 
-class AgentBase[S: BaseSettings, I, O](metaclass=ABCMeta):
+class AgentBaseSettings(BaseSettings):
+    '''
+    A base agent settings model class.
+    '''
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        extra='ignore',
+    )
+
+    messenger_src_count_min: int = 1
+    messenger_src_count_max: int | None = None
+    messenger_sink_count_min: int = 1
+    messenger_sink_count_max: int | None = None
+
+    prompt_path: Path
+    verbose: bool = False
+
+
+class AgentBase[S: AgentBaseSettings, I, O](metaclass=ABCMeta):
     '''
     A virtual agent base class.
     '''
@@ -33,7 +54,7 @@ class AgentBase[S: BaseSettings, I, O](metaclass=ABCMeta):
             level=logging.INFO,
         )
         self._logger.info(f'Welcome to the {self.name}!')
-        self._settings = self._settings_type()()
+        self._settings = self._settings_type()()  # type: ignore
 
     @classmethod
     @abstractmethod
@@ -67,7 +88,18 @@ class AgentBase[S: BaseSettings, I, O](metaclass=ABCMeta):
         self._logger.info('Started agent')
         try:
             while True:
-                self._produce(self._process(self._consume()))
+                inputs: list[I] = []
+                while len(inputs) < self.settings.messenger_src_count_min:
+                    new_input = self._consume()
+                    if new_input is None:
+                        break
+                    inputs.append(new_input)
+
+                for _ in range(self.settings.messenger_sink_count_min):
+                    new_output = self._process(inputs)
+                    if new_output is None:
+                        break
+                    self._produce(new_output)
         except KeyboardInterrupt:
             self._logger.info('CTRL+C captured')
             return self.terminate()
@@ -78,11 +110,12 @@ class AgentBase[S: BaseSettings, I, O](metaclass=ABCMeta):
         '''
         return None
 
-    def _process(self, data: I | None) -> O | None:
+    @abstractmethod
+    def _process(self, data: list[I]) -> O | None:
         '''
         Process the data.
         '''
-        return data
+        pass
 
     def _produce(self, data: O) -> None:
         '''
@@ -97,13 +130,7 @@ class AgentBase[S: BaseSettings, I, O](metaclass=ABCMeta):
         pass
 
 
-class AgentSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8',
-        extra='ignore',
-    )
-
+class AgentSettings(AgentBaseSettings):
     kafka_bootstrap_servers: str
     kafka_group_id: str
     kafka_topic_src: str | None = None
@@ -115,8 +142,6 @@ class AgentSettings(BaseSettings):
     openai_api_key: SecretStr | None = None
     openai_base_url: str = 'https://api.openai.com'
     openai_model_name: str | None = None
-
-    prompt_home: Path = Path('.')
 
     def kafka_bootstrap_servers_list(self) -> list[str]:
         return self.kafka_bootstrap_servers.split(',')
@@ -133,39 +158,46 @@ class AgentSettings(BaseSettings):
 
 
 class Message(BaseModel):
-    content: str
-
-
-class PromptTemplate(BaseModel):
-    role: Literal['system', 'user']
+    role: Literal['assistant', 'system', 'user']
     '''The role of the messages author.'''
 
     name: str | None = None
     '''The optional name for the participant.'''
 
-    template: str
-    '''The content template of the message.'''
+    content: str
+    '''The content of the message.'''
 
     def build_ollama(self) -> OllamaMessage:
         return OllamaMessage(
             role=self.role,
-            content=self.template,
+            content=self.content,
         )
 
     def build_openai(self) -> openai_chat.ChatCompletionMessageParam:
         match self.role:
+            case 'assistant':
+                return openai_chat.ChatCompletionAssistantMessageParam(
+                    role='assistant',
+                    name=self.name or '',
+                    content=self.content,
+                )
             case 'system':
                 return openai_chat.ChatCompletionSystemMessageParam(
                     role='system',
                     name=self.name or '',
-                    content=self.template,
+                    content=self.content,
                 )
             case 'user':
                 return openai_chat.ChatCompletionUserMessageParam(
                     role='user',
                     name=self.name or '',
-                    content=self.template,
+                    content=self.content,
                 )
+
+
+class PromptTemplate(BaseModel):
+    operator: Literal['Index', 'Message'] = 'Message'
+    inputs: list[Message]
 
 
 class Agent(AgentBase[AgentSettings, Message, Message]):
@@ -178,8 +210,11 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
 
         if topic_src_list:
             self._consumer = KafkaConsumer(
+                allow_auto_create_topics=False,
+                auto_offset_reset='latest',
                 bootstrap_servers=bootstrapper_servers,
                 group_id=self.settings.kafka_group_id,
+                metrics_enabled=True,
             )
             self._consumer.subscribe(topic_src_list)
             assert self._consumer.bootstrap_connected()
@@ -188,7 +223,10 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
 
         if topic_sink_list:
             self._producer = KafkaProducer(
+                allow_auto_create_topics=False,
                 bootstrap_servers=bootstrapper_servers,
+                compression_type=None,
+                metrics_enabled=True,
             )
         else:
             self._producer = None
@@ -197,7 +235,8 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
             self._llm = OllamaClient(
                 host=self.settings.ollama_base_url,
             )
-        elif self.settings.openai_model_name is not None:
+        elif self.settings.openai_api_key is not None and \
+                self.settings.openai_model_name is not None:
             self._llm = OpenAIClient(
                 api_key=self.settings.openai_api_key.get_secret_value(),
                 base_url=self.settings.openai_base_url,
@@ -205,22 +244,15 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
         else:
             self._llm = None
 
+        self._prompt: Template | None
         if self._llm is not None:
             with open(
-                file=self.settings.prompt_home.joinpath('prompt.yaml'),
+                file=self.settings.prompt_path,
                 encoding='utf-8',
             ) as fp:
-                prompt_data = yaml.safe_load(fp)
-                if not isinstance(prompt_data, list):
-                    raise ValueError('Prompt is not a list')
-                if not prompt_data:
-                    raise ValueError('Empty prompt')
-                self._prompt = [
-                    PromptTemplate.model_validate(p)
-                    for p in prompt_data
-                ]
+                self._prompt = Template(fp.read())
         else:
-            self._prompt = []
+            self._prompt = None
 
         self._topic_sink = topic_sink_list
 
@@ -245,47 +277,79 @@ class Agent(AgentBase[AgentSettings, Message, Message]):
             return None
 
     @final
-    def _build_ollama_prompt(
+    def _build_prompt_ollama(
         self,
+        messages: Iterable[Message],
     ) -> Iterable[OllamaMessage]:
         return (
             message.build_ollama()
-            for message in self._prompt
+            for message in messages
         )
 
     @final
-    def _build_openai_prompt(
+    def _build_prompt_openai(
         self,
+        messages: Iterable[Message],
     ) -> Iterable[openai_chat.ChatCompletionMessageParam]:
         return (
             message.build_openai()
-            for message in self._prompt
+            for message in messages
         )
 
     @final
+    def _build_prompt_template(
+        self,
+        data: list[Message],
+    ) -> PromptTemplate:
+        if self._prompt is None:
+            raise Exception('Empty prompt')
+
+        return PromptTemplate.model_validate(yaml.safe_load(
+            stream=self._prompt.render(
+                inputs=data,
+            )
+        ))
+
+    @final
     @override
-    def _process(self, data: Message | None) -> Message | None:
+    def _process(self, data: list[Message]) -> Message | None:
+        template = self._build_prompt_template(data)
+
+        # Generate content
+        content: str | None
         if isinstance(self._llm, OllamaClient):
             completion = self._llm.chat(
-                model=self.settings.ollama_model_name,
-                messages=self._build_ollama_prompt(),
+                model=self.settings.ollama_model_name or '',  # type: ignore
+                messages=list(self._build_prompt_ollama(template.inputs)),
             )
             content = completion.message.content
         elif isinstance(self._llm, OpenAIClient):
             completion = self._llm.chat.completions.create(
-                model=self.settings.openai_model_name,
-                messages=self._build_openai_prompt(),
+                model=self.settings.openai_model_name,  # type: ignore
+                messages=self._build_prompt_openai(template.inputs),
             )
             content = completion.choices[0].message.content
         else:
             return super()._process(data)
 
-        if content is not None:
-            return Message(
-                content=content,
-            )
-        else:
+        # Validate output content
+        if content is None:
             return None
+        if self.settings.verbose:
+            logging.info(f'Generated: {content}')
+
+        # Parse content
+        match template.operator:
+            case 'Index':
+                index = int(content)
+                if index < 1 or index >= len(data):
+                    return None
+                return data[index - 1]
+            case 'Message':
+                return Message(
+                    role='assistant',
+                    content=content,
+                )
 
     @final
     @override

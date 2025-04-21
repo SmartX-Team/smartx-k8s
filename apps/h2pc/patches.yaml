@@ -1,5 +1,8 @@
 ---
 features:
+  keda:
+    enabled: {{ has "org.ulagbulag.io/autoscaling/keda" .Values.features }}
+
   openark:
     vine:
       enabled: {{ and

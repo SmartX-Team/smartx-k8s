@@ -1,0 +1,39 @@
+{{- $ollama := .params.ollama | default false }}
+---
+kind: LLM
+params:
+  - name: min
+    type: Integer
+    default: 2
+  - name: max
+    type: Integer
+    optional: true
+  - name: modelName
+    type: String
+    default: exaone3.5:32b
+  - name: ollama
+    type: Boolean
+    default: false
+env:
+  - name: MESSENGER_SRC_COUNT_MIN
+    value: {{ .params.min | quote }}
+{{- if ne nil .params.max }}
+  - name: MESSENGER_SRC_COUNT_MAX
+    value: {{ .params.max | quote }}
+{{- end }}
+{{- if $ollama }}
+  - name: OLLAMA_BASE_URL
+    value: http://localhost:11434
+  - name: OLLAMA_MODEL_NAME
+    value: {{ .params.modelName | quote }}
+{{- end }}
+  - name: OPENAI_MODEL_NAME
+    value: {{ .params.modelName | quote }}
+features:
+  ollama: {{ $ollama }}
+resources: null
+srcs: null
+sinks:
+  - kind: Stream
+template: |
+{{- .Files.Get "prompts/max.yaml" | trim | nindent 2 }}

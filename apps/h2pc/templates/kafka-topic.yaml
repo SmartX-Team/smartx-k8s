@@ -24,6 +24,7 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 {{- include "helm.agentLabels" $operator | nindent 4 }}
     strimzi.io/cluster: {{ include "helm.fullname" $ | quote }}
+spec: {}
 {{- end }}
 {{- end }}
 {{- end }}

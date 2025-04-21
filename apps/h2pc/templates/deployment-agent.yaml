@@ -44,7 +44,6 @@ spec:
         kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
 {{- end }}
     spec:
-{{- if not $.Values.features.openark.vine.enabled }}
       affinity:
         # Node affinity rules
         nodeAffinity:
@@ -64,7 +63,13 @@ spec:
                     values:
                       - Compute
                       - Desktop
-{{- end }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels: {{- include "helm.selectorLabels" $ | nindent 20 }}
+                topologyKey: kubernetes.io/hostname
+              weight: 2
       initContainers:
 {{- if eq "Kafka" $.Values.messenger.kind }}
         - name: init-wait-kafka
@@ -165,8 +170,8 @@ spec:
                 ) | quote }}
 {{- end }}
 {{- end }}
-            - name: PROMPT_HOME
-              value: {{ $dataPath | quote }}
+            - name: PROMPT_PATH
+              value: {{ printf "%s/prompt.yaml" $dataPath | quote }}
 {{- range $_ := $env }}
             - {{- . | toYaml | nindent 14 }}
 {{- end }}

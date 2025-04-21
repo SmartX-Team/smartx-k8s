@@ -20,6 +20,5 @@ metadata:
     app.kubernetes.io/component: {{ $name | quote }}
 data:
   script: |
-    ---
-{{- $operator.template | toYaml | nindent 4 }}
+{{- $operator.template | trim | nindent 4 }}
 {{- end }}

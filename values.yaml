@@ -130,6 +130,7 @@ features:
   - org.ulagbulag.io/bare-metal-provisioning
   - org.ulagbulag.io/bare-metal-provisioning/kiss
   - org.ulagbulag.io/batch/scheduling
+  - org.ulagbulag.io/batch/scheduling/h2pc
   - org.ulagbulag.io/batch/scheduling/kueue
   - org.ulagbulag.io/batch/scheduling/ray
   - org.ulagbulag.io/cni

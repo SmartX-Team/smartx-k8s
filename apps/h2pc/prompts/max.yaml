@@ -1,0 +1,17 @@
+---
+operator: Index
+inputs:
+  - role: system
+    content: |
+      You are going to read multiple journals.
+      Please read these and select the best one.
+      Please answer only with the journal number such as 1
+      Do not answer the others.
+
+{% for input in inputs %}
+  - role: user
+    content: |
+      # Journal {{ loop.index }}
+
+      {{ input.content | indent(6) }}
+{% endfor %}

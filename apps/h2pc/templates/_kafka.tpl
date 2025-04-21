@@ -33,7 +33,7 @@ Kafka Topics
 
 {{- $_ := set $context "topics" ( append $context.topics ( printf "%s.agent.%s.%s"
   $.chartName
-  $.operator.agent.name
+  ( .name | default $.operator.agent.name )
   ( .kind | kebabcase )
 ) ) }}
 {{- end }}

@@ -1,0 +1,59 @@
+{{- if .Values.features.keda }}
+{{- range $_ := .Values.dag | default list }}
+{{- $operator := include "helm.agentOperator" ( merge ( dict
+  "ExtraOperators" ( $.Values.extraOperators | default list )
+  "ExtraPrompts" ( $.Values.extraPrompts | default list )
+  "Files" $.Files
+) . ) | fromYaml }}
+{{- $kind := $operator.kind | kebabcase }}
+{{- $name := include "helm.agentName" $operator }}
+{{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+{{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
+{{- if not ( empty $srcs ) }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $fullname | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+{{- include "helm.agentLabels" $operator | nindent 4 }}
+    app.kubernetes.io/component: {{ $name | quote }}
+spec:
+  scaleTargetRef:
+    name: {{ $fullname | quote }}
+  pollingInterval: 30 # 30 seconds
+  initialCooldownPeriod: 0
+  cooldownPeriod: 300
+  idleReplicaCount: 0
+  minReplicaCount: 0
+  maxReplicaCount: 100
+  triggers:
+{{- if eq "Kafka" $.Values.messenger.kind }}
+{{- range $_ := ( include "helm.kafkaTopics" ( dict
+  "chartName" ( include "helm.fullname" $ )
+  "operator" $operator
+  "topics" $srcs
+) | split "," ) }}
+    - type: kafka
+      metadata:
+        allowIdleConsumers: "false"
+        bootstrapServers: {{ printf "%s.%s.svc:9092"
+            ( include "helm.kafkaBootstrapperServer" $ )
+            $.Release.Namespace
+          | quote
+        }}
+        consumerGroup: {{ $fullname | quote }}
+        lagThreshold: "10"
+        offsetResetPolicy: latest # Options: [latest, earliest]
+        # sasl: none
+        tls: disable
+        topic: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

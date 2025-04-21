@@ -18,12 +18,20 @@ dag:
     operator: Prompt
     params:
       name: source
-      ollama: true
+      ollama: false
     # env: []
     # resources: {}
     # srcs: []
     # sinks:
     #   - kind: Stream # Options: [Stream]
+  - name: source-1
+    operator: Max
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
 
 env: []
 
@@ -64,6 +72,9 @@ extraOperators: []
 extraPrompts: []
 
 features:
+  keda:
+    enabled: false
+
   ollama:
     image:
       repo: docker.io/ollama/ollama
