@@ -1,0 +1,36 @@
+---
+################################################################################
+# NATS Stateful Set and associated resources
+################################################################################
+
+############################################################
+# NATS config
+############################################################
+config:
+  cluster:
+    # apply to generated route URLs that connect to other pods in the StatefulSet
+    routeURLs:
+      k8sClusterDomain: {{ .Values.cluster.domainName | quote }}
+
+  websocket:
+    enabled: false
+    tls:
+      enabled: false
+
+    ############################################################
+    # ingress
+    ############################################################
+    # service must be enabled also
+    ingress:
+      # must contain at least 1 host otherwise ingress will not be created
+      hosts:
+        - {{ printf "h2pc.%s" .Values.ingress.domainName | quote }}
+      # sets to the ingress class name
+      className: {{ .Values.ingress.domainName | quote }}
+
+############################################################
+# stateful set -> pod template -> prom-exporter container
+############################################################
+# config.monitor must be enabled
+promExporter:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

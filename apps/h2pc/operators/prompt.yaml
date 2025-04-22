@@ -16,9 +16,10 @@ env:
     value: http://localhost:11434
   - name: OLLAMA_MODEL_NAME
     value: {{ .params.modelName | quote }}
-{{- end }}
+{{- else }}
   - name: OPENAI_MODEL_NAME
     value: {{ .params.modelName | quote }}
+{{- end }}
 features:
   ollama: {{ $ollama }}
 resources: null

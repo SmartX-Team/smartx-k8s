@@ -37,7 +37,7 @@ spec:
       transaction.state.log.min.isr: 2
     template:
       pod:
-        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        affinity: {{- $.Values.messenger.affinity | toYaml | nindent 10 }}
         metadata:
           labels:
             kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
@@ -50,7 +50,7 @@ spec:
       deleteClaim: false
     template:
       pod:
-        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        affinity: {{- $.Values.messenger.affinity | toYaml | nindent 10 }}
         metadata:
           labels:
             kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}
@@ -59,7 +59,7 @@ spec:
     userOperator: {}
     template:
       pod:
-        affinity: {{- $.Values.messenger.kafka.affinity | toYaml | nindent 10 }}
+        affinity: {{- $.Values.messenger.affinity | toYaml | nindent 10 }}
         metadata:
           labels:
             kueue.x-k8s.io/queue-name: {{ include "helm.fullname" $ | quote }}

@@ -12,7 +12,7 @@ until ollama ps >/dev/null 2>/dev/null; do
 done
 
 # Pull image
-until ollama pull "${OPENAI_MODEL_NAME}"; do
+until ollama pull "${OLLAMA_MODEL_NAME}"; do
     sleep 1
 done
 

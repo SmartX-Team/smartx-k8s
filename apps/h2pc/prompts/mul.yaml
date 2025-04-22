@@ -1,0 +1,19 @@
+---
+operator: Message
+inputs:
+  - role: system
+    content: |
+      You are going to read multiple journals.
+      Please read these and reconstruct naturally so that it only includes commonalities.
+      The output should be similar or identical to the format of the previous journals.
+      Do not include metadata such as journal numbers in the output.
+      Please answer only with the journal contents, not the others such as your own title, description or clarifying.
+      Do not answer the others.
+
+{% for input in inputs %}
+  - role: user
+    content: |
+      # Journal {{ loop.index }}
+
+      {{ input.content | indent(6) }}
+{% endfor %}

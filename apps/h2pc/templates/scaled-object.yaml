@@ -8,6 +8,8 @@
 {{- $kind := $operator.kind | kebabcase }}
 {{- $name := include "helm.agentName" $operator }}
 {{- $fullname := printf "%s-%s" ( include "helm.fullname" $ ) $name }}
+{{- $activationLagThreshold := 1 }}
+{{- $lagThreshold := 10 }}
 {{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
 {{- if not ( empty $srcs ) }}
 ---
@@ -29,29 +31,49 @@ spec:
   initialCooldownPeriod: 0
   cooldownPeriod: 300
   idleReplicaCount: 0
-  minReplicaCount: 0
-  maxReplicaCount: 100
+  minReplicaCount: {{ eq "Kafka" $.Values.messenger.kind | ternary 0 1 }}
+  maxReplicaCount: 25
   triggers:
 {{- if eq "Kafka" $.Values.messenger.kind }}
-{{- range $_ := ( include "helm.kafkaTopics" ( dict
+{{- range $_ := ( include "helm.messengerTopics" ( dict
   "chartName" ( include "helm.fullname" $ )
   "operator" $operator
   "topics" $srcs
 ) | split "," ) }}
     - type: kafka
       metadata:
+        activationLagThreshold: {{ $activationLagThreshold | quote }}
         allowIdleConsumers: "false"
-        bootstrapServers: {{ printf "%s.%s.svc:9092"
-            ( include "helm.kafkaBootstrapperServer" $ )
-            $.Release.Namespace
+        bootstrapServers: {{ include "helm.messengerBootstrapperServerUrl" $
           | quote
         }}
         consumerGroup: {{ $fullname | quote }}
-        lagThreshold: "10"
+        lagThreshold: {{ $lagThreshold | quote }}
         offsetResetPolicy: latest # Options: [latest, earliest]
         # sasl: none
         tls: disable
         topic: {{ . | quote }}
+{{- end }}
+{{- else if eq "Nats" $.Values.messenger.kind }}
+{{- range $_ := $srcs }}
+    - type: nats-jetstream
+      metadata:
+        # TODO: Use RBAC account
+        # FIXME: KEDA 버그? ~/Library/keda/pkg/scalers/nats_jetstream_scaler.go:L245-L261
+        account: $G # default
+        activationLagThreshold: {{ $activationLagThreshold | quote }}
+        consumer: {{ $fullname | quote }}
+        lagThreshold: {{ $lagThreshold | quote }}
+        natsServerMonitoringEndpoint: {{ printf "%s:8222"
+            ( include "helm.messengerBootstrapperServer" $ )
+          | quote
+        }}
+        stream: {{ printf "%s-agent-%s"
+            ( include "helm.fullname" $ )
+            ( .name | default $fullname )
+          | quote
+        }}
+        useHttps: "false"
 {{- end }}
 {{- end }}
 {{- end }}

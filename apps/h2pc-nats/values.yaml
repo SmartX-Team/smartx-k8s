@@ -1,0 +1,112 @@
+---
+################################################################################
+# Common options
+################################################################################
+
+# reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts
+# note: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS
+tlsCA:
+  enabled: false
+
+################################################################################
+# NATS Stateful Set and associated resources
+################################################################################
+
+############################################################
+# NATS config
+############################################################
+# FIXME: Add node affinity
+# FIXME: Add kueue tolerations
+# FIXME: Add kueue pod labels
+config:
+  cluster:
+    enabled: true
+    tls:
+      enabled: false
+
+  jetstream:
+    enabled: true
+
+    fileStore:
+      enabled: true
+
+      ############################################################
+      # stateful set -> volume claim templates -> jetstream pvc
+      ############################################################
+      pvc:
+        enabled: true
+        size: 100Gi
+        storageClassName: ceph-block
+
+      # defaults to the PVC size
+      maxSize: 100Gi
+
+    memoryStore:
+      enabled: false
+      # ensure that container has a sufficient memory limit greater than maxSize
+      maxSize: 1Gi
+
+  nats:
+    tls:
+      enabled: false
+
+  leafnodes:
+    enabled: false
+
+  websocket:
+    enabled: false
+    tls:
+      enabled: false
+
+    ############################################################
+    # ingress
+    ############################################################
+    # service must be enabled also
+    ingress:
+      enabled: false
+      path: /msg/nats
+      pathType: Exact
+
+  mqtt:
+    enabled: false
+
+  gateway:
+    enabled: false
+    tls:
+      enabled: false
+
+  monitor:
+    enabled: true
+    tls:
+      # config.nats.tls must be enabled also
+      # when enabled, monitoring port will use HTTPS with the options from config.nats.tls
+      # if promExporter is also enabled, consider setting promExporter.monitorDomain
+      enabled: false
+
+  profiling:
+    enabled: false
+
+  resolver:
+    enabled: false
+
+    ############################################################
+    # stateful set -> volume claim templates -> resolver pvc
+    ############################################################
+    pvc:
+      enabled: true
+      size: 1Gi
+      storageClassName: ceph-block
+
+############################################################
+# stateful set -> pod template -> reloader container
+############################################################
+reloader:
+  enabled: true
+
+############################################################
+# natsBox
+#
+# NATS Box Deployment and associated resources
+############################################################
+natsBox:
+  enabled: true

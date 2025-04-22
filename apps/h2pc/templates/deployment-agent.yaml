@@ -78,8 +78,8 @@ spec:
           command:
             - {{ printf "%s/wait-kafka.sh" $binPath | quote }}
           env:
-            - name: KAFKA_BOOTSTRAP_SERVERS
-              value: {{ include "helm.kafkaBootstrapperServer" $ | quote }}
+            - name: MESSENGER_BOOTSTRAP_SERVERS
+              value: {{ include "helm.messengerBootstrapperServerUrl" $ | quote }}
           resources:
             limits:
               cpu: 100m
@@ -146,15 +146,20 @@ spec:
           }}
           imagePullPolicy: {{ index $.Values.agents $kind "image" "pullPolicy" | quote }}
           env:
-{{- if eq "Kafka" $.Values.messenger.kind }}
-            - name: KAFKA_BOOTSTRAP_SERVERS
-              value: {{ include "helm.kafkaBootstrapperServer" $ | quote }}
-            - name: KAFKA_GROUP_ID
+            - name: MESSENGER_BOOTSTRAP_SERVERS
+              value: {{ include "helm.messengerBootstrapperServerUrl" $ | quote }}
+            - name: MESSENGER_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MESSENGER_GROUP_ID
               value: {{ $fullname | quote }}
+            - name: MESSENGER_KIND
+              value: {{ $.Values.messenger.kind | kebabcase | quote }}
 {{- $srcs := ne nil $operator.srcs | ternary $operator.srcs ( .srcs | default list ) }}
 {{- if not ( empty $srcs ) }}
-            - name: KAFKA_TOPIC_SRC
-              value: {{ include "helm.kafkaTopics" ( dict
+            - name: MESSENGER_TOPIC_SRC
+              value: {{ include "helm.messengerTopics" ( dict
                   "chartName" ( include "helm.fullname" $ )
                   "operator" $operator
                   "topics" $srcs
@@ -162,13 +167,12 @@ spec:
 {{- end }}
 {{- $sinks := ne nil $operator.sinks | ternary $operator.sinks ( .sinks | default list ) }}
 {{- if not ( empty $sinks ) }}
-            - name: KAFKA_TOPIC_SINK
-              value: {{ include "helm.kafkaTopics" ( dict
+            - name: MESSENGER_TOPIC_SINK
+              value: {{ include "helm.messengerTopics" ( dict
                   "chartName" ( include "helm.fullname" $ )
                   "operator" $operator
                   "topics" $sinks
                 ) | quote }}
-{{- end }}
 {{- end }}
             - name: PROMPT_PATH
               value: {{ printf "%s/prompt.yaml" $dataPath | quote }}
@@ -190,6 +194,15 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+{{- if not $.Values.features.openark.vine.enabled }}
+      tolerations:
+        - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+          operator: Exists
+          effect: NoExecute
+        - key: {{ index $.Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+          operator: Exists
+          effect: NoExecute
+{{- end }}
       volumes:
         - name: agent-data
           configMap:

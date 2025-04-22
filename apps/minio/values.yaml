@@ -98,9 +98,12 @@ provisioning:
   ##     memory: 1024Mi
   ##
   resources:
+    requests:
+      cpu: 1
+      memory: 1Gi
     limits:
-      cpu: 8
-      memory: 8Gi
+      cpu: 2
+      memory: 2Gi
       ephemeral-storage: 8Gi
   ## Automatic Cleanup for Finished Jobs
   ## @param provisioning.cleanupAfterFinished.enabled Enables Cleanup for Finished Jobs

@@ -106,9 +106,11 @@ org.ulagbulag.io/batch/scheduling:
 org.ulagbulag.io/batch/scheduling/h2pc:
   requires:
     - org.ulagbulag.io/batch/scheduling
+    - org.ulagbulag.io/messenger
   optional:
     - org.ulagbulag.io/autoscaling/keda
     - org.ulagbulag.io/batch/scheduling/kueue
+    - org.ulagbulag.io/csi/object
     - org.ulagbulag.io/monitoring
 
 org.ulagbulag.io/batch/scheduling/kueue:

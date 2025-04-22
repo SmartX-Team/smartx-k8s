@@ -1,0 +1,6 @@
+---
+operator: Message
+inputs:
+  - role: user
+    content: |
+      Write a novel that depicts about love.

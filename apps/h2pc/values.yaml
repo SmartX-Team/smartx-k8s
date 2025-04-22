@@ -18,7 +18,7 @@ dag:
     operator: Prompt
     params:
       name: source
-      ollama: false
+      ollama: true
     # env: []
     # resources: {}
     # srcs: []
@@ -26,6 +26,22 @@ dag:
     #   - kind: Stream # Options: [Stream]
   - name: source-1
     operator: Max
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
+  - name: source-2
+    operator: Add
+    params:
+      min: 2
+      ollama: true
+    srcs:
+      - name: source-0
+        kind: Stream
+  - name: source-3
+    operator: Mul
     params:
       min: 2
       ollama: true
@@ -90,44 +106,49 @@ features:
       clusterQueueName: openark.vine-session.openark-vine-session-pool.default-kueue
 
 messenger:
-  kind: Kafka # Options: [Kafka]
+  kind: Nats # Options: [Kafka, Nats]
+
+  affinity:
+    # Node affinity rules
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - ControlPlane
+          weight: 1
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 2
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Gateway
+          weight: 4
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+                  - Desktop
+                  - Gateway
   kafka:
-    affinity:
-      # Node affinity rules
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - ControlPlane
-            weight: 1
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Compute
-            weight: 2
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Gateway
-            weight: 4
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Compute
-                    - ControlPlane
-                    - Desktop
-                    - Gateway
     image:
       repo: docker.io/ubuntu/kafka
       tag: latest
       pullPolicy: Always
+  nats: {}
+
+openark:
+  labels: {}
