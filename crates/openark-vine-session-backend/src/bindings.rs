@@ -1,8 +1,8 @@
 use actix_web::{HttpResponse, Responder, Scope, get, post, web};
 use itertools::Itertools;
 use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
+use kcr_argoproj_io::v1alpha1::applications::Application;
 use kube::{Api, Client, ResourceExt, api::ListParams};
-use kube_custom_resources_rs::argoproj_io::v1alpha1::applications::Application;
 use kube_quantity::ParsedQuantity;
 use openark_vine_oauth::User;
 use openark_vine_session_api::{

@@ -8,6 +8,11 @@ use k8s_openapi::{
     api::core::v1::{Node, ObjectReference, Pod},
     apimachinery::pkg::apis::meta::v1::{OwnerReference, Time},
 };
+use kcr_argoproj_io::v1alpha1::applications::{
+    Application, ApplicationDestination, ApplicationIgnoreDifferences, ApplicationSources,
+    ApplicationSourcesHelm, ApplicationSpec, ApplicationSyncPolicy, ApplicationSyncPolicyAutomated,
+    ApplicationSyncPolicyManagedNamespaceMetadata,
+};
 use kube::{
     Api, Client, Error, Resource, ResourceExt, Result,
     api::{
@@ -21,11 +26,6 @@ use kube::{
         reflector::ObjectRef,
         watcher::Config,
     },
-};
-use kube_custom_resources_rs::argoproj_io::v1alpha1::applications::{
-    Application, ApplicationDestination, ApplicationIgnoreDifferences, ApplicationSources,
-    ApplicationSourcesHelm, ApplicationSpec, ApplicationSyncPolicy, ApplicationSyncPolicyAutomated,
-    ApplicationSyncPolicyManagedNamespaceMetadata,
 };
 use openark_core::operator::{OperatorArgs, install_crd};
 use openark_vine_session_api::{
@@ -335,6 +335,7 @@ fn build_app(
             project: ctx.args.project_name.clone(),
             revision_history_limit: None,
             source: None,
+            source_hydrator: None,
             sources: Some(vec![ApplicationSources {
                 helm: Some(ApplicationSourcesHelm {
                     release_name: Some("session".into()), // FIXED

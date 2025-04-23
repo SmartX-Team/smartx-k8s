@@ -575,9 +575,22 @@ fn build_extra_service_tab_content_vnc_item(
         "{base_url}/vnc/?autoconnect=true&host={host}&port={port}&reconnect=true&resize=scale&shared=true&view_only=true&quality=5"
     );
 
+    let alias = service
+        .alias
+        .as_deref()
+        .and_then(|pointer| value.pointer(pointer))
+        .and_then(|alias| alias.as_str())
+        .unwrap_or_else(|| src.as_str())
+        .to_string();
+
     Some(html! {
-        <div class="mockup-window bg-base-100 border border-base-300">
-            <iframe class="aspect-video w-full" { src } />
+        <div class="mockup-browser bg-base-100 border border-base-300">
+            <div class="mockup-browser-toolbar">
+                <div class="input">{ alias }</div>
+            </div>
+            <div class="aspect-video place-content-center w-full">
+                <iframe class="aspect-video w-full" { src } />
+            </div>
         </div>
     })
 }

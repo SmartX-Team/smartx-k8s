@@ -24,6 +24,7 @@ spec:
   extraServices:
     - name: Notebook
       kind: Navigate
+      alias: /node/alias
       jsonPath: /links/notebook
       description: Jupyter Notebook 화면으로 이동합니다.
       visible: true
@@ -32,6 +33,7 @@ spec:
       sideEffect: false
     - name: Remote Desktop
       kind: Navigate
+      alias: /node/alias
       jsonPath: /links/rdp
       description: 원격 데스크톱 화면으로 이동합니다.
       visible: true
@@ -40,6 +42,7 @@ spec:
       sideEffect: false
     - name: Remote Desktop
       kind: VNC
+      alias: /node/alias
       jsonPath: /links/vnc
       description: 원격 데스크톱 화면으로 이동합니다.
       visible: true

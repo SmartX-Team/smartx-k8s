@@ -116,6 +116,12 @@ pub struct TableExtraService {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
+    pub alias: Option<String>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     pub json_path: Option<String>,
 
     #[cfg_attr(

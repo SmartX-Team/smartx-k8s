@@ -67,7 +67,7 @@ k8s-openapi = { workspace = true, features = [
     # "std",
 ] }
 kube = { workspace = true, features = ["runtime"] }
-kube-custom-resources-rs = { workspace = true, features = ["argoproj_io"] }
+kcr-argoproj-io = { workspace = true }
 serde-json = { workspace = true, features = ["std"] }
 tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true, optional = true, features = [

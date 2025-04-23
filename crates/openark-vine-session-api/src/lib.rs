@@ -41,7 +41,7 @@ use serde_json::{Value, json};
 use strum::{Display, EnumString};
 use url::Url;
 
-#[cfg(all(feature = "kube", feature = "serde"))]
+#[cfg(feature = "kube")]
 use crate::{
     binding::{SessionBindingCrd, SessionBindingUserKind},
     profile::SessionProfileCrd,
@@ -256,6 +256,7 @@ impl ComputeMode {
     }
 }
 
+#[cfg(feature = "kube")]
 fn infer_compute_mode(profile: &SessionProfileCrd) -> ComputeMode {
     if profile
         .spec
@@ -371,6 +372,7 @@ impl<'a> Metadata<'a> {
         }
     }
 
+    #[cfg(feature = "serde")]
     #[must_use]
     fn build_labels(&self) -> BTreeMap<String, String> {
         fn to_patch_resource(res: &Option<Quantity>) -> String {

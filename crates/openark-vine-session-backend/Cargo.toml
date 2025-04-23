@@ -112,8 +112,8 @@ jsonwebtoken = { workspace = true }
 k8s-openapi = { workspace = true, features = [
     # "std",
 ] }
+kcr-argoproj-io = { workspace = true }
 kube = { workspace = true, features = ["admission"] }
-kube-custom-resources-rs = { workspace = true, features = ["argoproj_io"] }
 kube-quantity = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive", "std"] }
