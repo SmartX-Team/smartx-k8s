@@ -47,6 +47,13 @@ use crate::{
     profile::SessionProfileCrd,
 };
 
+#[derive(Copy, Clone, Debug, Display, EnumString, PartialEq, Eq)]
+#[cfg_attr(feature = "clap", derive(Parser))]
+#[strum(serialize_all = "kebab-case")]
+enum VineSessionGPU {
+    Nvidia,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "clap", derive(Parser))]
 pub struct VineSessionArgs {
@@ -61,6 +68,9 @@ pub struct VineSessionArgs {
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_VM"))]
     feature_vm: bool,
+
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FORCE_GPU"))]
+    force_gpu: Option<VineSessionGPU>,
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_INGRESS_DOMAIN_NAME"))]
     ingress_domain_name: String,
@@ -820,35 +830,46 @@ impl<'a> NodeSession<'a> {
             map.insert("memory".into(), value);
         }
 
-        // Attach NVIDIA GPU
-        let labels = self.node.labels();
-        if labels
-            .get("nvidia.com/gpu.present")
-            .and_then(|value| value.parse().ok())
-            .unwrap_or(false)
-        {
-            match self.metadata.compute_mode {
-                Some(ComputeMode::Container | ComputeMode::Kueue) => {
-                    map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
-                }
-                Some(ComputeMode::VM) => {
-                    if let Some(allocatable) = self
-                        .node
-                        .status
-                        .as_ref()
-                        .and_then(|status| status.allocatable.as_ref())
-                    {
-                        let re = Regex::new(r"^nvidia\.com/[A-Z0-9_]+$").unwrap();
-                        let devices = allocatable
-                            .iter()
-                            .filter(|(key, _)| re.is_match(key) && !key.ends_with("_Audio"));
+        // Find GPU
+        let gpu = self.metadata.args.force_gpu.or_else(|| {
+            let labels = self.node.labels();
+            if labels
+                .get("nvidia.com/gpu.present")
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(false)
+            {
+                Some(VineSessionGPU::Nvidia)
+            } else {
+                None
+            }
+        });
 
-                        for (key, _value) in devices {
-                            map.insert(key.clone(), Quantity("1".into()));
+        // Attach GPU
+        if let Some(gpu) = gpu {
+            match gpu {
+                VineSessionGPU::Nvidia => match self.metadata.compute_mode {
+                    Some(ComputeMode::Container | ComputeMode::Kueue) => {
+                        map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
+                    }
+                    Some(ComputeMode::VM) => {
+                        if let Some(allocatable) = self
+                            .node
+                            .status
+                            .as_ref()
+                            .and_then(|status| status.allocatable.as_ref())
+                        {
+                            let re = Regex::new(r"^nvidia\.com/[A-Z0-9_]+$").unwrap();
+                            let devices = allocatable
+                                .iter()
+                                .filter(|(key, _)| re.is_match(key) && !key.ends_with("_Audio"));
+
+                            for (key, _value) in devices {
+                                map.insert(key.clone(), Quantity("1".into()));
+                            }
                         }
                     }
-                }
-                None => (),
+                    None => (),
+                },
             }
         }
         map

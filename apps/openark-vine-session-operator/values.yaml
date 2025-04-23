@@ -17,6 +17,9 @@ auth:
 
 features:
   gateway: false
+  gpu:
+    default: "" # Options: ["", nvidia]
+    nvidia: false
   ingress: false
   vm: false
 

@@ -14,6 +14,11 @@ auth:
 
 features:
   gateway: {{ has "org.ulagbulag.io/servicemesh" .Values.features }}
+  gpu:
+{{- if has "nvidia.com/gpu" .Values.features }}
+    default: nvidia
+{{- end }}
+    nvidia: {{ has "nvidia.com/gpu" .Values.features }}
   ingress: {{ has "org.ulagbulag.io/ingress" .Values.features }}
   vm: {{ has "org.ulagbulag.io/vm/kubevirt" .Values.features }}
 

@@ -71,6 +71,10 @@ spec:
               value: {{ .Values.features.ingress | quote }}
             - name: OPENARK_FEATURE_VM
               value: {{ .Values.features.vm | quote }}
+{{- if ne "" .Values.features.gpu.default }}
+            - name: OPENARK_FORCE_GPU
+              value: {{ .Values.features.gpu.default | quote }}
+{{- end }}
             - name: OPENARK_INGRESS_DOMAIN_NAME
               value: {{ .Values.ingress.domainName | quote }}
             - name: OPENARK_LABEL_ALIAS
