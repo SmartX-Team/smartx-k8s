@@ -1,0 +1,89 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+{{- $pysetupPath := printf "/opt/%s/agent/llm" $package }}
+{{- $venvPath := printf "%s/.venv" $pysetupPath }}
+{{- $installDir := "/usr/local" }}
+
+# Download base image
+FROM "{{ .Values.image.repo }}:{{ .Values.image.tag }}" AS base
+
+# Be ready for building
+FROM base AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        clang \
+        cmake \
+        curl \
+    && pip install poetry \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure environment variables
+ENV PYTHONUNBUFFERED=1 \
+    # prevents python creating .pyc files
+    PYTHONDONTWRITEBYTECODE=1 \
+    \
+    # pip
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_NO_CACHE_DIR=off \
+    \
+    # poetry
+    # make poetry install to this location
+    POETRY_HOME="/opt/poetry" \
+    # make poetry create the virtual environment in the project's root
+    # it gets named `.venv`
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    # do not ask any interactive question
+    POETRY_NO_INTERACTION=1 \
+    \
+    # paths
+    # this is where our requirements + virtual environment will live
+    PYSETUP_PATH={{ $pysetupPath | quote }} \
+    VENV_PATH={{ $venvPath | quote }}
+
+# Prepend poetry and venv to path
+ENV PATH="${POETRY_HOME}/bin:${VENV_PATH}/bin:${PATH}"
+
+# Load package metadata file
+WORKDIR {{ $pysetupPath | quote }}
+ADD ./pyproject.toml ./
+
+# Build it!
+RUN echo {{ .Release.Version | quote }} >./VERSION \
+    && mkdir -p {{ printf "%s/src/%s/_metadata" $pysetupPath $package | quote }} \
+    && echo '__version__ = "0.0.0"' > {{ printf "%s/src/%s/_metadata/version.py" $pysetupPath $package | quote }} \
+    && echo '__version_tuple__ = (0,0,0)' >> {{ printf "%s/src/%s/_metadata/version.py" $pysetupPath $package | quote }} \
+    && poetry install --only main \
+    && poetry dynamic-versioning \
+    && rm ./.venv/bin/python*
+
+# Be ready for serving
+FROM base AS server
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        ca-certificates \
+        openssl \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy executable files
+WORKDIR {{ $pysetupPath | quote }}
+# COPY --from=builder {{ printf "%s/bin/" $venvPath | quote }} {{ printf "%s/bin/" $installDir | quote }}
+COPY --from=builder {{ printf "%s/lib/" $venvPath | quote }} {{ printf "%s/lib/" $installDir | quote }}
+ADD ./LICENSE ./README.md ./
+ADD {{ printf "./src/%s/" $package | quote }} {{ printf "./%s/" $package | quote }}
+COPY --from=builder \
+    {{ printf "%s/src/%s/_metadata/version.py" $pysetupPath $package | quote }} \
+    {{ printf "./%s/_metadata/version.py" $package | quote }}
+
+# Mark as executable
+CMD [ {{ printf "%s/bin/python" $installDir | quote }}, "-m", {{ $package | quote }} ]

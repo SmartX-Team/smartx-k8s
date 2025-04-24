@@ -1,0 +1,60 @@
+[build-system]
+build-backend = "poetry_dynamic_versioning.backend"
+requires = [
+    "poetry-core>=2.0.0,<3.0.0",
+    "poetry-dynamic-versioning>=1.0.0,<2.0.0",
+]
+
+[project]
+name = "h2pc"
+authors = [{ name = "Ho Kim", email = "ho.kim@ulagbulag.io" }]
+description = "H2PC LLM Agent"
+keywords = ["h2pc", "kubernetes", "pipeline"]
+license = { text = "GPL-3.0-or-later WITH Classpath-exception-2.0" }
+readme = "README.md"
+
+dynamic = [
+    "version", # enable `poetry-dynamic-versioning`
+]
+
+[tool.poetry]
+homepage = "https://github.com/SmartX-Team/smartx-k8s"
+repository = "https://github.com/SmartX-Team/smartx-k8s"
+
+package-mode = false # set it `false` to build as a container image
+
+packages = [{ include = "src/h2pc" }]
+
+version = "0.0.0" # placeholder
+
+[tool.poetry.dependencies]
+# Compatible Python versions
+python = ">=3.12,<4.0"
+
+crc32c = { version = ">=2.7.1,<3.0.0" }
+deltalake = { version = ">=0.25.5,<0.26.0" }
+jinja2 = { version = ">=3.1.6,<3.2.0" }
+kafka-python = { version = ">=2.1.5,<3.0.0" }
+loguru = { version = ">=0.7.3,<0.8.0" }
+nats-py = { version = ">=2.10.0,<2.11.0" }
+ollama = { version = ">=0.4.8,<0.5.0" }
+openai = { version = ">=1.75.0,<2.0.0" }
+pydantic = { version = ">=2.11.3,<3.0.0" }
+pydantic-settings = { version = ">=2.8.1,<3.0.0" }
+pyiceberg = { version = ">=0.9.0,<0.10.0" }
+python-dotenv = ">=1.1.0,<1.2.0"
+pyyaml = { version = ">=6.0.2,<6.1.0" }
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+enable = true
+dirty = true
+from-file = { source = "VERSION" }
+metadata = true
+style = "semver"
+vcs = "any"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["src/*/_metadata/version.py"]

@@ -50,7 +50,7 @@ operator:
 workflow:
   image:
     repo: quay.io/ulagbulag/openark
-    tag: devel
+    tag: 2.0.0-alpha.1
     pullPolicy: Always
 
 kubespray:

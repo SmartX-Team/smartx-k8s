@@ -37,7 +37,7 @@ RUN git clone "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ 
     && cp 'OVMF_VARS.fd' 'OVMF_VARS.secboot.fd'
 
 # Be ready for serving
-FROM "{{ .Values.virtLauncher.image.repo }}:{{ .Values.virtLauncher.image.tag | default .Manifest.spec.containerImage.version }}" AS server
+FROM "{{ .Values.virtLauncher.image.repo }}:{{ .Values.virtLauncher.image.tag | default .Release.Version }}" AS server
 
 # Replace edk2
 COPY --chmod=444 --from=builder-edk2 \

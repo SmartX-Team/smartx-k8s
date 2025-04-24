@@ -32,7 +32,7 @@
     "**/images/*/manifest.yaml": "jinja-yaml",
     "**/images/*/patches.yaml": "jinja-yaml",
     "**/images/*/values.yaml": "yaml",
-    "**/images/h2pc-agent-llm/prompts/*.yaml": "jinja-yaml",
+    "**/images/h2pc/prompts/*.yaml": "jinja-yaml",
     "**/images/template/**/*.containerfile": "jinja-dockerfile",
     "**/images/template/defaults.yaml": "jinja-yaml",
     "**/images/template/templates/**/*.yaml": "jinja-yaml",
@@ -72,6 +72,7 @@
   },
   "python.analysis.autoImportCompletions": true,
   "python.analysis.typeCheckingMode": "standard",
+  "python.defaultInterpreterPath": "./images/h2pc/.venv/bin/python",
   "search.exclude": {
     "apps/exdns-2/values.yaml": true,
     "apps/template/defaults.yaml": true,

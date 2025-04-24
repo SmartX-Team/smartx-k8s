@@ -48,6 +48,10 @@
 # Poetry
 /**/.venv
 /**/poetry.lock
+/src/*/_metadata/version.py
+
+# Python
+/**/__pycache__/
 
 # Temporary files
 /**/.build/

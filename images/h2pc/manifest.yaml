@@ -2,7 +2,7 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.images.h2pc-agent-llm
+  name: smartx.images.h2pc
 spec:
   group: ops
   phase: alpha
@@ -13,4 +13,4 @@ spec:
   containerImage:
     namespace: h2pc
     period: "0 0 * * *"
-    version: latest
+    version: 2.0.0-alpha.1

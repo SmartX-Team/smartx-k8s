@@ -5,6 +5,10 @@
 {{- $_ := set $.Release "Name" $name }}
 {{- end }}
 {{- $_ := set $.Release "Namespace" $.Manifest.spec.containerImage.namespace }}
+{{- $_ := set $.Release "Version"
+  $.Manifest.spec.containerImage.version
+  | default $.Chart.AppVersion
+}}
 {{- end }}
 
 {{/* Load cluster-wide values */}}
@@ -35,11 +39,7 @@ metadata:
     images.ulagbulag.io/base.repo: {{ $.Values.baseImage.repo | quote }}
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
-    app.kubernetes.io/version: {{
-      $.Manifest.spec.containerImage.version
-        | default $.Chart.AppVersion
-        | quote
-    }}
+    app.kubernetes.io/version: {{ .Release.Version | quote }}
 data:
   Containerfile: |
 {{- tpl ( $.Files.Get "template.containerfile" ) $ | nindent 4 }}

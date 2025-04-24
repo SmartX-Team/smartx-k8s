@@ -2,7 +2,7 @@
 agents:
   llm:
     image:
-      repo: quay.io/ulagbulag/h2pc-agent-llm
+      repo: quay.io/ulagbulag/h2pc
       tag: ""
       pullPolicy: Always
     resources:

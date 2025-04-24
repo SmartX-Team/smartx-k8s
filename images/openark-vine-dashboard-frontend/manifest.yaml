@@ -13,4 +13,4 @@ spec:
   containerImage:
     namespace: vine-dashboard
     period: "0 0 * * *"
-    version: devel
+    version: 2.0.0-alpha.1
