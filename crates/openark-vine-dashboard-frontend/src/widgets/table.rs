@@ -589,7 +589,7 @@ fn build_extra_service_tab_content_vnc_item(
                 <div class="input">{ alias }</div>
             </div>
             <div class="aspect-video place-content-center w-full">
-                <iframe class="aspect-video w-full" { src } />
+                <iframe class="aspect-video w-full" sandbox="allow-same-origin allow-scripts" { src } />
             </div>
         </div>
     })
