@@ -49,6 +49,10 @@ operator:
     tag: ""
     pullPolicy: Always
 
+  # Duration for signing out nodes as seconds.
+  # TODO: Use labels to detect completing signout out
+  signOutTimeoutSeconds: 90
+
 region:
   timezone: ""
 

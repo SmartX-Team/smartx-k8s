@@ -453,7 +453,7 @@ async fn sync_app(ctx: &Context, node: &Node, timestamp: DateTime<Utc>) -> Resul
                     // Wait until the app is deleted
                     Some(Time(since)) => {
                         let duration = timestamp - since;
-                        if duration >= NodeSession::DURATION_SIGN_OUT {
+                        if duration >= ctx.args.api.duration_sign_out_as_chrono() {
                             #[cfg(feature = "tracing")]
                             warn!("still deleting application/{name} since {since:?} ({duration})");
                         } else {
@@ -480,7 +480,7 @@ async fn sync_app(ctx: &Context, node: &Node, timestamp: DateTime<Utc>) -> Resul
                         // Wait until the app is synced (pre-install jobs are completed)
                         _ => {
                             let duration = timestamp - since;
-                            if duration >= NodeSession::DURATION_SIGN_OUT {
+                            if duration >= ctx.args.api.duration_sign_out_as_chrono() {
                                 #[cfg(feature = "tracing")]
                                 warn!(
                                     "still syncing application/{name} since {since:?} ({duration})"
@@ -527,7 +527,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     // Do nothing while syncing the session application
     let is_synced = sync_app(&ctx, &node, timestamp).await?;
     if !is_synced {
-        return Ok(Action::requeue(NodeSession::DURATION_SIGN_OUT_STD));
+        return Ok(Action::requeue(ctx.args.api.duration_sign_out_as_std()));
     }
 
     // Collect allocated pods
@@ -633,7 +633,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
             }
             Ok(Action::requeue(remaining))
         }
-        None => Ok(Action::requeue(NodeSession::DURATION_SIGN_OUT_STD)),
+        None => Ok(Action::requeue(ctx.args.api.duration_sign_out_as_std())),
     }
 }
 

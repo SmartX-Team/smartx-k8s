@@ -61,6 +61,10 @@ pub struct VineSessionArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_AUTH_DOMAIN_NAME"))]
     auth_domain_name: String,
 
+    /// Duration for signing out nodes as seconds.
+    #[cfg_attr(feature = "clap", arg(long, env = "DURATION_SIGN_OUT_SECONDS"))]
+    duration_sign_out_seconds: u32,
+
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_GATEWAY"))]
     feature_gateway: bool,
 
@@ -135,6 +139,20 @@ pub struct VineSessionArgs {
 }
 
 impl VineSessionArgs {
+    /// Return a duration for signing out nodes as chrono duration.
+    ///
+    #[must_use]
+    pub const fn duration_sign_out_as_chrono(&self) -> Duration {
+        Duration::seconds(self.duration_sign_out_seconds as _)
+    }
+
+    /// Return a duration for signing out nodes as std duration.
+    ///
+    #[must_use]
+    pub const fn duration_sign_out_as_std(&self) -> ::core::time::Duration {
+        ::core::time::Duration::from_secs(self.duration_sign_out_seconds as _)
+    }
+
     /// Return `true` if gateway feature is enabled.
     ///
     #[must_use]
@@ -496,16 +514,6 @@ pub struct NodeSession<'a> {
 }
 
 impl<'a> NodeSession<'a> {
-    /// Duration for signing out nodes.
-    pub const DURATION_SIGN_OUT: Duration = Duration::seconds(Self::DURATION_SIGN_OUT_SECONDS as _);
-
-    /// Duration for signing out nodes.
-    pub const DURATION_SIGN_OUT_STD: ::core::time::Duration =
-        ::core::time::Duration::from_secs(Self::DURATION_SIGN_OUT_SECONDS as _);
-
-    /// Duration for signing out nodes as seconds.
-    pub const DURATION_SIGN_OUT_SECONDS: u32 = 35;
-
     /// Load node state from kubernetes object.
     ///
     pub fn load(args: &'a VineSessionArgs, node: &'a Node) -> Self {
@@ -555,7 +563,7 @@ impl<'a> NodeSession<'a> {
             .as_ref()?
             .0;
 
-        let time_completed = time_added + Self::DURATION_SIGN_OUT;
+        let time_completed = time_added + self.metadata.args.duration_sign_out_as_chrono();
         if time_completed > timestamp {
             Some(time_completed - timestamp)
         } else {
@@ -774,7 +782,7 @@ impl<'a> NodeSession<'a> {
                     "true".into(),
                     timestamp,
                 );
-                let time_completed = time_added + Self::DURATION_SIGN_OUT;
+                let time_completed = time_added + self.metadata.args.duration_sign_out_as_chrono();
                 if time_completed > timestamp {
                     Some(time_completed - timestamp)
                 } else {

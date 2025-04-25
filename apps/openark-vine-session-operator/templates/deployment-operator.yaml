@@ -57,6 +57,8 @@ spec:
                   fieldPath: metadata.name
             - name: DESTINATION_NAME
               value: {{ include "helm.appDestinationName" $ | quote }}
+            - name: DURATION_SIGN_OUT_SECONDS
+              value: {{ .Values.operator.signOutTimeoutSeconds | quote }}
             - name: INSTALL_CRDS
               value: "true"
             - name: NAMESPACE
