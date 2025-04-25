@@ -34,7 +34,7 @@ std = [
 ]
 
 # Async trait bounds
-send = ["openark-vine-oauth/send"]
+send = ["openark-vine-oauth?/send"]
 
 clap = ["dep:clap", "std"]
 client = [

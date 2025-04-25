@@ -6,6 +6,7 @@ extern crate alloc as std;
 pub mod binding;
 #[cfg(feature = "client")]
 pub mod client;
+pub mod command;
 pub mod exec;
 pub mod owned_profile;
 pub mod profile;
@@ -128,6 +129,9 @@ pub struct VineSessionArgs {
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_SOURCE_REPO_URL"))]
     source_repo_url: Url,
+
+    #[cfg_attr(feature = "clap", arg(long, env = "TZ"))]
+    timezone: Option<String>,
 }
 
 impl VineSessionArgs {
@@ -219,6 +223,13 @@ impl VineSessionArgs {
             is_private: self.label_is_private.clone(),
             signed_out: self.label_signed_out.clone(),
         }
+    }
+
+    /// Convert to a region timezone.
+    ///
+    #[must_use]
+    pub fn to_region_timezone(&self) -> Option<String> {
+        self.timezone.clone()
     }
 }
 

@@ -44,7 +44,7 @@ data:
   bootstrapper_network_dns_server_ns2: {{ .Values.network.nameservers.ns2 | quote }}
   bootstrapper_network_ipv4_address: {{ .Values.bootstrapper.network.address.ipv4 | quote }}
   bootstrapper_node_data_kubernetes_path: {{ .Values.bootstrapper.node.kubernetes.path | quote }}
-  bootstrapper_node_image: "{{ .Values.bootstrapper.node.image.repo }}:{{ .Values.bootstrapper.node.image.tag }}"
+  bootstrapper_node_image: "{{ .Values.bootstrapper.node.image.repo }}:{{ .Values.bootstrapper.node.image.tag | default .Chart.AppVersion }}"
   bootstrapper_node_name: {{ .Values.bootstrapper.node.name | quote }}
   bootstrapper_node_reuse_container: {{ .Values.bootstrapper.node.reuse.container | quote }}
   bootstrapper_node_reuse_data_kubernetes: {{ .Values.bootstrapper.node.reuse.kubernetes | quote }}

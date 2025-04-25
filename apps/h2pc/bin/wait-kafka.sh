@@ -7,7 +7,7 @@
 set -e -o pipefail
 
 # Wait until the kafka cluster is ready
-until kafka-cluster.sh cluster-id --bootstrap-server "${KAFKA_BOOTSTRAP_SERVERS}:9092"; do
+until /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server "${KAFKA_BOOTSTRAP_SERVERS}:9092"; do
     sleep 1
 done
 

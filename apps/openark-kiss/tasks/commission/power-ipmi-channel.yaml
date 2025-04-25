@@ -5,10 +5,10 @@
 - name: Get IPMI IP Address
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ include "helm.ipmitool.image" $ | quote }}
     lan print
     | sed -n -e 's/^IP Address *: *\([0-9.]*\)/\1/p'
   register: ipmi_address
@@ -16,81 +16,81 @@
 - name: Set IPMI IP Address be Static
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ include "helm.ipmitool.image" $ | quote }}
     lan set 1 ipsrc static
   ignore_errors: true
 
 - name: Set IPMI IP Address
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
-    lan set 1 ipaddr '{{ ipmi_address.stdout }}'
+    {{ include "helm.ipmitool.image" $ | quote }}
+    lan set 1 ipaddr {{ "{{ ipmi_address.stdout }}" | quote }}
   ignore_errors: true
 
 - name: Set IPMI IP Address Netmask
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
-    lan set 1 netmask '{{ kiss_network_ipv4_subnet_mask }}'
+    {{ include "helm.ipmitool.image" $ | quote }}
+    lan set 1 netmask {{ "{{ kiss_network_ipv4_subnet_mask }}" | quote }}
   ignore_errors: true
 
 - name: Set IPMI IP Address Default Gateway
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
-    lan set 1 defgw ipaddr '{{ kiss_network_ipv4_gateway }}'
+    {{ include "helm.ipmitool.image" $ | quote }}
+    lan set 1 defgw ipaddr {{ "{{ kiss_network_ipv4_gateway }}" | quote }}
   ignore_errors: true
 
 - name: Set IPMI user 9 name
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
-    user set name 9 '{{ kiss_power_ipmi_username }}'
+    {{ include "helm.ipmitool.image" $ | quote }}
+    user set name 9 {{ "{{ kiss_power_ipmi_username }}" | quote }}
   ignore_errors: true
   no_log: true
 
 - name: Set IPMI user 9 password
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
     "quay.io/ulagbulag/openark-ipmitool:latest"
-    user set password 9 '{{ kiss_power_ipmi_password }}'
+    user set password 9 {{ "{{ kiss_power_ipmi_password }}" | quote }}
   ignore_errors: true
   no_log: true
 
 - name: Enable IPMI user 9
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ include "helm.ipmitool.image" $ | quote }}
     user enable 9
   ignore_errors: true
 
 - name: Link on IPMI user 9 as ADMIN
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ include "helm.ipmitool.image" $ | quote }}
     channel setaccess 1 9 callin=on ipmi=on link=on privilege=4
   ignore_errors: true

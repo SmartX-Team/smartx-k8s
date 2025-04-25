@@ -12,7 +12,7 @@ use openark_vine_dashboard_api::{
         TableSession,
     },
 };
-use openark_vine_session_api::exec::ExecArgs;
+use openark_vine_session_api::{command::SessionCommandView, exec::ExecArgs};
 use serde_json::Value;
 use url::Url;
 use web_sys::HtmlInputElement;
@@ -102,6 +102,7 @@ struct Context<'a> {
     session: &'a TableSession,
     tab_index: &'a UseStateHandle<Option<usize>>,
     tab_vnc_cmdline: UseStateHandle<String>,
+    tab_vnc_cmdline_profiles: UseStateHandle<Vec<SessionCommandView>>,
 }
 
 impl Selections {
@@ -562,18 +563,18 @@ fn build_extra_service_tab_content_vnc_item(
     service: &TableExtraService,
     value: &Value,
 ) -> Option<Html> {
-    let url: Url = value
-        .pointer(service.json_path.as_deref()?)?
-        .as_str()?
-        .parse()
-        .ok()?;
-
-    let base_url = &context.session.spec.base_url;
-    let host = url.host_str()?;
-    let port = url.port().unwrap_or(443);
-    let src = format!(
-        "{base_url}/vnc/?autoconnect=true&host={host}&port={port}&reconnect=true&resize=scale&shared=true&view_only=true&quality=5"
-    );
+    let url = value.pointer(service.json_path.as_deref()?)?.as_str()?;
+    let src = match url.parse::<Url>().ok() {
+        Some(url) => {
+            let base_url = &context.session.spec.base_url;
+            let host = url.host_str()?;
+            let port = url.port_or_known_default().unwrap_or(443);
+            format!(
+                "{base_url}/vnc/vnc.html?autoconnect=true&host={host}&port={port}&reconnect=true&resize=scale&shared=true&quality=5&view_only=true"
+            )
+        }
+        None => format!("{url}&quality=5&view_only=true"),
+    };
 
     let alias = service
         .alias
@@ -788,6 +789,7 @@ pub fn component(props: &TableWidgetProps) -> Html {
     let tab_index = use_state_eq(|| None);
 
     let tab_vnc_cmdline = use_state_eq(Default::default);
+    let tab_vnc_cmdline_profiles = use_state(Default::default);
 
     // Validate states
 
@@ -815,6 +817,7 @@ pub fn component(props: &TableWidgetProps) -> Html {
         session: &*session,
         tab_index: &tab_index,
         tab_vnc_cmdline,
+        tab_vnc_cmdline_profiles,
     };
 
     let floating_button = if tab_index.is_none()

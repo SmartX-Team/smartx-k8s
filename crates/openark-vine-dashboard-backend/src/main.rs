@@ -55,7 +55,7 @@ struct Args {
     labels: LabelArgs,
 
     /// Default namespace name
-    #[arg(long, env = "NAMESPACE", value_name = "ADDR")]
+    #[arg(long, env = "NAMESPACE", value_name = "NAME")]
     namespace: Option<String>,
 
     #[command(flatten)]
@@ -99,6 +99,11 @@ async fn try_main(args: Args) -> Result<()> {
         openid,
     } = args;
 
+    // Remove trailing
+    while base_url.ends_with('/') {
+        base_url.pop();
+    }
+
     let app = Data::new(AppMetadata {
         name,
         title: Some(title),
@@ -114,11 +119,6 @@ async fn try_main(args: Args) -> Result<()> {
     let labels = Data::new(labels);
     let openid = Data::new(openid);
     let reqwest = Data::new(::reqwest::Client::new());
-
-    // Remove trailing
-    while base_url.ends_with('/') {
-        base_url.pop();
-    }
 
     // Start web server
     HttpServer::new(move || {

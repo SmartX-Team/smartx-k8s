@@ -5,12 +5,12 @@
 - name: Change boot order to PxE-first
   when: intel_amt_is_ready
   shell: >
-    {{ bin_dir }}/nerdctl run --rm --net host
+    {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --entrypoint /usr/local/bin/wsmanhelper.sh
-    --env AMT_HOSTNAME='{{ kiss_power_intel_amt_host }}'
-    --env AMT_USERNAME='{{ kiss_power_intel_amt_username }}'
-    --env AMT_PASSWORD='{{ kiss_power_intel_amt_password }}'
-    "quay.io/ulagbulag/openark-wsmancli:latest"
+    --env AMT_HOSTNAME={{ "{{ kiss_power_intel_amt_host }}" | quote }}
+    --env AMT_USERNAME={{ "{{ kiss_power_intel_amt_username }}" | quote }}
+    --env AMT_PASSWORD={{ "{{ kiss_power_intel_amt_password }}" | quote }}
+    {{ include "helm.wsmancli.image" $ | quote }}
     boot pxe
   ignore_errors: true
   no_log: true

@@ -20,7 +20,11 @@ metadata:
 data:
 {{- range $taskPath, $_ := $.Files.Glob ( printf "tasks/%s/*" $taskKind ) }}
   {{ base $taskPath }}: |
-{{- if regexMatch ( printf "^tasks/%s/manual-.*\\.yaml$" $taskKind ) $taskPath }}
+{{- if or
+  ( regexMatch ( printf "^tasks/%s/power-intel-amt-.*\\.yaml$" $taskKind ) $taskPath )
+  ( regexMatch ( printf "^tasks/%s/power-ipxe-.*\\.yaml$" $taskKind ) $taskPath )
+  ( regexMatch ( printf "^tasks/%s/manual-.*\\.yaml$" $taskKind ) $taskPath )
+}}
 {{- tpl ( $.Files.Get $taskPath ) $ | trim | nindent 4 }}
 {{- else }}
 {{- $.Files.Get $taskPath | trim | nindent 4 }}

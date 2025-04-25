@@ -1,6 +1,6 @@
 {{- define "podTemplate.dbus-system" -}}
 name: dbus-system
-image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
 command:
   - /usr/bin/env

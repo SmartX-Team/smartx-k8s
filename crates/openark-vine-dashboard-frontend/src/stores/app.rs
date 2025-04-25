@@ -140,6 +140,16 @@ impl ApiStore<AppStore> {
         })
     }
 
+    pub fn vine_session_command_list(self, base_url: Url) {
+        self.call(Request {
+            fetch: move |client: Client| async move {
+                client.vine_session_command_list(base_url.clone()).await
+            },
+            ready: true,
+            update: move |_: &mut AppStore, _| (),
+        })
+    }
+
     pub fn vine_session_exec(self, base_url: Url, args: ExecArgs) {
         self.call(Request {
             fetch: move |client: Client| async move {

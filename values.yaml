@@ -36,8 +36,8 @@ bootstrapper:
   node:
     name: node1.master # set to "host" if you want to install on host machines
     image:
-      repo: quay.io/ulagbulag/openark-bootstrap-node
-      tag: latest
+      repo: quay.io/ulagbulag/openark-kiss-bootstrap-node
+      tag: ""
     kubernetes:
       path: /opt/kiss/
     reuse:
@@ -108,6 +108,10 @@ cluster:
       childSubnet: 10.112.0.0/12 # same as CNI CIDR
     kubeProxy:
       enabled: false # set to false for Cilium to work
+
+  # Physical region configuration
+  region:
+    timezone: Asia/Seoul
 
 # Enable SmartX features
 # TODO(user): Configure it!
@@ -207,6 +211,11 @@ kiss:
   # ETCD Cluster Configuration
   etcd:
     maxNodes: 5
+
+  # Extea Features Configuration
+  features:
+    # Whether to use CronJobs to check boxes
+    cronJobs: false
 
   # Bare-metal Box Grouping Configuration
   group:

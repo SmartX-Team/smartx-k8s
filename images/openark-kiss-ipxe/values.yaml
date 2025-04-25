@@ -1,0 +1,20 @@
+---
+debian:
+  image:
+    repo: docker.io/library/debian
+    tag: bookworm
+
+ipxe:
+  drivers:
+    - arch: x86_64
+      code: "0x09"
+      driver: snp
+    - arch: aarch64
+      code: "0x0B"
+      driver: snp
+      ipxeArch: arm64
+  repo:
+    baseUrl: https://github.com
+    owner: ipxe
+    name: ipxe
+    revision: 9f17d1116d27696ec76c48c5c77df34cba521380

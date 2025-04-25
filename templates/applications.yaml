@@ -315,6 +315,21 @@ Create applications
 {{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
 {{- end }}
 {{- if or ( not ( $.Files.Glob ( printf "%s/Chart.yaml" $dirname ) | empty ) ) $.Manifest.UseClusterValues }}
+{{- $chartFile := printf "%s/Chart.yaml" $dirname }}
+{{- $chart := $.Files.Get $chartFile | fromYaml }}
+{{- if ne $.Chart.AppVersion $chart.appVersion }}
+{{- fail ( printf "Mismatched SmartX App: AppVersion should be %s, not %s: %s"
+  ( $.Chart.AppVersion | quote )
+  ( $chart.appVersion | quote )
+  $chartFile
+) }}
+{{- else if ne $.Chart.Version $chart.version }}
+{{- fail ( printf "Mismatched SmartX App: Version should be %s, not %s: %s"
+  ( $.Chart.Version | quote )
+  ( $chart.version | quote )
+  $chartFile
+) }}
+{{- end }}
 {{- $source := dict }}
 {{- $_ := set $source "Helm" true }}
 {{- $_ := set $source "Path" $dirname }}

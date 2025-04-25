@@ -1,6 +1,6 @@
 {{- define "podTemplate.pipewire-pulse" -}}
 name: pipewire-pulse
-image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
 command:
   - /usr/bin/env

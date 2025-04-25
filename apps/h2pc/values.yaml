@@ -145,8 +145,8 @@ messenger:
                   - Gateway
   kafka:
     image:
-      repo: docker.io/ubuntu/kafka
-      tag: latest
+      repo: docker.io/apache/kafka
+      tag: 4.0.0
       pullPolicy: Always
   nats: {}
 

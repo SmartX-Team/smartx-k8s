@@ -48,6 +48,11 @@ spec:
       containers:
         - name: ntpd
           image: "{{ .Values.ntpd.image.repo }}:{{ .Values.ntpd.image.tag }}"
+          env:
+            - name: NTP_SERVERS
+              value: {{ .Values.ntpd.servers | default list | join "," | quote }}
+            - name: TZ
+              value: {{ .Values.cluster.region.timezone | quote }}
           ports:
             - name: ntp
               protocol: UDP

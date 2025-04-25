@@ -1,6 +1,6 @@
 {{- define "podTemplate.x11vnc" -}}
 name: x11vnc
-image: "{{ .Values.services.x11vnc.image.repo }}:{{ .Values.services.x11vnc.image.tag }}"
+image: "{{ .Values.services.x11vnc.image.repo }}:{{ .Values.services.x11vnc.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.services.x11vnc.image.pullPolicy | quote }}
 env:
   - name: DISPLAY

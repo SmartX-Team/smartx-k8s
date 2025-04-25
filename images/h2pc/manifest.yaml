@@ -13,4 +13,4 @@ spec:
   containerImage:
     namespace: h2pc
     period: "0 0 * * *"
-    version: 2.0.0-alpha.1
+    version: ""

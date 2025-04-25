@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder, Scope, get, post, web};
+use actix_web::{HttpResponse, Responder, Scope, get, web};
 use itertools::Itertools;
 use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
 use kcr_argoproj_io::v1alpha1::applications::Application;
@@ -6,7 +6,6 @@ use kube::{Api, Client, ResourceExt, api::ListParams};
 use kube_quantity::ParsedQuantity;
 use openark_vine_oauth::User;
 use openark_vine_session_api::{
-    exec::ExecArgs,
     owned_profile::OwnedSessionProfileSpec,
     session::{
         Session, SessionLinks, SessionRegion, SessionResourceAnnotations, SessionResourceLabels,
@@ -16,15 +15,18 @@ use openark_vine_session_api::{
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument, warn};
 
-use crate::LabelArgs;
+use crate::{LabelArgs, utils::build_label_selector};
 
 pub fn build() -> Scope {
-    web::scope("bindings").service(list).service(exec)
+    web::scope("bindings")
+        .service(list)
+        .service(crate::commands::build())
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 #[get("")]
 pub async fn list(
+    base_url: web::Data<String>,
     labels: web::Data<LabelArgs>,
     // Add support for guest users
     kube: web::Data<Client>,
@@ -41,7 +43,7 @@ pub async fn list(
             let mut items = list
                 .items
                 .into_iter()
-                .filter_map(convert)
+                .filter_map(|app| convert(app, &base_url))
                 .collect::<Vec<_>>();
             items.sort_by_key(|s| {
                 (
@@ -60,7 +62,7 @@ pub async fn list(
     }
 }
 
-fn convert(app: Application) -> Option<Session> {
+fn convert(app: Application, base_url: &str) -> Option<Session> {
     let values = app
         .spec
         .sources
@@ -203,13 +205,12 @@ fn convert(app: Application) -> Option<Session> {
                 .and_then(|service| service.enabled)
                 .unwrap_or(false)
             {
-                format!(
-                    "https://vnc.{node_name}.node.sessions.{domain_name}",
+                Some(format!(
+                    "{base_url}/bindings/vnc/vnc.html?autoconnect=true&host=vnc.{node_name}.node.sessions.{domain_name}&port={port}&reconnect=true&resize=scale&shared=true",
                     domain_name = &profile.ingress.domain_name,
                     node_name = &profile.node.name,
-                )
-                .parse()
-                .ok()
+                    port = 443,
+                ))
             } else {
                 None
             },
@@ -254,55 +255,5 @@ fn sum_quantity<'a>(quantities: impl Iterator<Item = &'a Quantity>) -> Option<Qu
             total += quantity;
         }
         Some(total.into())
-    }
-}
-
-#[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
-#[post("exec")]
-pub async fn exec(
-    labels: web::Data<LabelArgs>,
-    // Add support for guest users
-    kube: web::Data<Client>,
-    user: User,
-    args: web::Json<ExecArgs>,
-) -> impl Responder {
-    let web::Json(mut args) = args;
-    args.label_selector = Some(build_label_selector(
-        labels,
-        args.label_selector.as_deref(),
-        &user,
-    ));
-
-    match ::openark_vine_session_exec::exec(kube.as_ref().clone(), &args).await {
-        Ok(session) => {
-            session.join().await;
-            HttpResponse::Ok().json(())
-        }
-        Err(error) => {
-            #[cfg(feature = "tracing")]
-            warn!("Failed to exec: {error}");
-            HttpResponse::InternalServerError().finish()
-        }
-    }
-}
-
-fn build_label_selector(
-    labels: web::Data<LabelArgs>,
-    label_selector: Option<&str>,
-    user: &User,
-) -> String {
-    let mut appended_label_selector = format!(
-        "{k1}==true, {k2} in (, {v2})",
-        k1 = &labels.label_bind,
-        k2 = &labels.label_bind_user,
-        v2 = user.username(),
-    );
-
-    match label_selector {
-        Some(label_selector) => {
-            appended_label_selector.push_str(label_selector);
-            appended_label_selector
-        }
-        None => appended_label_selector,
     }
 }

@@ -59,12 +59,20 @@ spec:
           image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
           command:
-            - kiss-dns
+            - /usr/bin/env
+            - openark-kiss-dns
           env:
             - name: BIND_ADDR
-              value: 0.0.0.0:53
+              value: 0.0.0.0:5353
             - name: RUST_LOG
               value: INFO
+          ports:
+            - name: dns-tcp
+              protocol: TCP
+              containerPort: 5353
+            - name: dns-udp
+              protocol: UDP
+              containerPort: 5353
           resources:
             requests:
               cpu: 30m
@@ -91,8 +99,8 @@ spec:
     - name: dns-tcp
       protocol: TCP
       port: 53
-      targetPort: 53
+      targetPort: 5353
     - name: dns-udp
       protocol: UDP
       port: 53
-      targetPort: 53
+      targetPort: 5353

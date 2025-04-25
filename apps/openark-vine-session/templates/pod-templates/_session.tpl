@@ -29,6 +29,10 @@
   value: {{ .Values.session.locale.global | quote }}
 - name: NVIDIA_DRIVER_CAPABILITIES
   value: all
+{{- if .Values.region.timezone }}
+- name: TZ
+  value: {{ .Values.region.timezone | quote }}
+{{- end }}
 - name: USER
   value: {{ include "helm.userId" $ | quote }}
 - name: USER_SHELL

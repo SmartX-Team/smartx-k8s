@@ -40,13 +40,19 @@ cp -Lr "${IMAGE_SRC}/." "${IMAGE_HOME}"
 # Copy cluster-wide values
 # TODO: add support for 3rd-party cluster values
 mkdir "${IMAGE_HOME}/clusters"
-cp -r "${ROOT}/values.yaml" "${IMAGE_HOME}/clusters/default.yaml"
+cp "${ROOT}/values.yaml" "${IMAGE_HOME}/clusters/default.yaml"
 
 # Copy batteries
 cp -r "${IMAGES_HOME}/template/." "${IMAGE_HOME}"
 
 # Rename Containerfile
 mv "${IMAGE_HOME}/Containerfile" "${IMAGE_HOME}/template.containerfile"
+
+# Copy cluster-wide helm chart metadata
+cat "${ROOT}/Chart.yaml" |
+    yq '.name="container-image"' |
+    yq '.description="Temporary helm chart for building Containerfile"' \
+        >"${IMAGE_HOME}/Chart.yaml"
 
 # Build a template
 helm template "${IMAGE_NAME}" "${IMAGE_HOME}" \

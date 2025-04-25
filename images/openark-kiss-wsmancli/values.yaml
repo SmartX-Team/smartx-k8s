@@ -1,0 +1,26 @@
+---
+debian:
+  image:
+    repo: docker.io/library/debian
+    tag: bookworm
+
+openwsman:
+  repo:
+    baseUrl: https://github.com
+    owner: Openwsman
+    name: openwsman
+    revision: v2.8.1
+
+sfcc:
+  repo:
+    baseUrl: https://github.com
+    owner: kkaempf
+    name: sblim-sfcc
+    revision: master
+
+wsmancli:
+  repo:
+    baseUrl: https://github.com
+    owner: Openwsman
+    name: wsmancli
+    revision: v2.8.0

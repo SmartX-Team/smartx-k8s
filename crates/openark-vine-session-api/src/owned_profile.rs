@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     binding::SessionBindingUserSpec,
     profile::{
-        FeaturesSpec, GreeterSpec, PersistenceSpec, ServicesSpec, SessionSpec, UserSpec, VMSpec,
-        VolumesSpec,
+        FeaturesSpec, GreeterSpec, PersistenceSpec, RegionSpec, ServicesSpec, SessionSpec,
+        UserSpec, VMSpec, VolumesSpec,
     },
 };
 
@@ -39,6 +39,9 @@ pub struct OwnedSessionProfileSpec {
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub persistence: PersistenceSpec,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub region: RegionSpec,
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub services: ServicesSpec,

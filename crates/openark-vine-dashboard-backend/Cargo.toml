@@ -83,6 +83,7 @@ tracing = ["dep:tracing", "openark-core/tracing", "openark-vine-oauth/tracing"]
 openark-core = { workspace = true, features = ["clap", "std"] }
 openark-vine-dashboard-api = { workspace = true, features = [
     "kube",
+    "send",
     "serde",
     "std",
 ] }
@@ -90,6 +91,7 @@ openark-vine-oauth = { workspace = true, features = [
     "actix-web",
     "clap",
     "kube",
+    "send",
     "std",
 ] }
 

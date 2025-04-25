@@ -2,10 +2,11 @@
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
-{{- $package := "openark" }}
+{{- $package := .Release.Name }}
+{{- $version := .Release.Version }}
 
 # Be ready for building
-FROM "{{ .Values.openark.builder.image.repo }}:{{ .Values.openark.builder.image.tag }}-{{ .Values.openark.base.image.tag }}" AS builder
+FROM "{{ .Values.builder.image.repo }}:{{ .Values.builder.image.tag }}-{{ .Values.debian.image.tag }}" AS builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,12 +28,14 @@ RUN \
     --mount=type=cache,target=/usr/local/cargo/registry \
     # Create an output directory
     mkdir /out \
+    # Fix version
+    && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
     && cargo build --bins --exclude 'openark-vine-dashboard-frontend' --workspace --release \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
 
 # Be ready for serving
-FROM "{{ .Values.openark.base.image.repo }}:{{ .Values.openark.base.image.tag }}" AS server
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \

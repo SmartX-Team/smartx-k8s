@@ -1,5 +1,4 @@
-
-{{/*
+{{- /*
 Derived Kubespray Configs
 */}}
 {{- define "helm.kubesprayConfigs" -}}

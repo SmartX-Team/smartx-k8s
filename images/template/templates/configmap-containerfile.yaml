@@ -1,20 +1,5 @@
-{{/* Load manifest */}}
-{{- range $path, $_ := $.Files.Glob "manifest.yaml" }}
-{{- $_ := set $ "Manifest" ( tpl ( $.Files.Get $path ) $ | fromYaml ) }}
-{{- range $name := $.Manifest.metadata.name | split "." }}
-{{- $_ := set $.Release "Name" $name }}
-{{- end }}
-{{- $_ := set $.Release "Namespace" $.Manifest.spec.containerImage.namespace }}
-{{- $_ := set $.Release "Version"
-  $.Manifest.spec.containerImage.version
-  | default $.Chart.AppVersion
-}}
-{{- end }}
-
 {{/* Load cluster-wide values */}}
 {{- $_ := set $ "Cluster" dict }}
-{{- $_ := set $.Cluster "Chart" $.Chart }}
-{{- $_ := set $.Cluster "Release" $.Release }}
 {{- $_ := set $.Cluster "Values" dict }}
 {{- range $path, $_ := $.Files.Glob "clusters/*.yaml" }}
 {{- $_ := set $.Cluster "Values" ( $.Files.Get $path | fromYaml | merge $.Cluster.Values ) }}
@@ -27,6 +12,20 @@
 
 {{/* Patch base image */}}
 {{- $_ := set $.Values "baseImage" $.Cluster.Values.baseImage }}
+
+{{/* Load manifest */}}
+{{- range $path, $_ := $.Files.Glob "manifest.yaml" }}
+{{- $_ := set $ "Manifest" ( tpl ( $.Files.Get $path ) $ | fromYaml ) }}
+{{- range $name := $.Manifest.metadata.name | split "." }}
+{{- $_ := set $.Release "Name" $name }}
+{{- end }}
+{{- $_ := set $.Release "Namespace" $.Manifest.spec.containerImage.namespace }}
+{{- $_ := set $.Release "Version" (
+  $.Manifest.spec.containerImage.version
+  | default $.Cluster.Values.openark.version
+  | default $.Chart.AppVersion
+) }}
+{{- end }}
 
 {{/* Create a Containerfile ConfigMap */}}
 ---

@@ -26,7 +26,7 @@ features:
 greeter:
   image:
     repo: quay.io/ulagbulag/openark-vine-greeter
-    tag: latest
+    tag: ""
     pullPolicy: Always
 
 ingress:
@@ -37,7 +37,7 @@ nodeSelector: {}
 novnc:
   image:
     repo: quay.io/ulagbulag/openark-vine-novnc
-    tag: latest
+    tag: ""
     pullPolicy: Always
 
 openark:
@@ -48,6 +48,9 @@ operator:
     repo: quay.io/ulagbulag/openark
     tag: ""
     pullPolicy: Always
+
+region:
+  timezone: ""
 
 session:
   defaultNamespace: "" # default: current namespace

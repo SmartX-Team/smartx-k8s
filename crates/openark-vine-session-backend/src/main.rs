@@ -1,4 +1,6 @@
 mod bindings;
+mod commands;
+mod utils;
 
 use std::net::SocketAddr;
 
@@ -32,7 +34,7 @@ struct Args {
     labels: LabelArgs,
 
     /// Default namespace name
-    #[arg(long, env = "NAMESPACE", value_name = "ADDR")]
+    #[arg(long, env = "NAMESPACE", value_name = "NAME")]
     namespace: Option<String>,
 
     #[command(flatten)]
@@ -70,6 +72,12 @@ async fn try_main(args: Args) -> Result<()> {
         openid,
     } = args;
 
+    // Remove trailing
+    while base_url.ends_with('/') {
+        base_url.pop();
+    }
+
+    let base_url = Data::new(base_url);
     let config = {
         let mut config = Config::infer().await?;
         if let Some(namespace) = namespace {
@@ -82,14 +90,10 @@ async fn try_main(args: Args) -> Result<()> {
     let openid = Data::new(openid);
     let reqwest = Data::new(::reqwest::Client::new());
 
-    // Remove trailing
-    while base_url.ends_with('/') {
-        base_url.pop();
-    }
-
     // Start web server
     HttpServer::new(move || {
         let app = App::new()
+            .app_data(Data::clone(&base_url))
             .app_data(Data::clone(&client))
             .app_data(Data::clone(&labels))
             .app_data(Data::clone(&openid))

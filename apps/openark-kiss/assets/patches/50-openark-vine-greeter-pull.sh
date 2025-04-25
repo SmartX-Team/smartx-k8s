@@ -22,7 +22,7 @@ until [ -S /run/containerd/containerd.sock ]; do
     sleep 1
 done
 
-nerdctl pull --quiet "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+nerdctl pull --quiet "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
 
 # Stop ContainerD
 kill "${containerd_pid}" || true

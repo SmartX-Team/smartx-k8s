@@ -16,3 +16,6 @@ openark:
     org.ulagbulag.io/bind.user: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
     org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
     org.ulagbulag.io/signed-out: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+
+region:
+  timezone: {{ .Values.cluster.region.timezone | quote }}

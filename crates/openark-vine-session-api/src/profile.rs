@@ -65,6 +65,9 @@ pub struct SessionProfileSpec {
     )]
     pub persistence: Option<PersistenceSpec>,
 
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub region: Option<RegionSpec>,
+
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
@@ -220,6 +223,18 @@ pub struct PersistenceSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub storage_class_name: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct RegionSpec {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub timezone: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

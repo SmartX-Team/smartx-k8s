@@ -20,6 +20,7 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/configmap: {{ include "configmaps.kiss-config" $ | sha256sum | quote }}
         instrumentation.opentelemetry.io/inject-sdk: "true"
       labels:
         {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"
@@ -52,10 +53,27 @@ spec:
           image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
           command:
-            - kiss-operator
+            - /usr/bin/env
+            - openark-kiss-operator
           env:
+            - name: CONTROLLER_NAME
+              value: {{ .Chart.Name | quote }}
+            - name: CONTROLLER_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ENABLE_CRONJOBS
+              value: {{ .Values.kiss.features.cronJobs | quote }}
+            - name: INSTALL_CRDS
+              value: "true"
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: RUST_LOG
               value: INFO
+            - name: UPGRADE_CRDS
+              value: "true"
           resources:
             requests:
               cpu: 30m

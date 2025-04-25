@@ -127,6 +127,10 @@ spec:
               value: INFO
             - name: SESSION_NAMESPACE
               value: {{ .Values.session.defaultNamespace | default .Release.Namespace | quote }}
+{{- if .Values.region.timezone }}
+            - name: TZ
+              value: {{ .Values.region.timezone | quote }}
+{{- end }}
             - name: UPGRADE_CRDS
               value: "true"
 {{- if .Values.volumes.public.enabled }}

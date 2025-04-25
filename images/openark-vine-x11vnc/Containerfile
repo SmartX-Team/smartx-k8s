@@ -1,0 +1,22 @@
+# Copyright (c) 2023-2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        x11vnc \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy executable files
+ADD --chmod=555 ./entrypoint.sh /usr/local/bin/
+
+# Server Configuration
+EXPOSE 5900/tcp
+EXPOSE 5900/udp
+WORKDIR /usr/local/bin
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]

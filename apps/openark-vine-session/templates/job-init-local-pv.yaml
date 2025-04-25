@@ -31,7 +31,7 @@ spec:
 {{- include "helm.affinity" $ | nindent 8 }}
       containers:
         - name: init-local-pv
-          image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+          image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
           command:
             - /usr/bin/env

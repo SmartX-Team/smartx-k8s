@@ -28,18 +28,11 @@ fullnameOverride: ""
 greeter:
   image:
     repo: quay.io/ulagbulag/openark-vine-greeter
-    tag: latest
+    tag: ""
     pullPolicy: Always
 
 ingress:
   domainName: ""
-
-kubevirt:
-  sidecar:
-    image:
-      repo: quay.io/ulagbulag/openark-vine-ovmf
-      tag: latest
-      pullPolicy: Always
 
 nameOverride: ""
 
@@ -58,6 +51,9 @@ persistence:
       storage: 1Ti
   storageClassName: ceph-block
 
+region:
+  timezone: ""
+
 services:
   notebook:
     enabled: false
@@ -69,7 +65,7 @@ services:
     enabled: true
     image:
       repo: quay.io/ulagbulag/openark-vine-novnc
-      tag: latest
+      tag: ""
       pullPolicy: Always
   rdp:
     enabled: true
@@ -79,7 +75,7 @@ services:
     enabled: true
     image:
       repo: quay.io/ulagbulag/openark-vine-x11vnc
-      tag: latest
+      tag: ""
       pullPolicy: Always
 
   extraServices:
@@ -102,7 +98,7 @@ session:
     sudo: true
   image:
     repo: quay.io/ulagbulag/openark-vine-desktop
-    tag: ""
+    tag: ubuntu-24.04-v29
     pullPolicy: Always
 
   locale:
@@ -129,8 +125,6 @@ session:
       value: nimf
     - name: QT4_IM_MODULE
       value: nimf
-    - name: TZ
-      value: Asia/Seoul
     - name: XMODIFIERS
       value: "@im=nimf"
   priorityClassName: system-node-critical

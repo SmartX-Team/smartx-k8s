@@ -1,0 +1,80 @@
+# Copyright (c) 2023-2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Be ready for building
+FROM server AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+        autoconf \
+        automake \
+        build-essential \
+        clang \
+        cmake \
+        gawk \
+        git \
+        libcurl4-openssl-dev \
+        libpam-dev \
+        libssl-dev \
+        libtool \
+        libxml2-dev \
+        m4 \
+        pkg-config \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build build dependency: sblim-sfcc
+WORKDIR /src
+RUN git clone "{{ .Values.sfcc.repo.baseUrl }}/{{ .Values.sfcc.repo.owner }}/{{ .Values.sfcc.repo.name }}.git" \
+    && cd {{ .Values.sfcc.repo.name | quote }} \
+    && git checkout {{ .Values.sfcc.repo.revision | quote }} \
+    && git submodule update --init \
+    && ./autoconfiscate.sh \
+    && ./configure \
+    && make \
+    && make install
+
+# Build build dependency: openwsman
+WORKDIR /src
+RUN git clone "{{ .Values.openwsman.repo.baseUrl }}/{{ .Values.openwsman.repo.owner }}/{{ .Values.openwsman.repo.name }}.git" \
+    && cd {{ .Values.openwsman.repo.name | quote }} \
+    && git checkout {{ .Values.openwsman.repo.revision | quote }} \
+    && git submodule update --init \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && make install
+
+# Build it!
+ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
+WORKDIR /src
+RUN git clone "{{ .Values.wsmancli.repo.baseUrl }}/{{ .Values.wsmancli.repo.owner }}/{{ .Values.wsmancli.repo.name }}.git" \
+    && cd {{ .Values.wsmancli.repo.name | quote }} \
+    && git checkout {{ .Values.wsmancli.repo.revision | quote }} \
+    && git submodule update --init \
+    && ./bootstrap \
+    && ./configure \
+    && make
+
+# Copy executable files
+FROM server
+COPY --from=builder {{ printf "/src/%s/src/wsman" .Values.wsmancli.repo.name | quote }} /usr/local/bin/wsman
+
+# Add helper script
+ADD ./wsmanhelper.sh /usr/local/bin/
+
+# Server Configuration
+ENTRYPOINT [ "/usr/local/bin/wsmanhelper.sh" ]
+
+# Configure enviroment variables
+ENV RESOURCES_HOME="/usr/local/share/wsmancli/resources"
+
+# Add templates
+WORKDIR "${RESOURCES_HOME}"
+ADD ./resources/ "${RESOURCES_HOME}"

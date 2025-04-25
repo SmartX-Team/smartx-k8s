@@ -55,6 +55,7 @@ openark-core = { workspace = true, features = ["clap", "operator", "std"] }
 openark-vine-session-api = { workspace = true, features = [
     "clap",
     "kube",
+    "send",
     "std",
 ] }
 

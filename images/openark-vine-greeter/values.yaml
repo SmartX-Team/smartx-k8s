@@ -7,8 +7,8 @@ cluster:
 
 debian:
   image:
-    repo: docker.io/library/ubuntu
-    tag: "24.04"
+    repo: docker.io/library/debian
+    tag: bookworm
 
 user:
   uid: 2000

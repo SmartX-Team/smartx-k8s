@@ -93,10 +93,12 @@ openark-vine-oauth = { workspace = true, features = [
     "actix-web",
     "clap",
     "kube",
+    "send",
     "std",
 ] }
 openark-vine-session-api = { workspace = true, features = [
     "kube",
+    "send",
     "serde",
     "std",
 ] }

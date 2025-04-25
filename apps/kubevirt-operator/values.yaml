@@ -1,5 +1,8 @@
 ---
 kubevirt:
+  annotations:
+    alpha.kubevirt.io/EmulatorThreadCompleteToEvenParity: ""
+
   # Holds kubevirt configurations. Same as the virt-configMap.
   configuration:
     # DeveloperConfiguration holds developer options

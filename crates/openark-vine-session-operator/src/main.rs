@@ -31,11 +31,12 @@ use openark_core::operator::{OperatorArgs, install_crd};
 use openark_vine_session_api::{
     NodeSession, ProfileState,
     binding::{SessionBindingCrd, SessionBindingSpec},
+    command::SessionCommandCrd,
     owned_profile::{
         OwnedFeaturesSpec, OwnedOpenArkSpec, OwnedSessionProfileSpec, OwnedUserSpec,
         OwnedVMHostDeviceSpec, OwnedVMSpec,
     },
-    profile::{SessionProfileCrd, SessionProfileSpec, VolumeSharingSpec},
+    profile::{RegionSpec, SessionProfileCrd, SessionProfileSpec, VolumeSharingSpec},
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, debug, error, info, instrument, warn};
@@ -58,7 +59,7 @@ struct Args {
     #[arg(long, env = "OPENARK_LABEL_SELECTOR")]
     label_selector: String,
 
-    #[arg(long, env = "NAMESPACE")]
+    #[arg(long, env = "NAMESPACE", value_name = "NAME")]
     namespace: String,
 
     #[command(flatten)]
@@ -156,6 +157,7 @@ fn build_owned_session_profile(
         features,
         greeter,
         persistence,
+        region,
         services,
         session: session_spec,
         user,
@@ -247,6 +249,12 @@ fn build_owned_session_profile(
             labels: ctx.args.api.to_openark_labels(),
         },
         persistence: persistence.unwrap_or_default(),
+        region: RegionSpec {
+            timezone: region
+                .as_ref()
+                .and_then(|region| region.timezone.clone())
+                .or_else(|| ctx.args.api.to_region_timezone()),
+        },
         services: services.unwrap_or_default(),
         session: session_spec,
         user: OwnedUserSpec {
@@ -634,6 +642,25 @@ async fn report_update(
     reference: &ObjectReference,
     message: String,
 ) -> Result<()> {
+    #[cfg(feature = "tracing")]
+    {
+        let mut name = String::default();
+        if let Some(api_version) = reference.api_version.as_deref() {
+            name.push_str(api_version);
+            name.push('/');
+        }
+        if let Some(kind) = reference.kind.as_deref() {
+            name.push_str(kind);
+            name.push('/');
+        }
+        if let Some(namespace) = reference.namespace.as_deref() {
+            name.push_str(namespace);
+            name.push('/');
+        }
+        name.push_str(reference.name.as_deref().unwrap_or_default());
+        info!("{name}: {message}");
+    }
+
     let event = Event {
         type_: EventType::Normal,
         reason: "SessionUpdated".into(),
@@ -674,6 +701,7 @@ fn error_policy(_node: Arc<Node>, _error: &Error, _ctx: Arc<Context>) -> Action 
 
 async fn install_crds(args: &OperatorArgs, client: &Client) -> Result<()> {
     install_crd::<SessionBindingCrd>(args, client).await?;
+    install_crd::<SessionCommandCrd>(args, client).await?;
     install_crd::<SessionProfileCrd>(args, client).await?;
     Ok(())
 }
@@ -682,7 +710,9 @@ async fn try_main(args: Args) -> Result<()> {
     let client = Client::try_default().await?;
 
     // Update CRDs
-    install_crds(&args.operator, &client).await?;
+    if args.install_crds {
+        install_crds(&args.operator, &client).await?;
+    }
 
     let api_app = Api::namespaced(client.clone(), &args.namespace);
     let api_binding = Api::namespaced(client.clone(), &args.namespace);

@@ -160,7 +160,7 @@ pub struct SessionLinks {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub vnc: Option<Url>,
+    pub vnc: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

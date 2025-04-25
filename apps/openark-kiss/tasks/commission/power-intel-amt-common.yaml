@@ -7,11 +7,11 @@
 - name: Check whether Intel AMT is ready
   set_fact:
     intel_amt_is_ready: >
-      {{
+      {{ "{{" }}
           intel_amt.stat.exists
         and
           kiss_power_intel_amt_host is defined and kiss_power_intel_amt_host != ''
-      }}
+      {{ "}}" }}
   register: intel_amt
 
 - name: Download nerdctl command
@@ -21,8 +21,8 @@
 - name: Pull Intel AMT docker image
   when: intel_amt_is_ready
   shell: >
-    {{ bin_dir }}/nerdctl image pull
-    "quay.io/ulagbulag/openark-wsmancli:latest"
+    {{ "{{ bin_dir }}/nerdctl" }} image pull
+    {{ include "helm.wsmancli.image" $ | quote }}
   register: intel_amt_pull_docker_image
   until: intel_amt_pull_docker_image.rc == 0
   retries: 5

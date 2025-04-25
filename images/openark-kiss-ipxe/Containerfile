@@ -1,0 +1,55 @@
+# Copyright (c) 2022-2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Server Configuration
+WORKDIR /ipxe
+ENTRYPOINT [ "/usr/bin/env", "bash" ]
+CMD [ "-c", "cp /ipxe/* /var/lib/tftpboot/" ]
+
+# Be ready for building
+FROM server AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        ## Begin cross-gcc
+        gcc-aarch64-linux-gnu \
+        gcc-x86-64-linux-gnu \
+        ## End cross-gcc
+        git \
+        liblzma-dev \
+        syslinux \
+        xorriso \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build it!
+WORKDIR /src
+RUN git clone "{{ .Values.ipxe.repo.baseUrl }}/{{ .Values.ipxe.repo.owner }}/{{ .Values.ipxe.repo.name }}.git" \
+    && cd {{ printf "./%s/src" .Values.ipxe.repo.name | quote }} \
+    && git checkout {{ .Values.ipxe.repo.revision | quote }} \
+    && git submodule update --init \
+    # Patch DHCP settings
+    && sed -i 's/^\(#define DHCP_DISC_END_TIMEOUT_SEC \)[0-9]\+$/\132/g' './config/dhcp.h' \
+    # Build each iPXE platforms
+    # * usage: make [platform]/[driver].[extension]
+    ### ARCH [0x00] - BIOS
+    && make bin/undionly.kpxe \
+    && mv bin/undionly.kpxe /ipxe/undionly.kpxe \
+{{- range $_ := .Values.ipxe.drivers | default list }}
+{{- $ipxeArch := .ipxeArch | default .arch }}
+{{- $outputFile := printf "bin-%s-efi/%s.efi" $ipxeArch .driver }}
+    ### ARCH [{{ .code }}] - EFI - {{ $ipxeArch }}
+    && make {{ printf "CROSS=%s-linux-gnu-" .arch | quote }} {{ $outputFile | quote }} \
+    && mv {{ $outputFile | quote }} {{ printf "/ipxe/ipxe-%s.efi" $ipxeArch | quote }} \
+{{- end }}
+    && true
+
+# Copy executable files
+FROM server
+COPY --from=builder /ipxe/* /ipxe/

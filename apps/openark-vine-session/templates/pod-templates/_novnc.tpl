@@ -1,6 +1,6 @@
 {{- define "podTemplate.novnc" -}}
 name: novnc
-image: "{{ .Values.services.novnc.image.repo }}:{{ .Values.services.novnc.image.tag }}"
+image: "{{ .Values.services.novnc.image.repo }}:{{ .Values.services.novnc.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.services.novnc.image.pullPolicy | quote }}
 env:
   - name: NOVNC_VNC_PATH

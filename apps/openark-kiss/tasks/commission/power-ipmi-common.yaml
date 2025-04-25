@@ -11,8 +11,8 @@
 - name: Pull IPMI docker image
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl image pull
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ "{{ bin_dir }}/nerdctl" }} image pull
+    {{ include "helm.ipmitool.image" $ | quote }}
   register: ipmi_pull_docker_image
   until: ipmi_pull_docker_image.rc == 0
   retries: 5
@@ -21,6 +21,6 @@
 - name: Cleanup old container | IPMI
   when: ipmi.stat.exists
   shell: >
-    {{ bin_dir }}/nerdctl container rm "kiss-ipmitool"
+    {{ "{{ bin_dir }}/nerdctl" }} container rm "kiss-ipmitool"
   ignore_errors: true
   no_log: true

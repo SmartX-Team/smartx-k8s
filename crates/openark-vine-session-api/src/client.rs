@@ -4,7 +4,7 @@ use http::Method;
 use openark_vine_oauth::client::{Client, RequestCredentials};
 use url::Url;
 
-use crate::exec::ExecArgs;
+use crate::{command::SessionCommandView, exec::ExecArgs};
 
 #[cfg_attr(feature = "send", async_trait)]
 #[cfg_attr(not(feature = "send"), async_trait(?Send))]
@@ -12,6 +12,13 @@ pub trait ClientExt
 where
     Self: Clone + Client,
 {
+    #[inline]
+    async fn vine_session_command_list(&self, base_url: Url) -> Result<Vec<SessionCommandView>> {
+        let url = base_url.join("commands")?;
+        self.request(RequestCredentials::Include, Method::GET, url)
+            .await
+    }
+
     #[inline]
     async fn vine_session_exec(&self, base_url: Url, args: &ExecArgs) -> Result<()> {
         let url = base_url.join("exec")?;

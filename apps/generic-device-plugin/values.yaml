@@ -1,7 +1,7 @@
 ---
 image:
   repo: docker.io/squat/generic-device-plugin
-  tag: ""
+  tag: latest
   pullPolicy: Always
 
 openark:

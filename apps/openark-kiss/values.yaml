@@ -11,6 +11,9 @@ addUsers:
     shell: /bin/bash
     sudo: true
 
+apiserver:
+  baseUrl: ""
+
 assets:
   image:
     repo: docker.io/library/nginx
@@ -29,17 +32,27 @@ features:
 greeter:
   image:
     repo: quay.io/ulagbulag/openark-vine-greeter
-    tag: latest
+    tag: ""
+
+ipmitool:
+  image:
+    repo: quay.io/ulagbulag/openark-kiss-ipmitool
+    tag: ""
 
 ipxe:
   image:
-    repo: quay.io/ulagbulag/openark-ipxe
-    tag: latest
+    repo: quay.io/ulagbulag/openark-kiss-ipxe
+    tag: ""
 
 ntpd:
   image:
-    repo: docker.io/cturra/ntp
-    tag: latest
+    repo: docker.io/dockurr/chrony
+    tag: 4.6.1
+  servers:
+    - 0.pool.ntp.org
+    - 1.pool.ntp.org
+    - 2.pool.ntp.org
+    - 3.pool.ntp.org
 
 operator:
   image:
@@ -50,8 +63,13 @@ operator:
 workflow:
   image:
     repo: quay.io/ulagbulag/openark
-    tag: 2.0.0-alpha.1
+    tag: ""
     pullPolicy: Always
+
+wsmancli:
+  image:
+    repo: quay.io/ulagbulag/openark-kiss-wsmancli
+    tag: ""
 
 kubespray:
   ##########################################

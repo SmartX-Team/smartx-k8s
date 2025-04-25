@@ -11,6 +11,6 @@ spec:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
   containerImage:
-    namespace: vine
+    namespace: vine-session
     period: "0 0 * * *"
-    version: latest
+    version: ""

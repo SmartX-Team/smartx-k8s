@@ -9,7 +9,7 @@ Before=getty@tty1.service
 Type=simple
 ExecStart=/usr/local/bin/openark-vine-greeter.sh
 ExecStop=/usr/bin/env nerdctl stop -t 30 openark-vine-greeter
-Environment="IMAGE={{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag }}"
+Environment="IMAGE={{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
 Restart=on-failure
 RestartSec=5
 Slice=kubepods.slice
