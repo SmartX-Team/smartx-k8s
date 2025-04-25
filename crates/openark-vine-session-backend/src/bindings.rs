@@ -26,7 +26,7 @@ pub fn build() -> Scope {
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 #[get("")]
 pub async fn list(
-    base_url: web::Data<String>,
+    apiserver_base_url: web::Data<Option<String>>,
     labels: web::Data<LabelArgs>,
     // Add support for guest users
     kube: web::Data<Client>,
@@ -43,7 +43,7 @@ pub async fn list(
             let mut items = list
                 .items
                 .into_iter()
-                .filter_map(|app| convert(app, &base_url))
+                .filter_map(|app| convert(app, apiserver_base_url.as_deref()))
                 .collect::<Vec<_>>();
             items.sort_by_key(|s| {
                 (
@@ -62,7 +62,7 @@ pub async fn list(
     }
 }
 
-fn convert(app: Application, base_url: &str) -> Option<Session> {
+fn convert(app: Application, apiserver_base_url: Option<&str>) -> Option<Session> {
     let values = app
         .spec
         .sources
@@ -205,12 +205,21 @@ fn convert(app: Application, base_url: &str) -> Option<Session> {
                 .and_then(|service| service.enabled)
                 .unwrap_or(false)
             {
-                Some(format!(
-                    "{base_url}/bindings/vnc/vnc.html?autoconnect=true&host=vnc.{node_name}.node.sessions.{domain_name}&port={port}&reconnect=true&resize=scale&shared=true",
-                    domain_name = &profile.ingress.domain_name,
-                    node_name = &profile.node.name,
-                    port = 443,
-                ))
+                match apiserver_base_url {
+                    Some(base_url) => Some(format!(
+                        "{base_url}/bindings/vnc/vnc.html?autoconnect=true&host=vnc.{node_name}.node.sessions.{domain_name}&port={port}&reconnect=true&resize=scale&shared=true",
+                        domain_name = &profile.ingress.domain_name,
+                        node_name = &profile.node.name,
+                        port = 443,
+                    )),
+                    None => format!(
+                        "https://vnc.{node_name}.node.sessions.{domain_name}",
+                        domain_name = &profile.ingress.domain_name,
+                        node_name = &profile.node.name,
+                    )
+                    .parse()
+                    .ok(),
+                }
             } else {
                 None
             },

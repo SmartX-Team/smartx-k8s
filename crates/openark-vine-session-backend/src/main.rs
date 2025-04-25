@@ -30,6 +30,10 @@ struct Args {
     )]
     bind_addr: SocketAddr,
 
+    /// Whether to enable APIserver
+    #[arg(long, env = "ENABLE_APISERVER")]
+    enable_apiserver: bool,
+
     #[command(flatten)]
     labels: LabelArgs,
 
@@ -67,6 +71,7 @@ async fn try_main(args: Args) -> Result<()> {
     let Args {
         mut base_url,
         bind_addr: addr,
+        enable_apiserver,
         labels,
         namespace,
         openid,
@@ -77,7 +82,11 @@ async fn try_main(args: Args) -> Result<()> {
         base_url.pop();
     }
 
-    let base_url = Data::new(base_url);
+    let apiserver_base_url = Data::new(if enable_apiserver {
+        Some(base_url.clone())
+    } else {
+        None
+    });
     let config = {
         let mut config = Config::infer().await?;
         if let Some(namespace) = namespace {
@@ -93,7 +102,7 @@ async fn try_main(args: Args) -> Result<()> {
     // Start web server
     HttpServer::new(move || {
         let app = App::new()
-            .app_data(Data::clone(&base_url))
+            .app_data(Data::clone(&apiserver_base_url))
             .app_data(Data::clone(&client))
             .app_data(Data::clone(&labels))
             .app_data(Data::clone(&openid))
