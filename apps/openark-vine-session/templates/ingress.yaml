@@ -7,7 +7,7 @@ rules:
 
 {{- /********************************/}}
 {{- if and
-  .Values.services.notebook.enabled
+  ( eq "Notebook" .Values.mode )
   ( not ( empty .Values.node.name ) )
 }}
   - host: "notebook.{{ .Values.node.name }}.node.sessions.{{ .Values.ingress.domainName }}"

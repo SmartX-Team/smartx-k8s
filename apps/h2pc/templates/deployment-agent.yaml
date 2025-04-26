@@ -70,6 +70,12 @@ spec:
                   matchLabels: {{- include "helm.selectorLabels" $ | nindent 20 }}
                 topologyKey: kubernetes.io/hostname
               weight: 2
+          # FIXME: Use OpenARK vine session to deploy ollama (not kueue!)
+          # FIXME: Use (session matchLabels & session ollama service & _HPA agents_) to link local ollama
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels: {{- include "helm.selectorLabels" $ | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
       initContainers:
 {{- if eq "Kafka" $.Values.messenger.kind }}
         - name: init-wait-kafka

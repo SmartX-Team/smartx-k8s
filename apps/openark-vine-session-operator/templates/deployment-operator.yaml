@@ -89,6 +89,8 @@ spec:
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.cpu" | quote }}
             - name: OPENARK_LABEL_BIND_MEMORY
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.memory" | quote }}
+            - name: OPENARK_LABEL_BIND_MODE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.mode" | quote }}
             - name: OPENARK_LABEL_BIND_NAMESPACE
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.namespace" | quote }}
             - name: OPENARK_LABEL_BIND_NODE

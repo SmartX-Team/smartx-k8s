@@ -1,25 +1,44 @@
 ---
 defaultProfileName: default-kueue # Replace to empty "" for disabling
 
+features:
+  kueue:
+    enabled: false
+    namespaceSelector: {}
+  ollama:
+    enabled: false
+
 profiles:
-  - kind: Desktop # Options: [Desktop, Kueue, Notebook, VirtualMachine]
+  # - kind: Ollama # Options: [Desktop, Kueue, Notebook, Ollama, VirtualMachine]
+  #   name: default-kueue
+  #   extraFlavors: []
+  #   image: {}
+  #   session: {}
+
+  - kind: Desktop
     name: ubuntu-24.04
     session:
       context:
         hostNetwork: true
         privileged: true # FIXME: how to use webcams WITHOUT privileged containers?
 
-  - kind: Kueue # Options: [Desktop, Kueue, Notebook, VirtualMachine]
+  - kind: Kueue
     name: default-kueue
     extraFlavors: []
 
-  - kind: Notebook # Options: [Desktop, Kueue, Notebook, VirtualMachine]
+  - kind: Notebook
     name: pytorch
-    image:
-      repo: nvcr.io/nvidia/pytorch
-      tag: 25.03-py3
+    # image:
+    #   repo: nvcr.io/nvidia/pytorch
+    #   tag: 25.03-py3
 
-  - kind: VirtualMachine # Options: [Desktop, Kueue, Notebook, VirtualMachine]
+  - kind: Ollama
+    name: ollama
+    # image:
+    #   repo: docker.io/ollama/ollama
+    #   tag: 0.6.6
+
+  - kind: VirtualMachine
     name: windows-11
     cdrom:
       filename: Win11_24H2_Korean_x64.iso
@@ -38,10 +57,6 @@ bindings:
   #     - timezone: Asia/Seoul
   #       start: "0 9 * * *" # 09:00
   #       end: "0 18 * * *" # 18:00
-
-kueue:
-  enabled: false
-  namespaceSelector: {}
 
 openark:
   labels: {}

@@ -9,10 +9,30 @@ ananicy:
 auth:
   domainName: ""
 
+externalServices:
+  notebook:
+    image:
+      repo: nvcr.io/nvidia/pytorch
+      tag: 25.03-py3
+      pullPolicy: IfNotPresent
+  ollama:
+    image:
+      repo: docker.io/ollama/ollama
+      tag: 0.6.6
+      pullPolicy: IfNotPresent
+
+extraServices:
+  []
+  # - name: rdp-tcp
+  #   protocol: TCP
+  #   containerPort: 3389
+  # - name: rdp-udp
+  #   protocol: UDP
+  #   containerPort: 3389
+
 features:
-  audio: true
+  audio: false
   containers: true
-  desktopEnvironment: true
   devicePassthrough: false
   gateway: false
   hostAudio: false
@@ -33,6 +53,8 @@ greeter:
 
 ingress:
   domainName: ""
+
+mode: None # Options: [Desktop, None, Notebook, Ollama]
 
 nameOverride: ""
 
@@ -55,37 +77,22 @@ region:
   timezone: ""
 
 services:
-  notebook:
-    enabled: false
-    image:
-      repo: nvcr.io/nvidia/pytorch
-      tag: 25.03-py3
-      pullPolicy: IfNotPresent
   novnc:
-    enabled: true
+    enabled: false
     image:
       repo: quay.io/ulagbulag/openark-vine-novnc
       tag: ""
       pullPolicy: Always
   rdp:
-    enabled: true
+    enabled: false
   ssh:
-    enabled: true
+    enabled: false
   x11vnc:
-    enabled: true
+    enabled: false
     image:
       repo: quay.io/ulagbulag/openark-vine-x11vnc
       tag: ""
       pullPolicy: Always
-
-  extraServices:
-    []
-    # - name: rdp-tcp
-    #   protocol: TCP
-    #   containerPort: 3389
-    # - name: rdp-udp
-    #   protocol: UDP
-    #   containerPort: 3389
 
 session:
   context:

@@ -132,6 +132,62 @@ labels:
 {{- end }}
 
 {{- /*
+External service container template
+*/}}
+{{- define "helm.externalServiceContainerTemplate" -}}
+
+{{- range $_ := list "name" "env" }}
+{{- if not ( hasKey $ . ) }}
+{{- fail ( printf "Internal error: external service field not defined: %s" . ) }}
+{{- end }}
+{{- end }}
+
+{{- range $_ := list "image" "imagePullPolicy"
+  "command" "args" "ports" "resources" "securityContext"
+  "volumeMounts" "workingDir"
+}}
+{{- if hasKey $ . }}
+{{- fail ( printf "Internal error: external service field not supported: %s" . ) }}
+{{- end }}
+{{- end }}
+
+{{- $service := index .Values.externalServices .name }}
+
+name: {{ .name | quote }}
+image: {{ printf "%s:%s"
+  ( $service.image.repo | default .Values.session.image.repo )
+  ( $service.image.tag | default .Values.session.image.tag | default .Chart.AppVersion )
+}}
+imagePullPolicy: {{
+  $service.image.pullPolicy
+  | default .Values.session.image.pullPolicy
+  | quote
+}}
+env:
+{{- include "podTemplate.desktop.env" $ | nindent 2 }}
+{{- range $_ := .env | default list }}
+  - {{- . | toYaml | nindent 4 }}
+{{- end }}
+{{- /* Resources */}}
+{{- if $.Values.session.resources.limits }}
+resources:
+  limits:
+{{- range $key, $value := $.Values.session.resources.limits }}
+{{- if not ( has $key ( list "cpu" "memory" ) ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+    # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+securityContext:
+{{- include "podTemplate.desktop.securityContext" $ | nindent 2 }}
+workingDir: {{ include "helm.userHome" $ | quote }}
+volumeMounts:
+{{- include "podTemplate.desktop.volumeMounts" $ | nindent 2 }}
+{{- end }}
+
+{{- /*
 Pod init containers
 */}}
 {{- define "helm.podInitContainers" -}}
@@ -167,7 +223,7 @@ initContainers:
     Xorg Daemon
 *************************************/}}
 {{- if .Values.features.hostDisplay }}
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "host display cannot be enabled without desktop environment" }}
 {{- end }}
   - {{- include "podTemplate.xorg" $ | nindent 4 }}
@@ -177,7 +233,7 @@ initContainers:
     PipeWire Audio Daemon
 *************************************/}}
 {{- if .Values.features.audio }}
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "audio cannot be enabled without desktop environment" }}
 {{- else if not .Values.features.hostAudio }}
 {{- fail ( print
@@ -199,20 +255,12 @@ Pod containers
 containers:
 
 {{- /********************************
-    User Session
+    Default Mode
 *************************************/}}
-{{- if .Values.features.desktopEnvironment }}
-  - {{- include "podTemplate.session" $ | nindent 4 }}
-{{- end }}
-
-{{- /********************************
-    Notebook Service
-*************************************/}}
-{{- if and .Values.services.notebook.enabled }}
-{{- if .Values.features.desktopEnvironment }}
-{{- fail "notebook service cannot be enabled with desktop environment" }}
-{{- end }}
-  - {{- include "podTemplate.notebook" $ | nindent 4 }}
+{{- if eq "true" ( include "helm.serviceMode.isPod" .Values.mode ) }}
+  - {{- include ( printf "podTemplate.%s" ( .Values.mode | snakecase) ) $
+        | nindent 4
+    }}
 {{- end }}
 
 {{- /********************************

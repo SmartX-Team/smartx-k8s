@@ -11,19 +11,18 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   features:
-    desktopEnvironment: true
+    audio: true
     devicePassthrough: true
     hostAudio: true
     hostDisplay: true
     hostUdev: true
+  mode: Desktop
   persistence:
     enabled: true
   services:
-    novnc:
-      enabled: false
+    rdp:
+      enabled: true
     ssh:
-      enabled: false
-    x11vnc:
       enabled: false
   vm:
     enabled: true

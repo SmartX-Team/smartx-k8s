@@ -1,4 +1,4 @@
-{{- if .Values.kueue.enabled }}
+{{- if .Values.features.kueue.enabled }}
 {{- range $_ := .Values.profiles | default list }}
 {{- if eq .kind "Kueue" -}}
 

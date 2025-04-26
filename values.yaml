@@ -297,6 +297,7 @@ openark:
     org.ulagbulag.io/bind: org.ulagbulag.io/bind
     org.ulagbulag.io/bind.cpu: org.ulagbulag.io/bind.cpu
     org.ulagbulag.io/bind.memory: org.ulagbulag.io/bind.memory
+    org.ulagbulag.io/bind.mode: org.ulagbulag.io/bind.mode
     org.ulagbulag.io/bind.namespace: org.ulagbulag.io/bind.namespace
     org.ulagbulag.io/bind.node: org.ulagbulag.io/bind.node
     org.ulagbulag.io/bind.persistent: org.ulagbulag.io/bind.persistent

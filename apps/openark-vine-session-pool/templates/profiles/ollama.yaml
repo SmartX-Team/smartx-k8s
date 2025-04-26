@@ -1,5 +1,6 @@
+{{- if .Values.features.ollama.enabled }}
 {{- range $_ := .Values.profiles | default list }}
-{{- if eq .kind "Notebook" }}
+{{- if eq .kind "Ollama" }}
 
 ---
 apiVersion: org.ulagbulag.io/v1alpha1
@@ -11,24 +12,23 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   externalServices:
-    notebook:
+    ollama:
       image:
 {{- .image | default dict | toYaml | nindent 8 }}
-  features:
-    devicePassthrough: true
-    hostUdev: true
-  mode: Notebook
+  features: {}
+  mode: Ollama
   persistence:
     enabled: true
   services: {}
   volumes:
     home:
-      type: LocalOwned
+      type: LocalShared
 
     public:
-      enabled: {{ $.Values.volumes.public.enabled }}
+      enabled: false
     static:
-      enabled: {{ $.Values.volumes.static.enabled }}
+      enabled: false
 
+{{- end }}
 {{- end }}
 {{- end }}

@@ -1,4 +1,4 @@
-{{- if .Values.kueue.enabled }}
+{{- if .Values.features.kueue.enabled }}
 {{- range $_ := .Values.profiles | default list }}
 {{- if eq .kind "Kueue" -}}
 
@@ -11,26 +11,11 @@ metadata:
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
-  features:
-    audio: false
-    desktopEnvironment: false
-    devicePassthrough: false
-    hostAudio: false
-    hostDisplay: false
-    hostUdev: false
+  features: {}
+  mode: None
   persistence:
     enabled: true
-  services:
-    notebook:
-      enabled: false
-    novnc:
-      enabled: false
-    rdp:
-      enabled: false
-    ssh:
-      enabled: false
-    x11vnc:
-      enabled: false
+  services: {}
   volumes:
     home:
       type: LocalShared

@@ -51,6 +51,18 @@ pub struct SessionProfileSpec {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
+    pub external_services: Option<ExternalServicesSpec>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub extra_services: Option<Vec<ContainerPort>>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     pub features: Option<FeaturesSpec>,
 
     #[cfg_attr(
@@ -58,6 +70,12 @@ pub struct SessionProfileSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub greeter: Option<GreeterSpec>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub mode: Option<SessionMode>,
 
     #[cfg_attr(
         feature = "serde",
@@ -99,6 +117,20 @@ pub struct SessionProfileSpec {
     pub volumes: Option<VolumesSpec>,
 }
 
+pub type ExternalServicesSpec = BTreeMap<String, ExternalServiceSpec>;
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct ExternalServiceSpec {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub image: Option<ImageSpec>,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
@@ -115,12 +147,6 @@ pub struct FeaturesSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub containers: Option<bool>,
-
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub desktop_environment: Option<bool>,
 
     #[cfg_attr(
         feature = "serde",
@@ -246,12 +272,6 @@ pub struct ServicesSpec {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub notebook: Option<ServiceNotebookSpec>,
-
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
     pub novnc: Option<ServiceSpec>,
 
     #[cfg_attr(
@@ -271,30 +291,6 @@ pub struct ServicesSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub x11vnc: Option<ServiceSpec>,
-
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub extra_services: Option<Vec<ContainerPort>>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct ServiceNotebookSpec {
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub enabled: Option<bool>,
-
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub image: Option<ImageSpec>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -307,6 +303,25 @@ pub struct ServiceSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub enabled: Option<bool>,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+pub enum SessionMode {
+    Desktop,
+    #[default]
+    None,
+    Notebook,
+    Ollama,
+}
+
+impl SessionMode {
+    /// Return `true` if the mode can spawn container pods.
+    ///
+    pub const fn is_pod(&self) -> bool {
+        matches!(self, Self::Desktop | Self::Notebook | Self::Ollama)
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

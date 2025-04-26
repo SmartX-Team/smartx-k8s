@@ -2,7 +2,7 @@
 {{- /********************************
     Session Environment Variables
 *************************************/}}
-{{- define "podTemplate.session.env" -}}
+{{- define "podTemplate.desktop.env" -}}
 {{- range $env := .Values.session.env | default list }}
 -
 {{- . | toYaml | nindent 8 }}
@@ -46,7 +46,7 @@
 {{- /********************************
     Session Ports
 *************************************/}}
-{{- define "podTemplate.session.ports" -}}
+{{- define "podTemplate.desktop.ports" -}}
 
 {{- /********************************/}}
 {{- if .Values.services.ssh.enabled }}
@@ -73,7 +73,7 @@
 {{- end }}
 
 {{- /********************************/}}
-{{- range $port := .Values.services.extraServices }}
+{{- range $port := .Values.extraServices }}
 -
 {{- if not ( empty .name ) }}
   name: {{ .name | quote }}
@@ -91,14 +91,14 @@
 {{- /********************************
     Session Security Context
 *************************************/}}
-{{- define "podTemplate.session.securityContext" -}}
+{{- define "podTemplate.desktop.securityContext" -}}
 privileged: {{ .Values.session.context.privileged }}
 runAsNonRoot: {{ not ( .Values.session.context.root | default .Values.session.context.sudo ) }}
 runAsUser: {{ include "helm.userId" $ }}
 {{- end }}
 
 {{- /********************************/}}
-{{- define "podTemplate.session.volumeMounts" -}}
+{{- define "podTemplate.desktop.volumeMounts" -}}
 {{- if .Values.features.devicePassthrough }}
 - name: dev
   mountPath: /dev
@@ -141,7 +141,7 @@ runAsUser: {{ include "helm.userId" $ }}
   subPath: {{ include "helm.userContainersHomeSubPath" $ | quote }}
 {{- end }}
 
-{{- if .Values.services.notebook.enabled }}
+{{- if eq "Notebook" .Values.mode }}
 - name: home-notebook
   mountPath: "{{ include "helm.userHome" $ }}/.jupyter/jupyter_notebook_config.py"
   subPath: "jupyter_notebook_config.py"
@@ -184,14 +184,14 @@ runAsUser: {{ include "helm.userId" $ }}
   mountPath: /tmp
 
 {{- /********************************/}}
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
 - name: tmp-ice
   mountPath: /tmp/.ICE-unix
   readOnly: true
 {{- end }}
 
 {{- /********************************/}}
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
 - name: tmp-x11
   mountPath: /tmp/.X11-unix
   readOnly: true
@@ -200,7 +200,7 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- end }}
 
 {{- /********************************/}}
-{{- define "podTemplate.session" -}}
+{{- define "podTemplate.desktop" -}}
 name: session
 image: "{{ .Values.session.image.repo }}:{{ .Values.session.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.session.image.pullPolicy | quote }}
@@ -216,9 +216,9 @@ args:
 {{- end }}
 
 env:
-{{- include "podTemplate.session.env" $ | nindent 2 }}
+{{- include "podTemplate.desktop.env" $ | nindent 2 }}
 ports:
-{{- include "podTemplate.session.ports" $ | nindent 2 }}
+{{- include "podTemplate.desktop.ports" $ | nindent 2 }}
 {{- /* Resources */}}
 {{- if or
   .Values.features.containers
@@ -240,8 +240,8 @@ resources:
 {{- end }}
 {{- end }}
 securityContext:
-{{- include "podTemplate.session.securityContext" $ | nindent 2 }}
+{{- include "podTemplate.desktop.securityContext" $ | nindent 2 }}
 workingDir: {{ include "helm.userHome" $ | quote }}
 volumeMounts:
-{{- include "podTemplate.session.volumeMounts" $ | nindent 2 }}
+{{- include "podTemplate.desktop.volumeMounts" $ | nindent 2 }}
 {{- end }}

@@ -1,12 +1,15 @@
 ---
+features:
+  kueue:
+    enabled: {{ has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features }}
+    namespaceSelector:
+      matchLabels:
+        {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+  ollama:
+    enabled: {{ has "org.ulagbulag.io/ai/llm" .Values.features }}
+
 ingress:
   domainName: {{ .Values.ingress.domainName | quote }}
-
-kueue:
-  enabled: {{ has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features }}
-  namespaceSelector:
-    matchLabels:
-      {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
 
 openark:
   labels:

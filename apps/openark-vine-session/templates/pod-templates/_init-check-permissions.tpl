@@ -48,13 +48,13 @@ volumeMounts:
     mountPath: "/run/user/{{ include "helm.userId" $ }}"
 
 {{- /********************************/}}
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
   - name: tmp-ice
     mountPath: /tmp/.ICE-unix
 {{- end }}
 
 {{- /********************************/}}
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
   - name: tmp-x11
     mountPath: /tmp/.X11-unix
 {{- end }}

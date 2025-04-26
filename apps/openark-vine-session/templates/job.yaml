@@ -1,10 +1,7 @@
 {{- if and
   ( not .Values.vm.enabled )
   ( not .Values.persistence.enabled )
-  ( or
-    .Values.features.desktopEnvironment
-    .Values.services.notebook.enabled
-  )
+  ( eq "true" ( include "helm.serviceMode.isPod" .Values.mode ) )
 }}
 ---
 apiVersion: batch/v1

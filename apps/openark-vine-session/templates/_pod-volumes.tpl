@@ -83,7 +83,7 @@
 {{- end }}
 
 {{- /********************************/}}
-{{- if .Values.services.notebook.enabled }}
+{{- if eq "Notebook" .Values.mode }}
   - name: home-notebook
     secret:
       secretName: {{ include "helm.notebookName" $ | quote }}
@@ -189,12 +189,12 @@
   - name: tmp
     emptyDir: {}
 
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
   - name: tmp-ice
     emptyDir: {}
 {{- end }}
 
-{{- if .Values.features.desktopEnvironment }}
+{{- if eq "Desktop" .Values.mode }}
   - name: tmp-x11
     emptyDir: {}
 {{- end }}

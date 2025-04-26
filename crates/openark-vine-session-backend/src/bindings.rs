@@ -7,6 +7,7 @@ use kube_quantity::ParsedQuantity;
 use openark_vine_oauth::User;
 use openark_vine_session_api::{
     owned_profile::OwnedSessionProfileSpec,
+    profile::SessionMode,
     session::{
         Session, SessionLinks, SessionRegion, SessionResourceAnnotations, SessionResourceLabels,
         SessionState, SessionStatus, SessionStatusLevel, SessionUser,
@@ -164,13 +165,7 @@ fn convert(app: Application, apiserver_base_url: Option<&str>) -> Option<Session
                 .and_then(convert_quantity),
         },
         links: SessionLinks {
-            notebook: if profile
-                .services
-                .notebook
-                .as_ref()
-                .and_then(|service| service.enabled)
-                .unwrap_or(false)
-            {
+            notebook: if matches!(profile.mode, SessionMode::Notebook) {
                 format!(
                     "https://notebook.{node_name}.node.sessions.{domain_name}",
                     domain_name = &profile.ingress.domain_name,

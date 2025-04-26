@@ -45,7 +45,7 @@ async fn update_box_state(
 
     // update the box
     {
-        let patch = Patch::Strategic(json!({
+        let patch = Patch::Apply(json!({
             "apiVersion": &ctx.crd_box.api_version,
             "kind": &ctx.crd_box.kind,
             "metadata": {
@@ -242,7 +242,7 @@ pub async fn loop_forever(args: super::Args, client: Client) -> Result<()> {
 
     let patch_params = PatchParams {
         dry_run: false,
-        force: false,
+        force: true,
         field_manager: Some(args.operator.controller_name.clone()),
         field_validation: Some(ValidationDirective::Strict),
     };

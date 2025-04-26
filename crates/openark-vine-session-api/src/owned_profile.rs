@@ -1,6 +1,7 @@
 use core::ops;
 use std::string::String;
 
+use k8s_openapi::api::core::v1::ContainerPort;
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 #[cfg(feature = "serde")]
@@ -9,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     binding::SessionBindingUserSpec,
     profile::{
-        FeaturesSpec, GreeterSpec, PersistenceSpec, RegionSpec, ServicesSpec, SessionSpec,
-        UserSpec, VMSpec, VolumesSpec,
+        ExternalServicesSpec, FeaturesSpec, GreeterSpec, PersistenceSpec, RegionSpec, ServicesSpec,
+        SessionMode, SessionSpec, UserSpec, VMSpec, VolumesSpec,
     },
 };
 
@@ -23,6 +24,12 @@ pub struct OwnedSessionProfileSpec {
     pub auth: OwnedAuthSpec,
 
     #[cfg_attr(feature = "serde", serde(default))]
+    pub external_services: ExternalServicesSpec,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub extra_services: Vec<ContainerPort>,
+
+    #[cfg_attr(feature = "serde", serde(default))]
     pub features: OwnedFeaturesSpec,
 
     #[cfg_attr(feature = "serde", serde(default))]
@@ -30,6 +37,9 @@ pub struct OwnedSessionProfileSpec {
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub ingress: OwnedIngressSpec,
+
+    #[cfg_attr(feature = "serde", serde(default,))]
+    pub mode: SessionMode,
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub node: OwnedNodeSpec,
@@ -133,6 +143,9 @@ pub struct OwnedOpenArkSpec {
 pub struct OwnedOpenArkLabelsSpec {
     #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind"))]
     pub bind: String,
+
+    #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind.mode"))]
+    pub bind_mode: String,
 
     #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind.node"))]
     pub bind_node: String,

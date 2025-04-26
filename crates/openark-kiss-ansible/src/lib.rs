@@ -692,7 +692,7 @@ impl From<AnsibleResourceType> for ResourceRequirements {
                 requests: None,
                 limits: Some(
                     vec![
-                        ("cpu".into(), Quantity("1".into())),
+                        ("cpu".into(), Quantity("900m".into())),
                         ("memory".into(), Quantity("2Gi".into())),
                     ]
                     .into_iter()

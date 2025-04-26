@@ -13,12 +13,13 @@ agents:
         cpu: 100m
         memory: 100Mi
 
+# FIXME: Create a h2pc-operator (like session operator --[manage]> session app)
 dag:
   - name: source-0
     operator: Prompt
     params:
       name: source
-      ollama: true
+      ollama: false
     # env: []
     # resources: {}
     # srcs: []

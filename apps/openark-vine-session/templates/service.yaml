@@ -19,7 +19,7 @@ ports:
   ( not .Values.features.hostDisplay )
 ) 
 }}
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "RDP service cannot be enabled without desktop environment" }}
 {{- end }}
   - name: rdp-tcp
@@ -32,7 +32,7 @@ ports:
 
 {{- /********************************/}}
 {{- if .Values.services.x11vnc.enabled }}
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "x11vnc service cannot be enabled without desktop environment" }}
 {{- end }}
   - name: x11vnc
@@ -42,7 +42,7 @@ ports:
 
 {{- /********************************/}}
 {{- if .Values.services.novnc.enabled }}
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "novnc service cannot be enabled without desktop environment" }}
 {{- else if not .Values.services.x11vnc.enabled }}
 {{- fail "novnc service cannot be enabled without x11vnc" }}
@@ -53,7 +53,7 @@ ports:
 {{- end }}
 
 {{- /********************************/}}
-{{- if .Values.services.notebook.enabled }}
+{{- if eq "Notebook" .Values.mode }}
 {{- if .Values.vm.enabled }}
 {{- fail "notebook service cannot be enabled with VM" }}
 {{- end }}
@@ -63,7 +63,17 @@ ports:
 {{- end }}
 
 {{- /********************************/}}
-{{- range $port := .Values.services.extraServices }}
+{{- if eq "Ollama" .Values.mode }}
+{{- if .Values.vm.enabled }}
+{{- fail "ollama service cannot be enabled with VM" }}
+{{- end }}
+  - name: ollama
+    protocol: TCP
+    port: 11434
+{{- end }}
+
+{{- /********************************/}}
+{{- range $port := .Values.extraServices }}
   -
 {{- if not ( empty .name ) }}
     name: {{ .name | quote }}

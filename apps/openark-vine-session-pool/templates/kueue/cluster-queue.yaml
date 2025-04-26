@@ -1,4 +1,4 @@
-{{- if .Values.kueue.enabled }}
+{{- if .Values.features.kueue.enabled }}
 {{- range $_ := .Values.profiles | default list }}
 {{- if eq .kind "Kueue" -}}
 
@@ -14,7 +14,7 @@ spec:
     whenCanBorrow: Borrow
     whenCanPreempt: TryNextFlavor
   namespaceSelector:
-{{- $.Values.kueue.namespaceSelector | toYaml | nindent 4 }}
+{{- $.Values.features.kueue.namespaceSelector | toYaml | nindent 4 }}
   preemption:
     borrowWithinCohort:
       policy: Never

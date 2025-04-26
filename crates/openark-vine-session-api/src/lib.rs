@@ -92,6 +92,9 @@ pub struct VineSessionArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_MEMORY"))]
     label_bind_memory: String,
 
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_MODE"))]
+    label_bind_mode: String,
+
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_NAMESPACE"))]
     label_bind_namespace: String,
 
@@ -235,6 +238,7 @@ impl VineSessionArgs {
     pub fn to_openark_labels(&self) -> crate::owned_profile::OwnedOpenArkLabelsSpec {
         crate::owned_profile::OwnedOpenArkLabelsSpec {
             bind: self.label_bind.clone(),
+            bind_mode: self.label_bind_mode.clone(),
             bind_node: self.label_bind_node.clone(),
             bind_persistent: self.label_bind_persistent.clone(),
             bind_user: self.label_bind_user.clone(),
@@ -294,18 +298,7 @@ fn infer_compute_mode(profile: &SessionProfileCrd) -> ComputeMode {
         .is_some_and(|vm| vm.enabled.unwrap_or_default())
     {
         ComputeMode::VM
-    } else if profile
-        .spec
-        .features
-        .as_ref()
-        .is_some_and(|features| features.desktop_environment.unwrap_or_default())
-        || profile
-            .spec
-            .services
-            .as_ref()
-            .and_then(|services| services.notebook.as_ref())
-            .is_some_and(|service| service.enabled.unwrap_or_default())
-    {
+    } else if profile.spec.mode.unwrap_or_default().is_pod() {
         ComputeMode::Container
     } else {
         ComputeMode::Kueue

@@ -34,7 +34,7 @@ KubeVirt Virtual Machine Instance template
 */}}
 {{- define "helm.vmiTemplate" -}}
 
-{{- if not .Values.features.desktopEnvironment }}
+{{- if ne "Desktop" .Values.mode }}
 {{- fail "VM cannot be enabled without desktop environment" }}
 {{- end }}
 

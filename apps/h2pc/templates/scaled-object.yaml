@@ -20,6 +20,8 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
+    # FIXME: Create a h2pc-operator (like session operator --[manage]> session app)
+    # autoscaling.keda.sh/paused: "true"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 {{- include "helm.agentLabels" $operator | nindent 4 }}
@@ -59,7 +61,6 @@ spec:
     - type: nats-jetstream
       metadata:
         # TODO: Use RBAC account
-        # FIXME: KEDA 버그? ~/Library/keda/pkg/scalers/nats_jetstream_scaler.go:L245-L261
         account: $G # default
         activationLagThreshold: {{ $activationLagThreshold | quote }}
         consumer: {{ $fullname | quote }}

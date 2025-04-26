@@ -154,8 +154,11 @@ fn build_owned_session_profile(
     profile: &SessionProfileSpec,
 ) -> Result<OwnedSessionProfileSpec, AppState> {
     let SessionProfileSpec {
+        external_services,
+        extra_services,
         features,
         greeter,
+        mode,
         persistence,
         region,
         services,
@@ -236,6 +239,8 @@ fn build_owned_session_profile(
 
     Ok(OwnedSessionProfileSpec {
         auth: ctx.args.api.to_openark_auth_spec(),
+        external_services: external_services.unwrap_or_default(),
+        extra_services: extra_services.unwrap_or_default(),
         features: OwnedFeaturesSpec {
             data: features,
             gateway: ctx.args.api.feature_gateway(),
@@ -244,6 +249,7 @@ fn build_owned_session_profile(
         },
         greeter: greeter.unwrap_or_default(),
         ingress: ctx.args.api.to_openark_ingress_spec(),
+        mode: mode.unwrap_or_default(),
         node: ctx.args.api.to_node_spec(node),
         openark: OwnedOpenArkSpec {
             labels: ctx.args.api.to_openark_labels(),
