@@ -181,8 +181,9 @@ function _unload_driver() {
             echo "- daemon/${name}/load: Terminating"
             local pid=$(<"${pid_file}")
 
-            kill -SIGTERM "${pid}"
-            until kill -0 "${pid}" 2>/dev/null; do
+            kill -SIGTERM "${pid}" || true
+            until [ ! -d "/proc/${pid}" ]; do
+                kill -0 "${pid}" 2>/dev/null || true
                 sleep 0.1
             done
             echo "- daemon/${name}/load: Terminated"
