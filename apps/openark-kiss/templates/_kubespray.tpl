@@ -166,8 +166,10 @@ kubeadm_feature_gates:
 ## NUMA-aware scheduling
 kubelet_cpu_manager_policy: static
 kubelet_cpu_manager_policy_options:
+  align-by-socket: "true"
   distribute-cpus-across-numa: "true"
   full-pcpus-only: "true"
+  strict-cpu-reservation: "true"
 {{- end }}
 
 #####################################
