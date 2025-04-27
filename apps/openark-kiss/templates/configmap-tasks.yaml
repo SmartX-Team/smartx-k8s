@@ -22,7 +22,7 @@ data:
   {{ base $taskPath }}: |
 {{- if or
   ( regexMatch ( printf "^tasks/%s/power-intel-amt-.*\\.yaml$" $taskKind ) $taskPath )
-  ( regexMatch ( printf "^tasks/%s/power-ipxe-.*\\.yaml$" $taskKind ) $taskPath )
+  ( regexMatch ( printf "^tasks/%s/power-ipmi-.*\\.yaml$" $taskKind ) $taskPath )
   ( regexMatch ( printf "^tasks/%s/manual-.*\\.yaml$" $taskKind ) $taskPath )
 }}
 {{- tpl ( $.Files.Get $taskPath ) $ | trim | nindent 4 }}
