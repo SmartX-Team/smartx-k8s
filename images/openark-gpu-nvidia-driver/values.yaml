@@ -1,0 +1,27 @@
+---
+build:
+  golang:
+    version: ""
+
+cuda:
+  image:
+    repo: nvcr.io/nvidia/cuda
+    tag: 12.8.0
+  keyring:
+    baseUrl: https://developer.download.nvidia.com/compute/cuda
+
+driver:
+  installer:
+    baseUrl: https://us.download.nvidia.com/tesla
+    path: /usr/local/bin/installer
+  type: passthrough # Options: [passthrough, vgpu]
+  version: ""
+
+kiss:
+  os:
+    dist: ""
+    version: ""
+
+ubuntu:
+  image:
+    tag: "24.04"

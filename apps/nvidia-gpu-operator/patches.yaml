@@ -12,6 +12,12 @@ daemonsets:
       operator: Exists
       effect: NoExecute
 
+driver:
+  version: {{ .Values.driver.nvidia.gpu.version | quote }}
+  env:
+    - name: ACCEPT_LICENSE
+      value: {{ .Values.driver.nvidia.gpu.eula | quote }}
+
 node-feature-discovery:
   worker:
     tolerations:

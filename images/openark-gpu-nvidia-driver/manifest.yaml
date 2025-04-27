@@ -1,0 +1,22 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.images.openark-gpu-nvidia-driver
+spec:
+  group: ops
+  phase: beta
+  scale: large
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  containerImage:
+    namespace: gpu-nvidia
+    period: "0 0 * * *"
+    version: >
+      {{
+        printf "%s-%s%s"
+          .Values.driver.version
+          .Values.kiss.os.dist
+          .Values.kiss.os.version
+      }}

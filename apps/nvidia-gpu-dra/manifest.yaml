@@ -4,9 +4,8 @@ kind: Manifest
 metadata:
   name: smartx.apps.nvidia-gpu-dra
 spec:
-  enabled: false
   group: ops
-  phase: stable
+  phase: alpha
   scale: small
   users:
     owners:

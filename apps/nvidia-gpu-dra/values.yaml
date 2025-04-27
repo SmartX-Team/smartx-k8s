@@ -8,7 +8,7 @@ nvidiaDriverRoot: /run/nvidia/driver
 # Specify the path of CTK binary (nvidia-ctk) on the host,
 # as it should appear in the the generated CDI specification.
 # The path depends on the system that runs on the node.
-nvidiaCtkPath: /usr/bin/nvidia-ctk
+nvidiaCtkPath: /run/nvidia/driver/usr/bin/nvidia-ctk
 
 gpuResourcesEnabledOverride: true
 

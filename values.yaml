@@ -15,6 +15,12 @@ auth:
 baseImage:
   repo: quay.io/ulagbulag
 
+# Development Environment Configuration
+build:
+  golang:
+    baseUrl: https://storage.googleapis.com/golang
+    version: 1.23.6
+
 # Bootstrapper Node Configuration
 bootstrapper:
   auth:
@@ -112,6 +118,14 @@ cluster:
   # Physical region configuration
   region:
     timezone: Asia/Seoul
+
+# Bare-metal Driver Configuration
+# TODO(user): Configure it!
+driver:
+  nvidia:
+    gpu:
+      eula: false
+      version: 570.133.20
 
 # Enable SmartX features
 # TODO(user): Configure it!

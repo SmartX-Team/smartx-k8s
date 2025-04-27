@@ -14,7 +14,5 @@ set -x
 mkdir -p /etc/modules-load.d/
 
 cat <<EOF >/etc/modules-load.d/10-gpu-nvidia-driver.conf
-loop
-i2c_core
-ipmi_msghandler
+{{ .Files.Get "assets/modules-load.d/10-gpu-nvidia-driver.conf" | trim }}
 EOF

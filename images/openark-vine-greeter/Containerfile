@@ -6,7 +6,7 @@
 FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 
 # Package Manager Configuration
-ARG DEBIAN_FRONTEND='noninteractive'
+ENV DEBIAN_FRONTEND='noninteractive'
 
 # Import PPAs
 RUN install -d -m 0755 /etc/apt/keyrings \

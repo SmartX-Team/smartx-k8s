@@ -7,9 +7,6 @@ cdi:
   enabled: true
   default: false
 
-sandboxWorkloads:
-  enabled: true
-
 # standalone dcgm hostengine
 dcgm:
   # disabled by default to use embedded nv-hostengine by exporter
@@ -33,6 +30,7 @@ driver:
   repository: quay.io/ulagbulag
   image: openark-gpu-nvidia-driver
   version: 535.183.01
+  imagePullPolicy: Always
 
   manager:
     env:
@@ -121,11 +119,11 @@ migManager:
     default: all-disabled
 
 nfd:
-  enabled: true
-  nodefeaturerules: true
+  enabled: false
+  nodefeaturerules: false
 
 node-feature-discovery:
-  enableNodeFeatureApi: true
+  enableNodeFeatureApi: false
   gc:
     enable: true
 
@@ -153,7 +151,14 @@ operator:
 platform:
   openshift: false
 
+# Pod Security Admission
+psa:
+  enabled: true
+
 sandboxDevicePlugin:
+  enabled: true
+
+sandboxWorkloads:
   enabled: true
 
 toolkit:
