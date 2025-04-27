@@ -119,7 +119,7 @@ migManager:
     default: all-disabled
 
 nfd:
-  enabled: false
+  enabled: true
   nodefeaturerules: false
 
 node-feature-discovery:
