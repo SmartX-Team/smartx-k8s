@@ -32,7 +32,7 @@ function load_primary_gpu() {
         fi
 
         # Reset graphics modules
-        "$(dirname "$0")/unload-modules-gpu.sh" >&2
+        "$(dirname "$0")/gpu-unload-modules.sh" >&2
         sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
 
         # Load Primary GPU device
