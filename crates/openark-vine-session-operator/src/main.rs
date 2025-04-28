@@ -580,16 +580,29 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     let must_sign_out = profile_state.has_changed() || next.unreachable();
     let mut sign_out_remaining = next.set_sign_out(timestamp, must_sign_out);
 
+    // Grant creating app if all conditions are met
+    // * Node is ready
+    // * Profile is created or changed
+    let grant_create_app = !must_sign_out && !next.not_ready();
+
     // Update session application
     let app_state = match profile_state {
         ProfileState::Changed(_) => delete_app(&ctx, &node).await?,
         ProfileState::Created { binding, profile } => {
-            create_app(&ctx, &node, &next, binding, profile).await?
+            if grant_create_app {
+                create_app(&ctx, &node, &next, binding, profile).await?
+            } else {
+                delete_app(&ctx, &node).await?
+            }
         }
         ProfileState::Deleted(Some(_)) => delete_app(&ctx, &node).await?,
         ProfileState::Deleted(None) => AppState::Deleted,
         ProfileState::Unchanged { binding, profile } => {
-            create_app(&ctx, &node, &next, binding, profile).await?
+            if grant_create_app {
+                create_app(&ctx, &node, &next, binding, profile).await?
+            } else {
+                delete_app(&ctx, &node).await?
+            }
         }
     };
 

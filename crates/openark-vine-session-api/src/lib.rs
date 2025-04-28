@@ -545,6 +545,12 @@ impl<'a> NodeSession<'a> {
             .filter(|&s| !s.is_empty())
     }
 
+    /// Get whether the node is not ready.
+    #[must_use]
+    pub fn not_ready(&self) -> bool {
+        self.metadata.bind != Some(true)
+    }
+
     /// Get remaining signing-out duration.
     #[must_use]
     pub fn signing_out(&self, timestamp: DateTime<Utc>) -> Option<Duration> {
