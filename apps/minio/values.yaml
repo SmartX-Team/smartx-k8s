@@ -150,8 +150,8 @@ affinity:
             - key: node-role.kubernetes.io/kiss
               operator: In
               values:
-                - ControlPlane
                 - Compute
+                - ControlPlane
                 - Gateway
 
 ## @param resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)

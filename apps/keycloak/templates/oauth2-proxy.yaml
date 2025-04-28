@@ -36,6 +36,14 @@ spec:
                   - key: node-role.kubernetes.io/kiss
                     operator: In
                     values:
+                      - Compute
+            # KISS gateway nodes should be more preferred
+            - weight: 4
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
                       - Gateway
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -43,6 +51,7 @@ spec:
                   - key: node-role.kubernetes.io/kiss
                     operator: In
                     values:
+                      - Compute
                       - ControlPlane
                       - Gateway
       containers:

@@ -255,8 +255,8 @@ affinity:
             - key: node-role.kubernetes.io/kiss
               operator: In
               values:
-                - ControlPlane
                 - Compute
+                - ControlPlane
                 - Gateway
 ## @param nodeSelector Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
