@@ -44,11 +44,11 @@ RUN \
                 ( $package | snakecase )
             | quote
         }} \
-        "/out/envoy-filter.wasm"
+        '/out/plugin.wasm'
 
 # Be ready for serving
 FROM scratch
 
 # Copy executable files
 ADD ./LICENSE "/LICENSE"
-COPY --from=builder /out/envoy-filter.wasm ./
+COPY --from=builder '/out/plugin.wasm' ./
