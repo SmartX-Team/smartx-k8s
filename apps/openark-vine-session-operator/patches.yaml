@@ -13,7 +13,7 @@ auth:
   domainName: {{ .Values.auth.domainName | quote }}
 
 features:
-  gateway: {{ has "org.ulagbulag.io/servicemesh" .Values.features }}
+  gateway: {{ has "org.ulagbulag.io/gateway" .Values.features }}
   gpu:
 {{- if has "nvidia.com/gpu" .Values.features }}
     default: nvidia

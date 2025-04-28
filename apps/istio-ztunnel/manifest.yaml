@@ -18,7 +18,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/cni/istio
+      - org.ulagbulag.io/gateway/istio
     ignoreDifferences:
       - group: apps
         kind: DaemonSet

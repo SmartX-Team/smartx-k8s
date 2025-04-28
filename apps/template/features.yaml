@@ -134,7 +134,7 @@ org.ulagbulag.io/cni/istio:
   requires:
     - org.ulagbulag.io/cni
   provides:
-    - org.ulagbulag.io/servicemesh/istio
+    - org.ulagbulag.io/gateway/istio
 
 org.ulagbulag.io/cni/multus:
   requires:
@@ -299,15 +299,23 @@ org.ulagbulag.io/registry/container/harbor:
   requires:
     - org.ulagbulag.io/registry/container
 
-org.ulagbulag.io/servicemesh:
+org.ulagbulag.io/gateway:
   requires:
     - org.ulagbulag.io/cni
   optional:
+    - org.ulagbulag.io/auth
     - org.ulagbulag.io/monitoring
+    - org.ulagbulag.io/observability
+  provides:
+    - org.ulagbulag.io/ingress
 
-org.ulagbulag.io/servicemesh/istio:
+org.ulagbulag.io/gateway/envoy:
   requires:
-    - org.ulagbulag.io/servicemesh
+    - org.ulagbulag.io/gateway
+
+org.ulagbulag.io/gateway/istio:
+  requires:
+    - org.ulagbulag.io/gateway
 
 org.ulagbulag.io/tower:
   requires:

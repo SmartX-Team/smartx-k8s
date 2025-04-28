@@ -1,0 +1,6 @@
+---
+kubernetesClusterDomain: {{ .Values.cluster.domainName | quote }}
+
+service:
+  annotations:
+    {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}: "true"

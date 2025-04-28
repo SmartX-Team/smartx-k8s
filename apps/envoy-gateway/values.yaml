@@ -1,0 +1,60 @@
+---
+deployment:
+  pod:
+    affinity:
+      # Node affinity rules
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+            weight: 1
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Gateway
+            weight: 2
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+                    - ControlPlane
+                    - Gateway
+
+certgen:
+  job:
+    affinity:
+      # Node affinity rules
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+            weight: 1
+          - preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Gateway
+            weight: 2
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - Compute
+                    - ControlPlane
+                    - Gateway

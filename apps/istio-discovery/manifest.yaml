@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.istio-discovery
 spec:
+  enabled: false
   group: ops
   phase: stable
   scale: small
@@ -17,7 +18,7 @@ spec:
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/cni/istio
+      - org.ulagbulag.io/gateway/istio
     ignoreDifferences:
       - group: admissionregistration.k8s.io
         kind: ValidatingWebhookConfiguration

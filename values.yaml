@@ -163,6 +163,9 @@ features:
   - org.ulagbulag.io/dev
   - org.ulagbulag.io/distributed-storage-cluster
   - org.ulagbulag.io/distributed-storage-cluster/ceph
+  - org.ulagbulag.io/gateway
+  - org.ulagbulag.io/gateway/envoy
+  - org.ulagbulag.io/gateway/istio
   - org.ulagbulag.io/git
   - org.ulagbulag.io/git/github
   - org.ulagbulag.io/git/gitlab
@@ -178,8 +181,6 @@ features:
   - org.ulagbulag.io/registry
   - org.ulagbulag.io/registry/container
   - org.ulagbulag.io/registry/container/harbor
-  - org.ulagbulag.io/servicemesh
-  - org.ulagbulag.io/servicemesh/istio
   - org.ulagbulag.io/tower
   - org.ulagbulag.io/visualization
   - org.ulagbulag.io/visualization/grafana
