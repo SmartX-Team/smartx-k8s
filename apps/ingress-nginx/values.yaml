@@ -17,8 +17,16 @@ controller:
             matchExpressions:
               - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
                 operator: DoesNotExist
-        # KISS gateway nodes should be more preferred
+        # KISS compute nodes should be more preferred
         - weight: 2
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+        # KISS gateway nodes should be more preferred
+        - weight: 4
           preference:
             matchExpressions:
               - key: node-role.kubernetes.io/kiss
@@ -31,6 +39,7 @@ controller:
               - key: node-role.kubernetes.io/kiss
                 operator: In
                 values:
+                  - Compute
                   - ControlPlane
                   - Gateway
 
