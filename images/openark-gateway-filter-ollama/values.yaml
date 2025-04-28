@@ -1,0 +1,9 @@
+---
+builder:
+  image:
+    repo: docker.io/library/rust
+    tag: "1"
+
+debian:
+  image:
+    tag: bookworm

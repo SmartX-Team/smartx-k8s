@@ -11,9 +11,6 @@ use tokio::try_join;
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(long, env = "CONTROLLER_POD_NAME")]
-    controller_pod_name: Option<String>,
-
     #[arg(long, env = "ENABLE_CRONJOBS")]
     enable_cronjobs: bool,
 

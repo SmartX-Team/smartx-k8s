@@ -47,9 +47,6 @@ struct Args {
     #[command(flatten)]
     api: ::openark_vine_session_api::VineSessionArgs,
 
-    #[arg(long, env = "CONTROLLER_POD_NAME")]
-    controller_pod_name: Option<String>,
-
     #[arg(long, env = "DESTINATION_NAME")]
     destination_name: String,
 
@@ -745,7 +742,7 @@ async fn try_main(args: Args) -> Result<()> {
 
     let reporter = Reporter {
         controller: args.operator.controller_name.clone(),
-        instance: args.controller_pod_name.clone(),
+        instance: args.operator.controller_pod_name.clone(),
     };
     let recorder = Recorder::new(client, reporter);
 

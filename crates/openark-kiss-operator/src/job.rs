@@ -249,7 +249,7 @@ pub async fn loop_forever(args: super::Args, client: Client) -> Result<()> {
 
     let reporter = Reporter {
         controller: args.operator.controller_name.clone(),
-        instance: args.controller_pod_name.clone(),
+        instance: args.operator.controller_pod_name.clone(),
     };
     let recorder = Recorder::new(client.clone(), reporter);
 

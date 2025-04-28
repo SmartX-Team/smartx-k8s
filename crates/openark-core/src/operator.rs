@@ -14,6 +14,9 @@ pub struct OperatorArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "CONTROLLER_NAME"))]
     pub controller_name: String,
 
+    #[cfg_attr(feature = "clap", arg(long, env = "CONTROLLER_POD_NAME"))]
+    pub controller_pod_name: Option<String>,
+
     #[cfg_attr(feature = "clap", arg(long, env = "UPGRADE_CRDS"))]
     pub upgrade_crds: bool,
 }

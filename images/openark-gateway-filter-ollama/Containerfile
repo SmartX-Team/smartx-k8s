@@ -1,0 +1,54 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+{{- $version := .Release.Version }}
+
+# Be ready for building
+FROM "{{ .Values.builder.image.repo }}:{{ .Values.builder.image.tag }}-{{ .Values.debian.image.tag }}" AS builder
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        build-essential \
+        clang \
+        cmake \
+    # Enable wasm32 target
+    && rustup target add 'wasm32-unknown-unknown' \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Load source files
+ADD . /src
+WORKDIR /src
+
+# Build it!
+RUN \
+    # Cache build outputs
+    --mount=type=cache,target=/src/target \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    # Create an output directory
+    mkdir /out \
+    # Disable binary
+    && sed -i 's/^default-members *= */# \0/g' ./Cargo.toml \
+    # Fix version
+    && sed -i 's/^\(version *= *\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
+    # Build
+    && cargo build --package {{ $package | quote }} \
+        --profile 'release-wasm' \
+        --target 'wasm32-unknown-unknown' \
+        --workspace \
+    && mv \
+        {{ printf "./target/wasm32-unknown-unknown/release-wasm/%s.wasm"
+                ( $package | snakecase )
+            | quote
+        }} \
+        "/out/envoy-filter.wasm"
+
+# Be ready for serving
+FROM scratch
+
+# Copy executable files
+ADD ./LICENSE "/LICENSE"
+COPY --from=builder /out/envoy-filter.wasm ./

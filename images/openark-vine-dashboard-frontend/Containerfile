@@ -29,7 +29,10 @@ RUN apt-get update && apt-get install -y \
     # Build
     && cargo install --root /usr/local \
         trunk \
-        wasm-bindgen-cli
+        wasm-bindgen-cli \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
 
 # Load source files
 ADD . /src
@@ -53,6 +56,8 @@ RUN \
     # Alias
     && ln -sf /usr/bin/true /usr/bin/clear \
     && ln -sf npm /usr/bin/npm \
+    # Fix version
+    && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Pre-hook
     && npm run 'build:css' \
     # Build
