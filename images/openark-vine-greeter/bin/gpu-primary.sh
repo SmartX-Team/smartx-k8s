@@ -9,27 +9,6 @@
 # Prehibit errors
 set -e -o pipefail
 
-# Check user
-if [ "x$(id -u)" != 'x0' ]; then
-    echo 'ERROR: Permission denied (root-only)'
-    exec false
-fi
-
-# Unload all graphics modules
-modules=(
-    'i915'
-    'nouveau'
-    'nvidia_drm'
-    'nvidia_modeset'
-    'nvidia_uvm'
-    'nvidia'
-)
-for module in ${modules[@]}; do
-    while [ -d "/sys/module/${module}" ]; do
-        rmmod "${module}" || sleep 0.1
-    done
-done
-
 primary_dev=''
 for dev in $(
     find -L /sys/bus/pci/devices \

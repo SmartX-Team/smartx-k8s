@@ -31,6 +31,10 @@ function load_primary_gpu() {
             sleep 2 # Some GPU drivers (e.g. nouveau) needsome time to finish uninit
         fi
 
+        # Reset graphics modules
+        "$(dirname "$0")/unload-modules-gpu.sh" >&2
+        sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
+
         # Load Primary GPU device
         "$(dirname "$0")/pci-load.sh" "${primary_dev}" "${driver}" >&2
         sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
