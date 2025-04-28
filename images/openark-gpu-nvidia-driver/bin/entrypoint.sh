@@ -20,10 +20,10 @@ DAEMON_LIST=(
 
 # NOTE: Ordered by unloading
 KERNEL_MODULE_LIST=(
+    "nvidia_drm"
     "nvidia_modeset"
     "nvidia_uvm"
     "nvidia_peermem"
-    "nvidia_drm"
     "nvidia"
 )
 
