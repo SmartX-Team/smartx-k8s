@@ -46,6 +46,7 @@ pub struct TableSession {
         printcolumn = r#"{
             "name": "version",
             "type": "integer",
+            "priority": 1,
             "description": "table version",
             "jsonPath": ".metadata.generation"
         }"#

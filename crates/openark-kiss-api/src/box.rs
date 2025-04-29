@@ -39,12 +39,14 @@ use uuid::Uuid;
         printcolumn = r#"{
         "name": "address",
         "type": "string",
+        "priority": 1,
         "description": "access address of the box",
         "jsonPath": ".status.access.primary.address"
     }"#,
         printcolumn = r#"{
         "name": "power",
         "type": "string",
+        "priority": 1,
         "description": "power address of the box",
         "jsonPath": ".spec.power.address"
     }"#,
@@ -81,12 +83,14 @@ use uuid::Uuid;
         printcolumn = r#"{
         "name": "network-speed",
         "type": "string",
+        "priority": 1,
         "description": "network interface link speed (Unit: Mbps)",
         "jsonPath": ".status.access.primary.speedMbps"
     }"#,
         printcolumn = r#"{
         "name": "version",
         "type": "integer",
+        "priority": 1,
         "description": "box version",
         "jsonPath": ".metadata.generation"
     }"#

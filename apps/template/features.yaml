@@ -84,6 +84,10 @@ org.ulagbulag.io/autoscaling/keda:
   requires:
     - org.ulagbulag.io/autoscaling
 
+org.ulagbulag.io/autoscaling/traffic:
+  requires:
+    - org.ulagbulag.io/autoscaling
+
 org.ulagbulag.io/bare-metal-provisioning:
   requires:
     - org.ulagbulag.io/cni

@@ -10,16 +10,17 @@ use kube::{
     runtime::{
         Controller,
         controller::Action,
-        events::{Event, EventType, Recorder, Reporter},
+        events::{Recorder, Reporter},
         reflector::ObjectRef,
         watcher::Config,
     },
 };
+use openark_core::operator::RecorderExt;
 use openark_kiss_ansible::{AnsibleClient, AnsibleJob, AnsibleResourceType};
 use openark_kiss_api::r#box::{BoxCrd, BoxGroupRole, BoxState, BoxStatus};
 use serde_json::json;
 #[cfg(feature = "tracing")]
-use tracing::{Level, error, info, instrument};
+use tracing::{Level, info, instrument};
 
 struct Context {
     ansible: AnsibleClient,
@@ -220,57 +221,23 @@ async fn report_update(
     reference: &ObjectReference,
     message: String,
 ) -> Result<(), ::kube::Error> {
-    #[cfg(feature = "tracing")]
-    {
-        let mut name = String::default();
-        if let Some(api_version) = reference.api_version.as_deref() {
-            name.push_str(api_version);
-            name.push('/');
-        }
-        if let Some(kind) = reference.kind.as_deref() {
-            name.push_str(kind);
-            name.push('/');
-        }
-        if let Some(namespace) = reference.namespace.as_deref() {
-            name.push_str(namespace);
-            name.push('/');
-        }
-        name.push_str(reference.name.as_deref().unwrap_or_default());
-        info!("{name}: {message}");
-    }
-
-    let event = Event {
-        type_: EventType::Normal,
+    let event = ::kube::runtime::events::Event {
+        type_: ::kube::runtime::events::EventType::Normal,
         reason: "ProvisioningUpdated".into(),
         note: Some(message),
         action: "Scheduling".into(),
         secondary: None,
     };
-    recorder.publish(&event, reference).await
+    recorder.report_update(&event, reference).await
 }
 
 async fn report_error(
     recorder: &Recorder,
     error: ::kube::runtime::controller::Error<Error, ::kube::runtime::watcher::Error>,
 ) {
-    if let ::kube::runtime::controller::Error::ReconcilerFailed(error, object) = &error {
-        // Shorten error notes
-        let error = match error {
-            Error::Api(error) => error.to_string(),
-            error => error.to_string(),
-        };
-        let event = Event {
-            type_: EventType::Warning,
-            reason: "ProvisioningError".into(),
-            note: Some(error),
-            action: "Scheduling".into(),
-            secondary: None,
-        };
-        let reference = object.clone().into();
-        recorder.publish(&event, &reference).await.ok();
-    }
-    #[cfg(feature = "tracing")]
-    error!("reconcile failed: {error:?}")
+    let reason = "ProvisioningError".into();
+    let action = "Scheduling".into();
+    recorder.report_error(error, reason, action).await
 }
 
 fn error_policy(_box: Arc<BoxCrd>, _error: &Error, ctx: Arc<Context>) -> Action {
@@ -278,7 +245,12 @@ fn error_policy(_box: Arc<BoxCrd>, _error: &Error, ctx: Arc<Context>) -> Action 
 }
 
 pub async fn loop_forever(args: super::Args, client: Client) -> Result<()> {
-    let api = Api::<BoxCrd>::all(client.clone());
+    let namespace = args
+        .operator
+        .namespace
+        .as_deref()
+        .unwrap_or(client.default_namespace());
+    let api = Api::all(client.clone());
 
     let patch_params = PatchParams {
         dry_run: false,
@@ -296,7 +268,7 @@ pub async fn loop_forever(args: super::Args, client: Client) -> Result<()> {
     let watcher_config = Config::default();
 
     let context = Arc::new(Context {
-        ansible: AnsibleClient::try_new(&client, &args.namespace).await?,
+        ansible: AnsibleClient::try_new(&client, namespace).await?,
         api: api.clone(),
         crd: BoxCrd::api_resource(),
         enable_cronjobs: args.enable_cronjobs,

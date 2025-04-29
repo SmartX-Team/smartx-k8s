@@ -47,7 +47,7 @@ openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }
 openark-kiss-ansible = { path = "crates/openark-kiss-ansible" }
 openark-kiss-api = { path = "crates/openark-kiss-api" }
-openark-vine-api = { path = "crates/openark-vine-api" }
+openark-traffic-api = { path = "crates/openark-traffic-api" }
 openark-vine-dashboard-api = { path = "crates/openark-vine-dashboard-api" }
 openark-vine-dashboard-jq = { path = "crates/openark-vine-dashboard-jq" }
 openark-vine-oauth = { path = "crates/openark-vine-oauth" }
@@ -77,6 +77,7 @@ convert-case = { package = "convert_case", version = "0.8", default-features = f
 datafusion = { version = "46", default-features = false }
 fuser = { version = "0.15", default-features = false, features = ["abi-7-31"] }
 futures = { version = "0.3", default-features = false }
+gateway-api = { version = "0.15", default-features = false }
 getrandom = { version = "0.3", default-features = false }
 gloo-net = { version = "0.6", default-features = false }
 hickory-server = { version = "0.25", default-features = false, features = [

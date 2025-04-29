@@ -9,7 +9,7 @@ use kube::{
     api::{PartialObjectMeta, Patch, PatchParams},
     runtime::{
         metadata_watcher,
-        watcher::{Config, Event},
+        watcher::{self, Event},
     },
 };
 use openark_vine_session_api::filter_taint;
@@ -184,7 +184,7 @@ async fn try_main(args: &Args) -> Result<()> {
         running: None,
     };
 
-    let watcher_config = Config {
+    let watcher_config = watcher::Config {
         label_selector: Some(format!("kubernetes.io/hostname={}", &args.node_name)),
         ..Default::default()
     };

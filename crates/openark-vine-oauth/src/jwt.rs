@@ -1,10 +1,13 @@
+#[cfg(feature = "actix-web")]
 use chrono::{DateTime, Utc};
+#[cfg(feature = "actix-web")]
 use jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation, decode};
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "actix-web")]
 use crate::error::{ErrorInvalidToken, ErrorKind};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -20,6 +23,7 @@ pub(crate) struct JsonWebTokenClaims {
     pub email: String,
 }
 
+#[cfg(feature = "actix-web")]
 impl JsonWebTokenClaims {
     pub(crate) fn decode(token: &str) -> Result<Self, ErrorKind> {
         // FIXME: Validate JWT Claims
@@ -38,6 +42,7 @@ impl JsonWebTokenClaims {
                     ErrorKind::InvalidToken(ErrorInvalidToken::AccessTokenExpired)
                 }
                 _ => {
+                    #[cfg(feature = "tracing")]
                     ::tracing::warn!("{e}");
                     ErrorKind::InvalidToken(ErrorInvalidToken::MalformedJwtToken)
                 }

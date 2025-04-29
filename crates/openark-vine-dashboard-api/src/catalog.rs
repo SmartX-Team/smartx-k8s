@@ -97,6 +97,7 @@ pub struct CatalogItem {
         printcolumn = r#"{
             "name": "version",
             "type": "integer",
+            "priority": 1,
             "description": "catalog item version",
             "jsonPath": ".metadata.generation"
         }"#

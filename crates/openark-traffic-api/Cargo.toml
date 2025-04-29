@@ -1,5 +1,5 @@
 [package]
-name = "openark-vine-api"
+name = "openark-traffic-api"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -24,7 +24,7 @@ default = []
 alloc = ["chrono/alloc", "serde/alloc"]
 std = [
     "chrono/std",
-    # "k8s-openapi?/std",
+    # "k8s-openapi/std",
     # "schemars?/std",
     "serde?/std",
     "serde-json?/std",
@@ -32,20 +32,14 @@ std = [
     "uuid/std",
 ]
 
-kube = [
-    "alloc",
-    "dep:k8s-openapi",
-    "dep:kube",
-    "dep:serde-json",
-    "schemars",
-    "std",
-]
-schemars = ["dep:schemars", "k8s-openapi?/schemars", "serde"]
+kube = ["alloc", "dep:kube", "dep:serde-json", "schemars", "std"]
+schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
 serde = ["alloc", "chrono/serde", "dep:serde", "uuid/serde"]
 
 [dependencies]
 chrono = { workspace = true }
-k8s-openapi = { workspace = true, optional = true }
+gateway-api = { workspace = true }
+k8s-openapi = { workspace = true }
 kube = { workspace = true, optional = true, features = ["derive"] }
 schemars = { workspace = true, optional = true, features = [
     "chrono",

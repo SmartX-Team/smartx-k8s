@@ -145,6 +145,7 @@ features:
   - org.ulagbulag.io/auth/sync
   - org.ulagbulag.io/autoscaling
   - org.ulagbulag.io/autoscaling/keda
+  - org.ulagbulag.io/autoscaling/traffic
   - org.ulagbulag.io/bare-metal-provisioning
   - org.ulagbulag.io/bare-metal-provisioning/kiss
   - org.ulagbulag.io/batch/scheduling

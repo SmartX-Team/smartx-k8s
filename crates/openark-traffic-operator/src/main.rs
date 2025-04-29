@@ -1,25 +1,27 @@
-mod r#box;
-mod job;
+mod endpoint_slice;
+mod http_route_claim;
+mod traffic_route_claim;
+mod traffic_router_class;
 
 use anyhow::Result;
 use clap::Parser;
 use kube::Client;
 use openark_core::operator::{OperatorArgs, install_crd};
-use openark_kiss_api::r#box::BoxCrd;
+use openark_traffic_api::{
+    http_route_claim::HTTPRouteClaimCrd, traffic_router_class::TrafficRouterClassCrd,
+};
 use tokio::try_join;
 
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(long, env = "ENABLE_CRONJOBS")]
-    enable_cronjobs: bool,
-
     #[command(flatten)]
     operator: OperatorArgs,
 }
 
 async fn install_crds(args: &OperatorArgs, client: &Client) -> Result<()> {
-    install_crd::<BoxCrd>(args, client).await?;
+    install_crd::<HTTPRouteClaimCrd>(args, client).await?;
+    install_crd::<TrafficRouterClassCrd>(args, client).await?;
     Ok(())
 }
 
@@ -32,12 +34,17 @@ async fn try_main(args: Args) -> Result<()> {
     }
 
     let ((), ()) = try_join!(
+        // {
+        //     let args = args.clone();
+        //     let client = client.clone();
+        //     self::endpoint_slice::loop_forever(args, client)
+        // },
         {
             let args = args.clone();
             let client = client.clone();
-            self::r#box::loop_forever(args, client)
+            self::http_route_claim::loop_forever(args, client)
         },
-        self::job::loop_forever(args, client)
+        self::traffic_router_class::loop_forever(args, client)
     )?;
     Ok(())
 }
@@ -49,7 +56,7 @@ async fn main() {
     ::openark_core::init_once();
 
     #[cfg(feature = "tracing")]
-    ::tracing::info!("Welcome to OpenARK KISS Operator!");
+    ::tracing::info!("Welcome to OpenARK Gateway Route Operator!");
 
     try_main(args).await.expect("running an operator")
 }

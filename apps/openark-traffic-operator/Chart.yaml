@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
-name: openark-traffic-operator
-description: Cloud-Native Gateway & Service Traffic Operator
+name: openark-vine-dashboard
+description: Cloud-Native Dashboard Operator
 
 # A chart can be either an 'application' or a 'library' chart.
 #

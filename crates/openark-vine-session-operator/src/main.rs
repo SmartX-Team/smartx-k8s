@@ -22,12 +22,12 @@ use kube::{
     runtime::{
         Controller,
         controller::Action,
-        events::{Event, EventType, Recorder, Reporter},
+        events::{Recorder, Reporter},
         reflector::ObjectRef,
         watcher::Config,
     },
 };
-use openark_core::operator::{OperatorArgs, install_crd};
+use openark_core::operator::{OperatorArgs, RecorderExt, install_crd};
 use openark_vine_session_api::{
     NodeSession, ProfileState,
     binding::{SessionBindingCrd, SessionBindingSpec},
@@ -39,7 +39,7 @@ use openark_vine_session_api::{
     profile::{RegionSpec, SessionProfileCrd, SessionProfileSpec, VolumeSharingSpec},
 };
 #[cfg(feature = "tracing")]
-use tracing::{Level, debug, error, info, instrument, warn};
+use tracing::{Level, debug, info, instrument, warn};
 
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -50,14 +50,8 @@ struct Args {
     #[arg(long, env = "DESTINATION_NAME")]
     destination_name: String,
 
-    #[arg(long, env = "INSTALL_CRDS")]
-    install_crds: bool,
-
     #[arg(long, env = "OPENARK_LABEL_SELECTOR")]
     label_selector: String,
-
-    #[arg(long, env = "NAMESPACE", value_name = "NAME")]
-    namespace: String,
 
     #[command(flatten)]
     operator: OperatorArgs,
@@ -315,7 +309,7 @@ fn build_app(
                 session.append_labels(labels)
             }),
             name: Some(name),
-            namespace: Some(ctx.args.namespace.clone()),
+            namespace: ctx.args.operator.namespace.clone(),
             // The default behaviour is foreground cascading deletion
             // TODO: Can be changed: https://github.com/argoproj/argo-cd/issues/21035
             finalizers: Some(vec!["resources-finalizer.argocd.argoproj.io".into()]),
@@ -657,58 +651,24 @@ async fn report_update(
     recorder: &Recorder,
     reference: &ObjectReference,
     message: String,
-) -> Result<()> {
-    #[cfg(feature = "tracing")]
-    {
-        let mut name = String::default();
-        if let Some(api_version) = reference.api_version.as_deref() {
-            name.push_str(api_version);
-            name.push('/');
-        }
-        if let Some(kind) = reference.kind.as_deref() {
-            name.push_str(kind);
-            name.push('/');
-        }
-        if let Some(namespace) = reference.namespace.as_deref() {
-            name.push_str(namespace);
-            name.push('/');
-        }
-        name.push_str(reference.name.as_deref().unwrap_or_default());
-        info!("{name}: {message}");
-    }
-
-    let event = Event {
-        type_: EventType::Normal,
+) -> Result<(), ::kube::Error> {
+    let event = ::kube::runtime::events::Event {
+        type_: ::kube::runtime::events::EventType::Normal,
         reason: "SessionUpdated".into(),
         note: Some(message),
         action: "Scheduling".into(),
         secondary: None,
     };
-    recorder.publish(&event, reference).await
+    recorder.report_update(&event, reference).await
 }
 
 async fn report_error(
     recorder: &Recorder,
     error: ::kube::runtime::controller::Error<Error, ::kube::runtime::watcher::Error>,
 ) {
-    if let ::kube::runtime::controller::Error::ReconcilerFailed(error, object) = &error {
-        // Shorten error notes
-        let error = match error {
-            Error::Api(error) => error.to_string(),
-            error => error.to_string(),
-        };
-        let event = Event {
-            type_: EventType::Warning,
-            reason: "SessionError".into(),
-            note: Some(error),
-            action: "Scheduling".into(),
-            secondary: None,
-        };
-        let reference = object.clone().into();
-        recorder.publish(&event, &reference).await.ok();
-    }
-    #[cfg(feature = "tracing")]
-    error!("reconcile failed: {error:?}")
+    let reason = "SessionError".into();
+    let action = "Scheduling".into();
+    recorder.report_error(error, reason, action).await
 }
 
 fn error_policy(_node: Arc<Node>, _error: &Error, _ctx: Arc<Context>) -> Action {
@@ -726,15 +686,21 @@ async fn try_main(args: Args) -> Result<()> {
     let client = Client::try_default().await?;
 
     // Update CRDs
-    if args.install_crds {
+    if args.operator.install_crds {
         install_crds(&args.operator, &client).await?;
     }
 
-    let api_app = Api::namespaced(client.clone(), &args.namespace);
-    let api_binding = Api::namespaced(client.clone(), &args.namespace);
+    let api_app = Api::namespaced(client.clone(), &args.session_namespace);
+    let api_binding = match args.operator.namespace.as_deref() {
+        Some(ns) => Api::namespaced(client.clone(), ns),
+        None => Api::all(client.clone()),
+    };
     let api_node = Api::all(client.clone());
     let api_pod = Api::all(client.clone());
-    let api_profile = Api::namespaced(client.clone(), &args.namespace);
+    let api_profile = match args.operator.namespace.as_deref() {
+        Some(ns) => Api::namespaced(client.clone(), ns),
+        None => Api::all(client.clone()),
+    };
 
     let delete_params = DeleteParams {
         dry_run: false,

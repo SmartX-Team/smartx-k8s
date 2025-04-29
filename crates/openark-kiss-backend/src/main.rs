@@ -44,10 +44,6 @@ struct Args {
     )]
     bind_addr: SocketAddr,
 
-    /// Default namespace name
-    #[arg(long, env = "NAMESPACE", value_name = "NAME")]
-    namespace: Option<String>,
-
     #[command(flatten)]
     operator: OperatorArgs,
 }
@@ -57,7 +53,6 @@ async fn try_main(args: Args) -> Result<()> {
     let Args {
         mut base_url,
         bind_addr: addr,
-        namespace,
         operator,
     } = args;
 
@@ -68,7 +63,7 @@ async fn try_main(args: Args) -> Result<()> {
 
     let api = Data::new({
         let mut config = Config::infer().await?;
-        if let Some(namespace) = namespace {
+        if let Some(namespace) = operator.namespace {
             config.default_namespace = namespace;
         }
         let client = Client::try_from(config)?;

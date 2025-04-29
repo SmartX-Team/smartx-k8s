@@ -50,6 +50,7 @@ pub struct SessionCommandView {
         printcolumn = r#"{
             "name": "version",
             "type": "integer",
+            "priority": 1,
             "description": "command version",
             "jsonPath": ".metadata.generation"
         }"#

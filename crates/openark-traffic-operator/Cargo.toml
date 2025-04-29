@@ -1,5 +1,5 @@
 [package]
-name = "openark-gateway-operator"
+name = "openark-traffic-operator"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -52,10 +52,13 @@ tracing = ["dep:tracing", "openark-core/tracing"]
 
 [dependencies]
 openark-core = { workspace = true, features = ["clap", "operator", "std"] }
+openark-traffic-api = { workspace = true, features = ["kube", "std"] }
 
 anyhow = { workspace = true, features = ["std"] }
+chrono = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
 futures = { workspace = true, features = ["std"] }
+gateway-api = { workspace = true }
 k8s-openapi = { workspace = true, features = [
     "schemars",
     # "std",

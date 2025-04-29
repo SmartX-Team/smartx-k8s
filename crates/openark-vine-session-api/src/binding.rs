@@ -34,6 +34,7 @@ use serde::{Deserialize, Serialize};
         printcolumn = r#"{
             "name": "version",
             "type": "integer",
+            "priority": 1,
             "description": "binding version",
             "jsonPath": ".metadata.generation"
         }"#
