@@ -58,21 +58,18 @@ tls-aws-lc-rs = [
     "actix-web/rustls-0_23",
     "kube/rustls-tls",
     "openark-core/tls-aws-lc-rs",
-    "openark-vine-oauth/tls-aws-lc-rs",
     "reqwest/rustls-tls",
 ]
 tls-openssl = [
     "actix-web/openssl",
     "kube/openssl-tls",
     "openark-core/tls-openssl",
-    "openark-vine-oauth/tls-openssl",
     "reqwest/native-tls",
 ]
 tls-ring = [
     "actix-web/rustls-0_23",
     "kube/rustls-tls",
     "openark-core/tls-ring",
-    "openark-vine-oauth/tls-ring",
     "reqwest/rustls-tls",
 ]
 
@@ -80,7 +77,7 @@ tls-ring = [
 tracing = ["dep:tracing", "openark-core/tracing", "openark-vine-oauth/tracing"]
 
 [dependencies]
-openark-core = { workspace = true, features = ["clap", "std"] }
+openark-core = { workspace = true, features = ["clap", "client", "std"] }
 openark-vine-dashboard-api = { workspace = true, features = [
     "kube",
     "send",

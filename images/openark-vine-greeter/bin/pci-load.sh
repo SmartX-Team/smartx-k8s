@@ -39,14 +39,29 @@ elif [ "x${driver}" == 'xgpu' ]; then
     esac
 fi
 
+# Build driver
+# if [ -d "/lib/modules/$(uname -r)" ]; then
+#     if ! dkms autoinstall; then
+#         driver='nouveau' # fallback
+#     fi
+# fi
+
 # Unload old driver
 "$(dirname "$0")/pci-unload.sh" "${dev}"
 
 # Load new driver
 if [ ! -d "/sys/bus/pci/drivers/${driver}" ]; then
     echo "DEBUG: Load driver: ${driver}"
-    modprobe "${driver}"
+    until modprobe "${driver}"; do
+        echo "WARN: Still loading driver: ${driver}"
+        sleep 1
+    done
     echo "INFO: Loaded driver: ${driver}"
+
+    # Some GPU drivers (e.g. nouveau) need some time to finish init
+    if [ "${driver}" == 'nouveau' ]; then
+        sleep 2
+    fi
 fi
 
 # Bind device

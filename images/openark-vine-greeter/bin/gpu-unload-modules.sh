@@ -17,9 +17,8 @@ if [ "x$(id -u)" != 'x0' ]; then
     exec false
 fi
 
+# Unload external modules
 modules=(
-    'i915'
-    'nouveau'
     'nvidia_drm'
     'nvidia_modeset'
     'nvidia_uvm'

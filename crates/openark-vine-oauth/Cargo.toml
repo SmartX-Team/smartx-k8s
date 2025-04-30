@@ -30,6 +30,7 @@ std = [
     "getrandom?/std",
     "http?/std",
     # "k8s-openapi?/std",
+    "openark-core?/std",
     "regex?/std",
     # "schemars?/std",
     "serde?/std",
@@ -53,30 +54,28 @@ client = [
     "dep:async-trait",
     "dep:cookie",
     "dep:http",
+    "dep:openark-core",
     "dep:web-sys",
+    "openark-core?/client",
     "web-sys?/HtmlDocument",
-    "web-sys?/RequestCredentials",
     "web-sys?/Window",
 ]
 error-decode = ["dep:regex"]
 kube = ["actix-web", "dep:k8s-openapi", "dep:kube"]
 rand = ["dep:getrandom"]
-reqwest = ["client", "dep:reqwest"]
+reqwest = ["client", "dep:reqwest", "openark-core?/reqwest"]
 schemars = ["dep:schemars", "serde"]
 serde = ["dep:anyhow", "dep:base64", "dep:serde", "dep:serde-json", "url/serde"]
 
 # Async trait bounds
-send = []
-
-# TLS
-tls-aws-lc-rs = ["actix-web?/rustls-0_23", "reqwest?/rustls-tls"]
-tls-openssl = ["actix-web?/openssl", "reqwest?/native-tls"]
-tls-ring = ["actix-web?/rustls-0_23", "reqwest?/rustls-tls"]
+send = ["openark-core?/send"]
 
 # Tracing
 tracing = ["dep:tracing"]
 
 [dependencies]
+openark-core = { workspace = true, optional = true, features = ["alloc"] }
+
 actix-web = { workspace = true, optional = true, features = ["cookies"] }
 anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }

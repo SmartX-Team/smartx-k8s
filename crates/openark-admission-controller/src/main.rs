@@ -17,6 +17,7 @@ use kube::{
     core::admission::{AdmissionRequest, AdmissionResponse},
 };
 use openark_admission_openapi::AdmissionResult;
+use openark_core::client::HealthState;
 use rustls::{ServerConfig, pki_types::PrivateKeyDer};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -153,7 +154,7 @@ async fn ping() -> impl Responder {
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO))]
 #[get("/health")]
 async fn health() -> impl Responder {
-    HttpResponse::Ok().json("healthy")
+    HttpResponse::Ok().json(HealthState::Healthy)
 }
 
 fn load_tls_config(certs_path: &Path, key_path: &Path) -> Result<ServerConfig> {

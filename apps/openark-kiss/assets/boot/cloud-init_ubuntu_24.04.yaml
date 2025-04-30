@@ -11,7 +11,9 @@ autoinstall:
       primary:
         - country-mirror
   kernel:
+{{- if eq "edge" .Values.kiss.os.kernel }}
     flavor: hwe
+{{- end }}
   keyboard:
     layout: us
   locale: en_US.UTF-8

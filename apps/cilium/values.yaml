@@ -224,7 +224,7 @@ hubble:
   # for more comprehensive documentation about Hubble metrics.
   metrics:
     # -- Enables exporting hubble metrics in OpenMetrics format.
-    enableOpenMetrics: false
+    enableOpenMetrics: true
     tls:
       # Enable hubble metrics server TLS.
       enabled: false

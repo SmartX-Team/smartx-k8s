@@ -54,4 +54,4 @@ spec:
   source:
     chart: cilium
     repoUrl: "https://helm.cilium.io"
-    version: 1.17.2
+    version: 1.18.0-pre.2

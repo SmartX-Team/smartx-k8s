@@ -26,18 +26,16 @@ function load_primary_gpu() {
             # Unload all the other GPU devices
             "$(dirname "$0")/gpu-load-except.sh" "${primary_dev}" 'vfio-pci' >&2
 
+            # Reset graphics modules
+            "$(dirname "$0")/gpu-unload-modules.sh" >&2
+
             # Reset Primary GPU device: We want to kick off VGA Arbiter
             "$(dirname "$0")/pci-reset.sh" "${primary_dev}" >&2
-            sleep 2 # Some GPU drivers (e.g. nouveau) needsome time to finish uninit
         fi
-
-        # Reset graphics modules
-        "$(dirname "$0")/gpu-unload-modules.sh" >&2
-        sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
 
         # Load Primary GPU device
         "$(dirname "$0")/pci-load.sh" "${primary_dev}" "${driver}" >&2
-        sleep 2 # Some GPU drivers (e.g. nouveau) need some time to finish init
+        sleep 1 # Some GPU drivers (e.g. nouveau) need some time to finish init
 
         # Unload all USB devices
         "$(dirname "$0")/usb-load-all.sh" 'vfio-pci' >&2
@@ -106,8 +104,8 @@ if [ ! -S "${X11_SOCK}" ]; then
     fi
     sleep 1
 fi
-until xrandr --listactivemonitors >/dev/null; do
-    sleep 1
+until timeout 1 xrandr --listactivemonitors >/dev/null; do
+    sleep 0.1
 done
 
 echo "Finding displays..."

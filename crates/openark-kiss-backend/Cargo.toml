@@ -70,7 +70,7 @@ tls-ring = ["actix-web/rustls-0_23", "kube/rustls-tls", "openark-core/tls-ring"]
 tracing = ["dep:tracing", "openark-core/tracing"]
 
 [dependencies]
-openark-core = { workspace = true, features = ["clap", "std"] }
+openark-core = { workspace = true, features = ["clap", "client", "std"] }
 openark-kiss-api = { workspace = true, features = ["kube", "std"] }
 
 actix-cors = { workspace = true, optional = true }

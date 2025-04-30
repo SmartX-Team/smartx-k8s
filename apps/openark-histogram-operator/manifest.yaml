@@ -2,9 +2,8 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.apps.openark-traffic-operator
+  name: smartx.apps.openark-histogram-operator
 spec:
-  enabled: false
   group: ops
   phase: alpha
   scale: small
@@ -13,12 +12,12 @@ spec:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: traffic-operator
+    namespace: openark-histogram
     patched: false
     unsafe: false
     useClusterValues: false
     features:
-      - org.ulagbulag.io/autoscaling/traffic
+      - org.ulagbulag.io/autoscaling/service
     ignoreDifferences: []
     sync:
       createNamespace: true

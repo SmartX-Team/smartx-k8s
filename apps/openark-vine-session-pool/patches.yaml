@@ -14,6 +14,7 @@ ingress:
 openark:
   labels:
     org.ulagbulag.io/bind: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+    org.ulagbulag.io/bind.mode: {{ index .Values.openark.labels "org.ulagbulag.io/bind.mode" | quote }}
     org.ulagbulag.io/bind.profile: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
     org.ulagbulag.io/signed-out: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
     org.ulagbulag.io/topology-block: {{ index .Values.openark.labels "org.ulagbulag.io/topology-block" | quote }}

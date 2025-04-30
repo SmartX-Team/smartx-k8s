@@ -72,7 +72,7 @@ openark-admission-openapi = { workspace = true, features = [
     "patch",
     "std",
 ] }
-openark-core = { workspace = true, features = ["clap", "std"] }
+openark-core = { workspace = true, features = ["clap", "client", "std"] }
 
 actix-web = { workspace = true }
 actix-web-opentelemetry = { workspace = true, optional = true }

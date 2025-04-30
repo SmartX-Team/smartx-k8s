@@ -11,8 +11,9 @@ set -e -o pipefail
 set -x
 
 # Cleanup old container
-if nerdctl stop -t 5 "openark-vine-greeter" >/dev/null; then
-    nerdctl rm -f "openark-vine-greeter" >/dev/null || true
+NAME='openark-vine-greeter'
+if nerdctl stop -t 5 "${NAME}" >/dev/null; then
+    nerdctl rm -f "${NAME}" >/dev/null || true
 fi
 
 # Cleanup nerdctl data
@@ -24,12 +25,35 @@ if ! nerdctl namespace ls | grep -Posq "${NAMESPACE}"; then
     nerdctl namespace create "${NAMESPACE}" || true
 fi
 
-# TODO: 잘못된 종료가 아니라면 무한히 생성하기
-# TODO: greeter.sh SIGTERM 받아들여서 안전하게 종료하기 (종료코드 0이 아닌 경우 getty@tty1.service 로 이동!)
-exec nerdctl run \
+# Register termination function
+function terminate() {
+    # Stop container
+    if [ "x${pid_container}" != 'x' ]; then
+        kill "${pid_container}" || true
+        wait "${pid_container}" || true
+    fi
+    timeout 15 nerdctl stop "${NAME}" || true
+    nerdctl kill "${NAME}" || true
+
+    # Cleanup module
+    rmmod nouveau || true
+    exec true
+}
+
+trap -- 'terminate' SIGINT
+trap -- 'terminate' SIGTERM
+
+# Load kernel headers
+EXTRA_VOLUMES=()
+for path in $(find /usr/src -maxdepth 1 -name 'linux-*'); do
+    EXTRA_VOLUMES+="--volume ${path}:${path}:ro "
+done
+
+# Start a container
+nerdctl run \
     --cgroup-parent 'kubepods.slice' \
     --cgroupns host \
-    --name "openark-vine-greeter" \
+    --name "${NAME}" \
     --namespace "${NAMESPACE}" \
     --network host \
     --privileged \
@@ -39,4 +63,9 @@ exec nerdctl run \
     --user root \
     --volume /dev:/dev:ro \
     --volume /lib/modules:/lib/modules:ro \
-    "${IMAGE}"
+    ${EXTRA_VOLUMES[@]} \
+    "${IMAGE}" &
+declare -ig pid_container="$!"
+
+wait "${pid_container}" || true
+terminate

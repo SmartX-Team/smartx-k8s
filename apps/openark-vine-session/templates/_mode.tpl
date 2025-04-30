@@ -7,7 +7,7 @@
 }}
 
 {{- $externalModes := list
-  "None"
+  "Manual"
 }}
 
 {{- if not ( has . ( concat

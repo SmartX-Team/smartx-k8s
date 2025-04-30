@@ -35,7 +35,7 @@ async fn callback(
 ) -> impl Responder {
     let web::Query(CallbackQuery {
         code,
-        // FIXME: Validate issuer
+        // TODO: Validate issuer
         // iss,
         // session_state,
         state: super::State {

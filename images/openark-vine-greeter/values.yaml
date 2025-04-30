@@ -10,6 +10,11 @@ debian:
     repo: docker.io/library/ubuntu
     tag: "24.04"
 
+driver:
+  nvidia:
+    enabled: false
+    version: ""
+
 user:
   uid: 2000
   gid: 2000

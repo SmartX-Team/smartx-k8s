@@ -12,7 +12,7 @@ use kube::{
     Api, Client, Config,
     api::{PatchParams, ValidationDirective},
 };
-use openark_core::operator::OperatorArgs;
+use openark_core::{client::HealthState, operator::OperatorArgs};
 use openark_kiss_api::r#box::BoxCrd;
 use tracing::{Level, instrument};
 
@@ -25,7 +25,7 @@ async fn ping() -> impl Responder {
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO))]
 #[get("health")]
 async fn health() -> impl Responder {
-    HttpResponse::Ok().json("healthy")
+    HttpResponse::Ok().json(HealthState::Healthy)
 }
 
 #[derive(Clone, Debug, Parser)]

@@ -4,7 +4,7 @@ use yew::prelude::*;
 fn component() -> Html {
     html! {
         <>
-        // FIXME: https://tailwind-dashboard-template-dashwind.vercel.app/login
+        // TODO: https://tailwind-dashboard-template-dashwind.vercel.app/login
             <h1 class="text-2xl mt-8 font-bold">{ "Admin Dashboard Starter Kit" }</h1>
             // <p class="py-2 mt-4">✓ <span class="font-semibold">Light/dark</span> mode toggle</p>
             // <p class="py-2">✓ <span class="font-semibold">Redux toolkit</span> and other utility libraries configured</p>

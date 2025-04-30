@@ -35,6 +35,16 @@ hubble:
   # See https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics
   # for more comprehensive documentation about Hubble metrics.
   metrics:
+{{- if has "org.ulagbulag.io/monitoring" .Values.features }}
+    enabled:
+      - dns
+      - drop
+      - flow
+      - httpV2:labelsContext=source_ip,source_namespace,source_workload,source_workload_kind,source_app,destination_ip,destination_namespace,destination_workload,destination_workload_kind,destination_app,traffic_direction
+      - icmp
+      - tcp
+{{- end }}
+
     serviceMonitor:
       # -- Create ServiceMonitor resources for Prometheus Operator.
       # This requires the prometheus CRDs to be available.
@@ -104,7 +114,9 @@ loadBalancer:
   # program is run directly out of the networking driver's early receive
   # path), or best-effort (use native mode XDP acceleration on devices
   # that support it).
-  acceleration: best-effort
+  # FIXME: XDP Acceleration is unstable
+  # acceleration: best-effort
+  acceleration: disabled
 {{- end }}
 
 operator:

@@ -84,7 +84,7 @@ org.ulagbulag.io/autoscaling/keda:
   requires:
     - org.ulagbulag.io/autoscaling
 
-org.ulagbulag.io/autoscaling/traffic:
+org.ulagbulag.io/autoscaling/service:
   requires:
     - org.ulagbulag.io/autoscaling
 

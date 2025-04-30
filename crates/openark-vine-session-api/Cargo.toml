@@ -33,15 +33,12 @@ std = [
     "url/std",
 ]
 
-# Async trait bounds
-send = ["openark-vine-oauth?/send"]
-
 clap = ["dep:clap", "std"]
 client = [
     "dep:anyhow",
     "dep:async-trait",
     "dep:http",
-    "openark-vine-oauth/client",
+    "openark-core/client",
     "serde",
     "std",
 ]
@@ -49,8 +46,11 @@ kube = ["kube/client", "kube/derive", "schemars", "std"]
 schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
 serde = ["chrono/serde", "dep:serde", "dep:serde-json", "url/serde"]
 
+# Async trait bounds
+send = ["openark-core?/send"]
+
 [dependencies]
-openark-vine-oauth = { workspace = true, optional = true }
+openark-core = { workspace = true, optional = true, features = ["alloc"] }
 
 anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }

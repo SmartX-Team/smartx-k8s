@@ -53,9 +53,9 @@ serde = ["chrono/serde", "dep:serde", "openark-vine-oauth/serde", "url/serde"]
 send = ["openark-vine-oauth/send"]
 
 # TLS
-tls-aws-lc-rs = ["kube?/rustls-tls", "openark-vine-oauth/tls-aws-lc-rs"]
-tls-openssl = ["kube?/openssl-tls", "openark-vine-oauth/tls-openssl"]
-tls-ring = ["kube?/rustls-tls", "openark-vine-oauth/tls-ring"]
+tls-aws-lc-rs = ["kube?/rustls-tls"]
+tls-openssl = ["kube?/openssl-tls"]
+tls-ring = ["kube?/rustls-tls"]
 
 # Tracing
 tracing = ["dep:tracing", "openark-vine-oauth/tracing"]

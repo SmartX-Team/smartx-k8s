@@ -184,6 +184,12 @@ pub struct FeaturesSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub ipc_passthrough: Option<bool>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub service: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -312,7 +318,7 @@ pub struct ServiceSpec {
 pub enum SessionMode {
     Desktop,
     #[default]
-    None,
+    Manual,
     Notebook,
     Ollama,
 }
@@ -321,7 +327,7 @@ impl SessionMode {
     /// Return `true` if the mode can spawn container pods.
     ///
     pub const fn is_pod(&self) -> bool {
-        matches!(self, Self::Desktop | Self::Notebook | Self::Ollama)
+        !matches!(self, Self::Manual)
     }
 }
 

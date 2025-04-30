@@ -9,6 +9,7 @@ use actix_web::{
 use anyhow::Result;
 use clap::Parser;
 use kube::Config;
+use openark_core::client::HealthState;
 use openark_vine_dashboard_api::app::AppMetadata;
 use openark_vine_oauth::OpenIDClientArgs;
 use tracing::{Level, instrument};
@@ -83,7 +84,7 @@ async fn ping() -> impl Responder {
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO))]
 #[get("health")]
 async fn health() -> impl Responder {
-    HttpResponse::Ok().json("healthy")
+    HttpResponse::Ok().json(HealthState::Healthy)
 }
 
 async fn try_main(args: Args) -> Result<()> {

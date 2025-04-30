@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 #[cfg(feature = "clap")]
 use clap::Parser;
-use k8s_openapi::api::core::v1::ObjectReference;
+use k8s_openapi::{api::core::v1::ObjectReference, apimachinery::pkg::apis::meta::v1::Condition};
 use kube::{
     Api, Client, CustomResourceExt, Result,
     api::{Patch, PatchParams, PostParams},
@@ -146,4 +146,18 @@ impl RecorderExt for Recorder {
         #[cfg(feature = "tracing")]
         error!("reconcile failed: {error:?}")
     }
+}
+
+/// Return `true` if any condition has been changed.
+///
+pub fn is_conditions_changed(a: &[Condition], b: &[Condition]) -> bool {
+    a.len() != b.len()
+        || a.iter().zip(b.iter()).any(|(a, b)| {
+            // Skip validating: last transition time
+            a.message != b.message
+                || a.observed_generation.is_some() && a.observed_generation != b.observed_generation
+                || a.reason != b.reason
+                || a.status != b.status
+                || a.type_ != b.type_
+        })
 }

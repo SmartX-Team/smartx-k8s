@@ -1,3 +1,8 @@
 ---
 cluster:
   domainName: {{ .Values.cluster.domainName | quote }}
+
+driver:
+  nvidia:
+    # enabled: {{ has "nvidia.com/gpu" .Values.features }}
+    version: {{ .Values.driver.nvidia.gpu.version | quote }}

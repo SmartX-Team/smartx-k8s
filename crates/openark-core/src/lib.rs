@@ -1,6 +1,8 @@
 #[cfg(feature = "opentelemetry")]
 extern crate openark_core_opentelemetry as opentelemetry;
 
+#[cfg(feature = "client")]
+pub mod client;
 #[cfg(feature = "operator")]
 pub mod operator;
 #[cfg(feature = "tls")]

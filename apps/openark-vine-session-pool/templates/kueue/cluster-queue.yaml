@@ -22,7 +22,6 @@ spec:
     withinClusterQueue: Never
   queueingStrategy: BestEffortFIFO
   resourceGroups:
-    # FIXME: to be configured
     - coveredResources:
         - cpu
         - ephemeral-storage

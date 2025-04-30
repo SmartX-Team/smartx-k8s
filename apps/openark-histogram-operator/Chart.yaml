@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
-name: openark-vine-dashboard
-description: Cloud-Native Dashboard Operator
+name: histogram-operator
+description: Cloud-Native Histogram Operator
 
 # A chart can be either an 'application' or a 'library' chart.
 #

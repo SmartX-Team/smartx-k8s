@@ -26,7 +26,7 @@ pub(crate) struct JsonWebTokenClaims {
 #[cfg(feature = "actix-web")]
 impl JsonWebTokenClaims {
     pub(crate) fn decode(token: &str) -> Result<Self, ErrorKind> {
-        // FIXME: Validate JWT Claims
+        // TODO: Validate JWT Claims
         let key = DecodingKey::from_secret(b"");
         let validation = {
             let mut validation = Validation::new(Algorithm::RS256);

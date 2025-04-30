@@ -12,7 +12,7 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   features: {}
-  mode: None
+  mode: Manual
   persistence:
     enabled: true
   services: {}

@@ -1,0 +1,6 @@
+---
+openark:
+  labels:
+    org.ulagbulag.io/histogram: {{ index .Values.openark.labels "org.ulagbulag.io/histogram" | quote }}
+    org.ulagbulag.io/histogram-record: {{ index .Values.openark.labels "org.ulagbulag.io/histogram-record" | quote }}
+    org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}

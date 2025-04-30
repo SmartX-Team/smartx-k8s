@@ -42,6 +42,10 @@ if [ -e "${dev}/driver/module" ]; then
         echo "DEBUG: Unload driver: ${driver}"
         if rmmod "${driver}"; then
             echo "INFO: Unloaded driver: ${driver}"
+            # Some GPU drivers (e.g. nouveau) need some time to finish uninit
+            if [ "${driver}" == 'nouveau' ]; then
+                sleep 2
+            fi
         else
             echo "WARN: Failed to unload driver: ${driver}; ignoring"
         fi

@@ -22,7 +22,7 @@ use yewdux::prelude::*;
 pub(super) struct Client;
 
 #[async_trait(?Send)]
-impl ::openark_vine_oauth::client::Client for Client {
+impl ::openark_core::client::Client for Client {
     fn base_url(&self) -> Url {
         let base_url = option_env!("API_BASE_URL").unwrap_or("/api/v1/");
         crate::router::href().join(base_url).unwrap()
@@ -174,7 +174,7 @@ impl Client {
     }
 
     async fn refresh_access_token(&self, refresh_token: &str) -> Result<()> {
-        // FIXME: Refresh the token without re-signing-in
+        // TODO: Refresh the token without re-signing-in
         let _ = refresh_token;
         self.sign_in().await
     }

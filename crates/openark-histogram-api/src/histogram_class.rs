@@ -7,7 +7,9 @@ use schemars::JsonSchema;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// Spec defines the desired state of TrafficRouterClass.
+use crate::common::ServiceReference;
+
+/// Spec defines the desired state of Histogram.
 ///
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "kube", derive(CustomResource))]
@@ -19,9 +21,9 @@ use serde::{Deserialize, Serialize};
         category = "org",
         group = "org.ulagbulag.io",
         version = "v1alpha1",
-        kind = "TrafficRouterClass",
-        root = "TrafficRouterClassCrd",
-        status = "TrafficRouterClassStatus",
+        kind = "HistogramClass",
+        root = "HistogramClassCrd",
+        status = "HistogramClassStatus",
         printcolumn = r#"{
             "name": "controller",
             "type": "string",
@@ -53,85 +55,46 @@ use serde::{Deserialize, Serialize};
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct TrafficRouterClassSpec {
-    /// ControllerName is the name of the controller that is managing Routers
-    /// of this class. The value of this field MUST be a domain prefixed path.
+pub struct HistogramClassSpec {
+    /// ControllerName is the name of the controller that is managing
+    /// Histograms of this class. The value of this field MUST be a domain
+    /// prefixed path.
     ///
-    /// Example: "example.com/tranffc-router-controller".
+    /// Example: "example.com/histogram-controller".
     ///
     /// This field is not mutable and cannot be empty.
-    ///
-    /// Support: Core
     pub controller_name: String,
 
-    /// Description helps describe a TrafficRouterClass with more details.
+    /// Description helps describe a Histogram with more details.
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "String::is_empty")
     )]
     pub description: String,
 
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub parameters_ref: Option<PartialObjectReference>,
+    pub backend_ref: ServiceReference,
 }
 
-/// PartialObjectReference is a reference to a resource.
+/// Status defines the current state of Histogram.
 ///
-/// PartialObjectReference can reference a standard Kubernetes resource, i.e. ConfigMap,
-/// or an implementation-specific custom resource. The resource can be
-/// cluster-scoped or namespace-scoped.
-///
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct PartialObjectReference {
-    /// Group is the group of the referent.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "String::is_empty")
-    )]
-    pub group: String,
-
-    /// Kind is kind of the referent.
-    pub kind: String,
-
-    /// Name is the name of the referent.
-    pub name: String,
-
-    /// Namespace is the namespace of the referent.
-    /// This field is required when referring to a Namespace-scoped resource and
-    /// MUST be unset when referring to a Cluster-scoped resource.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub namespace: Option<String>,
-}
-
-/// Status defines the current state of TrafficRouterClass.
-///
-/// Implementations MUST populate status on all TrafficRouterClass
+/// Implementations MUST populate status on all Histogram
 /// resources which specify their controller name.
 ///
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct TrafficRouterClassStatus {
+pub struct HistogramClassStatus {
     /// Conditions is the current status from the controller for
-    /// this TrafficRouterClass.
+    /// this Histogram.
     ///
     /// Controllers should prefer to publish conditions using values
-    /// of TrafficRouterClassConditionType for the type of each Condition.
-    #[serde(default = "TrafficRouterClassStatus::default_conditions")]
+    /// of HistogramConditionType for the type of each Condition.
+    #[serde(default = "HistogramClassStatus::default_conditions")]
     pub conditions: Vec<Condition>,
 }
 
-impl Default for TrafficRouterClassStatus {
+impl Default for HistogramClassStatus {
     fn default() -> Self {
         Self {
             conditions: Self::default_conditions(),
@@ -139,7 +102,7 @@ impl Default for TrafficRouterClassStatus {
     }
 }
 
-impl TrafficRouterClassStatus {
+impl HistogramClassStatus {
     fn default_conditions() -> Vec<Condition> {
         vec![Condition {
             last_transition_time: Time(DateTime::default()),

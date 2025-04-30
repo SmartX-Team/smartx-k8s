@@ -17,6 +17,7 @@ spec:
   features:
     devicePassthrough: true
     hostUdev: true
+    service: true
   mode: Notebook
   persistence:
     enabled: true

@@ -9,7 +9,7 @@ metadata:
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
-  priority: 999
+  priority: 2147483647 # i32::MAX
   profile: {{ .Values.defaultProfileName | quote }}
   user:
     kind: Guest

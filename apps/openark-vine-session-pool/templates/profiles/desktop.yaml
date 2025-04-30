@@ -18,6 +18,7 @@ spec:
     hostDisplay: true
     hostUdev: true
     ipcPassthrough: true
+    service: true
   mode: Desktop
   persistence:
     enabled: true

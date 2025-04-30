@@ -48,8 +48,14 @@ opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
 tls-default = ["tls-aws-lc-rs"]
-tls-aws-lc-rs = ["openark-vine-dashboard-api/tls-aws-lc-rs"]
-tls-openssl = ["openark-vine-dashboard-api/tls-openssl"]
+tls-aws-lc-rs = [
+    "openark-core/tls-aws-lc-rs",
+    "openark-vine-dashboard-api/tls-aws-lc-rs",
+]
+tls-openssl = [
+    "openark-core/tls-openssl",
+    "openark-vine-dashboard-api/tls-openssl",
+]
 
 # Tracing
 tracing = [

@@ -145,7 +145,7 @@ features:
   - org.ulagbulag.io/auth/sync
   - org.ulagbulag.io/autoscaling
   - org.ulagbulag.io/autoscaling/keda
-  - org.ulagbulag.io/autoscaling/traffic
+  - org.ulagbulag.io/autoscaling/service
   - org.ulagbulag.io/bare-metal-provisioning
   - org.ulagbulag.io/bare-metal-provisioning/kiss
   - org.ulagbulag.io/batch/scheduling
@@ -325,6 +325,8 @@ openark:
     org.ulagbulag.io/category: org.ulagbulag.io/category
     org.ulagbulag.io/compute-mode: org.ulagbulag.io/compute-mode
     org.ulagbulag.io/description: org.ulagbulag.io/description
+    org.ulagbulag.io/histogram: org.ulagbulag.io/histogram
+    org.ulagbulag.io/histogram-record: org.ulagbulag.io/histogram-record
     org.ulagbulag.io/is-external: ark.ulagbulag.io/is-external
     org.ulagbulag.io/is-private: ark.ulagbulag.io/is-private
     org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy

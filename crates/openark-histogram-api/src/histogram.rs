@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
-use gateway_api::apis::experimental::httproutes::HTTPRouteSpec;
+use chrono::DateTime;
+use k8s_openapi::apimachinery::pkg::apis::meta::v1::{Condition, Time};
 #[cfg(feature = "kube")]
 use kube::CustomResource;
 #[cfg(feature = "schemars")]
@@ -9,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{traffic_route_claim::RouteClaimStatus, traffic_router_class::PartialObjectReference};
+use crate::common::ObjectReference;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "kube", derive(CustomResource))]
@@ -22,13 +23,13 @@ use crate::{traffic_route_claim::RouteClaimStatus, traffic_router_class::Partial
         category = "org",
         group = "org.ulagbulag.io",
         version = "v1alpha1",
-        kind = "HTTPRouteClaim",
-        root = "HTTPRouteClaimCrd",
-        status = "RouteClaimStatus",
+        kind = "Histogram",
+        root = "HistogramCrd",
+        status = "HistogramStatus",
         printcolumn = r#"{
             "name": "class",
             "type": "string",
-            "jsonPath": ".spec.trafficRouterClassName"
+            "jsonPath": ".spec.histogramClassName"
         }"#,
         printcolumn = r#"{
             "name": "accepted",
@@ -50,45 +51,39 @@ use crate::{traffic_route_claim::RouteClaimStatus, traffic_router_class::Partial
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct HTTPRouteClaimSpec {
-    /// trafficRouterClassName is the name of the class that is managing
+pub struct HistogramSpec {
+    /// histogramClassName is the name of the class that is managing
     /// Routers of this class.
-    pub traffic_router_class_name: String,
+    pub histogram_class_name: String,
 
-    /// resources is the requested resources to provision.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Vec::is_empty")
-    )]
-    pub resources: Vec<RouteResource>,
+    pub histogram: HistogramSettings,
 
-    /// template is the HTTPRoute template to build.
-    #[serde(default)]
-    pub template: HTTPRouteSpec,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-
-pub struct RouteResource {
-    pub backend_ref: RouteResourceBackendRef,
+    pub target_ref: ObjectReference,
 
     #[cfg_attr(feature = "serde", serde(default))]
-    pub lifecycle: RouteResourceLifecycle,
+    pub lifecycle: ServiceLifecycle,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub struct RouteResourceBackendRef {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub object: PartialObjectReference,
+pub struct HistogramSettings {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub accumulate: Option<bool>,
 
-    pub port: u16,
+    /// Poll histogram per interval
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub interval: Option<u64>,
+
+    pub size: u8,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -96,18 +91,18 @@ pub struct RouteResourceBackendRef {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub struct RouteResourceLifecycle {
+pub struct ServiceLifecycle {
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub pre_start: Option<RouteResourceProbe>,
+    pub pre_start: Option<ServiceProbe>,
 
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub post_stop: Option<RouteResourceProbe>,
+    pub post_stop: Option<ServiceProbe>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -115,8 +110,8 @@ pub struct RouteResourceLifecycle {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub enum RouteResourceProbe {
-    Http(RouteResourceHTTPProbe),
+pub enum ServiceProbe {
+    Http(HttpServiceProbe),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -124,22 +119,22 @@ pub enum RouteResourceProbe {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub struct RouteResourceHTTPProbe {
+pub struct HttpServiceProbe {
     pub path: String,
 
     pub port: u16,
 
-    pub protocol: RouteResourceHTTPProtocol,
+    pub protocol: HttpServiceProtocol,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub body: RouteResourceHTTPBody,
+    pub body: HttpServiceBody,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 
-pub enum RouteResourceHTTPProtocol {
+pub enum HttpServiceProtocol {
     DELETE,
     GET,
     PATCH,
@@ -151,6 +146,56 @@ pub enum RouteResourceHTTPProtocol {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub enum RouteResourceHTTPBody {
+pub enum HttpServiceBody {
     JsonBody(BTreeMap<String, Value>),
+}
+
+/// Status defines the current state of Histogram.
+///
+/// Implementations MUST populate status on all Histogram
+/// resources which specify their controller name.
+///
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct HistogramStatus {
+    /// Conditions is the current status from the controller for
+    /// this Histogram.
+    ///
+    /// Controllers should prefer to publish conditions using values
+    /// of HistogramConditionType for the type of each Condition.
+    #[serde(default = "HistogramStatus::default_conditions")]
+    pub conditions: Vec<Condition>,
+}
+
+impl Default for HistogramStatus {
+    fn default() -> Self {
+        Self {
+            conditions: Self::default_conditions(),
+        }
+    }
+}
+
+impl HistogramStatus {
+    fn default_conditions() -> Vec<Condition> {
+        vec![Condition {
+            last_transition_time: Time(DateTime::default()),
+            message: "Waiting for controller".into(),
+            observed_generation: None,
+            reason: "Pending".into(),
+            status: "Unknown".into(),
+            type_: "Accepted".into(),
+        }]
+    }
+
+    /// Return `true` if the resource is accepted.
+    ///
+    pub fn is_accepted(&self) -> bool {
+        self.conditions.iter().any(|condition| {
+            condition.type_ == "Accepted"
+                && condition.reason == "Accepted"
+                && condition.status == "True"
+        })
+    }
 }

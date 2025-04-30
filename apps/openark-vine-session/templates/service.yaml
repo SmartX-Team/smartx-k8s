@@ -95,6 +95,7 @@ ports:
 
 {{- end }}
 
+{{- if .Values.features.service }}
 {{- $ports := index ( include "helm.service.ports" $ | fromYaml ) "ports" }}
 {{- if not ( empty $ports ) }}
 ---
@@ -111,4 +112,5 @@ spec:
 {{- include "helm.selectorLabels" $ | nindent 4 }}
   ports:
 {{- $ports | toYaml | nindent 4 }}
+{{- end }}
 {{- end }}

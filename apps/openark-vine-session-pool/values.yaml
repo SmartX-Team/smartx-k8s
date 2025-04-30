@@ -9,12 +9,6 @@ features:
     enabled: false
 
 profiles:
-  # - kind: Ollama # Options: [Desktop, Kueue, Notebook, Ollama, VirtualMachine]
-  #   name: default-kueue
-  #   extraFlavors: []
-  #   image: {}
-  #   session: {}
-
   - kind: Desktop
     name: ubuntu-24.04
     session:

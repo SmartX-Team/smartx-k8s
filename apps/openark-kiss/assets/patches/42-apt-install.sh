@@ -11,17 +11,19 @@ set -e -o pipefail
 # Verbose
 set -x
 
-apt-get install -y \
-    build-essential \
-    containerd \
-    curl \
-    git \
-    haveged \
-    iw \
-    network-manager \
-    nfs-common \
-    pciutils \
-    ubuntu-server \
-    vim \
-    wget \
-    wireless-tools
+apt-get install --no-install-recommends --no-install-suggests -y \
+{{- range $_ := .Values.packages.ubuntu.requires }}
+    {{ . | quote }} \
+{{- end }}
+{{- if eq "ubuntu" .Values.kiss.os.dist }}
+{{- if eq "edge" .Values.kiss.os.kernel }}
+    {{ printf "linux-generic-hwe-%s" .Values.kiss.os.version | quote }} \
+{{- else if eq "stable" .Values.kiss.os.kernel }}
+    {{ printf "linux-generic" | quote }} \
+{{- else }}
+{{- fail ( printf "Unsupported kernel type: %s" .Values.kiss.os.kernel ) }}
+{{- end }}
+{{- else }}
+{{- fail "Internal error: Ubuntu OS is not enabled" }}
+{{- end }}
+    && true

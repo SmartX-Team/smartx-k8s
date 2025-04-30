@@ -16,6 +16,7 @@ spec:
     hostAudio: true
     hostDisplay: true
     hostUdev: true
+    service: true
   mode: Desktop
   persistence:
     enabled: true
