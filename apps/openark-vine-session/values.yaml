@@ -18,7 +18,7 @@ externalServices:
   ollama:
     image:
       repo: docker.io/ollama/ollama
-      tag: 0.6.6
+      tag: 0.6.8
       pullPolicy: IfNotPresent
 
 extraServices:
