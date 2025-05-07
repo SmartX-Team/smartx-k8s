@@ -13,6 +13,7 @@ models:
     - name: gemma3:27b-it-fp16
     - name: llama3.2-vision:90b
     - name: llama3.3:70b
+    - name: llama4:scout
     - name: openthinker:32b
     - name: r1-1776:70b
 
