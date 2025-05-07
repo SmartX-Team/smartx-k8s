@@ -1,3 +1,5 @@
+mod status;
+
 use std::{collections::BTreeMap, iter, sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
@@ -40,6 +42,8 @@ use openark_vine_session_api::{
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, debug, info, instrument, warn};
+
+use crate::status::Reason;
 
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -654,19 +658,19 @@ async fn report_update(
 ) -> Result<(), ::kube::Error> {
     let event = ::kube::runtime::events::Event {
         type_: ::kube::runtime::events::EventType::Normal,
-        reason: "SessionUpdated".into(),
+        reason: Reason::SessionUpdated.to_string(),
         note: Some(message),
         action: "Scheduling".into(),
         secondary: None,
     };
-    recorder.report_update(&event, reference).await
+    RecorderExt::<Reason>::report_update(recorder, &event, reference).await
 }
 
 async fn report_error(
     recorder: &Recorder,
     error: ::kube::runtime::controller::Error<Error, ::kube::runtime::watcher::Error>,
 ) {
-    let reason = "SessionError".into();
+    let reason = Reason::SessionError;
     let action = "Scheduling".into();
     recorder.report_error(error, reason, action).await
 }

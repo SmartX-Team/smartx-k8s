@@ -70,6 +70,7 @@ k8s-openapi = { workspace = true, features = [
 kube = { workspace = true, features = ["runtime"] }
 kcr-argoproj-io = { workspace = true }
 serde-json = { workspace = true, features = ["std"] }
+strum = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true, optional = true, features = [
     "attributes",

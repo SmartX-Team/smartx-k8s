@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         clang \
         cmake \
+    # Switch channel
+    && rustup default {{ .Values.rust.channel | quote }} \
     # Enable wasm32 target
     && rustup target add wasm32-unknown-unknown \
     # Build

@@ -1,0 +1,13 @@
+---
+apiVersion: org.ulagbulag.io/v1alpha1
+kind: SpectrumClass
+metadata:
+  name: {{ .Values.spectrumClass.name | quote }}
+spec:
+  controllerName: {{ .Chart.Name | quote }}
+  backendRef:
+    group: ""
+    kind: Service
+    name: {{ printf "%s-apiserver" ( include "helm.fullname" $ ) | quote }}
+    namespace: {{ .Release.Namespace | quote }}
+    port: {{ .Values.spectrumClass.port }}

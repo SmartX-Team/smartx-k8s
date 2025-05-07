@@ -1,0 +1,83 @@
+[package]
+name = "openark-spectrum-api"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+std = [
+    "anyhow?/std",
+    "chrono/std",
+    "http?/std",
+    # "k8s-openapi/std",
+    "openark-core?/std",
+    "ordered-float/std",
+    # "schemars?/std",
+    "serde?/std",
+    "serde-json/std",
+    "strum/std",
+    "url?/std",
+    "uuid/std",
+]
+
+client = [
+    "dep:anyhow",
+    "dep:async-trait",
+    "dep:http",
+    "dep:openark-core",
+    "dep:url",
+    "openark-core?/client",
+]
+kube = ["schemars", "std"]
+opeartor = ["kube", "openark-core/operator"]
+schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
+serde = [
+    "chrono/serde",
+    "dep:serde",
+    "ordered-float/serde",
+    "url?/serde",
+    "uuid/serde",
+]
+
+# Async trait bounds
+send = ["openark-core?/send"]
+
+# Tracing
+tracing = ["openark-core?/tracing"]
+
+[dependencies]
+openark-core = { workspace = true, optional = true }
+
+anyhow = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
+chrono = { workspace = true, features = ["alloc"] }
+http = { workspace = true, optional = true }
+k8s-openapi = { workspace = true }
+kube = { workspace = true, features = ["client", "derive"] }
+ordered-float = { workspace = true }
+schemars = { workspace = true, optional = true, features = [
+    "chrono",
+    "derive",
+    "uuid1",
+] }
+serde = { workspace = true, optional = true, features = ["alloc", "derive"] }
+serde-json = { workspace = true }
+strum = { workspace = true, features = ["derive"] }
+url = { workspace = true, optional = true }
+uuid = { workspace = true }

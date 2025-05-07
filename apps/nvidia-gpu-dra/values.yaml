@@ -42,6 +42,6 @@ kubeletPlugin:
                 values:
                   - "true"
               - key: nvidia.com/gpu.workload.config
-                operator: In
+                operator: NotIn
                 values:
-                  - container
+                  - vm-passthrough

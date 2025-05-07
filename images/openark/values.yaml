@@ -8,3 +8,6 @@ debian:
   image:
     repo: docker.io/library/debian
     tag: bookworm
+
+rust:
+  channel: ""

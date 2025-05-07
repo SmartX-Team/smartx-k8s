@@ -2,3 +2,6 @@
 openark:
   labels:
     org.ulagbulag.io/alias: {{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
+
+rust:
+  channel: ""

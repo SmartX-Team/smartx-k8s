@@ -1,12 +1,24 @@
+use std::time::Duration;
+
 use async_trait::async_trait;
+use chrono::Utc;
 #[cfg(feature = "clap")]
 use clap::Parser;
-use k8s_openapi::{api::core::v1::ObjectReference, apimachinery::pkg::apis::meta::v1::Condition};
+use k8s_openapi::{
+    api::core::v1::ObjectReference,
+    apimachinery::pkg::apis::meta::v1::{Condition, ObjectMeta, Time},
+};
 use kube::{
     Api, Client, CustomResourceExt, Result,
     api::{Patch, PatchParams, PostParams},
-    runtime::events::{Event, EventType, Recorder},
+    runtime::{
+        controller::Action,
+        events::{Event, EventType, Recorder},
+        reflector::{Lookup, ObjectRef},
+    },
 };
+use serde::{Serialize, de::DeserializeOwned};
+use serde_json::json;
 #[cfg(feature = "tracing")]
 use tracing::{Level, error, info, instrument};
 
@@ -78,7 +90,7 @@ where
 }
 
 #[async_trait]
-pub trait RecorderExt {
+pub trait RecorderExt<R> {
     async fn report_update(
         &self,
         event: &Event,
@@ -88,13 +100,14 @@ pub trait RecorderExt {
     async fn report_error(
         &self,
         error: ::kube::runtime::controller::Error<::kube::Error, ::kube::runtime::watcher::Error>,
-        reason: String,
+        reason: R,
         action: String,
-    );
+    ) where
+        R: 'async_trait + Send + ToString;
 }
 
 #[async_trait]
-impl RecorderExt for Recorder {
+impl<R> RecorderExt<R> for Recorder {
     async fn report_update(
         &self,
         event: &Event,
@@ -124,9 +137,11 @@ impl RecorderExt for Recorder {
     async fn report_error(
         &self,
         error: ::kube::runtime::controller::Error<::kube::Error, ::kube::runtime::watcher::Error>,
-        reason: String,
+        reason: R,
         action: String,
-    ) {
+    ) where
+        R: 'async_trait + Send + ToString,
+    {
         if let ::kube::runtime::controller::Error::ReconcilerFailed(error, object) = &error {
             // Shorten error notes
             let error = match error {
@@ -135,7 +150,7 @@ impl RecorderExt for Recorder {
             };
             let event = Event {
                 type_: EventType::Warning,
-                reason,
+                reason: reason.to_string(),
                 note: Some(error),
                 action,
                 secondary: None,
@@ -150,7 +165,7 @@ impl RecorderExt for Recorder {
 
 /// Return `true` if any condition has been changed.
 ///
-pub fn is_conditions_changed(a: &[Condition], b: &[Condition]) -> bool {
+fn is_conditions_changed(a: &[Condition], b: &[Condition]) -> bool {
     a.len() != b.len()
         || a.iter().zip(b.iter()).any(|(a, b)| {
             // Skip validating: last transition time
@@ -160,4 +175,127 @@ pub fn is_conditions_changed(a: &[Condition], b: &[Condition]) -> bool {
                 || a.status != b.status
                 || a.type_ != b.type_
         })
+}
+
+async fn report_update<K, R>(
+    recorder: &Recorder,
+    object: &K,
+    reason: R,
+    message: String,
+) -> Result<()>
+where
+    K: Resource,
+    <K as Lookup>::DynamicType: Default,
+    R: Reason,
+{
+    let event = ::kube::runtime::events::Event {
+        type_: if reason.accepted() {
+            ::kube::runtime::events::EventType::Normal
+        } else {
+            ::kube::runtime::events::EventType::Warning
+        },
+        reason: reason.to_string(),
+        note: Some(message),
+        action: "Accepted".into(),
+        secondary: None,
+    };
+
+    let reference = ObjectRef::from_obj(object).into();
+    <Recorder as RecorderExt<R>>::report_update(recorder, &event, &reference).await
+}
+
+pub trait Reason
+where
+    Self: Clone + ToString,
+{
+    fn accepted(&self) -> bool;
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Status<R> {
+    pub reason: R,
+    pub message: String,
+    pub requeue: bool,
+}
+
+impl<R> Status<R> {
+    fn into_condition(self, metadata: &ObjectMeta) -> Condition
+    where
+        R: Reason,
+    {
+        let Self {
+            reason,
+            message,
+            requeue: _,
+        } = self;
+
+        Condition {
+            last_transition_time: Time(Utc::now()),
+            message,
+            observed_generation: metadata.generation,
+            reason: reason.to_string(),
+            status: if reason.accepted() {
+                "True".into()
+            } else {
+                "False".into()
+            },
+            type_: "Accepted".into(),
+        }
+    }
+}
+
+pub trait Resource
+where
+    Self: Clone + DeserializeOwned + ::kube::Resource<DynamicType = ()> + Lookup<DynamicType = ()>,
+{
+    type Status: Serialize;
+
+    fn conditions(&self) -> Option<&[Condition]>;
+
+    fn build_status(&self, conditions: Vec<Condition>) -> <Self as Resource>::Status;
+}
+
+pub struct Context {
+    pub interval: Duration,
+    pub patch_params: PatchParams,
+    pub recorder: Recorder,
+}
+
+impl Context {
+    pub async fn commit<K, R>(&self, api: &Api<K>, object: &K, status: Status<R>) -> Result<Action>
+    where
+        K: Resource,
+        R: Reason,
+    {
+        let Status {
+            reason,
+            message,
+            requeue,
+        } = status.clone();
+
+        let metadata = object.meta();
+        let conditions = vec![status.into_condition(metadata)];
+
+        // Skip updating status if nothing has been changed
+        let last_conditions = object.conditions();
+        let has_changed = last_conditions
+            .is_none_or(|last_conditions| is_conditions_changed(&conditions, last_conditions));
+
+        if has_changed {
+            let name = metadata.name.as_deref().expect("conciled resource");
+            let patch = Patch::Merge(json!({
+                "apiVersion": <K as ::kube::Resource>::api_version(&()),
+                "kind": <K as ::kube::Resource>::kind(&()),
+                "status": object.build_status(conditions),
+            }));
+            api.patch_status(name, &self.patch_params, &patch).await?;
+        }
+
+        report_update(&self.recorder, object, reason, message).await?;
+        if requeue {
+            Ok(Action::requeue(self.interval))
+        } else {
+            Ok(Action::await_change())
+        }
+    }
 }

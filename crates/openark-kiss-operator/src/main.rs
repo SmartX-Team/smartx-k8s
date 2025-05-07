@@ -1,5 +1,6 @@
 mod r#box;
 mod job;
+mod status;
 
 use anyhow::Result;
 use clap::Parser;

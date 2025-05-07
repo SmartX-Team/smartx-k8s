@@ -22,6 +22,8 @@ use serde_json::json;
 #[cfg(feature = "tracing")]
 use tracing::{Level, info, instrument};
 
+use crate::status::Reason;
+
 struct Context {
     ansible: AnsibleClient,
     api: Api<BoxCrd>,
@@ -223,19 +225,19 @@ async fn report_update(
 ) -> Result<(), ::kube::Error> {
     let event = ::kube::runtime::events::Event {
         type_: ::kube::runtime::events::EventType::Normal,
-        reason: "ProvisioningUpdated".into(),
+        reason: Reason::ProvisioningUpdated.to_string(),
         note: Some(message),
         action: "Scheduling".into(),
         secondary: None,
     };
-    recorder.report_update(&event, reference).await
+    RecorderExt::<Reason>::report_update(recorder, &event, reference).await
 }
 
 async fn report_error(
     recorder: &Recorder,
     error: ::kube::runtime::controller::Error<Error, ::kube::runtime::watcher::Error>,
 ) {
-    let reason = "ProvisioningError".into();
+    let reason = Reason::ProvisioningError;
     let action = "Scheduling".into();
     recorder.report_error(error, reason, action).await
 }
