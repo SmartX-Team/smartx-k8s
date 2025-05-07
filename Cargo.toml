@@ -45,9 +45,9 @@ connected-data-lake-layer-delta-lake = { path = "crates/connected-data-lake-laye
 openark-admission-openapi = { path = "crates/openark-admission-openapi" }
 openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }
-openark-histogram-api = { path = "crates/openark-histogram-api" }
 openark-kiss-ansible = { path = "crates/openark-kiss-ansible" }
 openark-kiss-api = { path = "crates/openark-kiss-api" }
+openark-spectrum-api = { path = "crates/openark-spectrum-api" }
 openark-vine-dashboard-api = { path = "crates/openark-vine-dashboard-api" }
 openark-vine-dashboard-jq = { path = "crates/openark-vine-dashboard-jq" }
 openark-vine-oauth = { path = "crates/openark-vine-oauth" }
@@ -78,6 +78,11 @@ datafusion = { version = "46", default-features = false }
 fuser = { version = "0.15", default-features = false, features = ["abi-7-31"] }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.3", default-features = false }
+good-lp = { package = "good_lp", version = "1.13", features = [
+    "coin_cbc",
+    "lp-solvers",
+    "singlethread-cbc",
+] }
 gloo-net = { version = "0.6", default-features = false }
 hickory-server = { version = "0.25", default-features = false, features = [
     "backtrace",
@@ -108,6 +113,7 @@ opentelemetry-sdk = { package = "opentelemetry_sdk", version = "0.28", default-f
 ordered-float = { version = "5.0", default-features = false }
 prometheus-http-query = { version = "0.8", default-features = false }
 proxy-wasm = { version = "0.2.2", default-features = false }
+redb = { version = "2.5", default-features = false }
 regex = { version = "1.11", default-features = false }
 reqwest = { version = "0.12", default-features = false, features = [
     "charset",
@@ -138,3 +144,7 @@ web-sys = { version = "0.3", default-features = false }
 yew = { version = "0.21", default-features = false }
 yew-router = { version = "0.18", default-features = false }
 yewdux = { version = "0.11", default-features = false, features = ["future"] }
+
+[patch.crates-io]
+# FIXME: Wait a PR to be merged
+good_lp = { git = "https://github.com/ulagbulag/good_lp.git", branch = "feat/impl-clone-for-constraint-and-problem-variables" }

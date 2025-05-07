@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openark-spectrum-operator
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: openark-spectrum
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/autoscaling/service
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

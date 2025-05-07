@@ -4,7 +4,10 @@ use http::Method;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use url::Url;
 
-pub enum Payload<'a, T> {
+pub enum Payload<'a, T>
+where
+    T: ?Sized,
+{
     Empty,
     Form(&'a T),
     Json(&'a T),
@@ -68,7 +71,7 @@ pub trait Client {
         form: &I,
     ) -> Result<O>
     where
-        I: Sync + Serialize,
+        I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
         self.request_with_payload(credentials, method, url, Payload::Form(form))
@@ -84,7 +87,7 @@ pub trait Client {
         json: &I,
     ) -> Result<O>
     where
-        I: Sync + Serialize,
+        I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
         self.request_with_payload(credentials, method, url, Payload::Json(json))
@@ -99,7 +102,7 @@ pub trait Client {
         payload: Payload<'_, I>,
     ) -> Result<O>
     where
-        I: Sync + Serialize,
+        I: ?Sized + Sync + Serialize,
         O: DeserializeOwned;
 }
 
@@ -119,7 +122,7 @@ impl Client for ::reqwest::Client {
         payload: Payload<'_, I>,
     ) -> Result<O>
     where
-        I: Sync + Serialize,
+        I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
         use anyhow::Error;

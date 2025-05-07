@@ -28,6 +28,7 @@ std = [
     "openark-core-opentelemetry?/std",
     "rustls?/std",
     "serde?/std",
+    "serde-json?/std",
     "url/std",
 ]
 
@@ -45,8 +46,10 @@ client = [
 ]
 operator = [
     "dep:async-trait",
+    "dep:chrono",
     "dep:k8s-openapi",
     "dep:kube",
+    "dep:serde-json",
     "kube/client",
     "kube/runtime",
     "std",
@@ -121,12 +124,14 @@ clap = { workspace = true, optional = true, features = [
     "unicode",
     "usage",
 ] }
+chrono = { workspace = true, optional = true }
 http = { workspace = true, optional = true }
 k8s-openapi = { workspace = true, optional = true }
 kube = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true, features = ["json"] }
 rustls = { workspace = true, optional = true, features = ["tls12"] }
 serde = { workspace = true, optional = true }
+serde-json = { workspace = true, optional = true }
 tracing = { workspace = true, optional = true }
 url = { workspace = true, optional = true }
 

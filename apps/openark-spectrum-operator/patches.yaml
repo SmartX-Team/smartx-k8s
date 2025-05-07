@@ -1,0 +1,17 @@
+---
+openark:
+  labels:
+    org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
+    org.ulagbulag.io/spectrum-histogram: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram" | quote }}
+    org.ulagbulag.io/spectrum-histogram-record: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram-record" | quote }}
+    org.ulagbulag.io/spectrum-histogram-weight: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram-weight" | quote }}
+    org.ulagbulag.io/spectrum-pool: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-priority: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-priority" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-weight: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-weight-penalty: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-penalty" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-weight-max: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-max" | quote }}
+    org.ulagbulag.io/spectrum-pool-claim-weight-min: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-min" | quote }}
+    org.ulagbulag.io/spectrum-pool-record: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-record" | quote }}

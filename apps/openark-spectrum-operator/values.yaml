@@ -1,0 +1,21 @@
+---
+apiserver:
+  baseUrl: ""
+
+openark:
+  labels: {}
+
+operator:
+  image:
+    repo: quay.io/ulagbulag/openark
+    tag: ""
+    pullPolicy: Always
+
+prometheus:
+  baseUrl: http://grafana-kube-prometheus-st-prometheus.monitoring.svc:9090
+  defaultRecords:
+    service: openark_spectrum_histogram_service_weight_raw
+
+spectrumClass:
+  name: openark
+  port: 80

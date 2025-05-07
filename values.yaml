@@ -325,12 +325,23 @@ openark:
     org.ulagbulag.io/category: org.ulagbulag.io/category
     org.ulagbulag.io/compute-mode: org.ulagbulag.io/compute-mode
     org.ulagbulag.io/description: org.ulagbulag.io/description
-    org.ulagbulag.io/histogram: org.ulagbulag.io/histogram
-    org.ulagbulag.io/histogram-record: org.ulagbulag.io/histogram-record
     org.ulagbulag.io/is-external: ark.ulagbulag.io/is-external
     org.ulagbulag.io/is-private: ark.ulagbulag.io/is-private
     org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy
     org.ulagbulag.io/signed-out: org.ulagbulag.io/signed-out
+    org.ulagbulag.io/spectrum-histogram: org.ulagbulag.io/spectrum-histogram
+    org.ulagbulag.io/spectrum-histogram-record: org.ulagbulag.io/spectrum-histogram-record
+    org.ulagbulag.io/spectrum-histogram-weight: org.ulagbulag.io/spectrum-histogram-weight
+    org.ulagbulag.io/spectrum-pool: org.ulagbulag.io/spectrum-pool
+    org.ulagbulag.io/spectrum-pool-claim: org.ulagbulag.io/spectrum-pool-claim
+    org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop: org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop
+    org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start: org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start
+    org.ulagbulag.io/spectrum-pool-claim-priority: org.ulagbulag.io/spectrum-pool-claim-priority
+    org.ulagbulag.io/spectrum-pool-claim-weight: org.ulagbulag.io/spectrum-pool-claim-weight
+    org.ulagbulag.io/spectrum-pool-claim-weight-penalty: org.ulagbulag.io/spectrum-pool-claim-weight-penalty
+    org.ulagbulag.io/spectrum-pool-claim-weight-max: org.ulagbulag.io/spectrum-pool-claim-weight-max
+    org.ulagbulag.io/spectrum-pool-claim-weight-min: org.ulagbulag.io/spectrum-pool-claim-weight-min
+    org.ulagbulag.io/spectrum-pool-record: org.ulagbulag.io/spectrum-pool-record
     org.ulagbulag.io/title: org.ulagbulag.io/title
     org.ulagbulag.io/topology-block: org.ulagbulag.io/topology-block
     org.ulagbulag.io/topology-rack: org.ulagbulag.io/topology-rack
@@ -345,6 +356,10 @@ repo:
   owner: SmartX-Team
   name: smartx-k8s
   revision: main
+
+# Rust Toolchain Configuration
+rust:
+  channel: nightly
 
 # SmartX Tower cluster
 # TODO(user): Configure it!

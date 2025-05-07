@@ -1,0 +1,96 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm.fullname" $ | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+{{- include "helm.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: operator
+  template:
+    metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-sdk: "true"
+      labels:
+{{- include "helm.labels" $ | nindent 8 }}
+        app.kubernetes.io/component: operator
+    spec:
+      affinity:
+        nodeAffinity:
+          # KISS normal control plane nodes should be preferred
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                    operator: DoesNotExist
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+      containers:
+        - name: operator
+          image: "{{ .Values.operator.image.repo }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy | quote }}
+          command:
+            - /usr/bin/env
+            - openark-spectrum-operator
+          env:
+            - name: CONTROLLER_NAME
+              value: {{ .Chart.Name | quote }}
+            - name: CONTROLLER_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: INSTALL_CRDS
+              value: "true"
+            - name: OPENARK_LABEL_SPECTRUM_HISTOGRAM_PARENT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_HISTOGRAM_WEIGHT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram-weight" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_POST_STOP
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_PRE_START
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_PARENT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_PRIORITY
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-priority" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_WEIGHT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_WEIGHT_PENALTY
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-penalty" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_WEIGHT_MAX
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-max" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_WEIGHT_MIN
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-weight-min" | quote }}
+            - name: OPENARK_LABEL_SPECTRUM_POOL_PARENT
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool" | quote }}
+            - name: OPENARK_SPECTRUM_POOL_BASE_URL
+              value: {{ printf "http://%s-pool.%s.svc" ( include "helm.fullname" $ ) ( .Release.Namespace ) | quote }}
+            - name: RUST_LOG
+              value: INFO
+            - name: UPGRADE_CRDS
+              value: "true"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ include "helm.fullname" $ | quote }}

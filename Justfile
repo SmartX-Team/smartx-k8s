@@ -22,6 +22,36 @@ bootstrap REPO:
 box *ARGS:
     @./hack/box-ls.sh {{ ARGS }}
 
+# Run development package: openark-spectrum-backend
+run-openark-spectrum-backend:
+    @cargo run --package openark-spectrum-backend -- \
+        --default-record-service "$(cat ./apps/openark-spectrum-operator/values.yaml | yq '.prometheus.defaultRecords.service')" \
+        --label-custom-histogram-record "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram-record"')" \
+        --prometheus-base-url "$(cat ./apps/openark-spectrum-operator/values.yaml | yq '.prometheus.baseUrl')"
+
+# Run development package: openark-spectrum-operator
+run-openark-spectrum-operator:
+    @cargo run --package openark-spectrum-operator -- \
+        --controller-name 'openark-histogram' \
+        --install-crds \
+        --label-histogram-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram"')" \
+        --label-histogram-weight "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram-weight"')" \
+        --label-pool-claim-lifecycle-post-stop "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop"')" \
+        --label-pool-claim-lifecycle-pre-start "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start"')" \
+        --label-pool-claim-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim"')" \
+        --label-pool-claim-priority "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-priority"')" \
+        --label-pool-claim-weight "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-weight"')" \
+        --label-pool-claim-weight-penalty "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-weight-penalty"')" \
+        --label-pool-claim-weight-max "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-weight-max"')" \
+        --label-pool-claim-weight-min "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-weight-min"')" \
+        --label-pool-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool"')" \
+        --pool-base-url 'http://localhost:9000' \
+        --upgrade-crds
+
+# Run development package: openark-spectrum-pool
+run-openark-spectrum-pool:
+    @cargo run --package openark-spectrum-pool --
+
 # Run development package: openark-vine-session-backend
 run-openark-vine-dashboard-backend:
     @cargo run --package openark-vine-dashboard-backend -- \

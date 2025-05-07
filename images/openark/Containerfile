@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         clang \
         cmake \
+        coinor-libcbc-dev \
+    # Switch channel
+    && rustup default {{ .Values.rust.channel | quote }} \
     # Cleanup
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*
@@ -31,7 +34,10 @@ RUN \
     # Fix version
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
-    && cargo build --bins --exclude 'openark-vine-dashboard-frontend' --workspace --release \
+    && cargo build --bins \
+        --exclude 'openark-vine-dashboard-frontend' \
+        --profile 'release' \
+        --workspace \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
 
 # Be ready for serving
@@ -39,6 +45,7 @@ FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
+        coinor-cbc \
         curl \
         git \
         jq \
