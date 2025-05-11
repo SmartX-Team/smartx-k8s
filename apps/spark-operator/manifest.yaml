@@ -18,7 +18,14 @@ spec:
     useClusterValues: false
     features:
       - org.ulagbulag.io/observability
-    ignoreDifferences: []
+    ignoreDifferences:
+      - kind: Secret
+        name: spark-operator-webhook-certs
+        jsonPointers:
+          - /data/ca-cert.pem
+          - /data/ca-key.pem
+          - /data/server-cert.pem
+          - /data/server-key.pem
     sync:
       createNamespace: true
       respectIgnoreDifferences: true
