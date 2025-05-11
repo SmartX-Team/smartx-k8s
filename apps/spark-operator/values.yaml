@@ -46,10 +46,10 @@ affinity:
 resources:
   limits:
     cpu: 100m
-    memory: 300Mi
+    memory: 1Gi
   requests:
     cpu: 100m
-    memory: 300Mi
+    memory: 1Gi
 
 batchScheduler:
   # -- Enable batch scheduler for spark jobs scheduling. If enabled, users can specify batch scheduler name in spark application
