@@ -1,3 +1,4 @@
+mod pool;
 mod routes;
 mod store;
 
@@ -36,7 +37,7 @@ struct Args {
         long,
         env = "BIND_ADDR",
         value_name = "ADDR",
-        default_value = "0.0.0.0:8000"
+        default_value = "0.0.0.0:9000"
     )]
     bind_addr: SocketAddr,
 
@@ -57,14 +58,11 @@ async fn try_main(args: Args) -> Result<()> {
         base_url.pop();
     }
 
-    let client = Data::new(::reqwest::Client::default());
     let store = Data::new(store.build()?);
 
     // Start web server
     HttpServer::new(move || {
-        let app = App::new()
-            .app_data(Data::clone(&client))
-            .app_data(Data::clone(&store));
+        let app = App::new().app_data(Data::clone(&store));
 
         let app = app.service(
             web::scope(&base_url)

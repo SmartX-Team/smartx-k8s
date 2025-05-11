@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::{borrow::Cow, collections::BTreeSet};
 
 use k8s_openapi::api::{
     core::v1::{Service, ServiceSpec},
@@ -9,7 +9,10 @@ use kube::{
     api::{DeleteParams, ListParams, ObjectMeta, PostParams},
 };
 use openark_spectrum_api::{
-    client::PoolClient, schema::ScheduledItem, spectrum_class::SpectrumClassCrd,
+    client::PoolClient,
+    pool_claim::{PoolClaimCrd, PoolClaimSpec},
+    schema::{PoolCommitRequest, PoolCommitRequestItem, PoolRequest, PoolResource, PoolResponse},
+    spectrum_class::SpectrumClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
@@ -20,7 +23,7 @@ use crate::{
     targets::service::{
         Context as TargetContext, LABEL_KEY_SELECTOR, get_weighted_endpoints, infer_address_type,
     },
-    utils::pool::{Item, Lifecycle, Resource, schedule},
+    utils::pool::{Item, Resource, ScheduledItem, schedule},
 };
 
 pub(super) struct Context<'a> {
@@ -29,14 +32,7 @@ pub(super) struct Context<'a> {
     pub(super) client: &'a ::reqwest::Client,
     pub(super) kube: &'a Client,
     pub(super) label_claim_parent: &'a str,
-    pub(super) label_lifecycle_post_stop: &'a str,
-    pub(super) label_lifecycle_pre_start: &'a str,
     pub(super) label_parent: &'a str,
-    pub(super) label_priority: &'a str,
-    pub(super) label_weight: &'a str,
-    pub(super) label_weight_penalty: &'a str,
-    pub(super) label_weight_max: &'a str,
-    pub(super) label_weight_min: &'a str,
     pub(super) name: &'a str,
     pub(super) namespace: &'a str,
     pub(super) pool_url: &'a Url,
@@ -57,14 +53,7 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
         client,
         kube,
         label_claim_parent,
-        label_lifecycle_post_stop,
-        label_lifecycle_pre_start,
         label_parent,
-        label_priority,
-        label_weight,
-        label_weight_penalty,
-        label_weight_max,
-        label_weight_min,
         name,
         namespace,
         pool_url,
@@ -89,6 +78,17 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
         Err(error) => return Ok(Err(error)),
     };
 
+    // Fetch all claims
+    let api_claims = Api::<PoolClaimCrd>::namespaced(kube.clone(), namespace);
+    let list_params = ListParams {
+        field_selector: Some(format!(
+            "spec.{key}={name}",
+            key = PoolClaimSpec::FIELD_POOL_NAME,
+        )),
+        ..Default::default()
+    };
+    let claims = api_claims.list(&list_params).await?.items;
+
     // Fetch all claimed resources
     let api_services = Api::<Service>::namespaced(kube.clone(), namespace);
     let list_params = ListParams {
@@ -97,31 +97,24 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
     };
     let services = api_services.list(&list_params).await?.items;
 
-    // Extract claim name, lifecycle, priority, weight metadata
+    // Extract claim metadata
     let items: Vec<_> = services
         .iter()
         .filter_map(|item| {
-            let annotations = item.metadata.annotations.as_ref()?;
             let labels = item.metadata.labels.as_ref()?;
+            let claim_name = labels.get(label_claim_parent)?.as_str();
+            let claim = claims
+                .iter()
+                .find(|claim| claim.metadata.name.as_deref() == Some(claim_name))?;
 
             Some(Item {
-                claim_name: labels.get(label_claim_parent)?,
-                lifecycle: Lifecycle {
-                    pre_start: labels.get(label_lifecycle_pre_start)?.parse().ok()?,
-                    post_stop: labels.get(label_lifecycle_post_stop)?.parse().ok()?,
-                },
+                claim: Cow::Borrowed(claim),
                 resource: Resource {
-                    penalty: annotations
-                        .get(label_weight_penalty)
-                        .and_then(|e| e.parse().ok()),
-                    priority: labels.get(label_priority)?.parse().ok()?,
-                    min: annotations
-                        .get(label_weight_min)
-                        .and_then(|e| e.parse().ok()),
-                    max: annotations
-                        .get(label_weight_max)
-                        .and_then(|e| e.parse().ok()),
-                    weight: labels.get(label_weight)?.parse().ok()?,
+                    penalty: claim.spec.resources.penalty.unwrap_or(0.0),
+                    priority: claim.spec.resources.priority.unwrap_or(0),
+                    min: claim.spec.resources.min,
+                    max: claim.spec.resources.max,
+                    weight: claim.spec.resources.weight.unwrap_or(1),
                 },
                 item,
             })
@@ -129,8 +122,24 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
         .collect();
 
     // Fetch binding states
-    let binded = match client
-        .get_service_binding_states(pool_url.clone(), &resources)
+    let args = PoolRequest {
+        resources: resources
+            .items
+            .iter()
+            .map(|endpoint| {
+                Cow::Borrowed(
+                    endpoint
+                        .addresses
+                        .first()
+                        .expect("conciled endpoint")
+                        .as_str(),
+                )
+            })
+            .collect(),
+        namespace: namespace.into(),
+    };
+    let PoolResponse { binded } = match client
+        .get_service_binding_states(pool_url.clone(), &args)
         .await
     {
         Ok(items) => items,
@@ -146,14 +155,15 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
     // Map binding states
     let binded = binded
         .into_iter()
-        .map(|claim_name| {
-            claim_name.as_deref().and_then(|claim_name| {
+        .map(|PoolResource { claim, state }| PoolResource {
+            claim: claim.as_deref().and_then(|claim_name| {
                 items
                     .iter()
                     .enumerate()
-                    .find(|(_, item)| claim_name == item.claim_name)
+                    .find(|&(_, item)| Some(claim_name) == item.claim.metadata.name.as_deref())
                     .map(|(index, _)| index)
-            })
+            }),
+            state,
         })
         .collect();
 
@@ -169,12 +179,35 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
         }
     };
 
-    // FIXME: Trigger lifecycle
-    // FIXME:   - Create a connection pool for long time jobs
-    // FIXME:   - 작업 우선순위: (claim name) 별로 round-robin, 각 claim 에선 priority 가 높은 것부터 처리
-    // FIXME:   - 상태 저장: 전용 backend를 만들고 오프로딩
+    // Commit new bindings
+    let args = PoolCommitRequest {
+        items: items
+            .iter()
+            .map(|item| PoolCommitRequestItem {
+                lifecycle: item.lifecycle.clone(),
+                name: Cow::Owned(item.item.name_any()),
+                pool: PoolRequest {
+                    namespace: namespace.into(),
+                    resources: item
+                        .resources
+                        .iter()
+                        .map(|endpoint| {
+                            Cow::Borrowed(
+                                endpoint
+                                    .addresses
+                                    .first()
+                                    .expect("conciled endpoint")
+                                    .as_str(),
+                            )
+                        })
+                        .collect(),
+                },
+                priority: item.priority,
+            })
+            .collect(),
+    };
     match client
-        .commit_service_binding_states(pool_url.clone(), &items)
+        .commit_service_binding_states(pool_url.clone(), &args)
         .await
     {
         Ok(()) => (),
@@ -203,7 +236,9 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
     for (
         child_name,
         ScheduledItem {
+            lifecycle: _,
             item: _,
+            priority: _,
             resources: endpoints,
         },
     ) in children_names.iter().zip(items)

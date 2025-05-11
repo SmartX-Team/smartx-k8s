@@ -70,7 +70,13 @@ impl ::openark_core::operator::Resource for SpectrumClassCrd {
             "priority": 1,
             "description": "class version",
             "jsonPath": ".metadata.generation"
-        }"#
+        }"#,
+        selectable = ".spec.backendRef.group",
+        selectable = ".spec.backendRef.kind",
+        selectable = ".spec.backendRef.name",
+        selectable = ".spec.backendRef.namespace",
+        selectable = ".spec.backendRef.port",
+        selectable = ".spec.controllerName",
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -92,6 +98,10 @@ pub struct SpectrumClassSpec {
     pub description: String,
 
     pub backend_ref: ServiceReference,
+}
+
+impl SpectrumClassSpec {
+    pub const FIELD_CONTROLLER_NAME: &'static str = "controllerName";
 }
 
 /// Status defines the current state of Spectrum.

@@ -11,6 +11,10 @@ operator:
     tag: ""
     pullPolicy: Always
 
+pool:
+  baseUrl: ""
+  size: 64
+
 prometheus:
   baseUrl: http://grafana-kube-prometheus-st-prometheus.monitoring.svc:9090
   defaultRecords:

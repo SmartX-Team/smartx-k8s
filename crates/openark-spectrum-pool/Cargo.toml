@@ -85,7 +85,11 @@ openark-core = { workspace = true, features = [
     "reqwest",
     "std",
 ] }
-openark-spectrum-api = { workspace = true, features = ["kube", "std"] }
+openark-spectrum-api = { workspace = true, features = [
+    "client",
+    "kube",
+    "std",
+] }
 
 actix-cors = { workspace = true, optional = true }
 actix-web = { workspace = true }

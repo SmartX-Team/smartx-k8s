@@ -26,9 +26,6 @@ struct Args {
     #[arg(long, env = "OPENARK_LABEL_SPECTRUM_HISTOGRAM_WEIGHT")]
     label_histogram_weight: String,
 
-    #[arg(long, env = "OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_POST_STOP")]
-    label_pool_claim_lifecycle_post_stop: String,
-
     #[arg(long, env = "OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_PRE_START")]
     label_pool_claim_lifecycle_pre_start: String,
 

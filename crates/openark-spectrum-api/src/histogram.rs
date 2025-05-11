@@ -63,7 +63,12 @@ impl ::openark_core::operator::Resource for HistogramCrd {
             "priority": 1,
             "description": "histogram version",
             "jsonPath": ".metadata.generation"
-        }"#
+        }"#,
+        selectable = ".spec.spectrumClassName",
+        selectable = ".spec.targetRef.group",
+        selectable = ".spec.targetRef.kind",
+        selectable = ".spec.targetRef.name",
+        selectable = ".spec.targetRef.namespace",
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]

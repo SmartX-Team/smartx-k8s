@@ -8,17 +8,18 @@ use kube::{
     Api, Client, ResourceExt, Result,
     api::{DeleteParams, ListParams, ObjectMeta, PostParams},
 };
-use openark_spectrum_api::{
-    histogram::HistogramSettings, schema::WeightedItems, spectrum_class::SpectrumClassCrd,
-};
+use openark_spectrum_api::{histogram::HistogramSettings, spectrum_class::SpectrumClassCrd};
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 
 use crate::{
     status::Status,
-    targets::service::{
-        Context as TargetContext, LABEL_KEY_SELECTOR, get_weighted_endpoints, infer_address_type,
-        mirror_spec,
+    targets::{
+        WeightedItems,
+        service::{
+            Context as TargetContext, LABEL_KEY_SELECTOR, get_weighted_endpoints,
+            infer_address_type, mirror_spec,
+        },
     },
     utils::histogram::Histogram,
 };

@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet},
     convert::identity,
 };
@@ -12,20 +13,19 @@ use good_lp::{
     },
     variable,
 };
-use openark_spectrum_api::schema::{ScheduledItem, WeightedItems};
+use openark_spectrum_api::{
+    pool_claim::{PoolClaimCrd, PoolResourceLifecycle},
+    schema::{CommitState, PoolResource},
+};
 use ordered_float::OrderedFloat;
 #[cfg(feature = "tracing")]
 use tracing::debug;
 
-#[derive(Debug, Default)]
-pub(crate) struct Lifecycle {
-    pub(crate) pre_start: bool,
-    pub(crate) post_stop: bool,
-}
+use crate::targets::WeightedItems;
 
 #[derive(Debug)]
 pub(crate) struct Resource {
-    pub(crate) penalty: Option<f64>,
+    pub(crate) penalty: f64,
     pub(crate) priority: i32,
     pub(crate) min: Option<f64>,
     pub(crate) max: Option<f64>,
@@ -46,22 +46,21 @@ impl Default for Resource {
 
 #[derive(Debug)]
 pub(crate) struct Item<'a, T> {
-    pub(crate) claim_name: &'a str,
-    pub(crate) lifecycle: Lifecycle,
+    pub(crate) claim: Cow<'a, PoolClaimCrd>,
     pub(crate) resource: Resource,
     pub(crate) item: T,
 }
 
 struct State<'a, T> {
     allocated: Vec<Vec<usize>>,
-    binded: Vec<Option<usize>>,
+    binded: Vec<PoolResource<usize>>,
     filled: Vec<f64>,
     items: Vec<Item<'a, T>>,
     remaining: BTreeSet<usize>,
     weights: Vec<f64>,
 }
 
-impl<T> State<'_, T> {
+impl<'a, T> State<'a, T> {
     fn collect<S>(self, resources: WeightedItems<S>) -> Vec<ScheduledItem<S, T>> {
         let Self {
             allocated,
@@ -83,13 +82,26 @@ impl<T> State<'_, T> {
         items
             .into_iter()
             .zip(allocated)
-            .map(|(Item { item, .. }, allocated)| ScheduledItem {
-                item,
-                resources: allocated
-                    .into_iter()
-                    .filter_map(|index| resources.get_mut(index).and_then(|option| option.take()))
-                    .collect(),
-            })
+            .map(
+                |(
+                    Item {
+                        claim,
+                        item,
+                        resource,
+                    },
+                    allocated,
+                )| ScheduledItem {
+                    lifecycle: claim.spec.lifecycle.clone(),
+                    item,
+                    priority: resource.priority,
+                    resources: allocated
+                        .into_iter()
+                        .filter_map(|index| {
+                            resources.get_mut(index).and_then(|option| option.take())
+                        })
+                        .collect(),
+                },
+            )
             .collect()
     }
 }
@@ -145,10 +157,10 @@ impl SingleLayerProblem {
         let mut load: Vec<Expression> = vec![Expression::default(); n_j];
         for (row, &i) in remaining.iter().enumerate() {
             for (col, &j) in targets.iter().enumerate() {
-                let penalty = match binded[i] {
+                let penalty = match binded[i].claim {
                     None => 0.0,
                     Some(j2) if j == j2 => 0.0,
-                    Some(_) => items[i].resource.penalty.unwrap_or_default().max(0.0),
+                    Some(_) => items[j].resource.penalty,
                 };
                 load[col] = load[col].clone() + (weights[i] + penalty) * y[row][col];
             }
@@ -252,9 +264,17 @@ impl SingleLayerProblem {
     }
 }
 
-pub(crate) fn schedule<S, T>(
-    items: Vec<Item<T>>,
-    binded: Vec<Option<usize>>,
+#[derive(Debug)]
+pub(crate) struct ScheduledItem<S, T> {
+    pub(crate) item: T,
+    pub(crate) lifecycle: PoolResourceLifecycle,
+    pub(crate) priority: i32,
+    pub(crate) resources: Vec<S>,
+}
+
+pub(crate) fn schedule<'a, S, T>(
+    items: Vec<Item<'a, T>>,
+    binded: Vec<PoolResource<usize>>,
     resources: WeightedItems<S>,
 ) -> Result<Vec<ScheduledItem<S, T>>, ResolutionError> {
     // ****************************************
@@ -300,13 +320,33 @@ pub(crate) fn schedule<S, T>(
         .map(|opt| opt.map(OrderedFloat::into_inner).unwrap_or(weights_avg))
         .collect();
 
+    // Prefill locked resources
+    let mut allocated = vec![Vec::default(); n_j];
+    let mut filled = vec![0.0f64; n_j];
+    let mut remaining = BTreeSet::default();
+
+    for (i, last) in binded.iter().enumerate() {
+        let PoolResource { claim, state } = last;
+        match (claim, state) {
+            // Locked
+            (&Some(j), CommitState::Preparing) => {
+                allocated[j].push(i);
+                filled[j] += weights[i];
+            }
+            // Free
+            (_, CommitState::Pending | CommitState::Running) | (None, CommitState::Preparing) => {
+                remaining.insert(i);
+            }
+        }
+    }
+
     // Define state
     let mut state = State {
-        allocated: (0..n_j).map(|_| Default::default()).collect(),
+        allocated,
         binded,
-        filled: vec![0.0f64; n_j],
+        filled,
         items,
-        remaining: (0..resources.items.len()).collect(),
+        remaining,
         weights,
     };
 
@@ -407,6 +447,9 @@ pub(crate) fn schedule<S, T>(
 
 #[cfg(test)]
 mod tests {
+    use kube::api::ObjectMeta;
+    use openark_spectrum_api::pool_claim::PoolClaimSpec;
+
     use super::{super::*, *};
 
     fn aggregate_resources<'a, T>(
@@ -433,8 +476,10 @@ mod tests {
 
     fn build_resources_unbound<'a>(
         weights: Vec<Option<f64>>,
-    ) -> (Vec<Option<usize>>, WeightedItems<usize>) {
-        let binded = (0..weights.len()).map(|_| None).collect();
+    ) -> (Vec<PoolResource<usize>>, WeightedItems<usize>) {
+        let binded = (0..weights.len())
+            .map(|_| PoolResource::default())
+            .collect();
         let resources = WeightedItems {
             items: (0..weights.len()).collect(),
             weights: weights.into_iter().map(|x| x.map(OrderedFloat)).collect(),
@@ -468,8 +513,18 @@ mod tests {
 
     fn define_item_with_resource<'a>(name: &'a str, resource: Resource) -> Item<'a, &'a str> {
         Item {
-            claim_name: name,
-            lifecycle: Lifecycle::default(),
+            claim: Cow::Owned(PoolClaimCrd {
+                metadata: ObjectMeta {
+                    name: Some(name.into()),
+                    ..Default::default()
+                },
+                spec: PoolClaimSpec {
+                    pool_name: "test".into(),
+                    lifecycle: Default::default(),
+                    resources: Default::default(),
+                },
+                status: None,
+            }),
             resource,
             item: name,
         }
@@ -578,7 +633,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(800.0),
                     max: None,
@@ -588,7 +643,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: None,
@@ -616,7 +671,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(400.0),
                     max: None,
@@ -626,7 +681,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(300.0),
                     max: None,
@@ -636,7 +691,7 @@ mod tests {
             define_item_with_resource(
                 "c",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(300.0),
                     max: None,
@@ -666,7 +721,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(800.0),
                     max: None,
@@ -676,7 +731,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: None,
@@ -686,7 +741,7 @@ mod tests {
             define_item_with_resource(
                 "c",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: None,
@@ -714,7 +769,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: -1,
                     min: Some(800.0),
                     max: None,
@@ -724,7 +779,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: None,
@@ -734,7 +789,7 @@ mod tests {
             define_item_with_resource(
                 "c",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: None,
@@ -762,7 +817,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(1000.0),
                     max: Some(1000.0),
@@ -772,7 +827,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(500.0),
                     max: Some(500.0),
@@ -800,7 +855,7 @@ mod tests {
             define_item_with_resource(
                 "a",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 0,
                     min: Some(1000.0),
                     max: Some(1000.0),
@@ -810,7 +865,7 @@ mod tests {
             define_item_with_resource(
                 "b",
                 Resource {
-                    penalty: None,
+                    penalty: 0.0,
                     priority: 1,
                     min: Some(500.0),
                     max: Some(500.0),

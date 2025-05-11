@@ -27,7 +27,7 @@ run-openark-spectrum-backend:
     @cargo run --package openark-spectrum-backend -- \
         --default-record-service "$(cat ./apps/openark-spectrum-operator/values.yaml | yq '.prometheus.defaultRecords.service')" \
         --label-custom-histogram-record "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram-record"')" \
-        --prometheus-base-url "$(cat ./apps/openark-spectrum-operator/values.yaml | yq '.prometheus.baseUrl')"
+        --prometheus-base-url "$(cat ./apps/openark-spectrum-operator/values.yaml | yq '.prometheus.baseUrl')" \
 
 # Run development package: openark-spectrum-operator
 run-openark-spectrum-operator:
@@ -36,7 +36,6 @@ run-openark-spectrum-operator:
         --install-crds \
         --label-histogram-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram"')" \
         --label-histogram-weight "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram-weight"')" \
-        --label-pool-claim-lifecycle-post-stop "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop"')" \
         --label-pool-claim-lifecycle-pre-start "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start"')" \
         --label-pool-claim-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim"')" \
         --label-pool-claim-priority "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-priority"')" \
@@ -46,11 +45,13 @@ run-openark-spectrum-operator:
         --label-pool-claim-weight-min "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool-claim-weight-min"')" \
         --label-pool-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-pool"')" \
         --pool-base-url 'http://localhost:9000' \
-        --upgrade-crds
+        --upgrade-crds \
 
 # Run development package: openark-spectrum-pool
 run-openark-spectrum-pool:
-    @cargo run --package openark-spectrum-pool --
+    @cargo run --package openark-spectrum-pool -- \
+        --base-url '' \
+        --max-pool '64' \
 
 # Run development package: openark-vine-session-backend
 run-openark-vine-dashboard-backend:
@@ -58,20 +59,20 @@ run-openark-vine-dashboard-backend:
         --base-url '/api/v1' \
         --label-category "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/category"')" \
         --label-description "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/description"')" \
-        --label-title "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/title"')"
+        --label-title "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/title"')" \
 
 # Run development package: openark-vine-dashboard-frontend
 run-openark-vine-dashboard-frontend:
     @cd ./crates/openark-vine-dashboard-frontend && \
         env OPENARK_LABEL_ALIAS="$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/alias"')" \
-        trunk serve
+        trunk serve \
 
 # Run development package: openark-vine-session-backend
 run-openark-vine-session-backend:
     cargo run --package openark-vine-session-backend -- \
         --base-url '/api/v1' \
         --label-bind "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind"')" \
-        --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')"
+        --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')" \
 
 # Execute a command in a box
 ssh BOX *ARGS:

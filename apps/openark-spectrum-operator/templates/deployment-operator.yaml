@@ -59,8 +59,6 @@ spec:
               value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram" | quote }}
             - name: OPENARK_LABEL_SPECTRUM_HISTOGRAM_WEIGHT
               value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-histogram-weight" | quote }}
-            - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_POST_STOP
-              value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop" | quote }}
             - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_LIFECYCLE_PRE_START
               value: {{ index .Values.openark.labels "org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start" | quote }}
             - name: OPENARK_LABEL_SPECTRUM_POOL_CLAIM_PARENT

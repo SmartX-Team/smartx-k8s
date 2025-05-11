@@ -334,7 +334,6 @@ openark:
     org.ulagbulag.io/spectrum-histogram-weight: org.ulagbulag.io/spectrum-histogram-weight
     org.ulagbulag.io/spectrum-pool: org.ulagbulag.io/spectrum-pool
     org.ulagbulag.io/spectrum-pool-claim: org.ulagbulag.io/spectrum-pool-claim
-    org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop: org.ulagbulag.io/spectrum-pool-claim-lifecycle-post-stop
     org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start: org.ulagbulag.io/spectrum-pool-claim-lifecycle-pre-start
     org.ulagbulag.io/spectrum-pool-claim-priority: org.ulagbulag.io/spectrum-pool-claim-priority
     org.ulagbulag.io/spectrum-pool-claim-weight: org.ulagbulag.io/spectrum-pool-claim-weight

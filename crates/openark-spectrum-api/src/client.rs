@@ -1,11 +1,11 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use http::Method;
-use k8s_openapi::api::{core::v1::Service, discovery::v1::Endpoint};
+use k8s_openapi::api::discovery::v1::Endpoint;
 use openark_core::client::{Client, RequestCredentials};
 use url::Url;
 
-use crate::schema::{ScheduledItem, WeightRequest, WeightResponse, WeightedItems};
+use crate::schema::{PoolCommitRequest, PoolRequest, PoolResponse, WeightRequest, WeightResponse};
 
 #[cfg_attr(feature = "send", async_trait)]
 #[cfg_attr(not(feature = "send"), async_trait(?Send))]
@@ -39,7 +39,7 @@ where
     async fn commit_service_binding_states(
         &self,
         url: Url,
-        args: &[ScheduledItem<Endpoint, &Service>],
+        args: &PoolCommitRequest,
     ) -> Result<()> {
         let url = url.join("v1/Service/commit")?;
         self.request_with_json(RequestCredentials::Include, Method::POST, url, args)
@@ -50,8 +50,8 @@ where
     async fn get_service_binding_states(
         &self,
         url: Url,
-        args: &WeightedItems<Endpoint>,
-    ) -> Result<Vec<Option<String>>> {
+        args: &PoolRequest,
+    ) -> Result<PoolResponse> {
         let url = url.join("v1/Service")?;
         self.request_with_json(RequestCredentials::Include, Method::POST, url, args)
             .await

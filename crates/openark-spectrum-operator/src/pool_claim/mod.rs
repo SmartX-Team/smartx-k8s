@@ -31,7 +31,6 @@ use crate::{
 
 struct Context {
     kube: Client,
-    label_lifecycle_post_stop: String,
     label_lifecycle_pre_start: String,
     label_parent: String,
     label_pool_parent: String,
@@ -51,10 +50,7 @@ async fn reconcile(claim: Arc<PoolClaimCrd>, ctx: Arc<Context>) -> Result<Action
     let namespace = metadata.namespace.as_deref().expect("Namespaced resource");
     let PoolClaimSpec {
         pool_name,
-        lifecycle: PoolResourceLifecycle {
-            pre_start,
-            post_stop,
-        },
+        lifecycle: PoolResourceLifecycle { pre_start },
         resources:
             PoolResourceSettings {
                 penalty,
@@ -148,10 +144,6 @@ async fn reconcile(claim: Arc<PoolClaimCrd>, ctx: Arc<Context>) -> Result<Action
             // lifecycle
             {
                 map.insert(
-                    ctx.label_lifecycle_post_stop.clone(),
-                    post_stop.is_some().to_string(),
-                );
-                map.insert(
                     ctx.label_lifecycle_pre_start.clone(),
                     pre_start.is_some().to_string(),
                 );
@@ -230,7 +222,6 @@ pub async fn loop_forever(args: super::Args, kube: Client) -> Result<()> {
 
     let context = Arc::new(Context {
         kube,
-        label_lifecycle_post_stop: args.label_pool_claim_lifecycle_post_stop,
         label_lifecycle_pre_start: args.label_pool_claim_lifecycle_pre_start,
         label_parent: args.label_pool_claim_parent,
         label_pool_parent: args.label_pool_parent,

@@ -64,7 +64,8 @@ impl ::openark_core::operator::Resource for PoolClaimCrd {
             "priority": 1,
             "description": "claim version",
             "jsonPath": ".metadata.generation"
-        }"#
+        }"#,
+        selectable = ".spec.poolName",
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -78,6 +79,10 @@ pub struct PoolClaimSpec {
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub resources: PoolResourceSettings,
+}
+
+impl PoolClaimSpec {
+    pub const FIELD_POOL_NAME: &'static str = "poolName";
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -127,12 +132,6 @@ pub struct PoolResourceLifecycle {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub pre_start: Option<PoolResourceProbe>,
-
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub post_stop: Option<PoolResourceProbe>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -150,26 +149,41 @@ pub enum PoolResourceProbe {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
 pub struct PoolResourceHttpProbe {
+    pub method: PoolResourceHttpMethod,
+
     #[cfg_attr(feature = "serde", serde(default))]
     pub path: String,
 
     pub port: u16,
 
-    pub protocol: PoolResourceHttpServiceProtocol,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub secure: bool,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub body: PoolResourceHttpServiceBody,
+    pub body: Option<PoolResourceHttpBody>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 
-pub enum PoolResourceHttpServiceProtocol {
+pub enum PoolResourceHttpMethod {
     DELETE,
     GET,
     PATCH,
     POST,
+}
+
+#[cfg(feature = "client")]
+impl From<PoolResourceHttpMethod> for ::http::Method {
+    fn from(value: PoolResourceHttpMethod) -> Self {
+        match value {
+            PoolResourceHttpMethod::DELETE => Self::DELETE,
+            PoolResourceHttpMethod::GET => Self::GET,
+            PoolResourceHttpMethod::PATCH => Self::PATCH,
+            PoolResourceHttpMethod::POST => Self::POST,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -177,7 +191,7 @@ pub enum PoolResourceHttpServiceProtocol {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 
-pub enum PoolResourceHttpServiceBody {
+pub enum PoolResourceHttpBody {
     JsonBody(BTreeMap<String, Value>),
 }
 
