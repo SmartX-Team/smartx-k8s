@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.gateway-api
 spec:
+  enabled: false # Replaced by envoy-gateway
   group: ops
   phase: stable
   scale: small
