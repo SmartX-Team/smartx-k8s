@@ -10,9 +10,9 @@ use kube::{
 };
 use openark_spectrum_api::{
     client::PoolClient,
+    metrics_class::MetricsClassCrd,
     pool_claim::{PoolClaimCrd, PoolClaimSpec},
     schema::{PoolCommitRequest, PoolCommitRequestItem, PoolRequest, PoolResource, PoolResponse},
-    metrics_class::MetricsClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};

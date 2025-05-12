@@ -1,8 +1,8 @@
 {{- define "podTemplate.notebook" -}}
 {{- include "helm.externalServiceContainerTemplate" ( merge ( dict
   "name" "notebook"
-  "env" list
-) . ) }}
+  "env" ( list
+) ) . ) }}
 command:
   - /usr/bin/env
   - jupyter

@@ -1,0 +1,26 @@
+{{- if .Values.features.nvidiaTriton.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-%s" ( include "helm.fullname" $ ) "nvidia-triton" | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: nvidia-triton
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: session
+    {{ index .Values.openark.labels "org.ulagbulag.io/bind.mode" }}: nvidia-triton
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+    - name: grpc
+      protocol: TCP
+      port: 8001
+    - name: metrics
+      protocol: TCP
+      port: 8002
+{{- end }}

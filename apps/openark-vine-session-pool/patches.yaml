@@ -5,6 +5,8 @@ features:
     namespaceSelector:
       matchLabels:
         {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+  nvidiaTriton:
+    enabled: {{ has "org.ulagbulag.io/ai/llm" .Values.features }}
   ollama:
     enabled: {{ has "org.ulagbulag.io/ai/llm" .Values.features }}
 

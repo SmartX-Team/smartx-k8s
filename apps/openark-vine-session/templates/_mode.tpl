@@ -3,6 +3,7 @@
 {{- $nativeModes := list
   "Desktop"
   "Notebook"
+  "NvidiaTriton"
   "Ollama"
 }}
 

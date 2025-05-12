@@ -15,6 +15,11 @@ externalServices:
       repo: nvcr.io/nvidia/pytorch
       tag: 25.03-py3
       pullPolicy: IfNotPresent
+  nvidiaTriton:
+    image:
+      repo: nvcr.io/nvidia/tritonserver
+      tag: 25.04-vllm-python-py3
+      pullPolicy: IfNotPresent
   ollama:
     image:
       repo: docker.io/ollama/ollama
@@ -32,7 +37,9 @@ extraServices:
 
 features:
   audio: false
-  containers: true
+  containers: false
+  data: false
+  dbus: false
   devicePassthrough: false
   gateway: false
   hostAudio: false

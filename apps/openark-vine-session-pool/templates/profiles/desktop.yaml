@@ -12,6 +12,8 @@ metadata:
 spec:
   features:
     audio: true
+    containers: true
+    dbus: true
     devicePassthrough: true
     hostAudio: true
     hostDBus: true

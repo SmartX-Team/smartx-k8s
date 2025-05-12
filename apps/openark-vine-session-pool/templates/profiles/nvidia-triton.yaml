@@ -1,6 +1,6 @@
-{{- if .Values.features.ollama.enabled }}
+{{- if .Values.features.nvidiaTriton.enabled }}
 {{- range $_ := .Values.profiles | default list }}
-{{- if eq .kind "Ollama" }}
+{{- if eq .kind "NvidiaTriton" }}
 
 ---
 apiVersion: org.ulagbulag.io/v1alpha1
@@ -12,12 +12,12 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   externalServices:
-    ollama:
+    nvidiaTriton:
       image:
 {{- .image | default dict | toYaml | nindent 8 }}
   features:
     data: true
-  mode: Ollama
+  mode: NvidiaTriton
   persistence:
     enabled: true
   services: {}

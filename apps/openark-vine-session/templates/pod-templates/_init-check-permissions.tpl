@@ -14,6 +14,10 @@ env:
     value: {{ include "helm.userHome" $ | quote }}
   - name: TARGET_UID
     value: {{ include "helm.userId" $ | quote }}
+resources:
+  limits:
+    cpu: 100m
+    memory: 200Mi
 securityContext:
   privileged: false
   runAsNonRoot: false
@@ -31,6 +35,13 @@ volumeMounts:
   - name: home
     mountPath: {{ include "helm.userContainersHome" $ | quote }}
     subPath: {{ include "helm.userContainersHomeSubPath" $ | quote }}
+{{- end }}
+
+{{- /********************************/}}
+{{- if .Values.features.data }}
+  - name: home
+    mountPath: {{ include "helm.userDataHome" $ | quote }}
+    subPath: {{ include "helm.userDataHomeSubPath" $ | quote }}
 {{- end }}
 
 {{- /********************************/}}

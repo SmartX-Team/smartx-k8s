@@ -74,6 +74,34 @@ run-openark-vine-session-backend:
         --label-bind "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind"')" \
         --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')" \
 
+# Run development package: openark-vine-session-operator
+run-openark-vine-session-operator:
+    @cargo run --package openark-vine-session-operator -- \
+        --controller-name 'openark-vine-session-operator' \
+        --install-crds \
+        --duration-sign-out-seconds "$(cat ./apps/openark-vine-session-operator/values.yaml | yq '.operator.signOutTimeoutSeconds')" \
+        --label-alias "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/alias"')" \
+        --label-bind "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind"')" \
+        --label-bind-cpu "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.cpu"')" \
+        --label-bind-memory "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.memory"')" \
+        --label-bind-mode "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.mode"')" \
+        --label-bind-namespace "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.namespace"')" \
+        --label-bind-node "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.node"')" \
+        --label-bind-persistent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.persistent"')" \
+        --label-bind-profile "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.profile"')" \
+        --label-bind-revision "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.revision"')" \
+        --label-bind-storage "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.storage"')" \
+        --label-bind-timestamp "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.timestamp"')" \
+        --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')" \
+        --label-compute-mode "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/compute-mode"')" \
+        --label-is-private "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/is-private"')" \
+        --label-signed-out "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/signed-out"')" \
+        --session-namespace 'vine-session' \
+        --source-path 'apps/openark-vine-session' \
+        --source-repo-revision "$(cat ./values.yaml | yq '.repo.revision')" \
+        --source-repo-url "$(cat ./values.yaml | yq '.repo.baseUrl')/$(cat ./values.yaml | yq '.repo.owner')/$(cat ./values.yaml | yq '.repo.name').git" \
+        --upgrade-crds \
+
 # Execute a command in a box
 ssh BOX *ARGS:
     @./hack/box-ssh.sh {{ BOX }} {{ ARGS }}

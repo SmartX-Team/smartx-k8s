@@ -153,6 +153,18 @@ pub struct FeaturesSpec {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
+    pub data: Option<bool>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub dbus: Option<bool>,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
     pub device_passthrough: Option<bool>,
 
     #[cfg_attr(
@@ -320,6 +332,7 @@ pub enum SessionMode {
     #[default]
     Manual,
     Notebook,
+    NvidiaTriton,
     Ollama,
 }
 

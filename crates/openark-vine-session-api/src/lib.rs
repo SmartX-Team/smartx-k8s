@@ -763,11 +763,11 @@ impl<'a> NodeSession<'a> {
             self.metadata.bind = Some(false);
             self.metadata.bind_revision = None;
             self.metadata.bind_namespace = None;
-            self.metadata.bind_persistent = None;
+            self.metadata.bind_persistent = Some(false);
             self.metadata.bind_profile = None;
             self.metadata.bind_timestamp = None;
             self.metadata.bind_user = None;
-            self.metadata.compute_mode = None;
+            self.metadata.compute_mode = Some(ComputeMode::VM);
         } else {
             self.unreachable = false;
         }

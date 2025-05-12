@@ -43,6 +43,19 @@ set -x
 {{- end }}
 
 {{- /********************************/}}
+{{- if and
+    .Values.features.data ( or
+    ( eq .Values.volumes.home.type "LocalOwned" )
+    ( eq .Values.volumes.home.type "LocalShared" )
+) }}
+{{- $_ := set $ "Volumes" ( append $.Volumes ( printf "%s/%s"
+    ( include "helm.localPVPath" $ ) (
+        include "helm.userDataHomeSubPath" $
+    )
+) ) }}
+{{- end }}
+
+{{- /********************************/}}
 {{- if or
   ( eq .Values.volumes.home.type "LocalOwned" )
   ( eq .Values.volumes.home.type "LocalShared" )

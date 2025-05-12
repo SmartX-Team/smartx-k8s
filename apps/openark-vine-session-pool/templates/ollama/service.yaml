@@ -15,6 +15,6 @@ spec:
     {{ index .Values.openark.labels "org.ulagbulag.io/bind.mode" }}: ollama
   ports:
     - name: ollama
-      port: 11434
       protocol: TCP
+      port: 11434
 {{- end }}

@@ -141,6 +141,14 @@ runAsUser: {{ include "helm.userId" $ }}
   subPath: {{ include "helm.userContainersHomeSubPath" $ | quote }}
 {{- end }}
 
+{{- /********************************/}}
+{{- if .Values.features.data }}
+- name: home
+  mountPath: {{ include "helm.userDataHome" $ | quote }}
+  subPath: {{ include "helm.userDataHomeSubPath" $ | quote }}
+{{- end }}
+
+{{- /********************************/}}
 {{- if eq "Notebook" .Values.mode }}
 - name: home-notebook
   mountPath: "{{ include "helm.userHome" $ }}/.jupyter/jupyter_notebook_config.py"
@@ -171,9 +179,11 @@ runAsUser: {{ include "helm.userId" $ }}
   mountPath: /var/log/journal
 
 {{- /********************************/}}
+{{- if .Values.features.dbus }}
 - name: runtime-dbus
   mountPath: /run/dbus
   readOnly: true
+{{- end }}
 
 {{- /********************************/}}
 - name: runtime-user
@@ -201,7 +211,7 @@ runAsUser: {{ include "helm.userId" $ }}
 
 {{- /********************************/}}
 {{- define "podTemplate.desktop" -}}
-name: session
+name: desktop
 image: "{{ .Values.session.image.repo }}:{{ .Values.session.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.session.image.pullPolicy | quote }}
 

@@ -49,6 +49,7 @@ operator = [
     "dep:chrono",
     "dep:k8s-openapi",
     "dep:kube",
+    "dep:serde",
     "dep:serde-json",
     "kube/client",
     "kube/runtime",

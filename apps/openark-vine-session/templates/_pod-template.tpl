@@ -54,6 +54,26 @@ User containers directory path (server-side)
 {{- end }}
 
 {{- /*
+User data directory path
+*/}}
+{{- define "helm.userDataHome" -}}
+{{- printf "%s/.openark" ( include "helm.userHome" $ ) }}
+{{- end }}
+
+{{- /*
+User data directory path (server-side)
+*/}}
+{{- define "helm.userDataHomeSubPath" -}}
+{{- if eq .Values.volumes.home.type "LocalOwned" }}
+{{- printf "data/%s/%s" ( .Values.mode | kebabcase ) ( include "helm.userName" $ ) }}
+{{- else if eq .Values.volumes.home.type "LocalShared" }}
+{{- printf "data/%s/_shared" ( .Values.mode | kebabcase ) }}
+{{- else }} {{- /* Remote | Temporary */}}
+{{- printf "data/%s" ( .Values.mode | kebabcase ) }}
+{{- end }}
+{{- end }}
+
+{{- /*
 User SSH directory path (server-side)
 */}}
 {{- define "helm.userSshHomeSubPath" -}}
@@ -114,6 +134,8 @@ nodeAffinity:
 Pod metadata
 */}}
 {{- define "helm.podMetadata" -}}
+annotations:
+  kubectl.kubernetes.io/default-container: {{ .Values.mode | kebabcase | quote }}
 labels:
 {{- include "helm.labels" $ | nindent 2 }}
   app.kubernetes.io/component: session
@@ -153,7 +175,7 @@ External service container template
 
 {{- $service := index .Values.externalServices .name }}
 
-name: {{ .name | quote }}
+name: {{ .name | kebabcase | quote }}
 image: {{ printf "%s:%s"
   ( $service.image.repo | default .Values.session.image.repo )
   ( $service.image.tag | default .Values.session.image.tag | default .Chart.AppVersion )
@@ -174,7 +196,7 @@ resources:
   limits:
 {{- range $key, $value := $.Values.session.resources.limits }}
 {{- if not ( has $key ( list "cpu" "memory" ) ) }}
-    {{ $key | quote }}: {{ $value | quote }}
+    # {{ $key | quote }}: {{ $value | quote }}
 {{- end }}
     # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
     {{ $key | quote }}: {{ $value | quote }}
@@ -215,14 +237,21 @@ initContainers:
 {{- /********************************
     DBus Daemon
 *************************************/}}
+{{- if .Values.features.dbus }}
 {{- if not .Values.features.hostDBus }}
   - {{- include "podTemplate.dbus-system" $ | nindent 4 }}
+{{- end }}
+{{- else if .Values.features.hostDBus }}
+{{- fail "host DBus cannot be enabled without DBus" }}
 {{- end }}
 
 {{- /********************************
     Xorg Daemon
 *************************************/}}
 {{- if .Values.features.hostDisplay }}
+{{- if not .Values.features.dbus }}
+{{- fail "host display cannot be enabled without DBus" }}
+{{- end }}
 {{- if ne "Desktop" .Values.mode }}
 {{- fail "host display cannot be enabled without desktop environment" }}
 {{- end }}
@@ -233,6 +262,9 @@ initContainers:
     PipeWire Audio Daemon
 *************************************/}}
 {{- if .Values.features.audio }}
+{{- if not .Values.features.dbus }}
+{{- fail "audio cannot be enabled without DBus" }}
+{{- end }}
 {{- if ne "Desktop" .Values.mode }}
 {{- fail "audio cannot be enabled without desktop environment" }}
 {{- else if not .Values.features.hostAudio }}
@@ -258,7 +290,7 @@ containers:
     Default Mode
 *************************************/}}
 {{- if eq "true" ( include "helm.serviceMode.isPod" .Values.mode ) }}
-  - {{- include ( printf "podTemplate.%s" ( .Values.mode | snakecase) ) $
+  - {{- include ( printf "podTemplate.%s" ( .Values.mode | kebabcase ) ) $
         | nindent 4
     }}
 {{- end }}

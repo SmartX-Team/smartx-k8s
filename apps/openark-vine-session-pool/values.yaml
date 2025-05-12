@@ -5,6 +5,8 @@ features:
   kueue:
     enabled: false
     namespaceSelector: {}
+  nvidiaTriton:
+    enabled: false
   ollama:
     enabled: false
 
@@ -25,6 +27,12 @@ profiles:
     # image:
     #   repo: nvcr.io/nvidia/pytorch
     #   tag: 25.03-py3
+
+  - kind: NvidiaTriton
+    name: nvidia-triton
+    # image:
+    #   repo: nvcr.io/nvidia/tritonserver
+    #   tag: 25.04-vllm-python-py3
 
   - kind: Ollama
     name: ollama
