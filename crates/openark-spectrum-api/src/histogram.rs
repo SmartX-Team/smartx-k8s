@@ -43,9 +43,9 @@ impl ::openark_core::operator::Resource for HistogramCrd {
         root = "HistogramCrd",
         status = "HistogramStatus",
         printcolumn = r#"{
-            "name": "class",
+            "name": "metrics",
             "type": "string",
-            "jsonPath": ".spec.spectrumClassName"
+            "jsonPath": ".spec.metricsClassName"
         }"#,
         printcolumn = r#"{
             "name": "accepted",
@@ -64,7 +64,7 @@ impl ::openark_core::operator::Resource for HistogramCrd {
             "description": "histogram version",
             "jsonPath": ".metadata.generation"
         }"#,
-        selectable = ".spec.spectrumClassName",
+        selectable = ".spec.metricsClassName",
         selectable = ".spec.targetRef.group",
         selectable = ".spec.targetRef.kind",
         selectable = ".spec.targetRef.name",
@@ -73,9 +73,9 @@ impl ::openark_core::operator::Resource for HistogramCrd {
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct HistogramSpec {
-    /// spectrumClassName is the name of the class that is managing
-    /// Routers of this class.
-    pub spectrum_class_name: String,
+    /// metricsClassName is the name of the class that is managing
+    /// Metrics of this class.
+    pub metrics_class_name: String,
 
     pub target_ref: ObjectReference,
 

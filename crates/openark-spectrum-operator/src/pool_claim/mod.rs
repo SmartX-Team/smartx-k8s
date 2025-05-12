@@ -83,7 +83,7 @@ async fn reconcile(claim: Arc<PoolClaimCrd>, ctx: Arc<Context>) -> Result<Action
     let PoolCrd {
         metadata: _,
         spec: PoolSpec {
-            spectrum_class_name: _,
+            metrics_class_name: _,
             target_ref,
         },
         status: _,

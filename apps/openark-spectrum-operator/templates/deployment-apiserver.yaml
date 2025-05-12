@@ -111,5 +111,5 @@ spec:
   ports:
     - name: http
       protocol: TCP
-      port: {{ .Values.spectrumClass.port }}
+      port: {{ .Values.metricsClass.port }}
       targetPort: 8000

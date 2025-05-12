@@ -2,6 +2,10 @@
 apiserver:
   baseUrl: ""
 
+metricsClass:
+  name: openark
+  port: 80
+
 openark:
   labels: {}
 
@@ -19,7 +23,3 @@ prometheus:
   baseUrl: http://grafana-kube-prometheus-st-prometheus.monitoring.svc:9090
   defaultRecords:
     service: openark_spectrum_histogram_service_weight_raw
-
-spectrumClass:
-  name: openark
-  port: 80

@@ -12,7 +12,7 @@ use openark_spectrum_api::{
     client::PoolClient,
     pool_claim::{PoolClaimCrd, PoolClaimSpec},
     schema::{PoolCommitRequest, PoolCommitRequestItem, PoolRequest, PoolResource, PoolResponse},
-    spectrum_class::SpectrumClassCrd,
+    metrics_class::MetricsClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
@@ -28,7 +28,7 @@ use crate::{
 
 pub(super) struct Context<'a> {
     pub(super) child_metadata: ObjectMeta,
-    pub(super) class: SpectrumClassCrd,
+    pub(super) class: MetricsClassCrd,
     pub(super) client: &'a ::reqwest::Client,
     pub(super) kube: &'a Client,
     pub(super) label_claim_parent: &'a str,

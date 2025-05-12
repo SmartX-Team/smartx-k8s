@@ -32,7 +32,7 @@ run-openark-spectrum-backend:
 # Run development package: openark-spectrum-operator
 run-openark-spectrum-operator:
     @cargo run --package openark-spectrum-operator -- \
-        --controller-name 'openark-histogram' \
+        --controller-name 'openark-spectrum-operator' \
         --install-crds \
         --label-histogram-parent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram"')" \
         --label-histogram-weight "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/spectrum-histogram-weight"')" \

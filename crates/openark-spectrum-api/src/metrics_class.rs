@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use crate::common::ServiceReference;
 
 #[cfg(feature = "opeartor")]
-impl ::openark_core::operator::Resource for SpectrumClassCrd {
-    type Status = SpectrumClassStatus;
+impl ::openark_core::operator::Resource for MetricsClassCrd {
+    type Status = MetricsClassStatus;
 
     fn conditions(&self) -> Option<&[Condition]> {
         self.status
@@ -24,11 +24,11 @@ impl ::openark_core::operator::Resource for SpectrumClassCrd {
         &self,
         conditions: Vec<Condition>,
     ) -> <Self as ::openark_core::operator::Resource>::Status {
-        SpectrumClassStatus { conditions }
+        MetricsClassStatus { conditions }
     }
 }
 
-/// Spec defines the desired state of SpectrumClass.
+/// Spec defines the desired state of MetricsClass.
 ///
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "kube", derive(CustomResource))]
@@ -40,9 +40,9 @@ impl ::openark_core::operator::Resource for SpectrumClassCrd {
         category = "org",
         group = "org.ulagbulag.io",
         version = "v1alpha1",
-        kind = "SpectrumClass",
-        root = "SpectrumClassCrd",
-        status = "SpectrumClassStatus",
+        kind = "MetricsClass",
+        root = "MetricsClassCrd",
+        status = "MetricsClassStatus",
         printcolumn = r#"{
             "name": "controller",
             "type": "string",
@@ -80,17 +80,17 @@ impl ::openark_core::operator::Resource for SpectrumClassCrd {
     )
 )]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct SpectrumClassSpec {
+pub struct MetricsClassSpec {
     /// ControllerName is the name of the controller that is managing
-    /// Spectrums of this class. The value of this field MUST be a domain
+    /// Metrics of this class. The value of this field MUST be a domain
     /// prefixed path.
     ///
-    /// Example: "example.com/spectrum-controller".
+    /// Example: "example.com/metrics-controller".
     ///
     /// This field is not mutable and cannot be empty.
     pub controller_name: String,
 
-    /// Description helps describe a Spectrum with more details.
+    /// Description helps describe a class with more details.
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "String::is_empty")
@@ -100,30 +100,30 @@ pub struct SpectrumClassSpec {
     pub backend_ref: ServiceReference,
 }
 
-impl SpectrumClassSpec {
+impl MetricsClassSpec {
     pub const FIELD_CONTROLLER_NAME: &'static str = "controllerName";
 }
 
-/// Status defines the current state of Spectrum.
+/// Status defines the current state of Class.
 ///
-/// Implementations MUST populate status on all Spectrum
+/// Implementations MUST populate status on all Class
 /// resources which specify their controller name.
 ///
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct SpectrumClassStatus {
+pub struct MetricsClassStatus {
     /// Conditions is the current status from the controller for
-    /// this Spectrum.
+    /// this Class.
     ///
     /// Controllers should prefer to publish conditions using values
-    /// of SpectrumConditionType for the type of each Condition.
-    #[serde(default = "SpectrumClassStatus::default_conditions")]
+    /// of MetricsClassConditionType for the type of each Condition.
+    #[serde(default = "MetricsClassStatus::default_conditions")]
     pub conditions: Vec<Condition>,
 }
 
-impl Default for SpectrumClassStatus {
+impl Default for MetricsClassStatus {
     fn default() -> Self {
         Self {
             conditions: Self::default_conditions(),
@@ -131,7 +131,7 @@ impl Default for SpectrumClassStatus {
     }
 }
 
-impl SpectrumClassStatus {
+impl MetricsClassStatus {
     fn default_conditions() -> Vec<Condition> {
         vec![Condition {
             last_transition_time: Time(DateTime::default()),

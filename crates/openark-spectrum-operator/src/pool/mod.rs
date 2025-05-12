@@ -17,8 +17,8 @@ use kube::{
 };
 use openark_core::operator::RecorderExt;
 use openark_spectrum_api::{
+    metrics_class::MetricsClassCrd,
     pool::{PoolCrd, PoolSpec},
-    spectrum_class::SpectrumClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, info, instrument};
@@ -27,11 +27,11 @@ use url::Url;
 use crate::{
     status::{Reason, Status},
     targets::{Target, get_target},
-    utils::get_class,
+    utils::get_metrics_class,
 };
 
 struct Context {
-    api_class: Api<SpectrumClassCrd>,
+    api_class: Api<MetricsClassCrd>,
     client: ::reqwest::Client,
     kube: Client,
     label_claim_parent: String,
@@ -47,7 +47,7 @@ async fn reconcile(pool: Arc<PoolCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     let name = pool.name_any();
     let namespace = metadata.namespace.as_deref().expect("Namespaced resource");
     let PoolSpec {
-        spectrum_class_name,
+        metrics_class_name,
         target_ref,
     } = &pool.spec;
 
@@ -69,7 +69,7 @@ async fn reconcile(pool: Arc<PoolCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     };
 
     // Validate class
-    let class = match get_class(&ctx.api_class, spectrum_class_name).await? {
+    let class = match get_metrics_class(&ctx.api_class, metrics_class_name).await? {
         Ok(class) => class,
         Err(action) => return commit(action).await,
     };

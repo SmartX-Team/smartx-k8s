@@ -6,8 +6,8 @@ pub type Status = ::openark_core::operator::Status<Reason>;
 pub(crate) enum Reason {
     Accepted,
     InvalidBackendRef,
-    InvalidClass,
     InvalidHistogram,
+    InvalidMetricsClass,
     InvalidPool,
     InvalidTarget,
     #[default]

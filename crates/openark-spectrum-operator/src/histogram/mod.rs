@@ -18,7 +18,7 @@ use kube::{
 use openark_core::operator::RecorderExt;
 use openark_spectrum_api::{
     histogram::{HistogramCrd, HistogramSpec},
-    spectrum_class::SpectrumClassCrd,
+    metrics_class::MetricsClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, info, instrument};
@@ -26,11 +26,11 @@ use tracing::{Level, info, instrument};
 use crate::{
     status::{Reason, Status},
     targets::{Target, get_target},
-    utils::get_class,
+    utils::get_metrics_class,
 };
 
 struct Context {
-    api_class: Api<SpectrumClassCrd>,
+    api_class: Api<MetricsClassCrd>,
     client: ::reqwest::Client,
     kube: Client,
     label_parent: String,
@@ -45,7 +45,7 @@ async fn reconcile(hist: Arc<HistogramCrd>, ctx: Arc<Context>) -> Result<Action,
     let name = hist.name_any();
     let namespace = metadata.namespace.as_deref().expect("Namespaced resource");
     let HistogramSpec {
-        spectrum_class_name,
+        metrics_class_name,
         target_ref,
         histogram: settings,
     } = &hist.spec;
@@ -68,7 +68,7 @@ async fn reconcile(hist: Arc<HistogramCrd>, ctx: Arc<Context>) -> Result<Action,
     };
 
     // Validate class
-    let class = match get_class(&ctx.api_class, spectrum_class_name).await? {
+    let class = match get_metrics_class(&ctx.api_class, metrics_class_name).await? {
         Ok(class) => class,
         Err(action) => return commit(action).await,
     };

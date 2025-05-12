@@ -8,8 +8,8 @@ use k8s_openapi::api::core::v1::Service;
 use kube::{Api, Error, ResourceExt, api::PostParams};
 use openark_spectrum_api::{
     common::{ObjectReference, ServiceReference},
+    metrics_class::{MetricsClassCrd, MetricsClassSpec},
     pool::PoolCrd,
-    spectrum_class::{SpectrumClassCrd, SpectrumClassSpec},
 };
 
 use serde::{Serialize, de::DeserializeOwned};
@@ -25,10 +25,10 @@ fn build_service_reference_url_by_raw(name: &str, namespace: &str, port: u16) ->
         .map_err(|error| anyhow!("Failed to parse service URL: {error}"))
 }
 
-pub(crate) fn build_service_reference_url_by_class(class: &SpectrumClassCrd) -> Result<Url> {
-    let SpectrumClassCrd {
+pub(crate) fn build_service_reference_url_by_class(class: &MetricsClassCrd) -> Result<Url> {
+    let MetricsClassCrd {
         spec:
-            SpectrumClassSpec {
+            MetricsClassSpec {
                 backend_ref:
                     ServiceReference {
                         object:
@@ -59,14 +59,14 @@ pub(crate) fn build_service_reference_url_by_service(svc: &Service, port: u16) -
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
-pub(crate) async fn get_class(
-    api: &Api<SpectrumClassCrd>,
+pub(crate) async fn get_metrics_class(
+    api: &Api<MetricsClassCrd>,
     name: &str,
-) -> Result<Result<SpectrumClassCrd, Status>, Error> {
+) -> Result<Result<MetricsClassCrd, Status>, Error> {
     if name.trim().is_empty() {
         return Ok(Err(Status {
-            reason: Reason::InvalidClass,
-            message: "Empty class".into(),
+            reason: Reason::InvalidMetricsClass,
+            message: "Empty metrics class".into(),
             requeue: false,
         }));
     }
@@ -89,7 +89,7 @@ pub(crate) async fn get_class(
         }
         None => {
             return Ok(Err(Status {
-                reason: Reason::InvalidClass,
+                reason: Reason::InvalidMetricsClass,
                 message: format!("Class not found: {name}"),
                 requeue: true,
             }));

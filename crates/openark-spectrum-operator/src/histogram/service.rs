@@ -8,7 +8,7 @@ use kube::{
     Api, Client, ResourceExt, Result,
     api::{DeleteParams, ListParams, ObjectMeta, PostParams},
 };
-use openark_spectrum_api::{histogram::HistogramSettings, spectrum_class::SpectrumClassCrd};
+use openark_spectrum_api::{histogram::HistogramSettings, metrics_class::MetricsClassCrd};
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 
@@ -26,7 +26,7 @@ use crate::{
 
 pub(super) struct Context<'a> {
     pub(super) child_metadata: ObjectMeta,
-    pub(super) class: SpectrumClassCrd,
+    pub(super) class: MetricsClassCrd,
     pub(super) client: &'a ::reqwest::Client,
     pub(super) kube: &'a Client,
     pub(super) label_parent: &'a str,

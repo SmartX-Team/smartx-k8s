@@ -10,8 +10,8 @@ use kube::{
 };
 use openark_spectrum_api::{
     client::BackendClient,
+    metrics_class::MetricsClassCrd,
     schema::{WeightRequest, WeightResponse},
-    spectrum_class::SpectrumClassCrd,
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
@@ -72,7 +72,7 @@ pub(crate) async fn get_endpoints(
 pub(crate) struct Context<'a> {
     pub(crate) address_type: &'a str,
     pub(crate) child_metadata: &'a ObjectMeta,
-    pub(crate) class: &'a SpectrumClassCrd,
+    pub(crate) class: &'a MetricsClassCrd,
     pub(crate) client: &'a ::reqwest::Client,
     pub(crate) kube: &'a Client,
     pub(crate) target_metadata: &'a ObjectMeta,
@@ -110,7 +110,7 @@ pub(crate) async fn get_weighted_endpoints(
         Ok(url) => url,
         Err(error) => {
             return Ok(Err(Status {
-                reason: Reason::InvalidClass,
+                reason: Reason::InvalidMetricsClass,
                 message: error.to_string(),
                 requeue: true,
             }));
@@ -141,7 +141,7 @@ pub(crate) async fn get_weighted_endpoints(
     // Validate weights
     if items.len() != weights.len() {
         return Ok(Err(Status {
-            reason: Reason::InvalidClass,
+            reason: Reason::InvalidMetricsClass,
             message: "Invalid weights".into(),
             requeue: true,
         }));

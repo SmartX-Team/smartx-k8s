@@ -1,7 +1,7 @@
 mod histogram;
+mod metrics_class;
 mod pool;
 mod pool_claim;
-mod spectrum_class;
 mod status;
 mod targets;
 mod utils;
@@ -11,8 +11,8 @@ use clap::Parser;
 use kube::Client;
 use openark_core::operator::{OperatorArgs, install_crd};
 use openark_spectrum_api::{
-    histogram::HistogramCrd, pool::PoolCrd, pool_claim::PoolClaimCrd,
-    spectrum_class::SpectrumClassCrd,
+    histogram::HistogramCrd, metrics_class::MetricsClassCrd, pool::PoolCrd,
+    pool_claim::PoolClaimCrd,
 };
 use tokio::try_join;
 use url::Url;
@@ -59,9 +59,9 @@ struct Args {
 
 async fn install_crds(args: &OperatorArgs, client: &Client) -> Result<()> {
     install_crd::<HistogramCrd>(args, client).await?;
+    install_crd::<MetricsClassCrd>(args, client).await?;
     install_crd::<PoolClaimCrd>(args, client).await?;
     install_crd::<PoolCrd>(args, client).await?;
-    install_crd::<SpectrumClassCrd>(args, client).await?;
     Ok(())
 }
 
@@ -85,14 +85,14 @@ async fn try_main(args: Args) -> Result<()> {
             let args = args.clone();
             let client = client.clone();
             let kube = kube.clone();
-            self::pool::loop_forever(args, client, kube)
+            self::metrics_class::loop_forever(args, client, kube)
         },
         {
             let args = args.clone();
             let kube = kube.clone();
-            self::pool_claim::loop_forever(args, kube)
+            self::pool::loop_forever(args, client, kube)
         },
-        self::spectrum_class::loop_forever(args, client, kube),
+        self::pool_claim::loop_forever(args, kube),
     )?;
     Ok(())
 }

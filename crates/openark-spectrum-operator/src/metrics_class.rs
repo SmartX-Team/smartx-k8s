@@ -19,7 +19,7 @@ use openark_core::{
 };
 use openark_spectrum_api::{
     common::{ObjectReference, ServiceReference},
-    spectrum_class::{SpectrumClassCrd, SpectrumClassSpec},
+    metrics_class::{MetricsClassCrd, MetricsClassSpec},
 };
 #[cfg(feature = "tracing")]
 use tracing::{Level, info, instrument};
@@ -88,7 +88,7 @@ async fn validate_service(
 }
 
 struct Context {
-    api: Api<SpectrumClassCrd>,
+    api: Api<MetricsClassCrd>,
     client: ::reqwest::Client,
     controller_name: String,
     kube: Client,
@@ -96,8 +96,8 @@ struct Context {
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
-async fn reconcile(class: Arc<SpectrumClassCrd>, ctx: Arc<Context>) -> Result<Action, Error> {
-    let SpectrumClassSpec {
+async fn reconcile(class: Arc<MetricsClassCrd>, ctx: Arc<Context>) -> Result<Action, Error> {
+    let MetricsClassSpec {
         controller_name,
         description: _,
         backend_ref,
@@ -119,7 +119,7 @@ async fn reconcile(class: Arc<SpectrumClassCrd>, ctx: Arc<Context>) -> Result<Ac
     let commit_ok = || {
         commit(Status {
             reason: Reason::Accepted,
-            message: "Valid SpectrumClass".into(),
+            message: "Valid MetricsClass".into(),
             requeue: false,
         })
     };
@@ -186,7 +186,7 @@ async fn report_error(
     recorder.report_error(error, reason, action).await
 }
 
-fn error_policy(_class: Arc<SpectrumClassCrd>, _error: &Error, ctx: Arc<Context>) -> Action {
+fn error_policy(_class: Arc<MetricsClassCrd>, _error: &Error, ctx: Arc<Context>) -> Action {
     Action::requeue(ctx.status.interval)
 }
 
@@ -210,7 +210,13 @@ pub async fn loop_forever(
     };
     let recorder = Recorder::new(kube.clone(), reporter);
 
-    let watcher_config = Config::default();
+    let watcher_config = Config {
+        field_selector: Some(format!(
+            "spec.controllerName={}",
+            &args.operator.controller_name,
+        )),
+        ..Default::default()
+    };
 
     let context = Arc::new(Context {
         api: api.clone(),
