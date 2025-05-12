@@ -569,21 +569,12 @@ kubespray:
             matchLabels:
               k8s-app: kube-dns{{ coredns_ordinal_suffix }}
     nodeAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - ControlPlane
-          weight: 1
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
               - key: node-role.kubernetes.io/kiss
                 operator: In
                 values:
-                  - Compute
                   - ControlPlane
 
   ##########################################
