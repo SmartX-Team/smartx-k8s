@@ -63,6 +63,9 @@ domain:
         tickPolicy: delay
       rtc:
         tickPolicy: catchup
+{{- if .Values.region.timezone }}
+    timezone: {{ .Values.region.timezone | quote }}
+{{- end }}
     utc: {}
   cpu:
     dedicatedCpuPlacement: true
