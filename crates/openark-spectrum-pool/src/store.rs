@@ -157,9 +157,14 @@ impl WriteGuard<'_> {
                     let db = self.db.clone();
                     let key = key.to_string();
                     move || {
-                        let txn = db.begin_write()?;
-                        let mut table = txn.open_table(Store::TABLE_READY)?;
-                        table.insert(key.as_str(), CommitState::Running as u8)?;
+                        {
+                            let txn = db.begin_write()?;
+                            {
+                                let mut table = txn.open_table(Store::TABLE_READY)?;
+                                table.insert(key.as_str(), CommitState::Running as u8)?;
+                            }
+                            txn.commit()?;
+                        }
                         Ok(())
                     }
                 };

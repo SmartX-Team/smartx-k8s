@@ -33,7 +33,10 @@ async fn execute_probe_http(
 
     #[cfg(feature = "tracing")]
     match body {
-        Some(PoolResourceHttpBody::JsonBody(body)) => info!("Start probe: {url:?} {body:?}"),
+        Some(PoolResourceHttpBody::JsonBody(body)) => info!(
+            "Start probe: {url:?} {body}",
+            body = ::serde_json::to_string(body)?,
+        ),
         None => info!("Start probe: {url:?}"),
     }
 
@@ -51,7 +54,7 @@ async fn execute_probe_http(
     #[cfg(feature = "tracing")]
     {
         let status = response.status();
-        info!("Complete probe: {url:?} {{{status}}}");
+        info!("Complete commit probe: {url:?} {{{status}}}");
     }
 
     Ok(())
@@ -95,30 +98,45 @@ impl Pool {
                 let probes = probes.to_vec();
 
                 spawn(async move {
-                    let mut result = Ok(());
-                    for probe in &probes {
+                    let mut is_completed = true;
+                    for (index, probe) in probes.iter().enumerate() {
                         match execute_probe(&client, &address, &probe).await {
                             Ok(()) => continue,
                             Err(error) => {
-                                result = Err(error);
+                                #[cfg(feature = "tracing")]
+                                {
+                                    error!("Failed to commit probe ({address})[{index}]: {error}")
+                                }
+
+                                #[cfg(not(feature = "tracing"))]
+                                {
+                                    let _ = error;
+                                }
+
+                                is_completed = false;
                                 break;
                             }
                         }
                     }
-                    let result = result.and_then(|()| on_completed());
 
-                    semaphore.fetch_add(1, Ordering::SeqCst);
-                    match result {
-                        Ok(()) => (),
-                        Err(error) => {
-                            #[cfg(feature = "tracing")]
-                            {
-                                error!("Failed to commit probe ({address}): {error}")
+                    if is_completed {
+                        match on_completed() {
+                            Ok(()) => {
+                                #[cfg(feature = "tracing")]
+                                {
+                                    info!("Completed commit probes ({address})")
+                                }
                             }
+                            Err(error) => {
+                                #[cfg(feature = "tracing")]
+                                {
+                                    error!("Failed to commit probes ({address}): {error}")
+                                }
 
-                            #[cfg(not(feature = "tracing"))]
-                            {
-                                let _ = error;
+                                #[cfg(not(feature = "tracing"))]
+                                {
+                                    let _ = error;
+                                }
                             }
                         }
                     }
