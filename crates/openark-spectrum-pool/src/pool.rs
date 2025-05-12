@@ -83,10 +83,10 @@ impl Pool {
         &self,
         address: &str,
         probes: &[PoolResourceProbe],
-        on_completed: F,
+        callback: F,
     ) -> Result<CommitState>
     where
-        F: 'static + FnOnce() -> Result<()>,
+        F: 'static + FnOnce(bool) -> Result<()>,
     {
         let semaphore = self.semaphore.clone();
         match semaphore.load(Ordering::SeqCst) {
@@ -119,24 +119,25 @@ impl Pool {
                         }
                     }
 
-                    if is_completed {
-                        match on_completed() {
-                            Ok(()) => {
-                                #[cfg(feature = "tracing")]
-                                {
-                                    info!("Completed commit probes ({address})")
-                                }
+                    match callback(is_completed) {
+                        Ok(()) =>
+                        {
+                            #[cfg(feature = "tracing")]
+                            if is_completed {
+                                info!("Completed commit probes ({address})")
+                            } else {
+                                info!("Reverted commit probes ({address})")
                             }
-                            Err(error) => {
-                                #[cfg(feature = "tracing")]
-                                {
-                                    error!("Failed to commit probes ({address}): {error}")
-                                }
+                        }
+                        Err(error) => {
+                            #[cfg(feature = "tracing")]
+                            {
+                                error!("Failed to commit probes ({address}): {error}")
+                            }
 
-                                #[cfg(not(feature = "tracing"))]
-                                {
-                                    let _ = error;
-                                }
+                            #[cfg(not(feature = "tracing"))]
+                            {
+                                let _ = error;
                             }
                         }
                     }

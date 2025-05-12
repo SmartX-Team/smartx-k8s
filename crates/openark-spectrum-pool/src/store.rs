@@ -156,12 +156,17 @@ impl WriteGuard<'_> {
                 let on_completed = {
                     let db = self.db.clone();
                     let key = key.to_string();
-                    move || {
+                    move |is_completed| {
                         {
+                            let state = if is_completed {
+                                CommitState::Running
+                            } else {
+                                CommitState::Pending
+                            };
                             let txn = db.begin_write()?;
                             {
                                 let mut table = txn.open_table(Store::TABLE_READY)?;
-                                table.insert(key.as_str(), CommitState::Running as u8)?;
+                                table.insert(key.as_str(), state as u8)?;
                             }
                             txn.commit()?;
                         }
