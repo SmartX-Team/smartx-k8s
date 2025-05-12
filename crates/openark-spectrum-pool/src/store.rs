@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use openark_spectrum_api::{
     common::ObjectReference,
-    pool_claim::PoolResourceProbe,
+    pool_claim::PoolResourceLifecycle,
     schema::{CommitState, PoolResource},
 };
 use redb::{
@@ -147,10 +147,12 @@ impl WriteGuard<'_> {
         key: &ObjectReference,
         value: &str,
         address: &str,
-        probe: Option<&PoolResourceProbe>,
+        lifecycle: &PoolResourceLifecycle,
     ) -> Result<CommitState> {
-        let state = match probe {
-            Some(probe) => {
+        let PoolResourceLifecycle { pre_start } = lifecycle;
+        let state = match pre_start.as_slice() {
+            [] => CommitState::Running,
+            probes => {
                 let on_completed = {
                     let db = self.db.clone();
                     let key = key.to_string();
@@ -161,9 +163,8 @@ impl WriteGuard<'_> {
                         Ok(())
                     }
                 };
-                self.pool.commit(address, probe, on_completed)?
+                self.pool.commit(address, probes, on_completed)?
             }
-            None => CommitState::Running,
         };
 
         let key = key.to_string();

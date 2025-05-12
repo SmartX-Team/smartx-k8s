@@ -79,7 +79,7 @@ impl Pool {
     pub fn commit<F>(
         &self,
         address: &str,
-        probe: &PoolResourceProbe,
+        probes: &[PoolResourceProbe],
         on_completed: F,
     ) -> Result<CommitState>
     where
@@ -92,12 +92,21 @@ impl Pool {
                 semaphore.fetch_sub(1, Ordering::SeqCst);
                 let client = self.client.clone();
                 let address = address.to_string();
-                let probe = probe.clone();
+                let probes = probes.to_vec();
 
                 spawn(async move {
-                    let result = execute_probe(&client, &address, &probe)
-                        .await
-                        .and_then(|()| on_completed());
+                    let mut result = Ok(());
+                    for probe in &probes {
+                        match execute_probe(&client, &address, &probe).await {
+                            Ok(()) => continue,
+                            Err(error) => {
+                                result = Err(error);
+                                break;
+                            }
+                        }
+                    }
+                    let result = result.and_then(|()| on_completed());
+
                     semaphore.fetch_add(1, Ordering::SeqCst);
                     match result {
                         Ok(()) => (),

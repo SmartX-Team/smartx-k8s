@@ -129,9 +129,9 @@ pub struct PoolResourceSettings {
 pub struct PoolResourceLifecycle {
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
+        serde(default, skip_serializing_if = "Vec::is_empty")
     )]
-    pub pre_start: Option<PoolResourceProbe>,
+    pub pre_start: Vec<PoolResourceProbe>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

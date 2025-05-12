@@ -4,7 +4,7 @@ use actix_web::{HttpResponse, Responder, post, web};
 use anyhow::Result;
 use openark_spectrum_api::{
     common::ObjectReference,
-    pool_claim::PoolResourceProbe,
+    pool_claim::PoolResourceLifecycle,
     schema::{CommitState, PoolCommitRequest, PoolRequest, PoolResponse},
 };
 #[cfg(feature = "tracing")]
@@ -96,7 +96,7 @@ fn try_handle_commit<'a>(store: web::Data<Store>, args: PoolCommitRequest<'a>) -
     struct Value<'a> {
         address: &'a str,
         claim_name: &'a str,
-        probe: Option<&'a PoolResourceProbe>,
+        lifecycle: &'a PoolResourceLifecycle,
         resource: ObjectReference,
     }
 
@@ -123,7 +123,7 @@ fn try_handle_commit<'a>(store: web::Data<Store>, args: PoolCommitRequest<'a>) -
                     let value = Value {
                         address,
                         claim_name,
-                        probe: item.lifecycle.pre_start.as_ref(),
+                        lifecycle: &item.lifecycle,
                         resource: ObjectReference {
                             group: "discovery.k8s.io".into(),
                             kind: "Endpoint".into(),
@@ -140,11 +140,11 @@ fn try_handle_commit<'a>(store: web::Data<Store>, args: PoolCommitRequest<'a>) -
         for Value {
             address,
             claim_name,
-            probe,
+            lifecycle,
             resource,
         } in orders.values()
         {
-            match txn.put(resource, *claim_name, *address, *probe)? {
+            match txn.put(resource, *claim_name, *address, *lifecycle)? {
                 CommitState::Pending => break,
                 CommitState::Preparing | CommitState::Running => continue,
             }

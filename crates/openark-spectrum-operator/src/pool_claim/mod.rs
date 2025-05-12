@@ -145,7 +145,7 @@ async fn reconcile(claim: Arc<PoolClaimCrd>, ctx: Arc<Context>) -> Result<Action
             {
                 map.insert(
                     ctx.label_lifecycle_pre_start.clone(),
-                    pre_start.is_some().to_string(),
+                    pre_start.len().to_string(),
                 );
             }
             // resources
