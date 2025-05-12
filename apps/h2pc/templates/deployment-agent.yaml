@@ -99,6 +99,8 @@ spec:
           image: "{{ $.Values.features.ollama.image.repo }}:{{ $.Values.features.ollama.image.tag }}"
           imagePullPolicy: {{ $.Values.features.ollama.image.pullPolicy | quote }}
           env:
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "1"
             - name: OLLAMA_HOST
               value: 0.0.0.0:11434
 {{- range $_ := $env }}
