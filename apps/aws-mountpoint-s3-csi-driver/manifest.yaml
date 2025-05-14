@@ -4,8 +4,9 @@ kind: Manifest
 metadata:
   name: smartx.apps.aws-mountpoint-s3-csi-driver
 spec:
+  enabled: false
   group: ops
-  phase: stable
+  phase: alpha
   scale: small
   users:
     owners:

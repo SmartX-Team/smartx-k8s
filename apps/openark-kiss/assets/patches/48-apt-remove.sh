@@ -11,7 +11,7 @@ set -e -o pipefail
 # Verbose
 set -x
 
-apt-get install -y \
+apt-get remove -y \
 {{- range $_ := .Values.packages.ubuntu.excludes }}
     {{ . | quote }} \
 {{- end }}

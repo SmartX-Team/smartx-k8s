@@ -26,4 +26,7 @@ apt-get install --no-install-recommends --no-install-suggests -y \
 {{- else }}
 {{- fail "Internal error: Ubuntu OS is not enabled" }}
 {{- end }}
+{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+    'containerd' \
+{{- end }}
     && true

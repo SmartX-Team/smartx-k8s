@@ -417,7 +417,7 @@ kubespray:
   #     host_dir: /mnt/disks
   #     mount_dir: /mnt/disks
   #     volume_mode: Filesystem
-  #     fs_type: ext4
+  #     fs_type: btrfs
   #   fast-disks:
   #     host_dir: /mnt/fast-disks
   #     mount_dir: /mnt/fast-disks
@@ -425,7 +425,7 @@ kubespray:
   #       - "/scripts/shred.sh"
   #       - "2"
   #     volume_mode: Filesystem
-  #     fs_type: ext4
+  #     fs_type: btrfs
 
   # Cert manager deployment
   cert_manager_enabled: true

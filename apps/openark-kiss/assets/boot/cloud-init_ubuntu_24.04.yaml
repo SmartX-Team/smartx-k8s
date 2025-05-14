@@ -62,11 +62,49 @@ autoinstall:
   storage:
     swap:
       size: 0
-    layout:
-      name: direct
-      match:
-        # ssd: true
-        size: smallest
+    config:
+      # Root drive
+      - id: disk0
+        type: disk
+        match:
+          # ssd: true
+          size: smallest
+        ptable: gpt
+        grub_device: true
+        preserve: false
+        wipe: superblock
+      # Partition / EFI
+      - id: efi_partition
+        type: partition
+        size: 1G
+        device: disk0
+        flag: boot
+        grub_device: true
+        preserve: false
+      - id: efi_format
+        type: format
+        fstype: fat32
+        volume: efi_partition
+        preserve: false
+      - id: efi_mount
+        type: mount
+        path: /boot/efi
+        device: efi_format
+      # Partition / Root
+      - id: root_partition
+        type: partition
+        size: -1
+        device: disk0
+        preserve: false
+      - id: root_format
+        type: format
+        fstype: btrfs
+        volume: root_partition
+        preserve: false
+      - id: root_mount
+        type: mount
+        path: /
+        device: root_format
 
   early-commands:
     # Installer Network Configuration
