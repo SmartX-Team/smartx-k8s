@@ -74,37 +74,131 @@ autoinstall:
         preserve: false
         wipe: superblock
       # Partition / EFI
-      - id: efi_partition
+      - id: partition_efi
         type: partition
         size: 1G
         device: disk0
         flag: boot
         grub_device: true
         preserve: false
-      - id: efi_format
+      - id: format_efi
         type: format
         fstype: fat32
-        volume: efi_partition
+        volume: partition_efi
         preserve: false
-      - id: efi_mount
+      - id: mount_efi
         type: mount
         path: /boot/efi
-        device: efi_format
+        device: format_efi
+
+{{- if .Values.storage.lvm }}
+{{- if .Values.kiss.group.resetStorage }}
+{{- fail "resetStorage feature cannot with enabled with LVM storage" }}
+{{- end }}
+      # Partition / LVM
+      - id: partition_lvm
+        type: partition
+{{- if eq "0" ( .Values.storage.size | toString ) }}
+        size: -1
+{{- else }}
+        size: {{ .Values.storage.size }}
+{{- end }}
+        device: disk0
+        preserve: false
+      - id: vg_rootfs
+        name: vg_rootfs
+        type: lvm_volgroup
+        devices:
+          - partition_lvm
+      # Logical Volume / Root
+      - id: lv_root
+        name: lv_root
+        type: lvm_partition
+        volgroup: vg_rootfs
+        size: 10G
+      - id: format_root
+        type: format
+        fstype: {{ .Values.storage.fstype | quote }}
+        volume: lv_root
+        preserve: false
+      - id: mount_root
+        type: mount
+        path: /
+        device: format_root
+      # Logical Volume / ContainerD
+      - id: lv_containerd
+        name: lv_containerd
+        type: lvm_partition
+        volgroup: vg_rootfs
+        size: 70G
+      - id: format_containerd
+        type: format
+        fstype: {{ .Values.storage.fstype | quote }}
+        volume: lv_containerd
+        preserve: false
+      - id: mount_containerd
+        type: mount
+        path: /var/lib/containerd
+        device: format_containerd
+      # Logical Volume / Logs
+      - id: lv_log
+        name: lv_log
+        type: lvm_partition
+        volgroup: vg_rootfs
+        size: 10G
+      - id: format_log
+        type: format
+        fstype: {{ .Values.storage.fstype | quote }}
+        volume: lv_log
+        preserve: false
+      - id: mount_log
+        type: mount
+        path: /var/log
+        device: format_log
+      # Logical Volume / ETCD
+      - id: lv_etcd
+        name: lv_etcd
+        type: lvm_partition
+        volgroup: vg_rootfs
+        size: 10G
+      - id: format_etcd
+        type: format
+        fstype: {{ .Values.storage.fstype | quote }}
+        volume: lv_etcd
+        preserve: false
+      - id: mount_etcd
+        type: mount
+        path: /var/lib/containerd
+        device: format_etcd
+{{- else }}
       # Partition / Root
-      - id: root_partition
+      - id: partition_root
+        type: partition
+{{- if eq "0" ( .Values.storage.size | toString ) }}
+        size: -1
+{{- else }}
+        size: {{ .Values.storage.size }}
+{{- end }}
+        device: disk0
+        preserve: false
+      - id: format_root
+        type: format
+        fstype: {{ .Values.storage.fstype | quote }}
+        volume: partition_root
+        preserve: false
+      - id: mount_root
+        type: mount
+        path: /
+        device: format_root
+{{- if ne "0" ( .Values.storage.size | toString ) }}
+      # Partition / Free
+      - id: partition_free
         type: partition
         size: -1
         device: disk0
         preserve: false
-      - id: root_format
-        type: format
-        fstype: btrfs
-        volume: root_partition
-        preserve: false
-      - id: root_mount
-        type: mount
-        path: /
-        device: root_format
+{{- end }}
+{{- end }}
 
   early-commands:
     # Installer Network Configuration

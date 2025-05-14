@@ -60,6 +60,11 @@ operator:
     tag: ""
     pullPolicy: Always
 
+storage:
+  fstype: btrfs
+  lvm: true
+  size: "0" # Use `0` to use full disk
+
 workflow:
   image:
     repo: quay.io/ulagbulag/openark

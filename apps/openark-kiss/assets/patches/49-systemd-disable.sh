@@ -81,6 +81,7 @@ rm -f \
 # SYSINIT
 cd /etc/systemd/system/sysinit.target.wants/
 rm -f \
+    apparmor.service \
     multipathd.service \
     open-iscsi.service
 
