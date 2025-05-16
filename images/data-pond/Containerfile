@@ -41,7 +41,7 @@ RUN \
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
     && cargo build \
-        --package 'data-pond-controller' \
+        --package 'data-pond' \
         --profile 'release' \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
 
@@ -70,6 +70,7 @@ ADD ./bin/* /usr/local/bin/
 COPY --from=builder /out/* /usr/local/bin/
 
 # Mark as executable
+CMD [ "./entrypoint.sh" ]
 ENTRYPOINT [ "/usr/bin/env" ]
 USER user
 WORKDIR /usr/local/bin/

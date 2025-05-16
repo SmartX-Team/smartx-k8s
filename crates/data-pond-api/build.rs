@@ -10,7 +10,8 @@ async fn main() -> Result<()> {
     let url = env::var("CSI_PROTO_URL").unwrap_or_else(|_| "https://raw.githubusercontent.com/container-storage-interface/spec/refs/heads/master/csi.proto".into());
 
     // Cache outputs
-    println!("cargo::rerun-if-env-changed=CSI_PROTO_URL");
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=CSI_PROTO_URL");
 
     // Download spec
     let path = out_dir.join("csi.proto");
@@ -25,7 +26,8 @@ async fn main() -> Result<()> {
     // Parse spec
     let config = ::tonic_build::configure()
         .build_client(cfg!(feature = "client"))
-        .build_server(cfg!(feature = "server"));
+        .build_server(cfg!(feature = "server"))
+        .emit_rerun_if_changed(false);
     let protos = &[path.as_path()];
     let includes = &[out_dir.as_path()];
     config.compile_protos(protos, includes)?;

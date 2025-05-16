@@ -11,9 +11,14 @@ set -e -o pipefail
 set -x
 
 # Configure environment variables
-IO_SOURCES="${IO_SOURCES:-nvme}"
-IO_TARGET="${IO_TARGET:-nvme}"
-NVME_DRIVER="${NVME_DRIVER:-kernel}"
+export DATA_POND_IO_SOURCES="${DATA_POND_IO_SOURCES:-nvme}"
+export DATA_POND_IO_TARGET="${DATA_POND_IO_TARGET:-nvme}"
+export NVME_DRIVER="${NVME_DRIVER:-kernel}"
+
+# Execute global controller
+if ! echo -n "${DATA_POND_SERVICES}" | grep -Posq '(^|,)node(,|$)'; then
+    exec data-pond
+fi
 
 function terminate() {
     # Stop controller
@@ -22,16 +27,15 @@ function terminate() {
         wait "${pid_controller}" || true
     fi
 
-    "$(dirname "$0")/${IO_TARGET}-target-cleanup.sh" >&2
-    for source in $(echo "${IO_SOURCES}" | tr ',' '\n'); do
-        driver="$(cat "${source}" | tr a-z A-Z)_DRIVER"
-        if [ -f "$(dirname "$0")/${source}-target-cleanup.sh" ]; then
-            "$(dirname "$0")/${source}-target-cleanup.sh" >&2
+    # Unload driver
+    "$(dirname "$0")/${DATA_POND_IO_TARGET}-target-unload.sh" >&2
+    for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
+        driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
+        if [ "${source}" != "${DATA_POND_IO_TARGET}" ] && [ -f "$(dirname "$0")/${source}-target-unload.sh" ]; then
+            "$(dirname "$0")/${source}-target-unload.sh" >&2
         fi
-        "$(dirname "$0")/${source}-source-${!driver}-cleanup.sh" >&2
         "$(dirname "$0")/${source}-source-${!driver}-unload.sh" >&2
     done
-    exec true
 }
 
 trap -- 'terminate' SIGINT
@@ -39,22 +43,16 @@ trap -- 'terminate' SIGTERM
 
 # Load driver
 terminate
-for source in $(echo "${IO_SOURCES}" | tr ',' '\n'); do
-    driver="$(cat "${source}" | tr a-z A-Z)_DRIVER"
+for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
+    driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
     "$(dirname "$0")/${source}-source-${!driver}-load.sh" >&2
 done
 
-# Discover sources
-for source in $(echo "${IO_SOURCES}" | tr ',' '\n'); do
-    driver="$(cat "${source}" | tr a-z A-Z)_DRIVER"
-    "$(dirname "$0")/${source}-source-${!driver}-discover.sh" >&2
-done
-
-# Load controller
-data_pond_controller &
+# Load node controller
+data-pond &
 declare -ig pid_controller="$!"
 
-# Unload controller
+# Unload node controller
 wait "${pid_controller}" || true
 
 # Unload driver

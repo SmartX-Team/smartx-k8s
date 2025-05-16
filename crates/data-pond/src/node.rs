@@ -1,114 +1,79 @@
-use std::net::SocketAddr;
+use std::collections::HashMap;
 
 use async_trait::async_trait;
-use clap::Parser;
-use data_pond_api::node_server::{Node, NodeServer};
-use tonic::{Request, Response, Result, transport};
-#[cfg(feature = "tracing")]
-use tracing::info;
-
-#[derive(Clone, Debug, Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Args {
-    /// An address to bind the server
-    #[arg(
-        long,
-        env = "BIND_ADDR",
-        value_name = "ADDR",
-        default_value = "0.0.0.0:50051"
-    )]
-    bind_addr: SocketAddr,
-
-    #[command(flatten)]
-    server: Server,
-}
-
-#[derive(Clone, Debug, Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Server {}
+use data_pond_api::node_server::Node;
+use tonic::{Request, Response, Result};
 
 #[async_trait]
-impl Node for Server {
+impl Node for super::Server {
     async fn node_stage_volume(
         &self,
         request: Request<::data_pond_api::NodeStageVolumeRequest>,
     ) -> Result<Response<::data_pond_api::NodeStageVolumeResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_stage_volume")
     }
 
     async fn node_unstage_volume(
         &self,
         request: Request<::data_pond_api::NodeUnstageVolumeRequest>,
     ) -> Result<Response<::data_pond_api::NodeUnstageVolumeResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_unstage_volume")
     }
 
     async fn node_publish_volume(
         &self,
         request: Request<::data_pond_api::NodePublishVolumeRequest>,
     ) -> Result<Response<::data_pond_api::NodePublishVolumeResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_publish_volume")
     }
 
     async fn node_unpublish_volume(
         &self,
         request: Request<::data_pond_api::NodeUnpublishVolumeRequest>,
     ) -> Result<Response<::data_pond_api::NodeUnpublishVolumeResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_unpublish_volume")
     }
 
     async fn node_get_volume_stats(
         &self,
         request: Request<::data_pond_api::NodeGetVolumeStatsRequest>,
     ) -> Result<Response<::data_pond_api::NodeGetVolumeStatsResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_get_volume_stats")
     }
 
     async fn node_expand_volume(
         &self,
         request: Request<::data_pond_api::NodeExpandVolumeRequest>,
     ) -> Result<Response<::data_pond_api::NodeExpandVolumeResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_expand_volume")
     }
 
     async fn node_get_capabilities(
         &self,
         request: Request<::data_pond_api::NodeGetCapabilitiesRequest>,
     ) -> Result<Response<::data_pond_api::NodeGetCapabilitiesResponse>> {
-        todo!()
+        dbg!(request.into_inner());
+        crate::todo!("node_get_capabilities")
     }
 
     async fn node_get_info(
         &self,
         request: Request<::data_pond_api::NodeGetInfoRequest>,
     ) -> Result<Response<::data_pond_api::NodeGetInfoResponse>> {
-        todo!()
+        let ::data_pond_api::NodeGetInfoRequest {} = request.into_inner();
+
+        Ok(Response::new(::data_pond_api::NodeGetInfoResponse {
+            node_id: todo!(),
+            max_volumes_per_node: 0,
+            accessible_topology: Some(::data_pond_api::Topology {
+                segments: HashMap::default(),
+            }),
+        }))
     }
-}
-
-async fn try_main(args: Args) -> Result<(), transport::Error> {
-    let Args {
-        bind_addr: addr,
-        server,
-    } = args;
-
-    #[cfg(feature = "tracing")]
-    info!("Listening on {addr}");
-
-    transport::Server::builder()
-        .add_service(NodeServer::new(server))
-        .serve(addr)
-        .await
-}
-
-#[::tokio::main]
-async fn main() {
-    let args = Args::parse();
-
-    ::openark_core::init_once();
-
-    #[cfg(feature = "tracing")]
-    ::tracing::info!("Welcome to Data Pond Node Server!");
-
-    try_main(args).await.expect("running a server")
 }

@@ -11,6 +11,21 @@ set -e -o pipefail
 # Verbose
 set -x
 
+# Cleanup Ports
+for port in $(find /sys/kernel/config/nvmet/ports -maxdepth 1 -mindepth 1 -type d); do
+    find "${port}/subsystems" -maxdepth 1 -mindepth 1 -type l -exec rm '{}' \;
+    rmdir "${port}"
+done
+
+# Cleanup Subsystems
+for sys in $(find /sys/kernel/config/nvmet/subsystems -maxdepth 1 -mindepth 1 -type d); do
+    for ns in $(find "${sys}/namespaces" -maxdepth 1 -mindepth 1 -type d); do
+        echo 0 >"${ns}/enable"
+        rmdir "${ns}"
+    done
+    rmdir "${sys}"
+done
+
 # nvmet
-rmmod nvmet-tcp
-rmmod nvmet
+rmmod nvmet-tcp || true
+rmmod nvmet || true

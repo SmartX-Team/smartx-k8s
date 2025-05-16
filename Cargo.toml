@@ -141,6 +141,7 @@ tracing-opentelemetry = { version = "=0.30", default-features = false } # should
 tracing-subscriber = { version = "=0.3", default-features = false }
 tracing-web = { version = "=0.1", default-features = false }
 tokio = { version = "=1", default-features = false }
+tokio-stream = { version = "=0.1", default-features = false }
 unicode-width = { version = "=0.2", default-features = false, features = [
     "cjk",
 ] }
