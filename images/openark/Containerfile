@@ -34,11 +34,13 @@ RUN \
     # Fix version
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
-    && cargo build --bins \
-        --exclude 'openark-vine-dashboard-frontend' \
-        --package 'openark-*' \
+    && cargo build \
+        --package 'openark-*-backend' \
+        --package 'openark-*-handler' \
+        --package 'openark-*-operator' \
+        --package 'openark-cli' \
+        --package 'openark-kiss-dns' \
         --profile 'release' \
-        --workspace \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
 
 # Be ready for serving
@@ -52,7 +54,6 @@ RUN apt-get update && apt-get install -y \
         jq \
         policykit-1 \
         systemd \
-        wget \
     # Cleanup
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*

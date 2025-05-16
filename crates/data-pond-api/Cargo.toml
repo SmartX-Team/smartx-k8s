@@ -1,0 +1,49 @@
+[package]
+name = "data-pond-api"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+
+# gRPC
+client = ["transport"]
+server = ["transport"]
+transport = ["tonic/transport", "tonic-build/transport"]
+
+# TLS
+tls-aws-lc-rs = ["reqwest/rustls-tls"]
+tls-openssl = ["reqwest/native-tls"]
+tls-ring = ["reqwest/rustls-tls"]
+
+[build-dependencies]
+anyhow = { workspace = true, features = ["std"] }
+tonic-build = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true, features = [
+    "fs",
+    "macros",
+    "net",
+    "rt-multi-thread",
+] }
+
+[dependencies]
+prost = { workspace = true, features = ["derive", "std"] }
+prost-types = { workspace = true, features = ["std"] }
+tonic = { workspace = true }

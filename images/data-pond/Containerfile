@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         clang \
         cmake \
+        protobuf-compiler \
     # Switch channel
     && rustup default {{ .Values.rust.channel | quote }} \
     # Cleanup
@@ -24,6 +25,12 @@ ADD . /src
 WORKDIR /src
 
 # Build it!
+ENV CSI_PROTO_URL={{ printf "%s/%s/%s/refs/heads/%s/csi.proto"
+    .Values.csi.baseUrl
+    .Values.csi.owner
+    .Values.csi.name
+    .Values.csi.revision
+}}
 RUN \
     # Cache build outputs
     --mount=type=cache,target=/src/target \
@@ -33,10 +40,9 @@ RUN \
     # Fix version
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
-    && cargo build --bins \
-        --package 'data-pond-*' \
+    && cargo build \
+        --package 'data-pond-controller' \
         --profile 'release' \
-        --workspace \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
 
 # Be ready for serving

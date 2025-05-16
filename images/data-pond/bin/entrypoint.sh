@@ -22,10 +22,12 @@ function terminate() {
         wait "${pid_controller}" || true
     fi
 
-    "$(dirname "$0")/${IO_TARGET}-target.sh" >&2
+    "$(dirname "$0")/${IO_TARGET}-target-cleanup.sh" >&2
     for source in $(echo "${IO_SOURCES}" | tr ',' '\n'); do
         driver="$(cat "${source}" | tr a-z A-Z)_DRIVER"
-        "$(dirname "$0")/${source}-target-cleanup.sh" >&2
+        if [ -f "$(dirname "$0")/${source}-target-cleanup.sh" ]; then
+            "$(dirname "$0")/${source}-target-cleanup.sh" >&2
+        fi
         "$(dirname "$0")/${source}-source-${!driver}-cleanup.sh" >&2
         "$(dirname "$0")/${source}-source-${!driver}-unload.sh" >&2
     done

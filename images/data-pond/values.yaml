@@ -4,6 +4,12 @@ builder:
     repo: docker.io/library/rust
     tag: "1"
 
+csi:
+  baseUrl: https://raw.githubusercontent.com
+  owner: container-storage-interface
+  name: spec
+  revision: master
+
 debian:
   image:
     repo: docker.io/library/debian

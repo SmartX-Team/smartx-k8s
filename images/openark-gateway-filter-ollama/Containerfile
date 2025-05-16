@@ -38,7 +38,6 @@ RUN \
     && cargo build --package {{ $package | quote }} \
         --profile 'release-wasm' \
         --target 'wasm32-unknown-unknown' \
-        --workspace \
     && mv \
         {{ printf "./target/wasm32-unknown-unknown/release-wasm/%s.wasm"
                 ( $package | snakecase )
