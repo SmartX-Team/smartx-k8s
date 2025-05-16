@@ -168,7 +168,7 @@ autoinstall:
         preserve: false
       - id: mount_etcd
         type: mount
-        path: /var/lib/containerd
+        path: /opt/etcd
         device: format_etcd
 {{- else }}
       # Partition / Root

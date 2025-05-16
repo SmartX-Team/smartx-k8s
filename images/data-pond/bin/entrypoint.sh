@@ -11,13 +11,15 @@ set -e -o pipefail
 set -x
 
 # Configure environment variables
-export DATA_POND_IO_SOURCES="${DATA_POND_IO_SOURCES:-nvme}"
-export DATA_POND_IO_TARGET="${DATA_POND_IO_TARGET:-nvme}"
+if [[ ! -v DATA_POND_IO_SOURCES ]]; then
+    export DATA_POND_IO_SOURCES="nvme"
+fi
+export DATA_POND_IO_TARGETS="${DATA_POND_IO_TARGETS:-nvme}"
 export NVME_DRIVER="${NVME_DRIVER:-kernel}"
 
-# Execute global controller
-if ! echo -n "${DATA_POND_SERVICES}" | grep -Posq '(^|,)node(,|$)'; then
-    exec data-pond
+# Mount ConfigFS
+if ! cat /proc/mounts | grep -Posq '^configfs +/sys/kernel/config +configfs'; then
+    mount configfs -t configfs /sys/kernel/config
 fi
 
 function terminate() {
@@ -28,12 +30,11 @@ function terminate() {
     fi
 
     # Unload driver
-    "$(dirname "$0")/${DATA_POND_IO_TARGET}-target-unload.sh" >&2
+    for target in $(echo "${DATA_POND_IO_TARGETS}" | tr ',' '\n'); do
+        "$(dirname "$0")/${target}-target-unload.sh" >&2
+    done
     for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
         driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
-        if [ "${source}" != "${DATA_POND_IO_TARGET}" ] && [ -f "$(dirname "$0")/${source}-target-unload.sh" ]; then
-            "$(dirname "$0")/${source}-target-unload.sh" >&2
-        fi
         "$(dirname "$0")/${source}-source-${!driver}-unload.sh" >&2
     done
 }
@@ -46,6 +47,9 @@ terminate
 for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
     driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
     "$(dirname "$0")/${source}-source-${!driver}-load.sh" >&2
+done
+for target in $(echo "${DATA_POND_IO_TARGETS}" | tr ',' '\n'); do
+    "$(dirname "$0")/${target}-target-load.sh" >&2
 done
 
 # Load node controller

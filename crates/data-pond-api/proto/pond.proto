@@ -1,0 +1,37 @@
+syntax="proto3";
+package io.ulagbulag.csi.pond.v1;
+
+service Pond {
+  rpc ListDevices (ListDevicesRequest)
+    returns (ListDevicesResponse) {}
+}
+
+message ListDevicesRequest {}
+
+message ListDevicesResponse {
+  repeated Device Devices = 1;
+}
+
+message Device {
+  string id = 1;
+  optional string uid = 2;
+  DeviceLayer.Type layer = 3;
+  DeviceSource.Type source = 4;
+  string addr = 5;
+  int64 capacity = 6;
+  bool group = 7;
+}
+
+message DeviceLayer {
+  enum Type {
+    UNKNOWN = 0;
+    LVM = 1;
+  }
+}
+
+message DeviceSource {
+  enum Type {
+    UNKNOWN = 0;
+    NVME = 1;
+  }
+}

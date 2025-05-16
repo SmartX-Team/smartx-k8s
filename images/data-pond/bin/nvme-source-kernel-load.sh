@@ -4,20 +4,32 @@
 # found in the LICENSE file.
 
 # Data Pond Storage
-# Load NVMe Kernel Modules
+# Load NVMe tranport Kernel Modules
 
 # Prehibit errors
 set -e -o pipefail
 # Verbose
 set -x
 
-# nvme
-modprobe nvme num_p2p_queues=1
-modprobe nvme-tcp
-
 # nvmet
+modprobe nvme num_p2p_queues=1
 modprobe nvmet
 modprobe nvmet-tcp
+
+#######################################
+# Add subsystem
+#######################################
+
+if [ "x${NVME_SUBSYSTEM_NQN}" == 'x' ]; then
+    echo 'No such environment variable: NVME_SUBSYSTEM_NQN'
+    exec false
+fi
+SUBSYSTEM_HOME="/sys/kernel/config/nvmet/subsystems/${NVME_SUBSYSTEM_NQN}"
+mkdir "${SUBSYSTEM_HOME}"
+cd "${SUBSYSTEM_HOME}"
+(
+    echo 1 >./attr_allow_any_host
+)
 
 #######################################
 # Add ports
@@ -39,6 +51,9 @@ function add_port {
             ;;
         esac
         echo 'tcp' >./addr_trtype
+
+        # Add port to the subsystem
+        ln -s "${SUBSYSTEM_HOME}" "./subsystems/${SUBSYSTEM}"
     )
     index=$((index + 1))
 }

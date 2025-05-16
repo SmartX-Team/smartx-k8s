@@ -4,18 +4,18 @@
 # found in the LICENSE file.
 
 # Data Pond Storage
-# Load NVMe Kernel Modules
+# Unload NVMe Kernel Modules
 
 # Prehibit errors
 set -e -o pipefail
 # Verbose
 set -x
 
-# Cleanup Connections
-if [ -d '/sys/module/nvme_fabrics' ]; then
-    nvme disconnect-all
-fi
+# Set NVMe NQN
+echo "${NODE_ID}" >/etc/nvme/hostid
+echo "nqn.2014-08.org.nvmexpress:uuid:${NODE_ID}" >/etc/nvme/hostnqn
 
 # nvme
-rmmod nvme-tcp || true
-rmmod nvme-fabrics || true
+modprobe nvme num_p2p_queues=1
+modprobe nvme-fabrics
+modprobe nvme-tcp

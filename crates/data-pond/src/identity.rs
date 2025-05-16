@@ -1,19 +1,19 @@
-use std::{collections::HashMap, sync::atomic::Ordering};
+use std::collections::HashMap;
 
 use async_trait::async_trait;
-use data_pond_api::identity_server::Identity;
+use data_pond_api::csi::{self, identity_server::Identity};
 use tonic::{Request, Response, Result};
 
 #[async_trait]
 impl Identity for super::Server {
     async fn get_plugin_info(
         &self,
-        request: Request<::data_pond_api::GetPluginInfoRequest>,
-    ) -> Result<Response<::data_pond_api::GetPluginInfoResponse>> {
-        let ::data_pond_api::GetPluginInfoRequest {} = request.into_inner();
+        request: Request<csi::GetPluginInfoRequest>,
+    ) -> Result<Response<csi::GetPluginInfoResponse>> {
+        let csi::GetPluginInfoRequest {} = request.into_inner();
 
-        Ok(Response::new(::data_pond_api::GetPluginInfoResponse {
-            name: "data-pond".into(),
+        Ok(Response::new(csi::GetPluginInfoResponse {
+            name: self.driver_name.clone(),
             vendor_version: env!("CARGO_PKG_VERSION").into(),
             manifest: HashMap::default(),
         }))
@@ -21,37 +21,34 @@ impl Identity for super::Server {
 
     async fn get_plugin_capabilities(
         &self,
-        request: Request<::data_pond_api::GetPluginCapabilitiesRequest>,
-    ) -> Result<Response<::data_pond_api::GetPluginCapabilitiesResponse>> {
-        let ::data_pond_api::GetPluginCapabilitiesRequest {} = request.into_inner();
+        request: Request<csi::GetPluginCapabilitiesRequest>,
+    ) -> Result<Response<csi::GetPluginCapabilitiesResponse>> {
+        let csi::GetPluginCapabilitiesRequest {} = request.into_inner();
 
         Ok(Response::new(
-            ::data_pond_api::GetPluginCapabilitiesResponse {
+            csi::GetPluginCapabilitiesResponse {
                 capabilities: vec![
-                    ::data_pond_api::PluginCapability {
-                        r#type: Some(::data_pond_api::plugin_capability::Type::Service(
-                            ::data_pond_api::plugin_capability::Service {
+                    csi::PluginCapability {
+                        r#type: Some(csi::plugin_capability::Type::Service(
+                            csi::plugin_capability::Service {
                                 r#type:
-                                    ::data_pond_api::plugin_capability::service::Type::ControllerService
-                                        as _,
+                                    csi::plugin_capability::service::Type::ControllerService as _,
                             },
                         )),
                     },
-                    ::data_pond_api::PluginCapability {
-                        r#type: Some(::data_pond_api::plugin_capability::Type::Service(
-                            ::data_pond_api::plugin_capability::Service {
+                    csi::PluginCapability {
+                        r#type: Some(csi::plugin_capability::Type::Service(
+                            csi::plugin_capability::Service {
                                 r#type:
-                                    ::data_pond_api::plugin_capability::service::Type::VolumeAccessibilityConstraints
-                                        as _,
+                                    csi::plugin_capability::service::Type::VolumeAccessibilityConstraints as _,
                             },
                         )),
                     },
-                    ::data_pond_api::PluginCapability {
-                        r#type: Some(::data_pond_api::plugin_capability::Type::VolumeExpansion(
-                            ::data_pond_api::plugin_capability::VolumeExpansion {
+                    csi::PluginCapability {
+                        r#type: Some(csi::plugin_capability::Type::VolumeExpansion(
+                            csi::plugin_capability::VolumeExpansion {
                                 r#type:
-                                    ::data_pond_api::plugin_capability::volume_expansion::Type::Online
-                                        as _,
+                                    csi::plugin_capability::volume_expansion::Type::Online as _,
                             },
                         )),
                     },
@@ -62,12 +59,10 @@ impl Identity for super::Server {
 
     async fn probe(
         &self,
-        request: Request<::data_pond_api::ProbeRequest>,
-    ) -> Result<Response<::data_pond_api::ProbeResponse>> {
-        let ::data_pond_api::ProbeRequest {} = request.into_inner();
+        request: Request<csi::ProbeRequest>,
+    ) -> Result<Response<csi::ProbeResponse>> {
+        let csi::ProbeRequest {} = request.into_inner();
 
-        Ok(Response::new(::data_pond_api::ProbeResponse {
-            ready: Some(self.state.ready.load(Ordering::SeqCst)),
-        }))
+        Ok(Response::new(csi::ProbeResponse { ready: Some(true) }))
     }
 }
