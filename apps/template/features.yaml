@@ -206,6 +206,16 @@ org.ulagbulag.io/distributed-storage-cluster/ceph:
     - org.ulagbulag.io/csi/filesystem
     # - org.ulagbulag.io/csi/object
 
+org.ulagbulag.io/distributed-storage-cluster/data-pond:
+  requires:
+    - org.ulagbulag.io/distributed-storage-cluster
+  optional:
+    - org.ulagbulag.io/auth
+    - org.ulagbulag.io/ingress
+    - org.ulagbulag.io/monitoring
+  provides:
+    - org.ulagbulag.io/csi/block
+
 org.ulagbulag.io/git:
   requires:
     - org.ulagbulag.io/cni

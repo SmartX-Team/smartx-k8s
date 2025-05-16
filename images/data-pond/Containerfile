@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
         build-essential \
         clang \
         cmake \
-        coinor-libcbc-dev \
     # Switch channel
     && rustup default {{ .Values.rust.channel | quote }} \
     # Cleanup
@@ -35,8 +34,7 @@ RUN \
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build
     && cargo build --bins \
-        --exclude 'openark-vine-dashboard-frontend' \
-        --package 'openark-*' \
+        --package 'data-pond-*' \
         --profile 'release' \
         --workspace \
     && find ./target/release/ -maxdepth 1 -type f -perm -a=x -print0 | xargs -0 -I {} mv {} /out
@@ -46,25 +44,14 @@ FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-        coinor-cbc \
-        curl \
-        git \
-        jq \
-        policykit-1 \
-        systemd \
-        wget \
+        btrfs-progs \
+        iproute2 \
+        kmod \
+        lvm2 \
+        nvme-cli \
     # Cleanup
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*
-
-# Install dependencies / helm
-RUN curl "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3" | bash
-
-# Install dependencies / kubectl
-RUN K8S_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" \
-    && ARCH="$(dpkg --print-architecture)" \
-    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl" \
-    && chmod 0555 '/usr/local/bin/kubectl'
 
 # Create an user
 RUN groupadd --gid "2000" "user" \
@@ -73,10 +60,10 @@ RUN groupadd --gid "2000" "user" \
 
 # Copy executable files
 ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+ADD ./bin/* /usr/local/bin/
 COPY --from=builder /out/* /usr/local/bin/
 
 # Mark as executable
-CMD [ "./arkctl" ]
 ENTRYPOINT [ "/usr/bin/env" ]
 USER user
 WORKDIR /usr/local/bin/

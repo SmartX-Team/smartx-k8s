@@ -164,6 +164,7 @@ features:
   - org.ulagbulag.io/dev
   - org.ulagbulag.io/distributed-storage-cluster
   - org.ulagbulag.io/distributed-storage-cluster/ceph
+  - org.ulagbulag.io/distributed-storage-cluster/data-pond
   - org.ulagbulag.io/gateway
   - org.ulagbulag.io/gateway/envoy
   - org.ulagbulag.io/gateway/istio

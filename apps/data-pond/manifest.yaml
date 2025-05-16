@@ -1,0 +1,26 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.data-pond
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: data-pond
+    patched: false
+    unsafe: true # CSI
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/csi
+      - org.ulagbulag.io/distributed-storage-cluster/data-pond
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

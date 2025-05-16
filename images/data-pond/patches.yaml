@@ -1,0 +1,3 @@
+---
+rust:
+  channel: {{ .Values.rust.channel | quote }}

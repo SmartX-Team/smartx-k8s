@@ -38,10 +38,6 @@ version = "0.0.0" # A placeholder
 blocks_in_conditions = "allow" # opentelemetry tracing macro would be noisy
 
 [workspace.dependencies]
-connected-data-lake-api = { path = "crates/connected-data-lake-api" }
-connected-data-lake-backend-fs = { path = "crates/connected-data-lake-backend-fs" }
-connected-data-lake-backend-object-store = { path = "crates/connected-data-lake-backend-object-store" }
-connected-data-lake-layer-delta-lake = { path = "crates/connected-data-lake-layer-delta-lake" }
 openark-admission-openapi = { path = "crates/openark-admission-openapi" }
 openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }

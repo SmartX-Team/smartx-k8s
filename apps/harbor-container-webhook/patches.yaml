@@ -16,6 +16,9 @@ webhook:
 {{- if has "org.ulagbulag.io/distributed-storage-cluster/ceph" .Values.features }}
           - csi-rook-ceph
 {{- end }}
+{{- if has "org.ulagbulag.io/distributed-storage-cluster/data-pond" .Values.features }}
+          - data-pond
+{{- end }}
           - harbor
 {{- if has "org.ulagbulag.io/ingress" .Values.features }}
           - {{ .Values.ingress.namespace | quote }}
