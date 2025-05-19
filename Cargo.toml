@@ -39,12 +39,14 @@ blocks_in_conditions = "allow" # opentelemetry tracing macro would be noisy
 
 [workspace.dependencies]
 data-pond-api = { path = "crates/data-pond-api" }
+data-pond-csi = { path = "crates/data-pond-csi" }
 openark-admission-openapi = { path = "crates/openark-admission-openapi" }
 openark-core = { path = "crates/openark-core" }
 openark-core-opentelemetry = { path = "crates/openark-core-opentelemetry" }
 openark-kiss-ansible = { path = "crates/openark-kiss-ansible" }
 openark-kiss-api = { path = "crates/openark-kiss-api" }
 openark-spectrum-api = { path = "crates/openark-spectrum-api" }
+openark-spectrum-scheduler = { path = "crates/openark-spectrum-scheduler" }
 openark-vine-dashboard-api = { path = "crates/openark-vine-dashboard-api" }
 openark-vine-dashboard-jq = { path = "crates/openark-vine-dashboard-jq" }
 openark-vine-oauth = { path = "crates/openark-vine-oauth" }

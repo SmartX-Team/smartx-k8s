@@ -1,5 +1,5 @@
 [package]
-name = "data-pond-api"
+name = "openark-spectrum-scheduler"
 
 authors = { workspace = true }
 description = { workspace = true }
@@ -21,14 +21,13 @@ workspace = true
 
 [features]
 default = []
-std = [
-    # "schemars?/std",
-    "serde?/std",
-]
 
-schemars = ["dep:schemars", "serde"]
-serde = ["dep:serde"]
+# Tracing
+tracing = ["dep:tracing", "openark-spectrum-api/tracing"]
 
 [dependencies]
-schemars = { workspace = true, optional = true, features = ["derive"] }
-serde = { workspace = true, optional = true, features = ["alloc", "derive"] }
+openark-spectrum-api = { workspace = true, features = ["kube", "std"] }
+
+good-lp = { workspace = true }
+ordered-float = { workspace = true, features = ["std"] }
+tracing = { workspace = true, optional = true }

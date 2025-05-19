@@ -1,5 +1,4 @@
 pub(crate) mod histogram;
-pub(crate) mod pool;
 
 use std::fmt;
 

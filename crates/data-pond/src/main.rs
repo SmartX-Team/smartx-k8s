@@ -5,7 +5,7 @@ mod node;
 mod pond;
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeSet,
     net::{IpAddr, SocketAddr},
     path::Path,
     sync::Arc,
@@ -13,9 +13,9 @@ use std::{
 
 use anyhow::{Error, Result, anyhow, bail};
 use clap::{Parser, ValueEnum};
-use data_pond_api::{
+use data_pond_csi::{
     csi::{
-        self, controller_server::ControllerServer, identity_server::IdentityServer,
+        controller_server::ControllerServer, identity_server::IdentityServer,
         node_server::NodeServer,
     },
     pond::{self as api_pond, pond_server::PondServer},
@@ -68,24 +68,9 @@ enum Service {
     Pond,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct EndpointName(String);
-
-#[derive(Debug)]
-struct Endpoint {}
-
-#[derive(Debug)]
-struct Volume {
-    data: csi::Volume,
-    condition: csi::VolumeCondition,
-    published_node_ids: BTreeSet<String>,
-}
-
 #[derive(Debug, Default)]
 struct State {
     devices: RwLock<Vec<api_pond::Device>>,
-    endpoints: RwLock<BTreeMap<EndpointName, Endpoint>>,
-    volumes: RwLock<BTreeMap<String, Volume>>,
 }
 
 impl State {
@@ -147,7 +132,7 @@ async fn try_main(args: Args) -> Result<()> {
     for service in services {
         match service {
             Service::Controller => {
-                let server = self::controller::Server::try_new(server.clone()).await?;
+                let server = self::controller::Server::try_new().await?;
                 routes.add_service(ControllerServer::new(server))
             }
             Service::Identity => routes.add_service(IdentityServer::new(server.clone())),

@@ -49,17 +49,17 @@ tls-aws-lc-rs = [
     "hickory-resolver/h3-aws-lc-rs",
     "hickory-resolver/https-aws-lc-rs",
     "hickory-resolver/quic-aws-lc-rs",
-    "data-pond-api/tls-aws-lc-rs",
+    "data-pond-csi/tls-aws-lc-rs",
     "openark-core/tls-aws-lc-rs",
 ]
-tls-openssl = ["data-pond-api/tls-openssl", "openark-core/tls-openssl"]
+tls-openssl = ["data-pond-csi/tls-openssl", "openark-core/tls-openssl"]
 tls-ring = [
     "hickory-resolver/dnssec-ring",
     "hickory-resolver/tls-ring",
     "hickory-resolver/h3-ring",
     "hickory-resolver/https-ring",
     "hickory-resolver/quic-ring",
-    "data-pond-api/tls-ring",
+    "data-pond-csi/tls-ring",
     "openark-core/tls-ring",
 ]
 
@@ -67,11 +67,17 @@ tls-ring = [
 tracing = ["dep:tracing", "openark-core/tracing"]
 
 [dependencies]
-data-pond-api = { workspace = true, features = ["server", "transport"] }
+data-pond-api = { workspace = true, features = ["serde"] }
+data-pond-csi = { workspace = true, features = [
+    "client",
+    "server",
+    "transport",
+] }
 openark-core = { workspace = true, features = ["clap", "std"] }
 
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+chrono = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
 futures = { workspace = true, features = ["std"] }
 hickory-resolver = { workspace = true, features = ["system-config", "tokio"] }

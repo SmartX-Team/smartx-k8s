@@ -14,6 +14,10 @@ use openark_spectrum_api::{
     pool_claim::{PoolClaimCrd, PoolClaimSpec},
     schema::{PoolCommitRequest, PoolCommitRequestItem, PoolRequest, PoolResource, PoolResponse},
 };
+use openark_spectrum_scheduler::{
+    item::{Item, Resource, ScheduledItem},
+    schedule,
+};
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 use url::Url;
@@ -23,7 +27,6 @@ use crate::{
     targets::service::{
         Context as TargetContext, LABEL_KEY_SELECTOR, get_weighted_endpoints, infer_address_type,
     },
-    utils::pool::{Item, Resource, ScheduledItem, schedule},
 };
 
 pub(super) struct Context<'a> {

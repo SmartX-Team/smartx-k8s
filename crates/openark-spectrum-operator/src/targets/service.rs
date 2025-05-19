@@ -13,6 +13,7 @@ use openark_spectrum_api::{
     metrics_class::MetricsClassCrd,
     schema::{WeightRequest, WeightResponse},
 };
+use openark_spectrum_scheduler::item::WeightedItems;
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 
@@ -81,7 +82,7 @@ pub(crate) struct Context<'a> {
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 pub(crate) async fn get_weighted_endpoints(
     ctx: Context<'_>,
-) -> Result<Result<super::WeightedItems<Endpoint>, Status>> {
+) -> Result<Result<WeightedItems<Endpoint>, Status>> {
     let Context {
         address_type,
         child_metadata,
@@ -147,5 +148,5 @@ pub(crate) async fn get_weighted_endpoints(
         }));
     }
 
-    Ok(Ok(super::WeightedItems { items, weights }))
+    Ok(Ok(WeightedItems { items, weights }))
 }

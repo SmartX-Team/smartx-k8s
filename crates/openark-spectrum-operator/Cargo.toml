@@ -52,6 +52,7 @@ tracing = [
     "dep:tracing",
     "openark-core/tracing",
     "openark-spectrum-api/tracing",
+    "openark-spectrum-scheduler/tracing",
 ]
 
 [dependencies]
@@ -68,6 +69,7 @@ openark-spectrum-api = { workspace = true, features = [
     "send",
     "std",
 ] }
+openark-spectrum-scheduler = { workspace = true }
 
 anyhow = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }

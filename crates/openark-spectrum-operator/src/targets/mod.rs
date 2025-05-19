@@ -6,7 +6,6 @@ use k8s_openapi::{
 };
 use kube::{Api, Client, Result, api::ObjectMeta};
 use openark_spectrum_api::common::ObjectReference;
-use ordered_float::OrderedFloat;
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 
@@ -52,10 +51,4 @@ pub(crate) async fn get_target(
             requeue: false,
         })),
     }
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct WeightedItems<T> {
-    pub(crate) items: Vec<T>,
-    pub(crate) weights: Vec<Option<OrderedFloat<f64>>>,
 }

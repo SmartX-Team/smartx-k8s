@@ -68,6 +68,7 @@ RUN groupadd --gid "2000" "user" \
 # Copy executable files
 ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
 ADD ./bin/* /usr/local/bin/
+ADD ./lvm/lvm.conf /etc/lvm/lvm.conf
 COPY --from=builder /out/* /usr/local/bin/
 
 # Mark as executable

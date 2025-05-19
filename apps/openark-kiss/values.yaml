@@ -61,7 +61,7 @@ operator:
     pullPolicy: Always
 
 storage:
-  fstype: btrfs
+  fstype: ext4
   lvm: true
   size: "0" # Use `0` to use full disk
 
@@ -422,7 +422,7 @@ kubespray:
   #     host_dir: /mnt/disks
   #     mount_dir: /mnt/disks
   #     volume_mode: Filesystem
-  #     fs_type: btrfs
+  #     fs_type: ext4
   #   fast-disks:
   #     host_dir: /mnt/fast-disks
   #     mount_dir: /mnt/fast-disks
@@ -430,7 +430,7 @@ kubespray:
   #       - "/scripts/shred.sh"
   #       - "2"
   #     volume_mode: Filesystem
-  #     fs_type: btrfs
+  #     fs_type: ext4
 
   # Cert manager deployment
   cert_manager_enabled: true

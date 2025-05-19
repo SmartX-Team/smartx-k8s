@@ -1,278 +1,22 @@
+pub mod item;
+pub mod solvers;
+mod state;
+
 use std::{
-    borrow::Cow,
     collections::{BTreeMap, BTreeSet},
     convert::identity,
 };
 
-use good_lp::{
-    Expression, IntoAffineExpression, LpSolver, ProblemVariables, ResolutionError, Solution,
-    SolverModel, constraint,
-    solvers::{
-        ObjectiveDirection,
-        lp_solvers::{CbcSolver, WithMaxSeconds, WithMipGap},
-    },
-    variable,
-};
-use openark_spectrum_api::{
-    pool_claim::{PoolClaimCrd, PoolResourceLifecycle},
-    schema::{CommitState, PoolResource},
-};
+use good_lp::{ResolutionError, solvers::ObjectiveDirection};
+use openark_spectrum_api::schema::{CommitState, PoolResource};
 use ordered_float::OrderedFloat;
-#[cfg(feature = "tracing")]
-use tracing::debug;
 
-use crate::targets::WeightedItems;
+use crate::{
+    item::{Item, ScheduledItem, WeightedItems},
+    state::State,
+};
 
-#[derive(Debug)]
-pub(crate) struct Resource {
-    pub(crate) penalty: f64,
-    pub(crate) priority: i32,
-    pub(crate) min: Option<f64>,
-    pub(crate) max: Option<f64>,
-    pub(crate) weight: u64,
-}
-
-impl Default for Resource {
-    fn default() -> Self {
-        Self {
-            penalty: Default::default(),
-            priority: Default::default(),
-            min: Default::default(),
-            max: Default::default(),
-            weight: 1,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct Item<'a, T> {
-    pub(crate) claim: Cow<'a, PoolClaimCrd>,
-    pub(crate) resource: Resource,
-    pub(crate) item: T,
-}
-
-struct State<'a, T> {
-    allocated: Vec<Vec<usize>>,
-    binded: Vec<PoolResource<usize>>,
-    filled: Vec<f64>,
-    items: Vec<Item<'a, T>>,
-    remaining: BTreeSet<usize>,
-    weights: Vec<f64>,
-}
-
-impl<'a, T> State<'a, T> {
-    fn collect<S>(self, resources: WeightedItems<S>) -> Vec<ScheduledItem<S, T>> {
-        let Self {
-            allocated,
-            filled,
-            items,
-            ..
-        } = self;
-
-        let mut resources: Vec<_> = resources.items.into_iter().map(Some).collect();
-        #[cfg(feature = "tracing")]
-        {
-            debug!("Scheduled: {filled:?}");
-        }
-        #[cfg(not(feature = "tracing"))]
-        {
-            let _ = filled;
-        }
-
-        items
-            .into_iter()
-            .zip(allocated)
-            .map(
-                |(
-                    Item {
-                        claim,
-                        item,
-                        resource,
-                    },
-                    allocated,
-                )| ScheduledItem {
-                    lifecycle: claim.spec.lifecycle.clone(),
-                    item,
-                    priority: resource.priority,
-                    resources: allocated
-                        .into_iter()
-                        .filter_map(|index| {
-                            resources.get_mut(index).and_then(|option| option.take())
-                        })
-                        .collect(),
-                },
-            )
-            .collect()
-    }
-}
-
-struct SingleLayerProblem {
-    direction: ObjectiveDirection,
-    items: Vec<usize>,
-    use_all: bool,
-    use_max: bool,
-    use_min: bool,
-}
-
-impl SingleLayerProblem {
-    fn solve<T>(self, state: &mut State<'_, T>) -> Result<bool, ResolutionError> {
-        let SingleLayerProblem {
-            direction,
-            items: targets,
-            use_all,
-            use_max,
-            use_min,
-        } = self;
-
-        let State {
-            allocated,
-            binded,
-            filled,
-            items,
-            remaining,
-            weights,
-        } = state;
-
-        // Define constants
-        let n_i = remaining.len();
-        let n_j = targets.len();
-
-        // Stop if no more items or remaining resources
-        if n_i == 0 || n_j == 0 {
-            return Ok(false);
-        }
-
-        // Define variable matrix [remaining, targets]
-        let mut vars = ProblemVariables::default();
-        let y: Vec<Vec<_>> = (0..n_i)
-            .map(|_| {
-                targets
-                    .iter()
-                    .map(|_| vars.add(variable().binary()))
-                    .collect()
-            })
-            .collect();
-
-        // Define `load` = prefilled + upcoming
-        let mut load: Vec<Expression> = vec![Expression::default(); n_j];
-        for (row, &i) in remaining.iter().enumerate() {
-            for (col, &j) in targets.iter().enumerate() {
-                let penalty = match binded[i].claim {
-                    None => 0.0,
-                    Some(j2) if j == j2 => 0.0,
-                    Some(_) => items[j].resource.penalty,
-                };
-                load[col] = load[col].clone() + (weights[i] + penalty) * y[row][col];
-            }
-        }
-
-        // (a) Bind each resource to an item
-        let mut constraints = Vec::default();
-        for row in 0..n_i {
-            let init = Expression::default();
-            let expr = (0..n_j).fold(init, |acc, col| acc + y[row][col]);
-            let constraint = if use_all {
-                // Required
-                constraint!(expr == 1.0)
-            } else {
-                // Optional
-                constraint!(expr <= 1.0)
-            };
-            constraints.push(constraint);
-        }
-
-        // (b) Guaranteed item min / max
-        if use_min || use_max {
-            for (col, &j) in targets.iter().enumerate() {
-                let load_j = filled[j] + load[col].clone();
-                if use_min {
-                    if let Some(min) = items[j].resource.min {
-                        let constraint = constraint!(load_j.clone() >= min);
-                        constraints.push(constraint)
-                    }
-                }
-                if use_max {
-                    match items[j].resource.max {
-                        Some(max) => {
-                            let constraint = constraint!(load_j <= max);
-                            constraints.push(constraint)
-                        }
-                        None => {
-                            // max 없음 → "min만 배정"
-                            let min = items[j].resource.min.expect("guaranteed item");
-                            let constraint = constraint!(load_j == min);
-                            constraints.push(constraint)
-                        }
-                    }
-                }
-            }
-        }
-
-        let objective = match direction {
-            // (c) Just use resources as much as possible
-            ObjectiveDirection::Maximisation => {
-                let init = Expression::default();
-                (0..n_j).fold(init, |acc, j| acc + load[j].clone())
-            }
-            // (c) Max/Min deviation variable d
-            ObjectiveDirection::Minimisation => {
-                let d = vars.add(variable().min(0.0));
-                for (col_j1, &j1) in targets.iter().enumerate() {
-                    let weight1 = items[j1].resource.weight as f64;
-                    let expr1 = (filled[j1] + load[col_j1].clone()) / weight1;
-                    for (col_j2, &j2) in targets.iter().enumerate() {
-                        let weight2 = items[j2].resource.weight as f64;
-                        let expr2 = (filled[j2] + load[col_j2].clone()) / weight2;
-                        constraints.push(constraint!(expr1.clone() - expr2.clone() <= d.clone()));
-                        constraints.push(constraint!(expr2 - expr1.clone() <= d.clone()));
-                    }
-                }
-                d.into_expression()
-            }
-        };
-
-        // Define solver & Bind to a model
-        let solver = LpSolver(
-            CbcSolver::default()
-                .with_mip_gap(1.0 + 1e-6)?
-                .with_max_seconds(1),
-        );
-        let model = vars
-            .clone()
-            .optimise(direction, objective)
-            .using(solver)
-            .with_all(constraints);
-
-        let solution = match model.solve() {
-            Ok(solver) => solver,
-            // No more resources are left; stopping
-            Err(ResolutionError::Infeasible) => return Ok(false),
-            Err(error) => return Err(error),
-        };
-
-        // Store resources
-        for (row, i) in remaining.clone().into_iter().enumerate() {
-            for (col, &j) in targets.iter().enumerate() {
-                if solution.value(y[row][col]) > 0.5 {
-                    allocated[j].push(i);
-                    filled[j] += weights[i];
-                    remaining.remove(&i);
-                }
-            }
-        }
-        Ok(true)
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct ScheduledItem<S, T> {
-    pub(crate) item: T,
-    pub(crate) lifecycle: PoolResourceLifecycle,
-    pub(crate) priority: i32,
-    pub(crate) resources: Vec<S>,
-}
-
-pub(crate) fn schedule<'a, S, T>(
+pub fn schedule<'a, S, T>(
     items: Vec<Item<'a, T>>,
     binded: Vec<PoolResource<usize>>,
     resources: WeightedItems<S>,
@@ -390,7 +134,7 @@ pub(crate) fn schedule<'a, S, T>(
 
     if !guaranteed.is_empty() {
         for items in build_tiers(guaranteed) {
-            let problem = SingleLayerProblem {
+            let problem = self::solvers::milp::Solver {
                 direction: ObjectiveDirection::Maximisation,
                 items,
                 use_all: false,
@@ -409,7 +153,7 @@ pub(crate) fn schedule<'a, S, T>(
 
     if !burstable.is_empty() {
         for items in build_tiers(burstable) {
-            let problem = SingleLayerProblem {
+            let problem = self::solvers::milp::Solver {
                 direction: ObjectiveDirection::Maximisation,
                 items,
                 use_all: false,
@@ -428,7 +172,7 @@ pub(crate) fn schedule<'a, S, T>(
 
     drop(priority);
     if !state.remaining.is_empty() && !best_effort.is_empty() {
-        let problem = SingleLayerProblem {
+        let problem = self::solvers::milp::Solver {
             direction: ObjectiveDirection::Minimisation,
             items: best_effort,
             use_all: true,

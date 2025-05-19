@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use data_pond_api::csi::{self, identity_server::Identity};
+use data_pond_csi::csi::{self, identity_server::Identity};
 use tonic::{Request, Response, Result};
 
 #[async_trait]

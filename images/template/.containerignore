@@ -53,6 +53,11 @@
 # Python
 /**/__pycache__/
 
+# Rust
+/**/Cargo.lock
+/**/debug/
+/**/target/
+
 # Temporary files
 /**/.build/
 /**/.buildlog/
