@@ -6,12 +6,12 @@ mod pond;
 
 use std::{
     collections::{BTreeMap, BTreeSet},
-    net::IpAddr,
+    net::{IpAddr, SocketAddr},
     path::Path,
     sync::Arc,
 };
 
-use anyhow::{Result, anyhow, bail};
+use anyhow::{Error, Result, anyhow, bail};
 use clap::{Parser, ValueEnum};
 use data_pond_api::{
     csi::{
@@ -20,7 +20,8 @@ use data_pond_api::{
     },
     pond::{self as api_pond, pond_server::PondServer},
 };
-use tokio::{fs, net::UnixListener, sync::RwLock};
+use strum::{Display, EnumString};
+use tokio::{fs, net::UnixListener, sync::RwLock, try_join};
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::{service::RoutesBuilder, transport};
 #[cfg(feature = "tracing")]
@@ -57,7 +58,9 @@ struct Args {
     services: Vec<Service>,
 }
 
-#[derive(Copy, Clone, Debug, ValueEnum, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Copy, Clone, Debug, Display, EnumString, ValueEnum, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
 enum Service {
     Controller,
     Identity,
@@ -69,9 +72,7 @@ enum Service {
 struct EndpointName(String);
 
 #[derive(Debug)]
-struct Endpoint {
-    devices: Vec<api_pond::Device>,
-}
+struct Endpoint {}
 
 #[derive(Debug)]
 struct Volume {
@@ -82,15 +83,15 @@ struct Volume {
 
 #[derive(Debug, Default)]
 struct State {
+    devices: RwLock<Vec<api_pond::Device>>,
     endpoints: RwLock<BTreeMap<EndpointName, Endpoint>>,
     volumes: RwLock<BTreeMap<String, Volume>>,
 }
 
 impl State {
     async fn discover(&self, server: &Server) -> Result<()> {
-        let name = EndpointName(format!("tcp://{}:{}", server.pod_ip, server.pond_port));
         let endpoint = self::discovery::discover(server).await?;
-        self.endpoints.write().await.insert(name, endpoint);
+        *self.devices.write().await = endpoint;
         Ok(())
     }
 }
@@ -115,6 +116,16 @@ struct Server {
     )]
     pond_port: u16,
 
+    #[arg(
+        long,
+        env = "DATA_POND_IO_SOURCES",
+        value_name = "SOURCE",
+        value_delimiter = ',',
+        num_args = 1..,
+        required = true,
+    )]
+    sources: Vec<String>,
+
     #[clap(skip)]
     state: Arc<State>,
 }
@@ -132,14 +143,18 @@ async fn try_main(args: Args) -> Result<()> {
     info!("Activated Services: {services:?}");
 
     let mut routes = RoutesBuilder::default();
+    let mut use_pond = false;
     for service in services {
         match service {
-            Service::Controller => routes.add_service(ControllerServer::new(server.clone())),
+            Service::Controller => {
+                let server = self::controller::Server::try_new(server.clone()).await?;
+                routes.add_service(ControllerServer::new(server))
+            }
             Service::Identity => routes.add_service(IdentityServer::new(server.clone())),
             Service::Node => routes.add_service(NodeServer::new(server.clone())),
             Service::Pond => {
-                server.state.discover(&server).await?;
-                routes.add_service(PondServer::new(server.clone()))
+                use_pond = true;
+                continue;
             }
         };
     }
@@ -149,41 +164,66 @@ async fn try_main(args: Args) -> Result<()> {
     info!("Listening on {csi_endpoint}");
 
     // Validate endpoint
-    match csi_endpoint.scheme() {
-        "tcp" => {
-            let host = csi_endpoint
-                .host_str()
-                .ok_or_else(|| anyhow!("Missing CSI endpoint host"))?;
-            let port = csi_endpoint
-                .port()
-                .ok_or_else(|| anyhow!("Missing CSI endpoint port"))?;
+    let task_csi = async move {
+        match csi_endpoint.scheme() {
+            "tcp" => {
+                let host = csi_endpoint
+                    .host_str()
+                    .ok_or_else(|| anyhow!("Missing CSI endpoint host"))?;
+                let port = csi_endpoint
+                    .port()
+                    .ok_or_else(|| anyhow!("Missing CSI endpoint port"))?;
 
-            let addr = format!("{host}:{port}")
-                .parse()
-                .map_err(|error| anyhow!("Failed to parse CSI endpoint address: {error}"))?;
+                let addr = format!("{host}:{port}")
+                    .parse()
+                    .map_err(|error| anyhow!("Failed to parse CSI endpoint address: {error}"))?;
 
-            router.serve(addr).await
-        }
-        "unix" => {
-            match csi_endpoint.host_str() {
-                None => (),
-                Some(host) => bail!("Unexpected CSI endpoint host: {host}"),
+                router.serve(addr).await.map_err(Into::into)
             }
+            "unix" => {
+                match csi_endpoint.host_str() {
+                    None => (),
+                    Some(host) => bail!("Unexpected CSI endpoint host: {host}"),
+                }
 
-            // Remove old socket file
-            let path = Path::new(csi_endpoint.path());
-            if path.exists() {
-                fs::remove_file(path).await?;
+                // Remove old socket file
+                let path = Path::new(csi_endpoint.path());
+                if path.exists() {
+                    fs::remove_file(path).await?;
+                }
+
+                // Bind to a Unix socket listener
+                let listener = UnixListener::bind(path)?;
+                let incoming = UnixListenerStream::new(listener);
+                router
+                    .serve_with_incoming(incoming)
+                    .await
+                    .map_err(Into::into)
             }
-
-            // Bind to a Unix socket listener
-            let listener = UnixListener::bind(path)?;
-            let incoming = UnixListenerStream::new(listener);
-            router.serve_with_incoming(incoming).await
+            scheme => bail!("Unexpected CSI endpoint scheme: {scheme}"),
         }
-        scheme => bail!("Unexpected CSI endpoint scheme: {scheme}"),
+    };
+
+    if use_pond {
+        let task_pond = async move {
+            let addr = SocketAddr::new(server.pod_ip, server.pond_port);
+
+            #[cfg(feature = "tracing")]
+            info!("Listening pond server on tcp://{addr}");
+
+            server.state.discover(&server).await?;
+            transport::Server::builder()
+                .add_service(PondServer::new(server.clone()))
+                .serve(addr)
+                .await
+                .map_err(Error::from)
+        };
+
+        let ((), ()) = try_join!(task_csi, task_pond)?;
+        Ok(())
+    } else {
+        task_csi.await
     }
-    .map_err(Into::into)
 }
 
 #[::tokio::main]

@@ -52,6 +52,7 @@ FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 RUN apt-get update && apt-get install -y \
         btrfs-progs \
         iproute2 \
+        jq \
         kmod \
         lvm2 \
         nvme-cli \

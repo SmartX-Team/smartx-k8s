@@ -12,7 +12,8 @@ set -x
 
 # Configure environment variables
 if [[ ! -v DATA_POND_IO_SOURCES ]]; then
-    export DATA_POND_IO_SOURCES="nvme"
+    echo 'No such environment variable: DATA_POND_IO_SOURCES' >&2
+    exec false
 fi
 export DATA_POND_IO_TARGETS="${DATA_POND_IO_TARGETS:-nvme}"
 export NVME_DRIVER="${NVME_DRIVER:-kernel}"

@@ -17,7 +17,7 @@ message Device {
   optional string uid = 2;
   DeviceLayer.Type layer = 3;
   DeviceSource.Type source = 4;
-  string addr = 5;
+  optional string addr = 5;
   int64 capacity = 6;
   bool group = 7;
 }

@@ -81,6 +81,9 @@ good-lp = { package = "good_lp", version = "1.13", features = [
     "singlethread-cbc",
 ] }
 gloo-net = { version = "=0.6", default-features = false }
+hickory-resolver = { version = "=0.25", default-features = false, features = [
+    "backtrace",
+] }
 hickory-server = { version = "=0.25", default-features = false, features = [
     "backtrace",
 ] }

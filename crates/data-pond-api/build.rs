@@ -34,15 +34,15 @@ async fn main() -> Result<()> {
         .build_server(cfg!(feature = "server"))
         .emit_rerun_if_changed(false)
         .type_attribute(
-            "Disk",
+            "Device",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         )
         .type_attribute(
-            "DiskLayer",
+            "DeviceLayer",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         )
         .type_attribute(
-            "DiskSource",
+            "DeviceSource",
             "#[derive(::serde::Serialize, ::serde::Deserialize)]",
         );
     let protos = &[Path::new("proto/pond.proto"), path.as_path()];

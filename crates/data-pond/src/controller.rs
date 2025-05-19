@@ -1,9 +1,57 @@
+use std::{net::IpAddr, ops};
+
 use async_trait::async_trait;
 use data_pond_api::csi::{self, controller_server::Controller};
+use hickory_resolver::{
+    ResolveError, Resolver,
+    name_server::{GenericConnector, TokioConnectionProvider},
+    proto::runtime::TokioRuntimeProvider,
+};
 use tonic::{Request, Response, Result, Status};
 
+pub(crate) struct Server {
+    inner: super::Server,
+    resolver: Resolver<GenericConnector<TokioRuntimeProvider>>,
+}
+
+impl ops::Deref for Server {
+    type Target = super::Server;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl Server {
+    pub(crate) async fn try_new(inner: super::Server) -> Result<Self, ResolveError> {
+        // Construct a new Resolver with default configuration options
+        let provider = TokioConnectionProvider::default();
+        let resolver = Resolver::builder(provider)?.build();
+        Ok(Self { inner, resolver })
+    }
+
+    async fn discover(&self) -> Result<Vec<IpAddr>> {
+        match self
+            .resolver
+            .ipv4_lookup("plugin.hoya.svc.ops.openark")
+            .await
+        {
+            Ok(lookup) => Ok(lookup.iter().map(|record| IpAddr::V4(record.0)).collect()),
+            Err(error)
+                if error
+                    .proto()
+                    .is_some_and(|proto| proto.kind().is_no_records_found()) =>
+            {
+                Ok(Default::default())
+            }
+            Err(error) => Err(Status::internal(error.to_string())),
+        }
+    }
+}
+
 #[async_trait]
-impl Controller for super::Server {
+impl Controller for Server {
     async fn create_volume(
         &self,
         request: Request<csi::CreateVolumeRequest>,
@@ -11,9 +59,15 @@ impl Controller for super::Server {
         let request = request.into_inner();
         dbg!(request);
 
+        // FIXME: To be implemented!
+        // TODO: endpoints 로부터 주기적으로 데이터 가져오기
+        // TODO: 1. DNS IP 조회
+        // TODO: 2. TTL 반영해 리프레싱
+        // TODO: 3. 덤프 띄워 반환
+        dbg!(self.discover().await?);
+
         // Ok(Response::new(csi::CreateVolumeResponse {
-        //     // FIXME: To be implemented!
-        //     volume: None,
+        //     volume: Some(),
         // }))
         Err(Status::resource_exhausted("Cannot create volumes"))
     }
@@ -60,7 +114,7 @@ impl Controller for super::Server {
         } = request.into_inner();
 
         // Collect entries
-        let max_entries = max_entries.max(0).min(i32::MAX - 1) as _;
+        let max_entries = max_entries.max(0).min(i32::MAX - 1) as usize;
         let mut entries: Vec<_> = self
             .state
             .volumes

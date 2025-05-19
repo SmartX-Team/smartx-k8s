@@ -43,9 +43,25 @@ opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 
 # TLS
 tls-default = ["tls-aws-lc-rs"]
-tls-aws-lc-rs = ["data-pond-api/tls-aws-lc-rs", "openark-core/tls-aws-lc-rs"]
+tls-aws-lc-rs = [
+    "hickory-resolver/dnssec-aws-lc-rs",
+    "hickory-resolver/tls-aws-lc-rs",
+    "hickory-resolver/h3-aws-lc-rs",
+    "hickory-resolver/https-aws-lc-rs",
+    "hickory-resolver/quic-aws-lc-rs",
+    "data-pond-api/tls-aws-lc-rs",
+    "openark-core/tls-aws-lc-rs",
+]
 tls-openssl = ["data-pond-api/tls-openssl", "openark-core/tls-openssl"]
-tls-ring = ["data-pond-api/tls-ring", "openark-core/tls-ring"]
+tls-ring = [
+    "hickory-resolver/dnssec-ring",
+    "hickory-resolver/tls-ring",
+    "hickory-resolver/h3-ring",
+    "hickory-resolver/https-ring",
+    "hickory-resolver/quic-ring",
+    "data-pond-api/tls-ring",
+    "openark-core/tls-ring",
+]
 
 # Tracing
 tracing = ["dep:tracing", "openark-core/tracing"]
@@ -57,6 +73,10 @@ openark-core = { workspace = true, features = ["clap", "std"] }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "std"] }
+futures = { workspace = true, features = ["std"] }
+hickory-resolver = { workspace = true, features = ["system-config", "tokio"] }
+serde-json = { workspace = true, features = ["std"] }
+strum = { workspace = true, features = ["derive"] }
 tonic = { workspace = true, features = ["router", "server", "transport"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-stream = { workspace = true, features = ["full"] }

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use data_pond_api::pond::{self, pond_server::Pond};
-use tonic::{Request, Response, Result, Status};
+use tonic::{Request, Response, Result};
 
 #[async_trait]
 impl Pond for super::Server {
@@ -8,10 +8,10 @@ impl Pond for super::Server {
         &self,
         request: Request<pond::ListDevicesRequest>,
     ) -> Result<Response<pond::ListDevicesResponse>> {
-        let request = request.into_inner();
-        dbg!(request);
+        let pond::ListDevicesRequest {} = request.into_inner();
 
-        // FIXME: To be implemented!
-        Err(Status::resource_exhausted("Cannot list devices"))
+        Ok(Response::new(pond::ListDevicesResponse {
+            devices: self.state.devices.read().await.clone(),
+        }))
     }
 }
