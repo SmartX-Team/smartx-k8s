@@ -1,3 +1,4 @@
+use data_pond_csi::pond;
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 #[cfg(feature = "serde")]
@@ -8,6 +9,12 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumeAttributes {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, rename = "data-pond.csi.ulagbulag.io/layer")
+    )]
+    pub layer: pond::device_layer::Type,
+
     #[cfg_attr(
         feature = "serde",
         serde(
@@ -51,9 +58,18 @@ pub struct VolumeAttributes {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
-#[cfg_attr(feature = "serde", derive(Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct VolumeSecrets {}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumeParameters {
     #[cfg_attr(feature = "serde", serde(default, flatten))]
     pub attributes: VolumeAttributes,
+
+    #[cfg_attr(feature = "serde", serde(default, flatten))]
+    pub secrets: VolumeSecrets,
 }

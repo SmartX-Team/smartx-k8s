@@ -1,4 +1,7 @@
-use std::{collections::BTreeSet, process::Stdio};
+use std::{
+    collections::{BTreeSet, HashMap},
+    process::Stdio,
+};
 
 use anyhow::{Result, bail};
 use data_pond_csi::pond;
@@ -7,14 +10,15 @@ use tokio::process::Command;
 #[cfg(feature = "tracing")]
 use tracing::warn;
 
-pub(crate) async fn discover(server: &super::Server) -> Result<Vec<pond::Device>> {
+pub(crate) async fn discover(server: &super::Server) -> Result<HashMap<String, pond::Device>> {
     server
         .sources
         .iter()
         .collect::<BTreeSet<_>>()
         .into_iter()
         .map(|source| async move {
-            let output = Command::new(format!("./{source}-source-kernel-discover.sh"))
+            let program = format!("./{source}-source-kernel-discover.sh");
+            let output = Command::new(program)
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::inherit())
@@ -48,5 +52,11 @@ pub(crate) async fn discover(server: &super::Server) -> Result<Vec<pond::Device>
         .collect::<FuturesOrdered<_>>()
         .try_collect::<Vec<Vec<_>>>()
         .await
-        .map(|lists| lists.into_iter().flatten().collect())
+        .map(|lists| {
+            lists
+                .into_iter()
+                .flatten()
+                .map(|device| (device.id.clone(), device))
+                .collect()
+        })
 }

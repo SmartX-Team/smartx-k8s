@@ -5,7 +5,7 @@ mod node;
 mod pond;
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeSet, HashMap},
     net::{IpAddr, SocketAddr},
     path::Path,
     sync::Arc,
@@ -70,7 +70,7 @@ enum Service {
 
 #[derive(Debug, Default)]
 struct State {
-    devices: RwLock<Vec<api_pond::Device>>,
+    devices: RwLock<HashMap<String, api_pond::Device>>,
 }
 
 impl State {
@@ -113,6 +113,14 @@ struct Server {
 
     #[clap(skip)]
     state: Arc<State>,
+}
+
+impl Server {
+    fn node_topology(&self) -> HashMap<String, String> {
+        let mut map = HashMap::default();
+        map.insert("kubernetes.io/hostname".into(), self.node_id.clone());
+        map
+    }
 }
 
 async fn try_main(args: Args) -> Result<()> {

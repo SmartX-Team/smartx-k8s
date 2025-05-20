@@ -21,14 +21,12 @@ workspace = true
 
 [features]
 default = []
-std = [
-    # "schemars?/std",
-    "serde?/std",
-]
 
 schemars = ["dep:schemars", "serde"]
 serde = ["dep:serde"]
 
 [dependencies]
+data-pond-csi = { workspace = true }
+
 schemars = { workspace = true, optional = true, features = ["derive"] }
-serde = { workspace = true, optional = true, features = ["alloc", "derive"] }
+serde = { workspace = true, optional = true, features = ["derive", "std"] }

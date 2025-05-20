@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-
 use async_trait::async_trait;
 use data_pond_csi::csi::{self, node_server::Node};
 use tonic::{Request, Response, Result};
+#[cfg(feature = "tracing")]
+use tracing::warn;
 
 #[async_trait]
 impl Node for super::Server {
@@ -10,7 +10,12 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeStageVolumeRequest>,
     ) -> Result<Response<csi::NodeStageVolumeResponse>> {
-        dbg!(request.into_inner());
+        // let request = request.into_inner();
+        // let csi::NodeStageVolumeRequest { volume_id, .. } = &request;
+
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_stage_volume")
     }
 
@@ -18,7 +23,9 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeUnstageVolumeRequest>,
     ) -> Result<Response<csi::NodeUnstageVolumeResponse>> {
-        dbg!(request.into_inner());
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_unstage_volume")
     }
 
@@ -26,7 +33,9 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodePublishVolumeRequest>,
     ) -> Result<Response<csi::NodePublishVolumeResponse>> {
-        dbg!(request.into_inner());
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_publish_volume")
     }
 
@@ -34,7 +43,9 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeUnpublishVolumeRequest>,
     ) -> Result<Response<csi::NodeUnpublishVolumeResponse>> {
-        dbg!(request.into_inner());
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_unpublish_volume")
     }
 
@@ -42,7 +53,9 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeGetVolumeStatsRequest>,
     ) -> Result<Response<csi::NodeGetVolumeStatsResponse>> {
-        dbg!(request.into_inner());
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_get_volume_stats")
     }
 
@@ -50,7 +63,9 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeExpandVolumeRequest>,
     ) -> Result<Response<csi::NodeExpandVolumeResponse>> {
-        dbg!(request.into_inner());
+        // FIXME: To be implemented!
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
         crate::todo!("node_expand_volume")
     }
 
@@ -58,8 +73,49 @@ impl Node for super::Server {
         &self,
         request: Request<csi::NodeGetCapabilitiesRequest>,
     ) -> Result<Response<csi::NodeGetCapabilitiesResponse>> {
-        dbg!(request.into_inner());
-        crate::todo!("node_get_capabilities")
+        let csi::NodeGetCapabilitiesRequest {} = request.into_inner();
+
+        Ok(Response::new(csi::NodeGetCapabilitiesResponse {
+            capabilities: vec![
+                csi::NodeServiceCapability {
+                    r#type: Some(csi::node_service_capability::Type::Rpc(
+                        csi::node_service_capability::Rpc {
+                            r#type: csi::node_service_capability::rpc::Type::StageUnstageVolume
+                                as _,
+                        },
+                    )),
+                },
+                csi::NodeServiceCapability {
+                    r#type: Some(csi::node_service_capability::Type::Rpc(
+                        csi::node_service_capability::Rpc {
+                            r#type: csi::node_service_capability::rpc::Type::GetVolumeStats as _,
+                        },
+                    )),
+                },
+                csi::NodeServiceCapability {
+                    r#type: Some(csi::node_service_capability::Type::Rpc(
+                        csi::node_service_capability::Rpc {
+                            r#type: csi::node_service_capability::rpc::Type::ExpandVolume as _,
+                        },
+                    )),
+                },
+                csi::NodeServiceCapability {
+                    r#type: Some(csi::node_service_capability::Type::Rpc(
+                        csi::node_service_capability::Rpc {
+                            r#type: csi::node_service_capability::rpc::Type::VolumeCondition as _,
+                        },
+                    )),
+                },
+                csi::NodeServiceCapability {
+                    r#type: Some(csi::node_service_capability::Type::Rpc(
+                        csi::node_service_capability::Rpc {
+                            r#type: csi::node_service_capability::rpc::Type::SingleNodeMultiWriter
+                                as _,
+                        },
+                    )),
+                },
+            ],
+        }))
     }
 
     async fn node_get_info(
@@ -72,7 +128,7 @@ impl Node for super::Server {
             node_id: self.node_id.clone(),
             max_volumes_per_node: 0, // delegate to CO
             accessible_topology: Some(csi::Topology {
-                segments: HashMap::default(),
+                segments: self.node_topology(),
             }),
         }))
     }

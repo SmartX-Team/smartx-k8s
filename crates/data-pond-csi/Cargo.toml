@@ -47,4 +47,5 @@ tokio = { workspace = true, features = [
 prost = { workspace = true, features = ["derive", "std"] }
 prost-types = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["derive", "std"] }
+strum = { workspace = true, features = ["derive"] }
 tonic = { workspace = true }

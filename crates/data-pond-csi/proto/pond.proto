@@ -2,15 +2,32 @@ syntax="proto3";
 package io.ulagbulag.csi.pond.v1;
 
 service Pond {
+  rpc AllocateVolume (AllocateVolumeRequest)
+    returns (AllocateVolumeResponse) {}
+
+  rpc DeallocateVolume (AllocateVolumeRequest)
+  returns (AllocateVolumeResponse) {}
+
   rpc ListDevices (ListDevicesRequest)
     returns (ListDevicesResponse) {}
 }
 
+message AllocateVolumeRequest {
+  string device_id = 1;
+  string volume_id = 2;
+  int64 capacity = 3;
+  VolumeOptions options = 4;
+  map<string, string> parameters = 5;
+}
+
+message AllocateVolumeResponse {}
+
 message ListDevicesRequest {}
 
 message ListDevicesResponse {
-  repeated Device devices = 1;
-  DeviceTopology topology = 2;
+  string id = 1;
+  repeated Device devices = 2;
+  DeviceTopology topology = 3;
 }
 
 message Device {
@@ -39,4 +56,12 @@ message DeviceSource {
 message DeviceTopology {
   map<string, string> required = 1;
   map<string, string> provides = 2;
+}
+
+message VolumeOptions {
+  string fs_type = 1;
+  DeviceLayer.Type layer = 2;
+  repeated string mount_flags = 3;
+  string mount_group = 4;
+  bool mount_shared = 5;
 }
