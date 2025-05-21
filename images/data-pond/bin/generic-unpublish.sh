@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Data Pond Storage
-# Deallocate a volume from LVM VG
+# Unpublish a volume
 
 # Prehibit errors
 set -e -o pipefail
@@ -12,6 +12,5 @@ set -e -o pipefail
 # Parse inputs
 inputs="$(cat | jq)"
 
-# Deallocate a volume
-exec lvremove -f \
-    "$(echo "${inputs}" | jq -r '.device_id')/$(echo "${inputs}" | jq -r '.volume.id')"
+# Unpublish a volume
+exec umount "$(echo "${inputs}" | jq -r '.target_path')"

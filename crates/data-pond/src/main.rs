@@ -3,6 +3,7 @@ mod discovery;
 mod identity;
 mod node;
 mod pond;
+mod volume;
 
 use std::{
     collections::{BTreeSet, HashMap},
@@ -75,7 +76,7 @@ struct State {
 
 impl State {
     async fn discover(&self, server: &Server) -> Result<()> {
-        let endpoint = self::discovery::discover(server).await?;
+        let endpoint = self::discovery::discover_devices(server).await?;
         *self.devices.write().await = endpoint;
         Ok(())
     }
@@ -83,7 +84,28 @@ impl State {
 
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
+struct DefaultSettings {
+    #[arg(long, env = "DEFAULT_FS_TYPE", default_value = "ext4")]
+    fs_type: String,
+}
+
+impl DefaultSettings {
+    fn volume_options(&self) -> ::data_pond_csi::pond::VolumeOptions {
+        ::data_pond_csi::pond::VolumeOptions {
+            fs_type: Some(self.fs_type.clone()),
+            mount_flags: Default::default(),
+            mount_group: Default::default(),
+            mount_shared: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Parser)]
+#[command(author, version, about, long_about = None)]
 struct Server {
+    #[command(flatten)]
+    default: DefaultSettings,
+
     #[arg(long, env = "DRIVER_NAME")]
     driver_name: String,
 
@@ -140,7 +162,7 @@ async fn try_main(args: Args) -> Result<()> {
     for service in services {
         match service {
             Service::Controller => {
-                let server = self::controller::Server::try_new().await?;
+                let server = self::controller::Server::try_new(server.default.clone()).await?;
                 routes.add_service(ControllerServer::new(server))
             }
             Service::Identity => routes.add_service(IdentityServer::new(server.clone())),

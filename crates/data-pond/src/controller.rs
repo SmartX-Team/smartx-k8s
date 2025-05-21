@@ -1,27 +1,22 @@
 use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, HashMap},
     sync::Arc,
 };
 
 use anyhow::Error;
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
-use data_pond_api::{VolumeAttributes, VolumeParameters, VolumeSecrets};
+use data_pond_api::{VolumeAttributes, VolumePublishControllerContext, VolumeSecrets};
 use data_pond_csi::{
     csi::{self, controller_server::Controller},
     pond::{self, pond_client::PondClient},
 };
-use futures::{
-    TryStreamExt,
-    stream::{FuturesOrdered, FuturesUnordered},
-};
+use futures::{TryStreamExt, stream::FuturesUnordered};
 use hickory_resolver::{
     Resolver,
     name_server::{GenericConnector, TokioConnectionProvider},
     proto::runtime::TokioRuntimeProvider,
 };
-use serde_json::{Map, Value};
-use strum::{Display, EnumString};
 use tokio::sync::{Mutex, RwLock, RwLockWriteGuard};
 use tonic::{
     Request, Response, Result, Status,
@@ -30,264 +25,21 @@ use tonic::{
 #[cfg(feature = "tracing")]
 use tracing::{debug, warn};
 
-#[derive(
-    Copy, Clone, Debug, Display, Default, EnumString, PartialEq, Eq, PartialOrd, Ord, Hash,
-)]
-#[strum(serialize_all = "kebab-case")]
-enum FsType {
-    #[default]
-    Ext4,
-}
+use crate::volume::{
+    PersistentVolume, Pond, Volume, VolumeGroup, VolumeOptionsExt, VolumeParametersExport,
+    VolumeParametersSource,
+};
 
-#[derive(Debug)]
-struct Pond {
-    client: Mutex<PondClient<Channel>>,
-    devices: Vec<pond::Device>,
-    id: String,
-    topology: pond::DeviceTopology,
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct DeviceKey {
+    pond_id: String,
+    device_id: String,
 }
 
 #[derive(Clone, Debug, Default)]
 struct Ponds {
     created_at: DateTime<Utc>,
     data: BTreeMap<String, Arc<Pond>>,
-}
-
-#[derive(Clone, Debug)]
-struct Volume {
-    attributes: VolumeAttributes,
-    data: pond::Device,
-    offset: i64,
-    pond: Arc<Pond>,
-    reserved: i64,
-    volume_id: String,
-}
-
-impl Volume {
-    #[inline]
-    fn available(&self) -> i64 {
-        self.data.capacity - self.offset - self.padding()
-    }
-
-    #[inline]
-    fn padding(&self) -> i64 {
-        self.data.layer().padding()
-    }
-
-    fn reserve(&mut self, remaining: i64) -> i64 {
-        let available = self.available();
-        let reserved = available.min(remaining);
-        self.reserved = reserved + self.padding();
-        reserved
-    }
-
-    fn build(
-        &self,
-        secrets: VolumeSecrets,
-        options: VolumeOptions,
-    ) -> Result<pond::AllocateVolumeRequest> {
-        let parameters = VolumeParameters {
-            attributes: self.attributes.clone(),
-            secrets,
-        };
-
-        Ok(pond::AllocateVolumeRequest {
-            device_id: self.data.id.clone(),
-            volume_id: self.volume_id.clone(),
-            capacity: self.reserved,
-            options: Some(options.into_pond_options(&parameters)),
-            parameters: ::serde_json::to_value(parameters)
-                .and_then(::serde_json::from_value)
-                // conceal secrets
-                .map_err(|_| Status::internal("Failed to build volume parameters"))?,
-        })
-    }
-
-    async fn allocate(self, secrets: VolumeSecrets, options: VolumeOptions) -> Result<Self> {
-        let request = self.build(secrets, options)?;
-        let pond::AllocateVolumeResponse {} = self
-            .pond
-            .client
-            .lock()
-            .await
-            .allocate_volume(request)
-            .await?
-            .into_inner();
-        Ok(self)
-    }
-
-    async fn deallocate(&self, secrets: VolumeSecrets, options: VolumeOptions) -> Result<()> {
-        let request = self.build(secrets, options)?;
-        let pond::AllocateVolumeResponse {} = self
-            .pond
-            .client
-            .lock()
-            .await
-            .deallocate_volume(request)
-            .await?
-            .into_inner();
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct VolumeGroup {
-    data: csi::Volume,
-    devices: Vec<Volume>,
-    options: VolumeOptions,
-}
-
-impl VolumeGroup {
-    async fn allocate(self, secrets: &VolumeSecrets) -> Result<PersistentVolume> {
-        let Self {
-            data,
-            devices,
-            options,
-        } = self;
-
-        // Allocate volumes
-        let devices = devices
-            .into_iter()
-            .map(|device| device.allocate(secrets.clone(), options.clone()))
-            .collect::<FuturesOrdered<_>>()
-            .try_collect()
-            .await?;
-
-        Ok(PersistentVolume {
-            condition: csi::VolumeCondition {
-                abnormal: false,
-                message: "Provisioned".into(),
-            },
-            group: Self {
-                data,
-                devices,
-                options,
-            },
-            published_node_ids: Default::default(),
-        })
-    }
-
-    async fn deallocate(&self, secrets: &VolumeSecrets) -> Result<()> {
-        let Self {
-            data: _,
-            devices,
-            options,
-        } = self;
-
-        // Deallocate volumes
-        devices
-            .into_iter()
-            .map(|device| device.deallocate(secrets.clone(), options.clone()))
-            .collect::<FuturesOrdered<_>>()
-            .try_collect::<()>()
-            .await?;
-
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug)]
-struct VolumeOptions {
-    fs_type: Option<FsType>,
-    mount_flags: Vec<String>,
-    mount_group: String,
-    mount_shared: bool,
-}
-
-impl VolumeOptions {
-    fn apply_volume_capabilities(
-        &mut self,
-        volume_capabilities: Vec<csi::VolumeCapability>,
-    ) -> Result<()> {
-        for csi::VolumeCapability {
-            access_mode,
-            access_type,
-        } in volume_capabilities
-        {
-            // Validate access mode
-            match access_mode.map(|field| field.mode()) {
-                Some(
-                    csi::volume_capability::access_mode::Mode::MultiNodeMultiWriter
-                    | csi::volume_capability::access_mode::Mode::MultiNodeReaderOnly
-                    | csi::volume_capability::access_mode::Mode::MultiNodeSingleWriter,
-                ) => self.mount_shared = true,
-                Some(
-                    csi::volume_capability::access_mode::Mode::SingleNodeMultiWriter
-                    | csi::volume_capability::access_mode::Mode::SingleNodeReaderOnly
-                    | csi::volume_capability::access_mode::Mode::SingleNodeSingleWriter
-                    | csi::volume_capability::access_mode::Mode::SingleNodeWriter,
-                ) => (),
-                Some(csi::volume_capability::access_mode::Mode::Unknown) | None => (),
-            }
-
-            // Validate access type
-            match access_type {
-                Some(csi::volume_capability::AccessType::Block(
-                    csi::volume_capability::BlockVolume {},
-                )) => {
-                    // Validate access mode
-                    if self.mount_shared {
-                        return Err(Status::invalid_argument(
-                            "Multi node PVC is not supported as a block device access mode",
-                        ));
-                    }
-                    self.fs_type = None;
-                    self.mount_flags.clear();
-                    self.mount_group.clear();
-                }
-                Some(csi::volume_capability::AccessType::Mount(
-                    csi::volume_capability::MountVolume {
-                        fs_type,
-                        mount_flags,
-                        volume_mount_group,
-                    },
-                )) => {
-                    // Validate filesystem type
-                    if !fs_type.is_empty() {
-                        self.fs_type = Some(fs_type.parse().map_err(|_| {
-                            Status::invalid_argument(format!(
-                                "Unsupported filesystem type: {fs_type}"
-                            ))
-                        })?);
-                    };
-                    self.mount_flags = mount_flags;
-                    self.mount_group = volume_mount_group;
-                }
-                None => (),
-            }
-        }
-        Ok(())
-    }
-
-    fn into_pond_options(self, parameters: &VolumeParameters) -> pond::VolumeOptions {
-        let Self {
-            fs_type,
-            mount_flags,
-            mount_group,
-            mount_shared,
-        } = self;
-
-        pond::VolumeOptions {
-            fs_type: fs_type.unwrap_or_default().to_string(),
-            layer: parameters.attributes.layer as _,
-            mount_flags,
-            mount_group,
-            mount_shared,
-        }
-    }
-}
-
-#[derive(Debug)]
-struct PersistentVolume {
-    condition: csi::VolumeCondition,
-    group: VolumeGroup,
-    published_node_ids: BTreeSet<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct DeviceKey {
-    pond_id: String,
-    device_id: String,
 }
 
 #[derive(Debug, Default)]
@@ -298,6 +50,7 @@ struct State {
 }
 
 pub(crate) struct Server {
+    default: super::DefaultSettings,
     pond_host: String,
     pond_port: u16,
     pond_protocol: String,
@@ -307,13 +60,14 @@ pub(crate) struct Server {
 }
 
 impl Server {
-    pub(crate) async fn try_new() -> Result<Self, Error> {
+    pub(crate) async fn try_new(default: super::DefaultSettings) -> Result<Self, Error> {
         // Construct a new Resolver with default configuration options
         let provider = TokioConnectionProvider::default();
         let resolver = Resolver::builder(provider)?.build();
 
         // Initialize ponds
         let server = Self {
+            default,
             pond_host: "plugin.hoya.svc.ops.openark".into(),
             pond_port: 9090,
             pond_protocol: "http".into(),
@@ -431,6 +185,9 @@ impl Controller for Server {
             mutable_parameters,
         } = request;
 
+        // Define volume ID
+        let volume_id = format!("pond_{name}");
+
         // Validate capacity
         let csi::CapacityRange {
             required_bytes,
@@ -438,46 +195,22 @@ impl Controller for Server {
         } = capacity_range.ok_or_else(|| Status::invalid_argument("missing capacity"))?;
 
         // ****************************************
-        // Step 1: Detect volume capabilities
+        // Step 1: Validate volume options
         // ****************************************
 
-        let mut options = VolumeOptions {
-            fs_type: Some(FsType::Ext4),
-            mount_flags: Default::default(),
-            mount_group: Default::default(),
-            mount_shared: false,
-        };
+        let mut options = self.default.volume_options();
         options.apply_volume_capabilities(volume_capabilities)?;
 
-        // Define volume ID
-        let volume_id = format!("pond_{name}");
-
         // ****************************************
-        // Step 2: Build device filters
+        // Step 2: Validate volume parameters
         // ****************************************
 
-        // Validate parameters (parameters -> mutable parameters -> secrets)
-        let VolumeParameters {
-            attributes,
-            secrets,
-        } = {
-            let mut map = Map::default();
-            {
-                let mut extend = |params: HashMap<String, String>| {
-                    map.extend(
-                        params
-                            .into_iter()
-                            .map(|(key, value)| (key, Value::String(value))),
-                    )
-                };
-                extend(parameters);
-                extend(mutable_parameters);
-                extend(secrets);
-            }
-            ::serde_json::from_value(Value::Object(map))
-                // conceal secrets
-                .map_err(|_| Status::invalid_argument("Invalid parameters or secrets"))?
-        };
+        let attributes: VolumeAttributes = vec![parameters, mutable_parameters].parse()?;
+        let secrets: VolumeSecrets = secrets.parse()?;
+
+        // ****************************************
+        // Step 3: Build device filters
+        // ****************************************
 
         // Validate volume content source
         let content_source = match volume_content_source {
@@ -525,7 +258,7 @@ impl Controller for Server {
         };
 
         // ****************************************
-        // Step 3: [C] Filter devices
+        // Step 4: [C] Filter devices
         // ****************************************
 
         // Load ponds
@@ -613,7 +346,7 @@ impl Controller for Server {
         }
 
         // ****************************************
-        // Step 4: [C] Create a VG
+        // Step 5: [C, E] Create a VG
         // ****************************************
 
         // Build accessible topology
@@ -674,27 +407,33 @@ impl Controller for Server {
         &self,
         request: Request<csi::DeleteVolumeRequest>,
     ) -> Result<Response<csi::DeleteVolumeResponse>> {
-        let csi::DeleteVolumeRequest { volume_id, secrets } = request.into_inner();
+        // ****************************************
+        // Step 0: Validate inputs
+        // ****************************************
 
-        // Validate secretes
-        let secrets: VolumeSecrets = {
-            let mut map = Map::default();
-            map.extend(
-                secrets
-                    .into_iter()
-                    .map(|(key, value)| (key, Value::String(value))),
-            );
-            ::serde_json::from_value(Value::Object(map))
-                // conceal secrets
-                .map_err(|_| Status::invalid_argument("Invalid secrets"))?
-        };
+        let request = request.into_inner();
+        #[cfg(feature = "tracing")]
+        debug!("request = {request:#?}");
+
+        let csi::DeleteVolumeRequest { volume_id, secrets } = request;
+
+        // ****************************************
+        // Step 1: Validate volume parameters
+        // ****************************************
+
+        let secrets: VolumeSecrets = secrets.parse()?;
+
+        // ****************************************
+        // Step 2: [C] Validate volume
+        // ****************************************
 
         // Find the volume
         let mut state = self.state.write().await;
         let PersistentVolume {
             condition: csi::VolumeCondition { abnormal, message },
             group,
-            published_node_ids: _,
+            published_node_ids,
+            readonly: _,
         } = {
             match state.volumes.get(&volume_id) {
                 Some(volume) => volume,
@@ -706,6 +445,17 @@ impl Controller for Server {
         if *abnormal {
             return Err(Status::aborted(message.clone()));
         }
+
+        // Stop if the published nodes exist
+        if !published_node_ids.is_empty() {
+            return Err(Status::aborted(format!(
+                "Published volume: {volume_id} -> {published_node_ids:?}"
+            )));
+        }
+
+        // ****************************************
+        // Step 3: [C, E] Execute
+        // ****************************************
 
         // Release devices
         group.deallocate(&secrets).await?;
@@ -731,18 +481,160 @@ impl Controller for Server {
         &self,
         request: Request<csi::ControllerPublishVolumeRequest>,
     ) -> Result<Response<csi::ControllerPublishVolumeResponse>> {
+        // ****************************************
+        // Step 0: Validate inputs
+        // ****************************************
+
+        let request = request.into_inner();
         #[cfg(feature = "tracing")]
-        warn!("request = {:#?}", request.into_inner());
-        crate::todo!("controller_publish_volume")
+        debug!("request = {request:#?}");
+
+        let csi::ControllerPublishVolumeRequest {
+            volume_id,
+            node_id,
+            volume_capability,
+            readonly,
+            secrets,
+            volume_context,
+        } = request;
+
+        // ****************************************
+        // Step 1: Validate volume options
+        // ****************************************
+
+        let mut options = self.default.volume_options();
+        options.apply_volume_capability(volume_capability.unwrap_or_default())?;
+        drop(options);
+
+        // ****************************************
+        // Step 2: Validate volume parameters
+        // ****************************************
+
+        let _: VolumeAttributes = volume_context.parse()?;
+        let _: VolumeSecrets = secrets.parse()?;
+
+        // ****************************************
+        // Step 3: [C] Validate volume
+        // ****************************************
+
+        // Find the volume
+        let mut state = self.state.write().await;
+        let PersistentVolume {
+            condition: csi::VolumeCondition { abnormal, message },
+            group,
+            published_node_ids,
+            readonly: group_readonly,
+        } = {
+            match state.volumes.get_mut(&volume_id) {
+                Some(volume) => volume,
+                None => return Err(Status::not_found(format!("No such volume: {volume_id}"))),
+            }
+        };
+
+        // Stop if the volume is abnormal
+        if *abnormal {
+            return Err(Status::aborted(message.clone()));
+        }
+
+        // Stop if the volume group is not shared and one of the nodes has been published as write mode.
+        if !group.options.mount_shared {
+            let has_published = !published_node_ids.is_empty();
+            let group_readonly = *group_readonly;
+            if !readonly && group_readonly && has_published {
+                return Err(Status::aborted(format!(
+                    "Already published volume AS ro: {volume_id}"
+                )));
+            }
+            if readonly && !group_readonly && has_published {
+                return Err(Status::aborted(format!(
+                    "Already published volume AS rw: {volume_id}"
+                )));
+            }
+        }
+
+        // ****************************************
+        // Step 4: [C] Publish node
+        // ****************************************
+
+        let publish_context = {
+            let context = VolumePublishControllerContext {
+                devices: group
+                    .devices
+                    .iter()
+                    .map(|device| device.data.clone())
+                    .collect(),
+            }
+            .to_dict()?;
+
+            published_node_ids.insert(node_id);
+            *group_readonly |= readonly;
+            drop(state);
+            context
+        };
+
+        Ok(Response::new(csi::ControllerPublishVolumeResponse {
+            publish_context,
+        }))
     }
 
     async fn controller_unpublish_volume(
         &self,
         request: Request<csi::ControllerUnpublishVolumeRequest>,
     ) -> Result<Response<csi::ControllerUnpublishVolumeResponse>> {
+        // ****************************************
+        // Step 0: Validate inputs
+        // ****************************************
+
+        let request = request.into_inner();
         #[cfg(feature = "tracing")]
-        warn!("request = {:#?}", request.into_inner());
-        crate::todo!("controller_unpublish_volume")
+        debug!("request = {request:#?}");
+
+        let csi::ControllerUnpublishVolumeRequest {
+            volume_id,
+            node_id,
+            secrets,
+        } = request;
+
+        // ****************************************
+        // Step 1: Validate volume parameters
+        // ****************************************
+
+        let _: VolumeSecrets = secrets.parse()?;
+
+        // ****************************************
+        // Step 2: [C] Validate volume
+        // ****************************************
+
+        // Find the volume
+        let mut state = self.state.write().await;
+        let PersistentVolume {
+            condition: csi::VolumeCondition { abnormal, message },
+            group: _,
+            published_node_ids,
+            readonly,
+        } = {
+            match state.volumes.get_mut(&volume_id) {
+                Some(volume) => volume,
+                None => return Ok(Response::new(csi::ControllerUnpublishVolumeResponse {})),
+            }
+        };
+
+        // Stop if the volume is abnormal
+        if *abnormal {
+            return Err(Status::aborted(message.clone()));
+        }
+
+        // ****************************************
+        // Step 3: [C] Unpublish node
+        // ****************************************
+
+        {
+            published_node_ids.remove(&node_id);
+            *readonly &= !published_node_ids.is_empty();
+            drop(state);
+        }
+
+        Ok(Response::new(csi::ControllerUnpublishVolumeResponse {}))
     }
 
     async fn validate_volume_capabilities(
@@ -822,24 +714,10 @@ impl Controller for Server {
                             },
                         )),
                     },
-                    // csi::ControllerServiceCapability {
-                    //     r#type: Some(csi::controller_service_capability::Type::Rpc(
-                    //         csi::controller_service_capability::Rpc {
-                    //             r#type: csi::controller_service_capability::rpc::Type::GetCapacity as _,
-                    //         },
-                    //     )),
-                    // },
                     csi::ControllerServiceCapability {
                         r#type: Some(csi::controller_service_capability::Type::Rpc(
                             csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::GetVolume as _,
-                            },
-                        )),
-                    },
-                    csi::ControllerServiceCapability {
-                        r#type: Some(csi::controller_service_capability::Type::Rpc(
-                            csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::ExpandVolume as _,
+                                r#type: csi::controller_service_capability::rpc::Type::PublishUnpublishVolume as _,
                             },
                         )),
                     },
@@ -850,24 +728,24 @@ impl Controller for Server {
                             },
                         )),
                     },
-                    csi::ControllerServiceCapability {
-                        r#type: Some(csi::controller_service_capability::Type::Rpc(
-                            csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::ListVolumesPublishedNodes as _,
-                            },
-                        )),
-                    },
                     // csi::ControllerServiceCapability {
                     //     r#type: Some(csi::controller_service_capability::Type::Rpc(
                     //         csi::controller_service_capability::Rpc {
-                    //             r#type: csi::controller_service_capability::rpc::Type::ModifyVolume as _,
+                    //             r#type: csi::controller_service_capability::rpc::Type::GetCapacity as _,
                     //         },
                     //     )),
                     // },
                     csi::ControllerServiceCapability {
                         r#type: Some(csi::controller_service_capability::Type::Rpc(
                             csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::SingleNodeMultiWriter as _,
+                                r#type: csi::controller_service_capability::rpc::Type::ExpandVolume as _,
+                            },
+                        )),
+                    },
+                    csi::ControllerServiceCapability {
+                        r#type: Some(csi::controller_service_capability::Type::Rpc(
+                            csi::controller_service_capability::Rpc {
+                                r#type: csi::controller_service_capability::rpc::Type::ListVolumesPublishedNodes as _,
                             },
                         )),
                     },
@@ -878,6 +756,27 @@ impl Controller for Server {
                             },
                         )),
                     },
+                    csi::ControllerServiceCapability {
+                        r#type: Some(csi::controller_service_capability::Type::Rpc(
+                            csi::controller_service_capability::Rpc {
+                                r#type: csi::controller_service_capability::rpc::Type::GetVolume as _,
+                            },
+                        )),
+                    },
+                    csi::ControllerServiceCapability {
+                        r#type: Some(csi::controller_service_capability::Type::Rpc(
+                            csi::controller_service_capability::Rpc {
+                                r#type: csi::controller_service_capability::rpc::Type::SingleNodeMultiWriter as _,
+                            },
+                        )),
+                    },
+                    // csi::ControllerServiceCapability {
+                    //     r#type: Some(csi::controller_service_capability::Type::Rpc(
+                    //         csi::controller_service_capability::Rpc {
+                    //             r#type: csi::controller_service_capability::rpc::Type::ModifyVolume as _,
+                    //         },
+                    //     )),
+                    // },
                 ],
             },
         ))

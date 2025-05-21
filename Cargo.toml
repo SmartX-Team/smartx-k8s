@@ -65,7 +65,6 @@ actix-web = { version = "=4.11", default-features = false, features = [
 ] }
 actix-web-opentelemetry = { version = "=0.22", default-features = false }
 anyhow = { version = "=1.0", default-features = false }
-arrow = { version = "=55", default-features = false, features = ["chrono-tz"] }
 async-trait = { version = "=0.1", default-features = false }
 base64 = { version = "=0.22", default-features = false }
 chrono = { version = "=0.4", default-features = false }
@@ -73,8 +72,6 @@ clap = { version = "=4.5", default-features = false }
 cookie = { version = "=0.18", default-features = false }
 codesnake = { version = "=0.2", default-features = false }
 convert-case = { package = "convert_case", version = "0.8", default-features = false }
-datafusion = { version = "=47", default-features = false }
-fuser = { version = "=0.15", default-features = false, features = ["abi-7-31"] }
 futures = { version = "=0.3", default-features = false }
 getrandom = { version = "=0.3", default-features = false }
 good-lp = { package = "good_lp", version = "1.13", features = [

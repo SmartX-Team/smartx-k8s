@@ -15,6 +15,6 @@ inputs="$(cat | jq)"
 # Allocate a volume
 exec lvcreate \
     -L "$(echo "${inputs}" | jq -r '.capacity')B" \
-    -n "$(echo "${inputs}" | jq -r '.volume_id')" \
+    -n "$(echo "${inputs}" | jq -r '.volume.id')" \
     --zero n \
     "$(echo "${inputs}" | jq -r '.device_id')"

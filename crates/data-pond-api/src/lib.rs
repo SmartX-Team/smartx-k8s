@@ -4,14 +4,21 @@ use schemars::JsonSchema;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+#[inline]
+const fn default_device_layer() -> pond::device_layer::Type {
+    pond::device_layer::Type::Lvm
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumeAttributes {
     #[cfg_attr(
         feature = "serde",
-        serde(default, rename = "data-pond.csi.ulagbulag.io/layer")
+        serde(
+            default = "default_device_layer",
+            rename = "data-pond.csi.ulagbulag.io/layer"
+        )
     )]
     pub layer: pond::device_layer::Type,
 
@@ -59,17 +66,79 @@ pub struct VolumeAttributes {
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumeSecrets {}
 
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumeParameters {
     #[cfg_attr(feature = "serde", serde(default, flatten))]
     pub attributes: VolumeAttributes,
 
     #[cfg_attr(feature = "serde", serde(default, flatten))]
     pub secrets: VolumeSecrets,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct VolumeContext {
+    pub id: String,
+
+    pub options: pond::VolumeOptions,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub parameters: VolumeParameters,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct VolumeAllocateContext {
+    pub capacity: i64,
+
+    pub device_id: String,
+
+    pub volume: VolumeContext,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct VolumePublishControllerContext {
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub devices: Vec<pond::Device>,
+}
+
+impl VolumePublishControllerContext {
+    pub const LABEL_DEVICES: &'static str = "data-pond.csi.ulagbulag.io/devices";
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct VolumePublishContext {
+    #[cfg_attr(feature = "serde", serde(default, flatten))]
+    pub controller: VolumePublishControllerContext,
+
+    pub read_only: bool,
+
+    pub staging_target_path: String,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub target_path: Option<String>,
+
+    pub volume: VolumeContext,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct VolumeUnpublishContext {
+    pub target_path: String,
+
+    pub volume_id: String,
 }

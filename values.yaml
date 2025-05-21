@@ -60,6 +60,7 @@ cluster:
   name: smartx
   group: default
   singleNode: false
+  standalone: false # Please enable it only if you want to make a single-node cluster
 
   # Vars for pointing to kubernetes api endpoints
   apiEndpoint: https://localhost:6443

@@ -15,6 +15,7 @@ set -x
 for vg in $(vgs --noheadings -o vg_name | awk '{$1=$1};1'); do
     echo '{
         "id": "'"${vg}"'",
+        "pond_id": "'"${NODE_ID}"'",
         "layer": 1,
         "source": 1,
         "capacity": '"$(vgs --noheadings --units b --nosuffix -o vg_size "${vg}" | awk '{$1=$1};1')"',

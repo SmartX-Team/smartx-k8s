@@ -17,7 +17,8 @@ message AllocateVolumeRequest {
   string volume_id = 2;
   int64 capacity = 3;
   VolumeOptions options = 4;
-  map<string, string> parameters = 5;
+  map<string, string> attributes = 5;
+  map<string, string> secrets = 6;
 }
 
 message AllocateVolumeResponse {}
@@ -32,11 +33,12 @@ message ListDevicesResponse {
 
 message Device {
   string id = 1;
-  optional string uid = 2;
-  DeviceLayer.Type layer = 3;
-  DeviceSource.Type source = 4;
-  optional string addr = 5;
-  int64 capacity = 6;
+  string pond_id = 2;
+  optional string uid = 3;
+  DeviceLayer.Type layer = 4;
+  DeviceSource.Type source = 5;
+  optional string addr = 6;
+  int64 capacity = 7;
 }
 
 message DeviceLayer {
@@ -59,9 +61,8 @@ message DeviceTopology {
 }
 
 message VolumeOptions {
-  string fs_type = 1;
-  DeviceLayer.Type layer = 2;
-  repeated string mount_flags = 3;
-  string mount_group = 4;
-  bool mount_shared = 5;
+  optional string fs_type = 1;
+  repeated string mount_flags = 2;
+  string mount_group = 3;
+  bool mount_shared = 4;
 }

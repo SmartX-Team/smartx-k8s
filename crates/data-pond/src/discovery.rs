@@ -10,7 +10,9 @@ use tokio::process::Command;
 #[cfg(feature = "tracing")]
 use tracing::warn;
 
-pub(crate) async fn discover(server: &super::Server) -> Result<HashMap<String, pond::Device>> {
+pub(crate) async fn discover_devices(
+    server: &super::Server,
+) -> Result<HashMap<String, pond::Device>> {
     server
         .sources
         .iter()
@@ -56,7 +58,14 @@ pub(crate) async fn discover(server: &super::Server) -> Result<HashMap<String, p
             lists
                 .into_iter()
                 .flatten()
-                .map(|device| (device.id.clone(), device))
+                .map(|mut device| {
+                    let id = device.id.clone();
+                    if device.addr.is_none() {
+                        device.addr = Some(server.pod_ip.to_string());
+                    }
+                    device.pond_id = server.node_id.clone();
+                    (id, device)
+                })
                 .collect()
         })
 }

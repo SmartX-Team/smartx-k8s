@@ -30,6 +30,26 @@ Please browse [apps/openark-kiss/values.yaml](apps/openark-kiss/values.yaml) for
 | kube.slice   | 1000m | 2Gi    | 2Gi               | 2000 | sshd.service, ...            |
 | (Daemonsets) | 2000m | 1Gi    | 2Gi               | 2000 | CSI, GPU, KubeVirt, ...      |
 
+## Standalone mode
+
+If you want to install `SmartX K8S` on your **desktop** or **server nodes**,
+you can utilize `standalone` mode to make your node be a control plane.
+
+The default preset URL is "https://github.com/SmartX-Team/desktop-k8s".
+You can clone the repository and change the URL.
+
+```bash
+# Preset URL: "https://github.com/SmartX-Team/desktop-k8s"
+just build-iso "https://github.com/SmartX-Team/desktop-k8s"
+```
+
+If you want to customize the preset, please change the preset repository URL.
+
+```bash
+# Custom preset
+just build-iso "https://github.com/your-org/your-custom-k8s"
+```
+
 ## OpenARK
 
 ### KISS: Kubernetes Is Short and Simple
@@ -55,3 +75,7 @@ For automated multi-site deployment of cloud-native on-premise (edge) clusters, 
 - **Ho Kim**, DongHwan Ku and JongWon Kim, "Cloud-native Metadata Lake using OpenCAS, " in Proc. KICS (Korea Institute of Communications and Information Sciences) 2022 Winter Conference, Pyeongchang, Korea, February, 2022.
 - **Ho Kim** and JongWon Kim, "Automated Multi-site Deployment of Bare-metal Cloud-native Edge Clusters, " in Proc. KICS (Korea Institute of Communications and Information Sciences) 2021 Fall Conference, Yeosu, Korea, November, 2021.
 - **Ho Kim**, Jun-Sik Shin, and JongWon Kim, "Prototype Implementation of All-flash DataPond Cluster employing OpenCAS Cache Acceleration with Optane Memory, " in Proc. KICS (Korea Institute of Communications and Information Sciences) 2021 Summer Conference, Jeju, Korea, June, 2021.
+
+## LICENSE
+
+Please refer the [LICENSE](/LICENSE) file.

@@ -81,6 +81,7 @@ chrono = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
 futures = { workspace = true, features = ["std"] }
 hickory-resolver = { workspace = true, features = ["system-config", "tokio"] }
+serde = { workspace = true, features = ["std"] }
 serde-json = { workspace = true, features = ["std"] }
 strum = { workspace = true, features = ["derive"] }
 tonic = { workspace = true, features = ["router", "server", "transport"] }

@@ -4,14 +4,15 @@
 # found in the LICENSE file.
 
 # Data Pond Storage
-# Deallocate a volume from LVM VG
+# Publish a LVM volume
 
 # Prehibit errors
 set -e -o pipefail
 
 # Parse inputs
 inputs="$(cat | jq)"
+echo "$inputs" >&2
 
-# Deallocate a volume
-exec lvremove -f \
-    "$(echo "${inputs}" | jq -r '.device_id')/$(echo "${inputs}" | jq -r '.volume.id')"
+# Publish a volume
+# FIXME: To be implemented!
+exec false
