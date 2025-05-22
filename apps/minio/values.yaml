@@ -99,11 +99,11 @@ provisioning:
   ##
   resources:
     requests:
-      cpu: 4
-      memory: 8Gi
+      cpu: 1
+      memory: 2Gi
     limits:
-      cpu: 4
-      memory: 8Gi
+      cpu: 2
+      memory: 4Gi
       ephemeral-storage: 8Gi
   ## Automatic Cleanup for Finished Jobs
   ## @param provisioning.cleanupAfterFinished.enabled Enables Cleanup for Finished Jobs
@@ -167,7 +167,7 @@ affinity:
 resources:
   limits:
     cpu: 8
-    memory: 8Gi
+    memory: 32Gi
     ephemeral-storage: 8Gi
 
 ## @section Traffic exposure parameters
