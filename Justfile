@@ -10,13 +10,18 @@ build-image NAME:
     @clear
     @IMAGE_NAME={{ NAME }} ./hack/image-build.sh
 
+# Build and push an ISO with specific preset repository (local path or URL)
+build-iso REPO:
+    @clear
+    @PRESET_URL={{ REPO }} ./hack/iso-build.sh
+
 # Execute a command in the boxes
 batch COMMAND *ARGS:
     @./hack/box-batch.sh {{ COMMAND }} {{ ARGS }}
 
-# Bootstrap a new k8s cluster
+# Bootstrap a new k8s cluster with specific preset repository (local path or URL)
 bootstrap REPO:
-    @./hack/kubespray.sh {{ REPO }} 'cluster.yml'
+    @PRESET_URL={{ REPO }} ./hack/kubespray.sh 'cluster.yml'
 
 # List all boxes
 box *ARGS:

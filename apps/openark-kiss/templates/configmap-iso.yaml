@@ -1,0 +1,17 @@
+{{- if .Values.cluster.standalone }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iso
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+  kubespray.sh: |
+{{- tpl ( $.Files.Get "bin/kubespray.sh" ) $ | trim | nindent 4 }}
+  os_base_url: {{ .Values.kiss.assets.repo.ubuntu_24_04.baseUrl | quote }}
+  os_revision: {{ .Values.kiss.os.revision | quote }}
+{{- end }}

@@ -58,6 +58,7 @@
 
 - name: Reboot the boxes if flashed (The task will be restarted)
   when:
+    - kiss_allow_reboot
     - kiss_allow_critical_commands | default(False)
     - ansible_architecture in mellanox_architectures
     - "'Restart needed' in result.stdout"
@@ -66,6 +67,7 @@
 
 - name: Assert rebooting
   when:
+    - kiss_allow_reboot
     - kiss_allow_critical_commands | default(False)
     - ansible_architecture in mellanox_architectures
     - "'Restart needed' in result.stdout"

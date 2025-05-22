@@ -8,8 +8,8 @@ set arch ${buildarch}
 iseq ${arch} i386 && set arch x86_64 ||
 iseq ${arch} x86_64 && set arch amd64 ||
 
-set os_ver 24.04
-set os_rev .2
+set os_ver {{ .Values.kiss.os.version }}
+set os_rev {{ printf ".%s" .Values.kiss.os.revision }}
 # FIXME: the official cdimage repo does NOT match the versions between initrd and iso
 set repo http://cdimage.ubuntu.com/releases/${os_ver}/release
 iseq ${arch} amd64 && set repo http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/assets/ubuntu-${os_ver} ||

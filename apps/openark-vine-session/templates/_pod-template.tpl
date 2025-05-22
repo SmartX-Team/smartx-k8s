@@ -127,6 +127,17 @@ nodeAffinity:
             values:
               - Compute
               - Desktop
+      - matchExpressions:
+{{- if not ( empty .Values.node.name ) }}
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+              - {{ .Values.node.name | quote }}
+{{- else }}
+          - key: node-role.kubernetes.io/standalone
+            operator: In
+            values:
+              - "true"
 {{- end }}
 {{- end }}
 

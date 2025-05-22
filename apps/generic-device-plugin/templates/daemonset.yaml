@@ -38,6 +38,12 @@ spec:
                     operator: In
                     values:
                       - container
+              # All standalone nodes
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/standalone
+                    operator: In
+                    values:
+                      - "true"
       containers:
         - name: generic-device-plugin
           image: "{{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

@@ -37,6 +37,11 @@ kubevirt:
                     operator: In
                     values:
                       - vm
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/standalone
+                    operator: In
+                    values:
+                      - "true"
 {{- end }}
       # A list of tolerations applied to the relevant kind of pods.
       # See https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ for more info.

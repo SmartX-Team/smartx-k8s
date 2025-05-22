@@ -68,6 +68,7 @@
 
 - name: Reboot the boxes if upgraded (The task will be restarted)
   when:
+    - kiss_allow_reboot
     - kiss_os_kernel is defined and kiss_os_kernel == 'edge'
     - kiss_is_kernel_latest is defined and not kiss_is_kernel_latest
   reboot:
@@ -75,6 +76,7 @@
 
 - name: Assert rebooting
   when:
+    - kiss_allow_reboot
     - kiss_os_kernel is defined and kiss_os_kernel == 'edge'
     - kiss_is_kernel_latest is defined and not kiss_is_kernel_latest
   fail:

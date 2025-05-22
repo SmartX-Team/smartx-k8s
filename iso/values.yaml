@@ -1,0 +1,4 @@
+---
+# Kubernetes Cluster Configuration
+cluster:
+  standalone: true

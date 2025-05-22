@@ -1,4 +1,19 @@
 ---
+# Local User Configuration
+addUsers:
+  - name: kiss
+    groups:
+      - docker
+      - sudo
+      - users
+      - wheel
+    lock_passwd: false
+    # TODO(user): Configure it!
+    passwd: $y$j9T$QoFzmE8vRTJaz/7AnQKIr.$Z/cGzIIHcL8XSsazmJlpCilDXoOGXNFCd7gnDGK3If3 # "password"
+    shell: /bin/bash
+    sudo: true
+
+# Authorization and Authentication Configuration
 # TODO(user): Configure it!
 auth:
   domainName: ""
@@ -256,6 +271,7 @@ kiss:
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
     version: "24.04"
+    revision: "2"
     kernel: edge # One of: edge (default), stable
 
   # Bare-metal Power Configuration

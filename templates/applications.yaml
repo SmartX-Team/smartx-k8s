@@ -142,6 +142,11 @@ Collect features: Also enables required and provided features
 {{- $_ := unset $ "Features" }}
 
 {{- /*
+Validate values
+*/}}
+{{- set $.Values.cluster "standalone" false }}
+
+{{- /*
 Create a SmartX application
 */}}
 {{- $appPath := "apps/template/application.yaml" }}

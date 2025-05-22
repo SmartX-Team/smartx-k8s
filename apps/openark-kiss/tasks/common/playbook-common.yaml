@@ -47,6 +47,7 @@
         ip: "{{ lookup('env', 'ansible_ssh_host') }}"
         kiss_allow_critical_commands: "{{ lookup('env', 'kiss_allow_critical_commands') == 'true' }}"
         kiss_allow_pruning_network_interfaces: "{{ lookup('env', 'kiss_allow_pruning_network_interfaces') == 'true' }}"
+        kiss_allow_reboot: "{{ ( lookup('env', 'kiss_allow_reboot', errors='ignore') | default('true') ) == 'true' }}"
         kiss_cluster_name_snake_case: "{{ lookup('env', 'kiss_cluster_name_snake_case') }}"
         kiss_cluster_is_new: "{{ lookup('env', 'kiss_cluster_is_new') == 'true' }}"
         kiss_group_enable_default_cluster: "{{ lookup('env', 'kiss_group_enable_default_cluster') == 'true' }}"

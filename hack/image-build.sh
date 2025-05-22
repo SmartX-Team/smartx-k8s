@@ -10,6 +10,8 @@ set -e -o pipefail
 #   Configuration                                         #
 ###########################################################
 
+export ROOT="${ROOT:-$(pwd)}"
+
 IMAGE_HOME="$($(dirname "$0")/image-prepare.sh)"
 
 ###########################################################

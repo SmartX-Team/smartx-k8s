@@ -64,3 +64,8 @@ nodeAffinity:
             values:
               - Dashboard
               - Desktop
+      - matchExpressions:
+          - key: node-role.kubernetes.io/standalone
+            operator: In
+            values:
+              - "true"

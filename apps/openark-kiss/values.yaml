@@ -1,16 +1,4 @@
 ---
-addUsers:
-  - name: kiss
-    groups:
-      - docker
-      - sudo
-      - users
-      - wheel
-    lock_passwd: false
-    passwd: $6$Tt5aacrWjfFz/v6l$lfIW/m1.dYdoJlRnYrtx/pKDyfUTJg8Sh/rbsOcMD2vJa.4rAzSZy7Lp89Q/3ijK97RQUm/zS0cApJmLFLwyx0
-    shell: /bin/bash
-    sudo: true
-
 apiserver:
   baseUrl: ""
 
@@ -63,6 +51,9 @@ operator:
 storage:
   fstype: ext4
   lvm: true
+  match:
+    size: smallest
+    ssd: true
   size: "0" # Use `0` to use full disk
 
 workflow:

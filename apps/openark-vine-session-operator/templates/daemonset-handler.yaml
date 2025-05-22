@@ -35,6 +35,11 @@ spec:
                     operator: In
                     values:
                       - Desktop
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/standalone
+                    operator: In
+                    values:
+                      - "true"
       nodeSelector:
 {{- .Values.nodeSelector | default dict | toYaml | nindent 8 }}
       initContainers:

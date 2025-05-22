@@ -17,7 +17,10 @@ mkdir -p /etc/systemd/system/getty.target.wants/
 cat <<EOF >/etc/systemd/system/openark-vine-greeter.service
 {{ tpl ( .Files.Get "systemd/openark-vine-greeter.service" ) $ | replace "$" "\\$" }}
 EOF
+
+{{- if not .Values.cluster.standalone }}
 ln -sf /etc/systemd/system/openark-vine-greeter.service /etc/systemd/system/getty.target.wants/openark-vine-greeter.service
+{{- end }}
 
 cat <<EOF >/usr/local/bin/openark-vine-greeter.sh
 {{ .Files.Get "bin/openark-vine-greeter.sh" | replace "$" "\\$" }}

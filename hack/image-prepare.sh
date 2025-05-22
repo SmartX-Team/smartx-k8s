@@ -10,7 +10,7 @@ set -e -o pipefail
 #   Configuration                                         #
 ###########################################################
 
-ROOT="$(pwd)"
+ROOT="${ROOT:-$(pwd)}"
 IMAGES_HOME="${ROOT}/images"
 if [ ! -d "${IMAGES_HOME}" ]; then
     echo "Invalid images directory: ${IMAGES_HOME}" >&2
@@ -29,18 +29,26 @@ if [ ! -f "${IMAGE_SRC}/Containerfile" ]; then
 fi
 
 ###########################################################
-#   Create an temporary helm chart                        #
+#   Create a temporary helm chart                         #
 ###########################################################
 
-IMAGE_HOME=$(mktemp -d)
+IMAGE_HOME="$(mktemp -d)"
 
 # NOTE: Do NOT copy symbolic links as-is
 cp -Lr "${IMAGE_SRC}/." "${IMAGE_HOME}"
 
 # Copy cluster-wide values
-# TODO: add support for 3rd-party cluster values
 mkdir "${IMAGE_HOME}/clusters"
 cp "${ROOT}/values.yaml" "${IMAGE_HOME}/clusters/default.yaml"
+
+# Download preset
+if [ "x${PRESET_URL}" != 'x' ]; then
+    if echo "${PRESET_URL}" | grep -Posq '^(git@|https://)'; then
+        git clone "${PRESET_URL}" "${IMAGE_HOME}/preset"
+    else
+        cp -Lr "${PRESET_URL}" "${IMAGE_HOME}/preset"
+    fi
+fi
 
 # Copy batteries
 cp -r "${IMAGES_HOME}/template/." "${IMAGE_HOME}"

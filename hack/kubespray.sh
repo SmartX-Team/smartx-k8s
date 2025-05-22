@@ -84,82 +84,46 @@ function __log() {
 
 # Define a main function
 function main() {
-    # Parse arguments
-    local base_repo="$1"
-
-    # Check base repository
-    if [ ! -f "${base_repo}/values.yaml" ]; then
-        __log 'ERROR' "No such repository: ${base_repo}"
-    fi
-
     # Create a temporary directory
     local BASEDIR="$(realpath "$(dirname "$(dirname "$0")")")"
     export WORKDIR="$(mktemp -d)"
     chmod 700 "${WORKDIR}"
-    cd "${WORKDIR}"
+
+    # Download preset
+    if [ "x${PRESET_URL}" != 'x' ]; then
+        if echo "${PRESET_URL}" | grep -Posq '^(git@|https://)'; then
+            git clone "${PRESET_URL}" "${WORKDIR}/preset"
+        else
+            cp -Lr "${PRESET_URL}" "${WORKDIR}/preset"
+        fi
+    fi
+
+    # Check base repository
+    if [ ! -f "${WORKDIR}/preset/values.yaml" ]; then
+        __log 'ERROR' "No such repository: ${PRESET_URL}"
+    fi
 
     # Merge cluster values
+    local values_file="${WORKDIR}/values.yaml"
     yq eval-all '. as $item ireduce ({}; . * $item )' \
         "${BASEDIR}/values.yaml" \
-        "${BASEDIR}/${base_repo}/values.yaml" \
-        >./values.yaml
+        "${WORKDIR}/preset/values.yaml" \
+        >"${values_file}"
 
-    # Begin building kubespray inventory
-    mkdir inventory
-    cd inventory
+    # Copy OpenARK KISS application
+    mkdir "${WORKDIR}/apps"
+    cp -r "${BASEDIR}/apps/openark-kiss" "${WORKDIR}/apps/openark-kiss"
 
-    # Get KISS Kubespray configurations
-    helm template "${BASEDIR}/apps/openark-kiss" \
-        --values ../values.yaml |
-        yq 'select(.metadata.name == "ansible-control-planes-default") | .data."defaults.yaml"' >./all.yaml
+    # Build a kubespray script
+    local kubespray_bin="${WORKDIR}/kubespray.sh"
+    helm template "${WORKDIR}/apps/openark-kiss" \
+        --set 'cluster.standalone=true' \
+        --values "${values_file}" |
+        yq 'select(.metadata.name == "iso") | .data."kubespray.sh"' >"${kubespray_bin}"
+    chmod 500 "${kubespray_bin}"
 
-    # Register bootstrapper node(s)
-    local node_name="$(cat ../values.yaml | yq '.bootstrapper.node.name')"
-    echo '{}' |
-        yq ".all.hosts.${node_name}.ansible_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.${node_name}.ansible_host_key_checking = false" |
-        yq ".all.hosts.${node_name}.ansible_ssh_host = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.${node_name}.ansible_ssh_port = 22" |
-        yq ".all.hosts.${node_name}.ansible_ssh_user = \"$(cat ../values.yaml | yq '.kiss.auth.ssh.username')\"" |
-        yq ".all.hosts.${node_name}.ip = \"$(cat ../values.yaml | yq '.bootstrapper.network.address.ipv4')\"" |
-        yq ".all.hosts.${node_name}.name = \"${node_name}\"" |
-        yq ".etcd.hosts.${node_name} = {}" |
-        yq ".kube_control_plane.hosts.${node_name} = {}" |
-        yq ".kube_node.hosts.${node_name} = {}" |
-        cat >./hosts.yaml
-    unset node_name
-
-    # Complete building kubespray inventory
-    cd - >/dev/null
-
-    # Begin building SSH inventory
-    mkdir ssh
-    chmod 700 ssh
-    cd ssh
-
-    # Get SSH private key
-    cat ../values.yaml | yq -r '.kiss.auth.ssh.key.private' >./key
-    chmod 400 ./key
-
-    # Get SSH public key
-    cat ../values.yaml | yq -r '.kiss.auth.ssh.key.public' >./key.pub
-
-    # Complete building SSH inventory
-    cd - >/dev/null
-
-    # Deploy a k8s cluster
-    docker run --rm -it \
-        --mount type=bind,source="${WORKDIR}/inventory/",dst=/inventory \
-        --mount type=bind,source="${WORKDIR}/ssh/",dst=/root/.ssh,readonly \
-        --net host \
-        "$(cat ./values.yaml | yq '.kiss.image.repo'):$(cat ./values.yaml | yq '.kiss.image.tag')" \
-        ansible-playbook \
-        --become \
-        --become-user 'root' \
-        --inventory '/inventory/all.yaml' \
-        --inventory '/inventory/hosts.yaml' \
-        --private-key '/root/.ssh/key' \
-        ${@:2}
+    # Execute kubespray
+    "${kubespray_bin}" ${@:1}
 
     # Cleanup
     cleanup

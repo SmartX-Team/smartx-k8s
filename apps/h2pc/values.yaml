@@ -144,6 +144,11 @@ messenger:
                   - ControlPlane
                   - Desktop
                   - Gateway
+          - matchExpressions:
+              - key: node-role.kubernetes.io/standalone
+                operator: In
+                values:
+                  - "true"
   kafka:
     image:
       repo: docker.io/apache/kafka

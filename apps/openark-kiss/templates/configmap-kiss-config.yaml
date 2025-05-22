@@ -44,7 +44,7 @@ data:
   bootstrapper_network_dns_server_ns2: {{ .Values.network.nameservers.ns2 | quote }}
   bootstrapper_network_ipv4_address: {{ .Values.bootstrapper.network.address.ipv4 | quote }}
   bootstrapper_node_data_kubernetes_path: {{ .Values.bootstrapper.node.kubernetes.path | quote }}
-  bootstrapper_node_image: "{{ .Values.bootstrapper.node.image.repo }}:{{ .Values.bootstrapper.node.image.tag | default .Chart.AppVersion }}"
+  bootstrapper_node_image: {{ printf "%s:%s" .Values.bootstrapper.node.image.repo ( .Values.bootstrapper.node.image.tag | default .Chart.AppVersion ) | quote }}
   bootstrapper_node_name: {{ .Values.bootstrapper.node.name | quote }}
   bootstrapper_node_reuse_container: {{ .Values.bootstrapper.node.reuse.container | quote }}
   bootstrapper_node_reuse_data_kubernetes: {{ .Values.bootstrapper.node.reuse.kubernetes | quote }}
@@ -62,7 +62,7 @@ data:
   ###########################################################################
   # Kubespray Configuration
   ###########################################################################
-  kubespray_image: "{{ .Values.kiss.image.repo }}:{{ .Values.kiss.image.tag }}"
+  kubespray_image: {{ printf "%s:%s" .Values.kiss.image.repo .Values.kiss.image.tag | quote }}
 
   ###########################################################################
   # Network Configuration
@@ -78,7 +78,7 @@ data:
   ###########################################################################
   # OS Configuration
   ###########################################################################
-  os_default: "{{ .Values.kiss.os.dist }}{{ .Values.kiss.os.version | replace "." "" }}"
+  os_default: {{ printf "%s%s" .Values.kiss.os.dist ( .Values.kiss.os.version | replace "." "" ) | quote }}
   os_dist: {{ .Values.kiss.os.dist | quote }}
   os_kernel: {{ .Values.kiss.os.kernel | quote }}
   os_version: {{ .Values.kiss.os.version | quote }}

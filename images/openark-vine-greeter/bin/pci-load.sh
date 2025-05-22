@@ -32,7 +32,7 @@ elif [ "x${driver}" == 'xgpu' ]; then
     case "$(cat "${dev}/vendor")" in
     '0x10de') driver='nouveau' ;; # nvidia
     '0x8086') driver='i915' ;;    # intel
-    '*')
+    *)
         echo "WARN: Unsupported PCI device: ${pci_id}"
         exec true
         ;;

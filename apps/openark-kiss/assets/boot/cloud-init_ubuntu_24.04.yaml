@@ -66,9 +66,7 @@ autoinstall:
       # Root drive
       - id: disk0
         type: disk
-        match:
-          # ssd: true
-          size: smallest
+        match: {{- .Values.storage.match | toYaml | nindent 10 }}
         ptable: gpt
         grub_device: true
         preserve: false
@@ -93,7 +91,7 @@ autoinstall:
 
 {{- if .Values.storage.lvm }}
 {{- if .Values.kiss.group.resetStorage }}
-{{- fail "resetStorage feature cannot with enabled with LVM storage" }}
+{{- fail "resetStorage feature cannot be enabled with LVM storage" }}
 {{- end }}
       # Partition / LVM
       - id: partition_lvm
@@ -202,12 +200,14 @@ autoinstall:
 
   early-commands:
     # Installer Network Configuration
+{{- if not $.Values.cluster.standalone }}
     - |
       cat <<EOF >>/etc/systemd/resolved.conf
       [Resolve]
       DNS={{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
       EOF
       systemctl restart systemd-resolved.service
+{{- end }}
     - |
       mkdir -p /etc/NetworkManager/conf.d/
       cat <<EOF >/etc/NetworkManager/conf.d/99-systemd.conf
@@ -236,13 +236,29 @@ autoinstall:
       nmcli connection down "${dev}" || true
       ; done
     - until netplan apply; do sleep 3; done
+{{- if not $.Values.cluster.standalone }}
     - until curl "http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}"; do netplan apply || true; sleep 30; done
+{{- end }}
+
   late-commands:
     # Execute Post-installation Scripts
-    - dhcpcd || true # Keep DHCP
+{{- if not $.Values.cluster.standalone }}
     - echo "nameserver {{ $.Values.cluster.nameservers.loadBalancer.ipv4 | default $.Values.cluster.nameservers.incluster.ipv4 }}" >/etc/resolv.conf # Keep DNS
+{{- else }}
+    - >
+      echo "nameserver {{ $.Values.network.nameservers.ns1 }}" >/etc/resolv.conf
+      && echo "nameserver {{ $.Values.network.nameservers.ns2 }}" >>/etc/resolv.conf
+{{- end }}
+    - rm -f /target/etc/resolv.conf && cp -L /etc/resolv.conf /target/etc/resolv.conf
+    - mount --bind /tmp /target/tmp
+{{- if $.Values.cluster.standalone }}
+    - cp -Lr "/cdrom/autoinstall/smartx-k8s" "/target/opt/smartx-k8s" && chmod -R u+w,go-rwx "/target/opt/smartx-k8s"
+{{- end }}
 {{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
 {{- $filename := base $path }}
+{{- if $.Values.cluster.standalone }}
+    - curtin in-target --target=/target -- "/opt/smartx-k8s/patches/{{ $filename }}"
+{{- else }}
     - >
       curl -o "/target/tmp/{{ $filename }}"
       "http://assets.{{ $.Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/patches/{{ $filename }}"
@@ -250,3 +266,5 @@ autoinstall:
       && curtin in-target --target=/target -- "/tmp/{{ $filename }}"
       && rm -f "/target/tmp/{{ $filename }}"
 {{- end }}
+{{- end }}
+    - umount /target/tmp
