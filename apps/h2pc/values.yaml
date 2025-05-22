@@ -95,7 +95,7 @@ features:
   ollama:
     image:
       repo: docker.io/ollama/ollama
-      tag: 0.6.8
+      tag: 0.7.0
       pullPolicy: IfNotPresent
     resources:
       limits:
