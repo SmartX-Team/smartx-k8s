@@ -57,7 +57,7 @@ greeter:
   image:
     repo: quay.io/ulagbulag/openark-vine-greeter
     tag: ""
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
 ingress:
   domainName: ""
@@ -90,7 +90,7 @@ services:
     image:
       repo: quay.io/ulagbulag/openark-vine-novnc
       tag: ""
-      pullPolicy: Always
+      pullPolicy: IfNotPresent
   rdp:
     enabled: false
   ssh:
@@ -100,7 +100,7 @@ services:
     image:
       repo: quay.io/ulagbulag/openark-vine-x11vnc
       tag: ""
-      pullPolicy: Always
+      pullPolicy: IfNotPresent
 
 session:
   context:
@@ -113,8 +113,8 @@ session:
     sudo: true
   image:
     repo: quay.io/ulagbulag/openark-vine-desktop
-    tag: ubuntu-24.04-v29
-    pullPolicy: Always
+    tag: ubuntu-24.04-v30
+    pullPolicy: IfNotPresent
 
   locale:
     global: ko_KR.UTF-8

@@ -9,7 +9,7 @@ addUsers:
       - wheel
     lock_passwd: false
     # TODO(user): Configure it!
-    passwd: $y$j9T$QoFzmE8vRTJaz/7AnQKIr.$Z/cGzIIHcL8XSsazmJlpCilDXoOGXNFCd7gnDGK3If3 # "password"
+    passwd: "" # "password"
     shell: /bin/bash
     sudo: true
 

@@ -158,3 +158,4 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ include "helm.fullname" $ | quote }}
+      tolerations: {{- .Values.operator.tolerations | toYaml | nindent 8 }}

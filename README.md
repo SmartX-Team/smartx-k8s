@@ -37,7 +37,7 @@ We suggest to fit the **recommended requirements** below:
 
 - CPU: 8 vCores
 - Memory (RAM): 16Gi
-- Local Storage: 200Gi
+- Local Storage: 300Gi
 
 We suggest to install the dependencies in your client node (e.g. Laptops) like below:
 

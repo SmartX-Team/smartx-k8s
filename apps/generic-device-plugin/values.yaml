@@ -2,7 +2,7 @@
 image:
   repo: docker.io/squat/generic-device-plugin
   tag: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 openark:
   labels: {}

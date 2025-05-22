@@ -62,6 +62,19 @@ hubble:
     clusterDomain: {{ .Values.cluster.domainName | quote }}
 
   relay:
+    # -- Node tolerations for pod assignment on nodes with taints
+    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations:
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+        operator: Exists
+        effect: NoExecute
+
     # -- Enable prometheus metrics for hubble-relay on the configured port at
     # /metrics
     prometheus:
@@ -70,6 +83,20 @@ hubble:
         # -- Enable service monitors.
         # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
         enabled: {{ has "org.ulagbulag.io/visualization/grafana" .Values.features }}
+
+  ui:
+    # -- Node tolerations for pod assignment on nodes with taints
+    # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations:
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+        operator: Exists
+        effect: NoExecute
+      - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+        operator: Exists
+        effect: NoExecute
 
 ipam:
   operator:
@@ -120,6 +147,10 @@ loadBalancer:
 {{- end }}
 
 operator:
+{{- if .Values.cluster.singleNode }}
+  # -- Number of replicas to run for the cilium-operator deployment
+  replicas: 1
+{{- end }}
   # -- Enable prometheus metrics for cilium-operator on the configured port at
   # /metrics
   prometheus:

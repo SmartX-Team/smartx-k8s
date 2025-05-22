@@ -70,7 +70,6 @@ wsmancli:
 packages:
   ubuntu:
     requires:
-      - apparmor
       - apt
       - apt-transport-https
       - base-files
@@ -167,6 +166,7 @@ packages:
       - wpasupplicant
       - xfsprogs
     excludes:
+      - apparmor
       - apport
       - bcache-tools
       - bolt
@@ -229,6 +229,9 @@ kubespray:
   containerd_storage_dir: "/var/lib/containerd"
 
   containerd_base_runtime_spec_rlimit_nofile: 1048576
+
+  containerd_enable_selinux: false
+  containerd_disable_apparmor: true
 
   # Versions
   # TODO: newer major releases (containerd 2.x) have many compatibility issues for now: 2025-03-16

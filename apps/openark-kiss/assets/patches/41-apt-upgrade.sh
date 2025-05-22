@@ -11,5 +11,4 @@ set -e -o pipefail
 # Verbose
 set -x
 
-apt-get update
-apt-get upgrade -y
+exec apt-get upgrade -y

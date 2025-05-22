@@ -53,7 +53,7 @@ function main() {
 
     (
         # Begin building kubespray inventory
-        mkdir inventory
+        mkdir -p inventory
         cd inventory
 
         # Register bootstrapper node(s)
@@ -84,7 +84,7 @@ function main() {
         cd ssh
 
         # Get SSH private key
-        echo {{ .Values.kiss.auth.ssh.key.private | quote }} >./key
+        echo -e {{ .Values.kiss.auth.ssh.key.private | quote }} >./key
         chmod 400 ./key
 
         # Get SSH public key
@@ -121,7 +121,6 @@ ansible_ssh_private_key_file=/root/.ssh/id_ed25519
 ansible_user={{ .Values.kiss.auth.ssh.username }}
 kiss_allow_critical_commands={{ .Values.kiss.commission.allowCriticalCommands }}
 kiss_allow_pruning_network_interfaces={{ .Values.kiss.commission.allowPruningNetworkInterfaces }}
-kiss_allow_reboot=false
 kiss_ansible_task_name=${OPENARK_KISS_TASK}
 kiss_cluster_control_planes={{ printf "kube_control_plane:%s:%s" $nodeName $nodeIP }}
 kiss_cluster_etcd_nodes={{ printf "etcd:%s:%s" $nodeName $nodeIP }}
@@ -152,6 +151,7 @@ kiss_network_wireless_wifi_key_mgmt={{ .Values.network.wireless.wifi.key.mgmt }}
 kiss_network_wireless_wifi_key_psk={{ .Values.network.wireless.wifi.key.psk }}
 kiss_network_wireless_wifi_ssid={{ .Values.network.wireless.wifi.ssid }}
 kiss_os_default={{ printf "%s%s" .Values.kiss.os.dist ( .Values.kiss.os.version | replace "." "" ) }}
+kiss_os_dist={{ .Values.kiss.os.dist }}
 kiss_os_kernel={{ .Values.kiss.os.kernel }}
 kiss_power_intel_amt_host=
 kiss_power_intel_amt_username={{ .Values.kiss.power.intelAmt.username }}
@@ -163,6 +163,7 @@ __EOF
         EXTRA_ENVS+=('--env-file' "${envFile}")
 
         # Configure mount path
+        mkdir -p {{ printf "%s/common/tasks" $tasks | quote }}
         EXTRA_MOUNTS+=('--mount' "type=bind,source={{ printf "%s/common" $tasks | quote }},dst=/opt/playbook,readonly")
         EXTRA_MOUNTS+=('--mount' "type=bind,source={{ printf "%s/${OPENARK_KISS_TASK}" $tasks | quote }},dst=/opt/playbook/tasks,readonly")
     else
@@ -175,29 +176,52 @@ __EOF
 
     # Append privileged tag if nested container
     declare -a EXTRA_ARGS=()
-    if grep -Posq '(docker|lxc|kubepods)' /proc/1/cgroup; then
+    if grep -Posq '(docker|kubepods|lxc)' /proc/1/cgroup; then
         EXTRA_ARGS+=('--privileged')
     fi
 
+    # Cleanup old container
+    local container_name='smartx-k8s-bootstrap'
+    nerdctl stop -t 5 "${container_name}" >/dev/null 2>/dev/null || true
+    nerdctl rm -f "${container_name}" >/dev/null 2>/dev/null || true
+
     # Deploy a k8s cluster
-    "${CONTAINER_RUNTIME}" run --rm -it \
-        ${EXTRA_ENVS[@]} \
-        --mount type=bind,source="${WORKDIR}/inventory/",dst=/inventory \
-        --mount type=bind,source="${WORKDIR}/ssh/",dst=/root/.ssh,readonly \
-        ${EXTRA_MOUNTS[@]} \
-        --net host \
-        ${EXTRA_ARGS[@]} \
-        {{ printf "%s:%s" .Values.kiss.image.repo .Values.kiss.image.tag | quote }} \
-        ansible-playbook \
-        --become \
-        --become-user 'root' \
-        --inventory '/inventory/all.yaml' \
-        --inventory '/inventory/hosts.yaml' \
-        --private-key '/root/.ssh/key' \
-        "${PLAYBOOK}" ${@:2}
+    local container_id="$(
+        "${CONTAINER_RUNTIME}" run -d \
+            ${EXTRA_ENVS[@]} \
+            --init \
+            --mount type=bind,source="${WORKDIR}/inventory/",dst=/inventory \
+            --mount type=bind,source="${WORKDIR}/ssh/",dst=/root/.ssh,readonly \
+            ${EXTRA_MOUNTS[@]} \
+            --name "${container_name}" \
+            --net host \
+            --security-opt seccomp='unconfined' \
+            ${EXTRA_ARGS[@]} \
+            {{ printf "%s:%s" .Values.kiss.image.repo .Values.kiss.image.tag | quote }} \
+            ansible-playbook \
+            --become \
+            --become-user 'root' \
+            --inventory '/inventory/defaults.yaml' \
+            --inventory '/inventory/hosts.yaml' \
+            --private-key '/root/.ssh/key' \
+            "${PLAYBOOK}" ${@:2}
+    )"
+
+    # Wait until the container has been completed
+    until [ "$("${CONTAINER_RUNTIME}" inspect "${container_id}" 2>/dev/null | yq '.0.State.Running')" == 'false' ]; do
+        "${CONTAINER_RUNTIME}" logs -f "${container_id}" || true
+        until "${CONTAINER_RUNTIME}" inspect "${container_id}" >/dev/null 2>/dev/null; do
+            sleep 1
+        done
+    done
+
+    # Terminate the container
+    local exit_code="$("${CONTAINER_RUNTIME}" inspect "${container_id}" 2>/dev/null | yq '.0.State.ExitCode')"
+    "${CONTAINER_RUNTIME}" rm -f "${container_id}" >/dev/null 2>/dev/null || true
 
     # Cleanup
     cleanup
+    exit "${exit_code}"
 }
 
 # Execute main function

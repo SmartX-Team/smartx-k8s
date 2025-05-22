@@ -40,25 +40,44 @@ function _install_dependencies() (
     rm -rf "${dst_dir}"
     mkdir -p "${dst_dir}/proc"
 
-    echo 'Installing Linux kernel headers...'
-    apt-get update
-    apt-get install -qq --no-install-recommends \
-        "linux-headers-${KERNEL_VERSION}" \
-        >/dev/null
+    if [ -d "/host/usr/src/linux-headers-${KERNEL_VERSION}" ]; then
+        echo 'Using host Linux kernel headers...'
+        cp -ar "/host${dst_dir}/build" "${dst_dir}"
+        for path in $(find /host/usr/src -maxdepth 1 -mindepth 1 -type d); do
+            ln -sf "${path}" "$(echo "${path}" | grep -Po '^/host\K.*$')"
+        done
+    else
+        echo 'Installing Linux kernel headers...'
+        apt-get update
+        apt-get install -qq --no-install-recommends \
+            "linux-headers-${KERNEL_VERSION}" \
+            >/dev/null
+    fi
 
-    echo 'Downloading Linux kernel module files...'
-    apt-get -qq download "linux-image-${KERNEL_VERSION}"
-    dpkg -x ./linux-image*.deb .
-    apt-get -qq download "linux-modules-${KERNEL_VERSION}"
-    dpkg -x ./linux-modules*.deb .
-    rm ./linux-*.deb
+    if [ -d "/host${dst_dir}/kernel" ]; then
+        echo 'Using host Linux kernel module files...'
+        for path in $(find "/host${dst_dir}" -maxdepth 1 -mindepth 1 -name 'modules.*' -type f); do
+            ln -sf "${path}" "$(echo "${path}" | grep -Po '^/host\K.*$')"
+        done
+        cp -r "/host${dst_dir}/kernel" "${dst_dir}/kernel"
+    else
+        echo 'Downloading Linux kernel module files...'
+        apt-get -qq download "linux-image-${KERNEL_VERSION}"
+        dpkg -x ./linux-image-*.deb .
+        apt-get -qq download "linux-modules-${KERNEL_VERSION}"
+        dpkg -x ./linux-modules-*.deb .
+        rm ./linux-*.deb
 
-    echo 'Installing Linux kernel module files...'
-    mv .${dst_dir}/modules.* "${dst_dir}"
-    mv .${dst_dir}/kernel "${dst_dir}"
+        echo 'Installing Linux kernel module files...'
+        mv .${dst_dir}/modules.* "${dst_dir}"
+        mv .${dst_dir}/kernel "${dst_dir}"
+    fi
     depmod "${KERNEL_VERSION}"
 
     echo 'Generating Linux kernel version string...'
+    if [ ! -d ./boot ] && [ -d /host/boot ]; then
+        ln -sf /host/boot ./boot
+    fi
     ls -1 ./boot/vmlinuz-* | sed 's/\/boot\/vmlinuz-//g' - >version
     if [ -z "$(<version)" ]; then
         echo "Could not locate Linux kernel version string" >&2

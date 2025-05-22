@@ -1,3 +1,0 @@
----
-cluster:
-  domainName: {{ .Values.cluster.domainName | quote }}

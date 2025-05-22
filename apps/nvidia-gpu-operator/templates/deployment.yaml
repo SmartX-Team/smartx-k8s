@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: {{ include "helm.fullname" $ | quote }}
   namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
@@ -43,16 +45,14 @@ spec:
           type: RuntimeDefault
       containers:
         - name: controller
-          image: "{{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          image: "{{ .Values.driverHook.repo }}:{{ .Values.driverHook.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.driverHook.pullPolicy | quote }}
           command:
             - /usr/bin/env
             - openark-admission-controller
           env:
             - name: BIND_ADDR
               value: 0.0.0.0:8443
-            - name: RUST_LOG
-              value: DEBUG
             - name: SCRIPT_PATH
               value: "/opt/scripts/{{ .Chart.Name }}.sh"
             - name: TLS_CERT_PATH
@@ -87,6 +87,7 @@ spec:
               mountPath: "/run/secrets/ulagbulag.io/{{ .Chart.Name }}/tls.key"
               subPath: tls.key
               readOnly: true
+      tolerations: {{- .Values.driverHook.tolerations | toYaml | nindent 8 }}
       volumes:
         - name: script
           configMap:

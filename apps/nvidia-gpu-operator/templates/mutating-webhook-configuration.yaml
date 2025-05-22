@@ -10,11 +10,16 @@ metadata:
 {{- include "helm.labels" $ | nindent 4 }}
 webhooks:
   - name: "{{ include "helm.fullname" $ }}.{{ .Release.Namespace }}.svc"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: "In"
+          values:
+            - {{ .Release.Namespace | quote }}
     objectSelector:
       matchLabels:
-        app.kubernetes.io/name: openark-vine-session
-        kubevirt.io: virt-launcher
-        vm.kubevirt.io/name: session
+        app.kubernetes.io/component: nvidia-driver
+        nvidia.com/precompiled: "false"
     rules:
       - apiGroups:
           - ""

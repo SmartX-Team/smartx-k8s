@@ -13,12 +13,12 @@ set -e -o pipefail
 
 mkdir -p /etc/systemd/system/multi-user.target.wants/
 cat <<EOF >/etc/systemd/system/smartx-k8s-bootstrap.service
-{{- tpl ( .Files.Get "systemd/smartx-k8s-bootstrap.service" ) $ | replace "$" "\\$" }}
+{{ tpl ( .Files.Get "systemd/smartx-k8s-bootstrap.service" ) $ | replace "$" "\\$" }}
 EOF
 ln -sf /etc/systemd/system/smartx-k8s-bootstrap.service /etc/systemd/system/multi-user.target.wants/smartx-k8s-bootstrap.service
 
 cat <<EOF >/usr/local/bin/smartx-k8s-bootstrap.sh
-{{- tpl ( .Files.Get "bin/smartx-k8s-bootstrap.sh" ) $ | replace "$" "\\$" }}
+{{ tpl ( .Files.Get "bin/bootstrap.sh" ) $ | replace "$" "\\$" }}
 EOF
 chmod 550 /usr/local/bin/smartx-k8s-bootstrap.sh
 

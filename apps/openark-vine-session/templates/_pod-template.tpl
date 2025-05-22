@@ -115,25 +115,20 @@ nodeAffinity:
       weight: 1
   requiredDuringSchedulingIgnoredDuringExecution:
     nodeSelectorTerms:
-      - matchExpressions:
 {{- if not ( empty .Values.node.name ) }}
+      - matchExpressions:
           - key: kubernetes.io/hostname
             operator: In
             values:
               - {{ .Values.node.name | quote }}
 {{- else }}
+      - matchExpressions:
           - key: node-role.kubernetes.io/kiss
             operator: In
             values:
               - Compute
               - Desktop
       - matchExpressions:
-{{- if not ( empty .Values.node.name ) }}
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-              - {{ .Values.node.name | quote }}
-{{- else }}
           - key: node-role.kubernetes.io/standalone
             operator: In
             values:

@@ -352,6 +352,11 @@ spec:
               secretKeyRef:
                 key: power_ipmi_password
                 name: kiss-config
+          - name: kiss_submit_base_url
+            valueFrom:
+              secretKeyRef:
+                key: submit_base_url
+                name: kiss-config
         resources:
           limits:
             cpu: "1"

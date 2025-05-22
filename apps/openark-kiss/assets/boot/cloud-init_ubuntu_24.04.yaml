@@ -28,8 +28,8 @@ autoinstall:
   # refresh-installer:
   #   update: true
   shutdown: reboot
-  timezone: geoip
-  updates: security
+  timezone: {{ .Values.cluster.region.timezone | default "geoip" | quote }}
+  # updates: security
 
   ssh:
     install-server: true
@@ -39,8 +39,8 @@ autoinstall:
 
   user-data:
     disable_root: true
-    # package_update: true
-    # package_upgrade: true
+    package_update: false
+    package_upgrade: false
     users:
 {{- range $_ := .Values.addUsers }}
       - name: {{ .name | quote }}
@@ -52,8 +52,10 @@ autoinstall:
         passwd: {{ .passwd | quote }}
 {{- end }}
         shell: {{ .shell | default "/bin/bash" | quote }}
+{{- if not ( empty $.Values.kiss.auth.ssh.key.public ) }}
         ssh_authorized_keys:
           - {{ $.Values.kiss.auth.ssh.key.public | quote }}
+{{- end }}
 {{- if .sudo | default false }}
         sudo: "ALL=(ALL) NOPASSWD: ALL"
 {{- end }}
@@ -90,9 +92,6 @@ autoinstall:
         device: format_efi
 
 {{- if .Values.storage.lvm }}
-{{- if .Values.kiss.group.resetStorage }}
-{{- fail "resetStorage feature cannot be enabled with LVM storage" }}
-{{- end }}
       # Partition / LVM
       - id: partition_lvm
         type: partition
@@ -128,7 +127,7 @@ autoinstall:
         name: lv_containerd
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 70G
+        size: 120G
       - id: format_containerd
         type: format
         fstype: {{ .Values.storage.fstype | quote }}
@@ -228,7 +227,7 @@ autoinstall:
             dhcp4: true
       EOF
     - >
-      apt-get update && apt-get install -y network-manager
+      apt-get clean && apt-get update && apt-get install -y network-manager
       && systemctl disable --now systemd-networkd.service systemd-networkd.socket
       && systemctl enable --now NetworkManager.service
       && nmcli connection reload
@@ -248,6 +247,7 @@ autoinstall:
     - >
       echo "nameserver {{ $.Values.network.nameservers.ns1 }}" >/etc/resolv.conf
       && echo "nameserver {{ $.Values.network.nameservers.ns2 }}" >>/etc/resolv.conf
+    - until curtin in-target --target=/target -- apt-get update; do sleep 3; done
 {{- end }}
     - rm -f /target/etc/resolv.conf && cp -L /etc/resolv.conf /target/etc/resolv.conf
     - mount --bind /tmp /target/tmp

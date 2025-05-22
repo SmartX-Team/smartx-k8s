@@ -114,12 +114,42 @@ function main() {
     mkdir "${WORKDIR}/apps"
     cp -r "${BASEDIR}/apps/openark-kiss" "${WORKDIR}/apps/openark-kiss"
 
-    # Build a kubespray script
-    local kubespray_bin="${WORKDIR}/kubespray.sh"
+    # Build an OpenARK KISS template
+    local templates="${WORKDIR}/openark-kiss.yaml"
     helm template "${WORKDIR}/apps/openark-kiss" \
         --set 'cluster.standalone=true' \
-        --values "${values_file}" |
-        yq 'select(.metadata.name == "iso") | .data."kubespray.sh"' >"${kubespray_bin}"
+        --values "${values_file}" >"${templates}"
+
+    # Patch ansible tasks
+    for task in $(
+        cat "${templates}" |
+            yq 'select(.metadata.name == "ansible-task-*") | .metadata.name' |
+            grep -Po '^ansible-task-\K[a-z]+$'
+    ); do
+        for file in $(
+            cat "${templates}" |
+                yq "select(.metadata.name == \"ansible-task-${task}\") | .data | keys | .[]"
+        ); do
+            cat "${templates}" |
+                yq "select(.metadata.name == \"ansible-task-${task}\") | .data.\"${file}\"" \
+                    >"${WORKDIR}/apps/openark-kiss/tasks/${task}/${file}"
+        done
+    done
+
+    # Patch ansible inventory
+    mkdir "${WORKDIR}/inventory"
+    for file in $(
+        cat "${templates}" |
+            yq "select(.metadata.name == \"ansible-control-planes-default\") | .data | keys | .[]"
+    ); do
+        cat "${templates}" |
+            yq "select(.metadata.name == \"ansible-control-planes-default\") | .data.\"${file}\"" \
+                >"${WORKDIR}/inventory/${file}"
+    done
+
+    # Get a kubespray script
+    local kubespray_bin="${WORKDIR}/kubespray.sh"
+    cat "${templates}" | yq 'select(.metadata.name == "iso") | .data."kubespray.sh"' >"${kubespray_bin}"
     chmod 500 "${kubespray_bin}"
 
     # Execute kubespray

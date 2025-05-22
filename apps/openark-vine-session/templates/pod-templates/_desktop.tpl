@@ -92,6 +92,11 @@
     Session Security Context
 *************************************/}}
 {{- define "podTemplate.desktop.securityContext" -}}
+{{- if .Values.session.context.privileged }}
+capabilities:
+  add:
+    - SYS_ADMIN
+{{- end }}
 privileged: {{ .Values.session.context.privileged }}
 runAsNonRoot: {{ not ( .Values.session.context.root | default .Values.session.context.sudo ) }}
 runAsUser: {{ include "helm.userId" $ }}

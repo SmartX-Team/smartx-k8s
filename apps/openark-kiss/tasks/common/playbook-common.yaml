@@ -43,11 +43,12 @@
         ansible_ssh_port: 22
         ansible_ssh_private_key_file: "{{ lookup('env', 'ansible_ssh_private_key_file') }}"
         ansible_ssh_user: "{{ lookup('env', 'ansible_user') }}"
+        ansible_python_interpreter: /usr/bin/python3
         ansible_user: "{{ lookup('env', 'ansible_user') }}"
+        bin_dir: /usr/local/bin
         ip: "{{ lookup('env', 'ansible_ssh_host') }}"
         kiss_allow_critical_commands: "{{ lookup('env', 'kiss_allow_critical_commands') == 'true' }}"
         kiss_allow_pruning_network_interfaces: "{{ lookup('env', 'kiss_allow_pruning_network_interfaces') == 'true' }}"
-        kiss_allow_reboot: "{{ ( lookup('env', 'kiss_allow_reboot', errors='ignore') | default('true') ) == 'true' }}"
         kiss_cluster_name_snake_case: "{{ lookup('env', 'kiss_cluster_name_snake_case') }}"
         kiss_cluster_is_new: "{{ lookup('env', 'kiss_cluster_is_new') == 'true' }}"
         kiss_group_enable_default_cluster: "{{ lookup('env', 'kiss_group_enable_default_cluster') == 'true' }}"
@@ -81,6 +82,7 @@
         kiss_power_ipmi_host: "{{ lookup('env', 'kiss_power_ipmi_host') }}"
         kiss_power_ipmi_username: "{{ lookup('env', 'kiss_power_ipmi_username') }}"
         kiss_power_ipmi_password: "{{ lookup('env', 'kiss_power_ipmi_password') }}"
+        kiss_submit_base_url: "{{ lookup('env', 'kiss_submit_base_url') }}"
         name: "{{ lookup('env', 'ansible_host') }}"
         reset_restart_network_service_name: "{{ 'systemd-networkd' if lookup('env', 'kiss_os_dist') in ['flatcar'] else 'NetworkManager' }}"
         upgrade_cluster_setup: "{{ ( lookup('env', 'kiss_ansible_task_name', errors='ignore') | default('') ) == 'upgrade' }}"
@@ -124,11 +126,3 @@
       set_fact:
         ansible_python_interpreter: /opt/bin/python
         bin_dir: /opt/bin
-
-- hosts: os_rocky:os_ubuntu
-  gather_facts: false
-  tasks:
-    - name: Set common facts
-      set_fact:
-        ansible_python_interpreter: /usr/bin/python3
-        bin_dir: /usr/local/bin

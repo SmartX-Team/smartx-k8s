@@ -1,7 +1,7 @@
 ---
 apiVersion: v2
-name: kubevirt-injector-gpu
-description: Dynamic Living GPU-Passthrough Injector for KubeVirt
+name: nvidia-gpu-operator-hook
+description: Additional patches of nvidia-gpu-operator
 
 # A chart can be either an 'application' or a 'library' chart.
 #

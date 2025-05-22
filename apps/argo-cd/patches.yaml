@@ -8,6 +8,18 @@ global:
   # -- Add Prometheus scrape annotations to all metrics services. This can be used as an alternative to the ServiceMonitors.
   addPrometheusAnnotations: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
 
+  # -- Default tolerations for all components
+  tolerations:
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+      operator: Exists
+      effect: NoExecute
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+      operator: Exists
+      effect: NoExecute
+    - key: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
+      operator: Exists
+      effect: NoExecute
+
 ## Argo Configs
 configs:
   # Argo CD configuration parameters

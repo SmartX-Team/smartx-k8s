@@ -15,12 +15,12 @@ set -x
 
 mkdir -p /etc/systemd/system/multi-user.target.wants/
 cat <<EOF >/etc/systemd/system/notify-new-box.service
-{{- tpl ( .Files.Get "systemd/notify-new-box.service" ) $ | replace "$" "\\$" }}
+{{ tpl ( .Files.Get "systemd/notify-new-box.service" ) $ | replace "$" "\\$" }}
 EOF
 ln -sf /etc/systemd/system/notify-new-box.service /etc/systemd/system/multi-user.target.wants/notify-new-box.service
 
 cat <<EOF >/usr/local/bin/notify-new-box.sh
-{{- tpl ( .Files.Get "bin/notify-new-box.sh" ) $ | replace "$" "\\$" }}
+{{ tpl ( .Files.Get "bin/notify-new-box.sh" ) $ | replace "$" "\\$" }}
 EOF
 chmod 550 /usr/local/bin/notify-new-box.sh
 

@@ -57,9 +57,9 @@
     var: kiss_submit_data
 
 - name: Submit results to kiss cluster
+  when: kiss_submit_base_url is defined and kiss_submit_base_url != ''
   uri:
-    # TODO: change URL
-    url: http://gateway.kiss.svc.ops.openark/commission
+    url: "{{ kiss_submit_base_url }}/commission"
     method: POST
     return_content: false
     body_format: json

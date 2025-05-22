@@ -18,3 +18,13 @@ sed -i 's/^\#\?\(ReserveVT=\).*$/\11/g' "${_LOGIND}"
 for i in {2..63}; do
     systemctl mask getty@tty${i}.service >/dev/null
 done
+
+# Autologin
+{{- if .Values.cluster.standalone }}
+mkdir -p /etc/systemd/system/getty@tty1.service.d/
+cat <<EOF >/etc/systemd/system/getty@tty1.service.d/override.conf
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -a {{ .Values.kiss.auth.ssh.username | quote }} --noclear - \$TERM
+EOF
+{{- end }}

@@ -11,7 +11,10 @@ set -e -o pipefail
 # Verbose
 set -x
 
-{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+{{- if and
+    ( not .Values.cluster.standalone )
+    ( has "org.ulagbulag.io/desktop-environment/vine" .Values.features )
+}}
 
 # Start ContainerD
 containerd &

@@ -100,7 +100,8 @@ async fn handle_apply(
 
             let zone_type = ZoneType::Primary;
             let allow_axfr = false;
-            let authority = InMemoryAuthority::empty(origin, zone_type, allow_axfr);
+            let nx_proof_kind = None;
+            let authority = InMemoryAuthority::empty(origin, zone_type, allow_axfr, nx_proof_kind);
 
             let ttl = 300;
             let rdata = match addr {

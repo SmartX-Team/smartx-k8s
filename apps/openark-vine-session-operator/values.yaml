@@ -5,7 +5,7 @@ apiserver:
   image:
     repo: quay.io/ulagbulag/openark
     tag: ""
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
 argo:
   destination:
@@ -27,7 +27,7 @@ greeter:
   image:
     repo: quay.io/ulagbulag/openark-vine-greeter
     tag: ""
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
 ingress:
   domainName: ""
@@ -38,7 +38,7 @@ novnc:
   image:
     repo: quay.io/ulagbulag/openark-vine-novnc
     tag: ""
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
 openark:
   labels: {}
@@ -47,11 +47,12 @@ operator:
   image:
     repo: quay.io/ulagbulag/openark
     tag: ""
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   # Duration for signing out nodes as seconds.
   # TODO: Use labels to detect completing signout out
   signOutTimeoutSeconds: 90
+  tolerations: []
 
 region:
   timezone: ""

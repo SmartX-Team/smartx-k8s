@@ -166,9 +166,6 @@ async fn systemctl_exec(command: &str, service_name: &str) -> Result<()> {
 }
 
 async fn try_main(args: &Args) -> Result<()> {
-    // Enable the service for the next boot
-    systemctl_exec("enable", &args.service_name).await?;
-
     let client = Client::try_default().await?;
     let api = Api::all(client.clone());
 

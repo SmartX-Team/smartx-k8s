@@ -7,6 +7,9 @@ cdi:
   enabled: true
   default: false
 
+cluster:
+  domainName: ""
+
 # standalone dcgm hostengine
 dcgm:
   # disabled by default to use embedded nv-hostengine by exporter
@@ -15,41 +18,11 @@ dcgm:
 dcgmExporter:
   enabled: true
 
-driver:
-  enabled: true
-  nvidiaDriverCRD:
-    enabled: true
-  useOpenKernelModules: true
-  usePrecompiled: false
+gdrcopy:
+  enabled: false
 
-  rdma:
-    enabled: false
-    useHostMofed: false
-
-  # NOTE: Flatcar Container Linux should need some patches for driver installer
-  repository: quay.io/ulagbulag
-  image: openark-gpu-nvidia-driver
-  version: 535.183.01
-  imagePullPolicy: IfNotPresent
-
-  manager:
-    env:
-      - name: ENABLE_AUTO_DRAIN
-        value: "true"
-      - name: ENABLE_GPU_POD_EVICTION
-        value: "true"
-      - name: DRAIN_DELETE_EMPTYDIR_DATA
-        value: "true"
-      - name: DRAIN_POD_SELECTOR_LABEL
-        value: ""
-      - name: DRAIN_TIMEOUT_SECONDS
-        value: "0s"
-      - name: DRAIN_USE_FORCE
-        value: "true"
-
-  # vGPU licensing configuration
-  licensingConfig:
-    nlsEnabled: false
+gds:
+  enabled: false
 
 devicePlugin:
   enabled: true
@@ -94,14 +67,50 @@ devicePlugin:
             - name: nvidia.com/gpu # no MIG GPUs
               replicas: 256 # unlimited, but no isolation (e.g. OOM-killed by other pods)
 
-gdrcopy:
-  enabled: false
-
-gds:
-  enabled: false
-
 gfd:
   enabled: true
+
+driver:
+  enabled: true
+  nvidiaDriverCRD:
+    enabled: true
+  useOpenKernelModules: true
+  usePrecompiled: false
+
+  rdma:
+    enabled: false
+    useHostMofed: false
+
+  # NOTE: Flatcar Container Linux should need some patches for driver installer
+  repository: quay.io/ulagbulag
+  image: openark-gpu-nvidia-driver
+  version: 535.183.01
+  imagePullPolicy: IfNotPresent
+
+  manager:
+    env:
+      - name: ENABLE_AUTO_DRAIN
+        value: "true"
+      - name: ENABLE_GPU_POD_EVICTION
+        value: "true"
+      - name: DRAIN_DELETE_EMPTYDIR_DATA
+        value: "true"
+      - name: DRAIN_POD_SELECTOR_LABEL
+        value: ""
+      - name: DRAIN_TIMEOUT_SECONDS
+        value: "0s"
+      - name: DRAIN_USE_FORCE
+        value: "true"
+
+  # vGPU licensing configuration
+  licensingConfig:
+    nlsEnabled: false
+
+driverHook:
+  repo: quay.io/ulagbulag/openark
+  tag: ""
+  pullPolicy: IfNotPresent
+  tolerations: []
 
 kataManager:
   enabled: true

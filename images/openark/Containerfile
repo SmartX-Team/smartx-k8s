@@ -38,6 +38,7 @@ RUN \
         --package 'openark-*-backend' \
         --package 'openark-*-handler' \
         --package 'openark-*-operator' \
+        --package 'openark-admission-controller' \
         --package 'openark-cli' \
         --package 'openark-kiss-dns' \
         --profile 'release' \

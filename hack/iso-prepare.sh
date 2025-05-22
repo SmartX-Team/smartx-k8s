@@ -39,7 +39,7 @@ fi
 cp "${IMAGE_HOME}/preset/values.yaml" "${IMAGE_HOME}/clusters/50-preset.yaml"
 
 # Build a template
-IMAGE_NAME="$(cat 'Chart.yaml' | yq -r '.name')"
+IMAGE_NAME="$(cat 'Chart.yaml' | yq '.name')"
 helm template "${IMAGE_NAME}" "${IMAGE_HOME}" \
     --output-dir "${IMAGE_HOME}" \
     $(find "${IMAGE_HOME}/clusters" -name '*.yaml' -exec echo "--values {}" \; | sort -V) >/dev/null

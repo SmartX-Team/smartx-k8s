@@ -524,6 +524,18 @@ impl AnsibleClient {
                                 }),
                                 ..Default::default()
                             },
+                            EnvVar {
+                                name: "kiss_submit_base_url".into(),
+                                value_from: Some(EnvVarSource {
+                                    secret_key_ref: Some(SecretKeySelector {
+                                        name: "kiss-config".into(),
+                                        key: "submit_base_url".into(),
+                                        ..Default::default()
+                                    }),
+                                    ..Default::default()
+                                }),
+                                ..Default::default()
+                            },
                         ]),
                         resources: Some(job.resource_type.into()),
                         volume_mounts: Some(vec![

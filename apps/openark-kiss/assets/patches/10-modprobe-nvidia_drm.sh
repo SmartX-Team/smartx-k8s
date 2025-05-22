@@ -3,18 +3,14 @@
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
-# Packages Configuration
-# Enable i386 Architecture
+# Graphics Driver Configuration
+# Disable Nouveau Driver
 
 # Prehibit errors
 set -e -o pipefail
 # Verbose
 set -x
 
-if [ "x$(uname -m)" == 'xx86_64' ]; then
-    dpkg --add-architecture i386
-fi
-
-until apt-get update; do
-    sleep 3;
-done
+cat <<EOF >/etc/modprobe.d/blacklist-nvidia_drm.conf
+blacklist nvidia_drm
+EOF
