@@ -1,0 +1,81 @@
+[package]
+name = "openark-admission-controller-base"
+
+authors = { workspace = true }
+description = { workspace = true }
+documentation = { workspace = true }
+edition = { workspace = true }
+include = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+
+# OpenTelemetry
+opentelemetry = [
+    "dep:actix-web-opentelemetry",
+    "openark-core/opentelemetry",
+    "tracing",
+]
+opentelemetry-all = [
+    "openark-core/opentelemetry-all",
+    "opentelemetry-logs",
+    "opentelemetry-metrics",
+    "opentelemetry-trace",
+]
+opentelemetry-otlp = ["openark-core/opentelemetry-otlp", "opentelemetry"]
+
+# OpenTelemetry pillars and functions
+opentelemetry-logs = ["openark-core/opentelemetry-logs", "opentelemetry"]
+opentelemetry-metrics = [
+    "actix-web-opentelemetry?/metrics",
+    "openark-core/opentelemetry-metrics",
+    "opentelemetry",
+]
+opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
+
+# TLS
+tls-aws-lc-rs = [
+    "actix-web/rustls-0_23",
+    "kube/rustls-tls",
+    "openark-core/tls-aws-lc-rs",
+]
+tls-openssl = [
+    "actix-web/openssl",
+    "kube/openssl-tls",
+    "openark-core/tls-openssl",
+]
+tls-ring = ["actix-web/rustls-0_23", "kube/rustls-tls", "openark-core/tls-ring"]
+
+# Tracing
+tracing = ["dep:tracing", "openark-core/tracing", "rustls/logging"]
+
+[dependencies]
+openark-core = { workspace = true, features = ["clap", "client", "std"] }
+
+actix-web = { workspace = true }
+actix-web-opentelemetry = { workspace = true, optional = true }
+anyhow = { workspace = true, features = ["std"] }
+async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive", "std"] }
+k8s-openapi = { workspace = true, features = [
+    # "std",
+] }
+kube = { workspace = true, features = ["admission"] }
+rustls = { workspace = true, features = ["std", "tls12"] }
+rustls-pemfile = { workspace = true, features = ["std"] }
+tracing = { workspace = true, optional = true, features = [
+    "attributes",
+    "std",
+] }
