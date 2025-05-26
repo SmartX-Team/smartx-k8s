@@ -2,7 +2,8 @@ use std::{collections::HashMap, process::Stdio};
 
 use async_trait::async_trait;
 use data_pond_api::{
-    VolumeContext, VolumeParameters, VolumePublishContext, VolumeUnpublishContext,
+    VolumeAllocateContext, VolumeParameters, VolumePublishContext, VolumePublishControllerContext,
+    VolumeUnpublishContext,
 };
 use data_pond_csi::csi::{self, node_server::Node};
 use tokio::{io::AsyncWriteExt, process::Command};
@@ -10,7 +11,7 @@ use tonic::{Request, Response, Result, Status};
 #[cfg(feature = "tracing")]
 use tracing::{debug, warn};
 
-use crate::volume::{VolumeOptionsExt, VolumeParametersSource};
+use crate::volume::{PondVolumeAllocate, VolumeOptionsExt, VolumeParametersSource};
 
 #[derive(Debug)]
 struct NodePublishVolumeRequest {
@@ -144,32 +145,58 @@ impl super::Server {
         // ****************************************
 
         // Validate parameters
-        let attributes = volume_context.parse()?;
-        let controller = publish_context.parse()?;
-        let secrets = secrets.parse()?;
+        let controller: VolumePublishControllerContext = publish_context.parse()?;
+        let parameters = VolumeParameters {
+            attributes: volume_context.parse()?,
+            secrets: secrets.parse()?,
+        };
 
         // ****************************************
-        // Step 3: [E] Execute
+        // Step 3: [E] Allocate volumes
+        // ****************************************
+
+        for binding in &controller.bindings {
+            if binding.metadata.device_id != binding.device.id {
+                return Err(Status::internal(format!(
+                    "Invalid device ID: expected {expected:?}, but given {given:?}",
+                    expected = binding.device.id,
+                    given = binding.metadata.device_id,
+                )));
+            }
+            if binding.metadata.volume_id != volume_id {
+                return Err(Status::internal(format!(
+                    "Invalid device volume ID ({device_id}): expected {expected:?}, but given {given:?}",
+                    device_id = binding.metadata.device_id,
+                    expected = volume_id,
+                    given = binding.metadata.volume_id,
+                )));
+            }
+
+            let context = VolumeAllocateContext {
+                binding,
+                options: &options,
+                parameters: &parameters,
+            };
+            context.allocate().await?;
+        }
+
+        // ****************************************
+        // Step 4: [E] Execute
         // ****************************************
 
         // Build context
         let context = VolumePublishContext {
             controller,
+            options,
+            parameters,
             read_only,
             staging_target_path,
             target_path,
-            volume: VolumeContext {
-                id: volume_id,
-                options,
-                parameters: VolumeParameters {
-                    attributes,
-                    secrets,
-                },
-            },
+            volume_id,
         };
 
         // Execute a program
-        let layer = context.volume.parameters.attributes.layer;
+        let layer = context.parameters.attributes.layer;
         let program = format!("./{layer}-{kind}.sh");
         let mut process = Command::new(program)
             .stdin(Stdio::piped())
@@ -196,7 +223,7 @@ impl super::Server {
             Err(Status::internal(format!(
                 "Failed to {kind} {volume_id}: {code}",
                 code = status.code().unwrap_or(-1),
-                volume_id = context.volume.id,
+                volume_id = context.volume_id,
             )))
         }
     }

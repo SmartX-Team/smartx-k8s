@@ -11,8 +11,11 @@ set -e -o pipefail
 
 # Parse inputs
 inputs="$(cat | jq)"
-echo "$inputs" >&2
 
 # Publish a volume
-# FIXME: To be implemented!
-exec false
+staging_target_path="$(echo "${inputs}" | jq -r '.staging_target_path')"
+target_path="$(echo "${inputs}" | jq -r '.target_path')"
+mkdir -p "${target_path}"
+exec mount -o bind \
+    "${staging_target_path}" \
+    "${target_path}"

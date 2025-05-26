@@ -1,33 +1,30 @@
-use std::{collections::HashMap, process::Stdio};
+use std::collections::HashMap;
 
 use async_trait::async_trait;
-use data_pond_api::{VolumeAllocateContext, VolumeContext, VolumeParameters};
+use data_pond_api::{VolumeAllocateContext, VolumeBindingContext, VolumeParameters};
 use data_pond_csi::pond::{self, pond_server::Pond};
-use tokio::{io::AsyncWriteExt, process::Command};
 use tonic::{Request, Response, Result, Status};
 #[cfg(feature = "tracing")]
 use tracing::debug;
 
-use crate::volume::VolumeParametersSource;
+use crate::volume::{PondVolumeAllocate, VolumeParametersSource};
 
 impl super::Server {
-    async fn handle_pond_allocate(
+    pub(crate) async fn handle_pond_allocate(
         &self,
         kind: &str,
-        request: Request<pond::AllocateVolumeRequest>,
+        request: pond::AllocateVolumeRequest,
     ) -> Result<Response<pond::AllocateVolumeResponse>> {
         // ****************************************
         // Step 0: Validate inputs
         // ****************************************
 
-        let request = request.into_inner();
         #[cfg(feature = "tracing")]
         debug!("request = {request:#?}");
 
         let pond::AllocateVolumeRequest {
+            binding,
             device_id,
-            volume_id,
-            capacity,
             options,
             attributes,
             secrets,
@@ -38,75 +35,55 @@ impl super::Server {
         // ****************************************
 
         let options = options.ok_or_else(|| Status::invalid_argument("Empty options"))?;
+        let binding = binding.ok_or_else(|| Status::invalid_argument("Empty binding"))?;
+        let volume_id = binding.volume_id.clone();
 
         // ****************************************
         // Step 2: Validate volume parameters
         // ****************************************
 
-        let attributes = vec![attributes].parse()?;
-        let secrets = secrets.parse()?;
+        let parameters = VolumeParameters {
+            attributes: vec![attributes].parse()?,
+            secrets: secrets.parse()?,
+        };
 
         // ****************************************
-        // Step 3: Validate device
+        // Step 3: [C] Validate device
         // ****************************************
 
         // Load a device
-        let devices = self.state.devices.read().await;
-        if !devices.contains_key(&device_id) {
-            return Err(Status::not_found(format!("No such device: {device_id}")));
-        }
+        let mut state = self.state.write().await;
+        let device = state
+            .devices
+            .get(&device_id)
+            .ok_or_else(|| Status::not_found(format!("No such device: {device_id}")))?;
 
         // ****************************************
-        // Step 4: [E] Execute
+        // Step 4: [C, E] Execute
         // ****************************************
 
         // Build context
+        let binding = VolumeBindingContext {
+            device: device.clone(),
+            layer: device.layer(),
+            metadata: binding.clone(),
+            source: device.source(),
+        };
         let context = VolumeAllocateContext {
-            capacity,
-            device_id,
-            volume: VolumeContext {
-                id: volume_id,
-                options,
-                parameters: VolumeParameters {
-                    attributes,
-                    secrets,
-                },
-            },
+            binding: &binding,
+            options: &options,
+            parameters: &parameters,
         };
 
         // Execute a program
-        let layer = context.volume.parameters.attributes.layer;
-        let program = format!("./{layer}-{kind}.sh");
-        let mut process = Command::new(program)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()?;
+        context.execute(kind).await?;
 
-        // Serialize inputs
-        let inputs = ::serde_json::to_vec(&context)
-            .map_err(|_| Status::internal("Failed to serialize the context"))?;
-
-        // Feed inputs
+        // Store the volume
         {
-            let mut stdin = process.stdin.take().unwrap();
-            stdin.write_all(&inputs).await?;
-            stdin.flush().await?;
+            state.bindings.insert(volume_id, binding.metadata);
+            drop(state);
         }
-
-        // Validate the process
-        let status = process.wait().await?;
-        if status.success() {
-            drop(devices);
-            Ok(Response::new(pond::AllocateVolumeResponse {}))
-        } else {
-            Err(Status::internal(format!(
-                "Failed to {kind} {volume_id} into {device_id}: {code}",
-                code = status.code().unwrap_or(-1),
-                device_id = context.device_id,
-                volume_id = context.volume.id,
-            )))
-        }
+        Ok(Response::new(pond::AllocateVolumeResponse {}))
     }
 }
 
@@ -117,7 +94,8 @@ impl Pond for super::Server {
         &self,
         request: Request<pond::AllocateVolumeRequest>,
     ) -> Result<Response<pond::AllocateVolumeResponse>> {
-        self.handle_pond_allocate("allocate", request).await
+        self.handle_pond_allocate("allocate", request.into_inner())
+            .await
     }
 
     #[inline]
@@ -125,7 +103,8 @@ impl Pond for super::Server {
         &self,
         request: Request<pond::AllocateVolumeRequest>,
     ) -> Result<Response<pond::AllocateVolumeResponse>> {
-        self.handle_pond_allocate("deallocate", request).await
+        self.handle_pond_allocate("deallocate", request.into_inner())
+            .await
     }
 
     async fn list_devices(
@@ -134,9 +113,11 @@ impl Pond for super::Server {
     ) -> Result<Response<pond::ListDevicesResponse>> {
         let pond::ListDevicesRequest {} = request.into_inner();
 
+        let state = self.state.read().await;
         Ok(Response::new(pond::ListDevicesResponse {
             id: self.node_id.clone(),
-            devices: self.state.devices.read().await.values().cloned().collect(),
+            bindings: state.bindings.values().cloned().collect(),
+            devices: state.devices.values().cloned().collect(),
             topology: Some(pond::DeviceTopology {
                 required: HashMap::default(),
                 provides: self.node_topology(),

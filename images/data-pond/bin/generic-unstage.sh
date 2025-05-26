@@ -13,6 +13,21 @@ set -e -o pipefail
 inputs="$(cat | jq)"
 echo "$inputs" >&2
 
-# Unstage volumes
-# FIXME: To be implemented!
-exec false
+# Unmount the volume
+target_path="$(echo "${inputs}" | jq -r '.target_path')"
+if [ -d "${target_path}" ]; then
+    umount "${target_path}"
+    rmdir "${target_path}"
+fi
+
+# Disaggregate devices
+# FIXME: To be implemented! (LVM)
+volume_id="$(echo "${inputs}" | jq -r '.volume_id')"
+if [ -d "${volume_id}" ]; then
+    lvremove -f "${volume_id}/${volume_id}"
+    vgremove -f "${volume_id}"
+fi
+
+# Unstage devices
+# FIXME: To be implemented! (NVMe, NVMe-oF)
+exec true

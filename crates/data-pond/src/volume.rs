@@ -1,52 +1,97 @@
-use std::{
-    collections::{BTreeSet, HashMap},
-    sync::Arc,
-};
+use std::{collections::HashMap, process::Stdio, sync::Arc};
 
-use data_pond_api::{VolumeAttributes, VolumePublishControllerContext, VolumeSecrets};
+use async_trait::async_trait;
+use data_pond_api::{
+    VolumeAllocateContext, VolumeAttributes, VolumePublishControllerContext, VolumeSecrets,
+};
 use data_pond_csi::{
     csi,
     pond::{self, pond_client::PondClient},
 };
-use futures::{TryStreamExt, stream::FuturesOrdered};
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
-use tokio::sync::Mutex;
+use tokio::{io::AsyncWriteExt, process::Command, sync::Mutex};
 use tonic::{Result, Status, transport::Channel};
 
 #[derive(Debug)]
 pub(crate) struct Pond {
+    pub(crate) bindings: Vec<pond::VolumeBindingMetadata>,
     pub(crate) client: Mutex<PondClient<Channel>>,
     pub(crate) devices: Vec<pond::Device>,
     pub(crate) id: String,
     pub(crate) topology: pond::DeviceTopology,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct Volume {
-    pub(crate) attributes: VolumeAttributes,
-    pub(crate) data: pond::Device,
-    pub(crate) offset: i64,
-    pub(crate) pond: Arc<Pond>,
-    pub(crate) reserved: i64,
-    pub(crate) volume_id: String,
+#[async_trait]
+pub(crate) trait PondVolumeAllocate {
+    async fn execute(&self, kind: &str) -> Result<()>;
+
+    #[inline]
+    async fn allocate(&self) -> Result<()> {
+        self.execute("allocate").await
+    }
 }
 
-impl Volume {
+#[async_trait]
+impl PondVolumeAllocate for VolumeAllocateContext<'_> {
+    async fn execute(&self, kind: &str) -> Result<()> {
+        let layer = self.parameters.attributes.layer;
+        let program = format!("./{layer}-{kind}.sh");
+        let mut process = Command::new(program)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .spawn()?;
+
+        // Serialize inputs
+        let inputs = ::serde_json::to_vec(self)
+            .map_err(|_| Status::internal("Failed to serialize the context"))?;
+
+        // Feed inputs
+        {
+            let mut stdin = process.stdin.take().unwrap();
+            stdin.write_all(&inputs).await?;
+            stdin.flush().await?;
+        }
+
+        // Validate the process
+        let status = process.wait().await?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(Status::internal(format!(
+                "Failed to {kind} {volume_id} into {device_id}: {code}",
+                code = status.code().unwrap_or(-1),
+                device_id = self.binding.metadata.device_id,
+                volume_id = self.binding.metadata.volume_id,
+            )))
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct VolumeBindingClaim {
+    pub(crate) attributes: VolumeAttributes,
+    pub(crate) device: pond::Device,
+    pub(crate) metadata: pond::VolumeBindingMetadata,
+    pub(crate) pond: Arc<Pond>,
+}
+
+impl VolumeBindingClaim {
     #[inline]
     pub(crate) fn available(&self) -> i64 {
-        self.data.capacity - self.offset - self.padding()
+        self.device.capacity - self.metadata.offset - self.padding()
     }
 
     #[inline]
     fn padding(&self) -> i64 {
-        self.data.layer().padding()
+        self.device.layer().padding()
     }
 
     pub(crate) fn reserve(&mut self, remaining: i64) -> i64 {
         let available = self.available();
         let reserved = available.min(remaining);
-        self.reserved = reserved + self.padding();
+        self.metadata.reserved = reserved + self.padding();
         reserved
     }
 
@@ -56,16 +101,19 @@ impl Volume {
         options: pond::VolumeOptions,
     ) -> Result<pond::AllocateVolumeRequest> {
         Ok(pond::AllocateVolumeRequest {
-            device_id: self.data.id.clone(),
-            volume_id: self.volume_id.clone(),
-            capacity: self.reserved,
-            options: Some(options),
             attributes: self.attributes.to_dict()?,
+            binding: Some(self.metadata.clone()),
+            device_id: self.device.id.clone(),
+            options: Some(options),
             secrets: secrets.to_dict()?,
         })
     }
 
-    async fn allocate(self, secrets: VolumeSecrets, options: pond::VolumeOptions) -> Result<Self> {
+    pub(crate) async fn allocate(
+        &mut self,
+        secrets: VolumeSecrets,
+        options: pond::VolumeOptions,
+    ) -> Result<()> {
         let request = self.build(secrets, options)?;
         let pond::AllocateVolumeResponse {} = self
             .pond
@@ -75,10 +123,14 @@ impl Volume {
             .allocate_volume(request)
             .await?
             .into_inner();
-        Ok(self)
+        Ok(())
     }
 
-    async fn deallocate(&self, secrets: VolumeSecrets, options: pond::VolumeOptions) -> Result<()> {
+    pub(crate) async fn deallocate(
+        &self,
+        secrets: VolumeSecrets,
+        options: pond::VolumeOptions,
+    ) -> Result<()> {
         let request = self.build(secrets, options)?;
         let pond::AllocateVolumeResponse {} = self
             .pond
@@ -88,63 +140,6 @@ impl Volume {
             .deallocate_volume(request)
             .await?
             .into_inner();
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct VolumeGroup {
-    pub(crate) data: csi::Volume,
-    pub(crate) devices: Vec<Volume>,
-    pub(crate) options: pond::VolumeOptions,
-}
-
-impl VolumeGroup {
-    pub(crate) async fn allocate(self, secrets: &VolumeSecrets) -> Result<PersistentVolume> {
-        let Self {
-            data,
-            devices,
-            options,
-        } = self;
-
-        // Allocate volumes
-        let devices = devices
-            .into_iter()
-            .map(|device| device.allocate(secrets.clone(), options.clone()))
-            .collect::<FuturesOrdered<_>>()
-            .try_collect()
-            .await?;
-
-        Ok(PersistentVolume {
-            condition: csi::VolumeCondition {
-                abnormal: false,
-                message: "Provisioned".into(),
-            },
-            group: Self {
-                data,
-                devices,
-                options,
-            },
-            published_node_ids: Default::default(),
-            readonly: false,
-        })
-    }
-
-    pub(crate) async fn deallocate(&self, secrets: &VolumeSecrets) -> Result<()> {
-        let Self {
-            data: _,
-            devices,
-            options,
-        } = self;
-
-        // Deallocate volumes
-        devices
-            .into_iter()
-            .map(|device| device.deallocate(secrets.clone(), options.clone()))
-            .collect::<FuturesOrdered<_>>()
-            .try_collect::<()>()
-            .await?;
-
         Ok(())
     }
 }
@@ -276,12 +271,12 @@ impl VolumeParametersSource<VolumeSecrets> for HashMap<String, String> {
 impl VolumeParametersSource<VolumePublishControllerContext> for HashMap<String, String> {
     fn parse(self) -> Result<VolumePublishControllerContext> {
         Ok(VolumePublishControllerContext {
-            devices: self
-                .get(VolumePublishControllerContext::LABEL_DEVICES)
-                .ok_or_else(|| Status::not_found("Empty devices"))
+            bindings: self
+                .get(VolumePublishControllerContext::LABEL_BINDINGS)
+                .ok_or_else(|| Status::not_found("Empty bindings"))
                 .and_then(|s| {
                     ::serde_json::from_str(s).map_err(|error| {
-                        Status::invalid_argument(format!("Invalid devices: {error}"))
+                        Status::invalid_argument(format!("Invalid bindings: {error}"))
                     })
                 })?,
         })
@@ -315,21 +310,15 @@ impl VolumeParametersExport for VolumeSecrets {
 
 impl VolumeParametersExport for VolumePublishControllerContext {
     fn to_dict(&self) -> Result<HashMap<String, String>> {
+        let Self { bindings } = self;
+
         let mut map = HashMap::default();
         map.insert(
-            Self::LABEL_DEVICES.into(),
-            ::serde_json::to_string(&self.devices).map_err(|error| {
-                Status::invalid_argument(format!("Failed to export devices: {error}"))
+            Self::LABEL_BINDINGS.into(),
+            ::serde_json::to_string(bindings).map_err(|error| {
+                Status::invalid_argument(format!("Failed to export bindings: {error}"))
             })?,
         );
         Ok(map)
     }
-}
-
-#[derive(Debug)]
-pub(crate) struct PersistentVolume {
-    pub(crate) condition: csi::VolumeCondition,
-    pub(crate) group: VolumeGroup,
-    pub(crate) published_node_ids: BTreeSet<String>,
-    pub(crate) readonly: bool,
 }

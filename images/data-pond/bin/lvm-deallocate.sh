@@ -14,4 +14,4 @@ inputs="$(cat | jq)"
 
 # Deallocate a volume
 exec lvremove -f \
-    "$(echo "${inputs}" | jq -r '.device_id')/$(echo "${inputs}" | jq -r '.volume.id')"
+    "$(echo "${inputs}" | jq -r '.device_id')/$(echo "${inputs}" | jq -r '.volume_id')"

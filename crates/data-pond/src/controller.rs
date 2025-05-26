@@ -1,23 +1,28 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap},
     sync::Arc,
 };
 
 use anyhow::Error;
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
-use data_pond_api::{VolumeAttributes, VolumePublishControllerContext, VolumeSecrets};
+use data_pond_api::{
+    VolumeAttributes, VolumeBindingContext, VolumePublishControllerContext, VolumeSecrets,
+};
 use data_pond_csi::{
     csi::{self, controller_server::Controller},
     pond::{self, pond_client::PondClient},
 };
-use futures::{TryStreamExt, stream::FuturesUnordered};
+use futures::{
+    TryStreamExt,
+    stream::{FuturesOrdered, FuturesUnordered},
+};
 use hickory_resolver::{
     Resolver,
     name_server::{GenericConnector, TokioConnectionProvider},
     proto::runtime::TokioRuntimeProvider,
 };
-use tokio::sync::{Mutex, RwLock, RwLockWriteGuard};
+use tokio::sync::{Mutex, MutexGuard};
 use tonic::{
     Request, Response, Result, Status,
     transport::{Channel, Uri},
@@ -26,8 +31,7 @@ use tonic::{
 use tracing::{debug, warn};
 
 use crate::volume::{
-    PersistentVolume, Pond, Volume, VolumeGroup, VolumeOptionsExt, VolumeParametersExport,
-    VolumeParametersSource,
+    Pond, VolumeBindingClaim, VolumeOptionsExt, VolumeParametersExport, VolumeParametersSource,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -42,11 +46,137 @@ struct Ponds {
     data: BTreeMap<String, Arc<Pond>>,
 }
 
+#[derive(Debug)]
+struct VolumeClaim {
+    bindings: Vec<VolumeBindingClaim>,
+    options: pond::VolumeOptions,
+}
+
+impl VolumeClaim {
+    async fn allocate(mut self, secrets: &VolumeSecrets) -> Result<Volume> {
+        let Self { bindings, options } = &mut self;
+
+        // Allocate volumes
+        bindings
+            .iter_mut()
+            .map(|binding| binding.allocate(secrets.clone(), options.clone()))
+            .collect::<FuturesOrdered<_>>()
+            .try_collect::<()>()
+            .await?;
+
+        Ok(Volume {
+            claim: self,
+            published_node_ids: Default::default(),
+            readonly: false,
+        })
+    }
+
+    async fn deallocate(&self, secrets: &VolumeSecrets) -> Result<()> {
+        let Self { bindings, options } = self;
+
+        // Deallocate volumes
+        bindings
+            .into_iter()
+            .map(|binding| binding.deallocate(secrets.clone(), options.clone()))
+            .collect::<FuturesOrdered<_>>()
+            .try_collect::<()>()
+            .await?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+struct Volume {
+    claim: VolumeClaim,
+    published_node_ids: BTreeSet<String>,
+    readonly: bool,
+}
+
 #[derive(Debug, Default)]
 struct State {
     allocated: HashMap<DeviceKey, i64>,
     ponds: Ponds,
-    volumes: BTreeMap<String, PersistentVolume>,
+    volumes: BTreeMap<String, Volume>,
+}
+
+impl State {
+    fn get_volume(&mut self, volume_id: &str) -> Result<&mut Volume> {
+        // Use cached volume
+        self.volumes
+            .get_mut(volume_id)
+            .ok_or_else(|| Status::not_found(format!("No such volume: {volume_id}")))
+    }
+
+    async fn get_volume_or_provision(
+        &mut self,
+        volume_id: &str,
+        options: pond::VolumeOptions,
+        attributes: &VolumeAttributes,
+    ) -> Result<&mut Volume> {
+        if !self.volumes.contains_key(volume_id) {
+            // Discover the volume bindings
+            let mut bindings = Vec::default();
+            for (pond_id, pond) in &self.ponds.data {
+                for metadata in pond
+                    .bindings
+                    .iter()
+                    .filter(|&metadata| metadata.volume_id == volume_id)
+                {
+                    let device_id = &metadata.device_id;
+                    bindings.push(VolumeBindingClaim {
+                        attributes: attributes.clone(),
+                        device: pond
+                            .devices
+                            .iter()
+                            .find(|&d| d.id == *device_id)
+                            .cloned()
+                            .ok_or_else(|| {
+                                Status::internal(format!(
+                                    "No such device: {pond_id} -> {device_id}"
+                                ))
+                            })?,
+                        metadata: metadata.clone(),
+                        pond: pond.clone(),
+                    });
+                }
+            }
+
+            // Validate the bindings
+            if bindings.is_empty() {
+                return Err(Status::unavailable("Volume bindings not found"));
+            }
+            {
+                let num_bindings = bindings.len();
+                let total_bindings: usize = bindings[0].metadata.total_bindings as _;
+                if num_bindings != total_bindings {
+                    return Err(Status::unavailable(format!(
+                        "Insufficient volume bindings: expected {total_bindings}, but found {num_bindings}"
+                    )));
+                }
+            }
+            {
+                bindings.sort_by_key(|p| p.metadata.index_bindings);
+                if bindings
+                    .iter()
+                    .enumerate()
+                    .any(|(index, p)| index != p.metadata.index_bindings as usize)
+                {
+                    return Err(Status::internal("Invalid volume partition order"));
+                }
+            }
+
+            // Store the volume
+            let volume = Volume {
+                claim: VolumeClaim { bindings, options },
+                published_node_ids: Default::default(),
+                readonly: false,
+            };
+            self.volumes.insert(volume_id.into(), volume);
+        }
+
+        Ok(self.volumes.get_mut(volume_id).unwrap())
+    }
 }
 
 pub(crate) struct Server {
@@ -56,7 +186,7 @@ pub(crate) struct Server {
     pond_protocol: String,
     pond_ttl: Duration,
     resolver: Resolver<GenericConnector<TokioRuntimeProvider>>,
-    state: RwLock<State>,
+    state: Mutex<State>,
 }
 
 impl Server {
@@ -76,13 +206,12 @@ impl Server {
             state: Default::default(),
         };
         {
-            let state = server.state.write().await;
-            let _ = server.fetch_ponds(state).await?;
+            let _ = server.fetch_ponds().await?;
         };
         Ok(server)
     }
 
-    async fn discover(&self) -> Result<Vec<Uri>> {
+    async fn discover_ponds(&self) -> Result<Vec<Uri>> {
         match self.resolver.ipv4_lookup(&self.pond_host).await {
             Ok(lookup) => {
                 let port = self.pond_port;
@@ -103,11 +232,9 @@ impl Server {
         }
     }
 
-    async fn fetch_ponds<'a>(
-        &self,
-        mut state: RwLockWriteGuard<'a, State>,
-    ) -> Result<RwLockWriteGuard<'a, State>> {
+    async fn fetch_ponds(&self) -> Result<MutexGuard<'_, State>> {
         // Apply cache
+        let mut state = self.state.lock().await;
         let ponds = &mut state.ponds;
         let now = Utc::now();
         if now < ponds.created_at + self.pond_ttl {
@@ -115,7 +242,7 @@ impl Server {
         }
 
         // Load all available pond service endpoints
-        let uris = self.discover().await?;
+        let uris = self.discover_ponds().await?;
 
         // Query to each pond and get available devices
         let data = uris
@@ -131,6 +258,7 @@ impl Server {
                 };
 
                 let pond::ListDevicesResponse {
+                    bindings,
                     id,
                     devices,
                     topology,
@@ -140,6 +268,7 @@ impl Server {
                     .into_inner();
 
                 let pond = Pond {
+                    bindings,
                     client: Mutex::new(client),
                     devices,
                     id: id.clone(),
@@ -262,50 +391,54 @@ impl Controller for Server {
         // ****************************************
 
         // Load ponds
-        let state = self.state.write().await;
-        let mut state = self.fetch_ponds(state).await?;
+        let mut state = self.fetch_ponds().await?;
 
         // Filter devices
-        let available_devices: BTreeMap<_, _> = state
+        let available_bindings: BTreeMap<_, _> = state
             .ponds
             .data
             .iter()
             .flat_map(|(pond_id, pond)| {
-                pond.devices.iter().cloned().map(|data| {
+                pond.devices.iter().cloned().map(|device| {
                     let key = DeviceKey {
                         pond_id: pond_id.clone(),
-                        device_id: data.id.clone(),
+                        device_id: device.id.clone(),
                     };
                     let offset = state.allocated.get(&key).copied().unwrap_or_default();
-                    Volume {
+                    VolumeBindingClaim {
                         attributes: attributes.clone(),
-                        data,
-                        offset,
+                        device,
+                        metadata: pond::VolumeBindingMetadata {
+                            device_id: key.device_id,
+                            index_bindings: 0,
+                            offset,
+                            reserved: 0,
+                            total_bindings: 0,
+                            volume_id: volume_id.clone(),
+                        },
                         pond: pond.clone(),
-                        reserved: 0,
-                        volume_id: volume_id.clone(),
                     }
                 })
             })
-            .filter_map(move |device| {
+            .filter_map(move |binding| {
                 // Apply topology
                 let TopologyRequirement {
                     requisite,
                     preferred,
-                } = filter_topology(&device.pond);
+                } = filter_topology(&binding.pond);
 
                 if !requisite {
                     return None;
                 }
 
-                let capacity = device.available();
+                let capacity = binding.available();
                 let priority = (
                     !preferred,
                     -capacity,
-                    device.pond.id.clone(),
-                    device.data.id.clone(),
+                    binding.pond.id.clone(),
+                    binding.device.id.clone(),
                 );
-                Some((priority, device))
+                Some((priority, binding))
             })
             .collect();
 
@@ -318,19 +451,19 @@ impl Controller for Server {
             .max(1);
 
         // Pick up devices
-        let mut devices = Vec::default();
+        let mut bindings = Vec::default();
         {
-            let mut available = available_devices.into_values();
+            let mut available = available_bindings.into_values();
             let padding = attributes.layer.margin();
             let required = required_bytes + padding;
             let mut total_filled = 0;
             let total_required = required * num_replicas;
             for _ in 0..num_replicas {
                 let mut filled = 0;
-                while let Some(mut device) = available.next() {
+                while let Some(mut binding) = available.next() {
                     let remaining = required - filled;
-                    let reserved = device.reserve(remaining);
-                    devices.push(device);
+                    let reserved = binding.reserve(remaining);
+                    bindings.push(binding);
                     filled += reserved;
                     total_filled += reserved;
                     if filled >= required {
@@ -345,14 +478,21 @@ impl Controller for Server {
             }
         }
 
+        // Store the binding order
+        let total_bindings = bindings.len() as _;
+        for (index, binding) in bindings.iter_mut().enumerate() {
+            binding.metadata.index_bindings = index as _;
+            binding.metadata.total_bindings = total_bindings;
+        }
+
         // ****************************************
-        // Step 5: [C, E] Create a VG
+        // Step 5: [C, E] Create a volume claim
         // ****************************************
 
         // Build accessible topology
-        let topology_segments = devices
+        let topology_segments = bindings
             .iter()
-            .map(|device| device.pond.topology.provides.clone())
+            .map(|binding| binding.pond.topology.provides.clone())
             .fold(HashMap::default(), |mut acc, x| {
                 acc.extend(x);
                 acc
@@ -364,42 +504,37 @@ impl Controller for Server {
             // conceal secrets
             .map_err(|_| Status::internal("Failed to build volume attributes"))?;
 
-        // Define a new VG
-        let vg = VolumeGroup {
-            data: csi::Volume {
-                capacity_bytes: required_bytes,
-                volume_id,
-                volume_context,
-                content_source,
-                accessible_topology: if topology_segments.is_empty() {
-                    Default::default()
-                } else {
-                    vec![csi::Topology {
-                        segments: topology_segments,
-                    }]
-                },
+        // Define a new volume claim
+        let claim = VolumeClaim { bindings, options };
+        let data = csi::Volume {
+            capacity_bytes: required_bytes,
+            volume_id,
+            volume_context,
+            content_source,
+            accessible_topology: if topology_segments.is_empty() {
+                Default::default()
+            } else {
+                vec![csi::Topology {
+                    segments: topology_segments,
+                }]
             },
-            devices,
-            options,
         };
 
-        // Claim LV
-        let volume = {
-            let pv = vg.allocate(&secrets).await?;
-            let volume = pv.group.data.clone();
-            for device in &pv.group.devices {
+        // Execute a claim
+        {
+            let volume = claim.allocate(&secrets).await?;
+            for binding in &volume.claim.bindings {
                 let key = DeviceKey {
-                    pond_id: device.pond.id.clone(),
-                    device_id: device.data.id.clone(),
+                    pond_id: binding.pond.id.clone(),
+                    device_id: binding.device.id.clone(),
                 };
-                *state.allocated.entry(key).or_default() += device.reserved;
+                *state.allocated.entry(key).or_default() += binding.metadata.reserved;
             }
-            state.volumes.insert(pv.group.data.volume_id.clone(), pv);
+            state.volumes.insert(data.volume_id.clone(), volume);
             drop(state); // release lock
-            volume
         };
         Ok(Response::new(csi::CreateVolumeResponse {
-            volume: Some(volume),
+            volume: Some(data),
         }))
     }
 
@@ -428,25 +563,11 @@ impl Controller for Server {
         // ****************************************
 
         // Find the volume
-        let mut state = self.state.write().await;
-        let PersistentVolume {
-            condition: csi::VolumeCondition { abnormal, message },
-            group,
-            published_node_ids,
-            readonly: _,
-        } = {
-            match state.volumes.get(&volume_id) {
-                Some(volume) => volume,
-                None => return Ok(Response::new(csi::DeleteVolumeResponse {})),
-            }
-        };
-
-        // Stop if the volume is abnormal
-        if *abnormal {
-            return Err(Status::aborted(message.clone()));
-        }
+        let mut state = self.fetch_ponds().await?;
+        let volume = state.get_volume(&volume_id)?;
 
         // Stop if the published nodes exist
+        let published_node_ids = &volume.published_node_ids;
         if !published_node_ids.is_empty() {
             return Err(Status::aborted(format!(
                 "Published volume: {volume_id} -> {published_node_ids:?}"
@@ -458,17 +579,17 @@ impl Controller for Server {
         // ****************************************
 
         // Release devices
-        group.deallocate(&secrets).await?;
+        volume.claim.deallocate(&secrets).await?;
 
         // Remove volume
         {
-            for device in group.devices.clone() {
+            for binding in volume.claim.bindings.clone() {
                 let key = DeviceKey {
-                    pond_id: device.pond.id.clone(),
-                    device_id: device.data.id.clone(),
+                    pond_id: binding.pond.id.clone(),
+                    device_id: binding.device.id.clone(),
                 };
                 if let Some(allocated) = state.allocated.get_mut(&key) {
-                    *allocated -= device.reserved;
+                    *allocated -= binding.metadata.reserved;
                 }
             }
             state.volumes.remove(&volume_id);
@@ -504,40 +625,28 @@ impl Controller for Server {
 
         let mut options = self.default.volume_options();
         options.apply_volume_capability(volume_capability.unwrap_or_default())?;
-        drop(options);
 
         // ****************************************
         // Step 2: Validate volume parameters
         // ****************************************
 
-        let _: VolumeAttributes = volume_context.parse()?;
+        let attributes: VolumeAttributes = volume_context.parse()?;
         let _: VolumeSecrets = secrets.parse()?;
 
         // ****************************************
-        // Step 3: [C] Validate volume
+        // Step 3: [C, E] Validate volume
         // ****************************************
 
         // Find the volume
-        let mut state = self.state.write().await;
-        let PersistentVolume {
-            condition: csi::VolumeCondition { abnormal, message },
-            group,
-            published_node_ids,
-            readonly: group_readonly,
-        } = {
-            match state.volumes.get_mut(&volume_id) {
-                Some(volume) => volume,
-                None => return Err(Status::not_found(format!("No such volume: {volume_id}"))),
-            }
-        };
-
-        // Stop if the volume is abnormal
-        if *abnormal {
-            return Err(Status::aborted(message.clone()));
-        }
+        let mut state = self.fetch_ponds().await?;
+        let volume = state
+            .get_volume_or_provision(&volume_id, options, &attributes)
+            .await?;
 
         // Stop if the volume group is not shared and one of the nodes has been published as write mode.
-        if !group.options.mount_shared {
+        let published_node_ids = &mut volume.published_node_ids;
+        let group_readonly = &mut volume.readonly;
+        if !volume.claim.options.mount_shared {
             let has_published = !published_node_ids.is_empty();
             let group_readonly = *group_readonly;
             if !readonly && group_readonly && has_published {
@@ -558,10 +667,16 @@ impl Controller for Server {
 
         let publish_context = {
             let context = VolumePublishControllerContext {
-                devices: group
-                    .devices
+                bindings: volume
+                    .claim
+                    .bindings
                     .iter()
-                    .map(|device| device.data.clone())
+                    .map(|binding| VolumeBindingContext {
+                        device: binding.device.clone(),
+                        layer: binding.device.layer(),
+                        metadata: binding.metadata.clone(),
+                        source: binding.device.source(),
+                    })
                     .collect(),
             }
             .to_dict()?;
@@ -606,31 +721,17 @@ impl Controller for Server {
         // ****************************************
 
         // Find the volume
-        let mut state = self.state.write().await;
-        let PersistentVolume {
-            condition: csi::VolumeCondition { abnormal, message },
-            group: _,
-            published_node_ids,
-            readonly,
-        } = {
-            match state.volumes.get_mut(&volume_id) {
-                Some(volume) => volume,
-                None => return Ok(Response::new(csi::ControllerUnpublishVolumeResponse {})),
-            }
-        };
-
-        // Stop if the volume is abnormal
-        if *abnormal {
-            return Err(Status::aborted(message.clone()));
-        }
+        let mut state = self.fetch_ponds().await?;
+        let volume = state.get_volume(&volume_id)?;
 
         // ****************************************
         // Step 3: [C] Unpublish node
         // ****************************************
 
         {
+            let published_node_ids = &mut volume.published_node_ids;
             published_node_ids.remove(&node_id);
-            *readonly &= !published_node_ids.is_empty();
+            volume.readonly &= !published_node_ids.is_empty();
             drop(state);
         }
 
@@ -650,43 +751,9 @@ impl Controller for Server {
         &self,
         request: Request<csi::ListVolumesRequest>,
     ) -> Result<Response<csi::ListVolumesResponse>> {
-        let csi::ListVolumesRequest {
-            max_entries,
-            starting_token,
-        } = request.into_inner();
-
-        // Collect entries
-        let max_entries = max_entries.max(0).min(i32::MAX - 1) as usize;
-        let mut entries: Vec<_> = self
-            .state
-            .read()
-            .await
-            .volumes
-            .range(starting_token..)
-            .take(max_entries + 1)
-            .map(|(_, pv)| csi::list_volumes_response::Entry {
-                volume: Some(pv.group.data.clone()),
-                status: Some(csi::list_volumes_response::VolumeStatus {
-                    published_node_ids: pv.published_node_ids.iter().cloned().collect(),
-                    volume_condition: Some(pv.condition.clone()),
-                }),
-            })
-            .collect();
-
-        // Pick up next token
-        let next_token = if entries.len() == max_entries {
-            entries
-                .pop()
-                .and_then(|entry| entry.volume)
-                .map(|volume| volume.volume_id)
-        } else {
-            None
-        };
-
-        Ok(Response::new(csi::ListVolumesResponse {
-            entries,
-            next_token: next_token.unwrap_or_default(),
-        }))
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
+        crate::todo!("list_volumes")
     }
 
     async fn get_capacity(
@@ -721,13 +788,6 @@ impl Controller for Server {
                             },
                         )),
                     },
-                    csi::ControllerServiceCapability {
-                        r#type: Some(csi::controller_service_capability::Type::Rpc(
-                            csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::ListVolumes as _,
-                            },
-                        )),
-                    },
                     // csi::ControllerServiceCapability {
                     //     r#type: Some(csi::controller_service_capability::Type::Rpc(
                     //         csi::controller_service_capability::Rpc {
@@ -746,20 +806,6 @@ impl Controller for Server {
                         r#type: Some(csi::controller_service_capability::Type::Rpc(
                             csi::controller_service_capability::Rpc {
                                 r#type: csi::controller_service_capability::rpc::Type::ListVolumesPublishedNodes as _,
-                            },
-                        )),
-                    },
-                    csi::ControllerServiceCapability {
-                        r#type: Some(csi::controller_service_capability::Type::Rpc(
-                            csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::VolumeCondition as _,
-                            },
-                        )),
-                    },
-                    csi::ControllerServiceCapability {
-                        r#type: Some(csi::controller_service_capability::Type::Rpc(
-                            csi::controller_service_capability::Rpc {
-                                r#type: csi::controller_service_capability::rpc::Type::GetVolume as _,
                             },
                         )),
                     },
@@ -832,18 +878,9 @@ impl Controller for Server {
         &self,
         request: Request<csi::ControllerGetVolumeRequest>,
     ) -> Result<Response<csi::ControllerGetVolumeResponse>> {
-        let csi::ControllerGetVolumeRequest { volume_id } = request.into_inner();
-
-        match self.state.read().await.volumes.get(&volume_id) {
-            Some(pv) => Ok(Response::new(csi::ControllerGetVolumeResponse {
-                volume: Some(pv.group.data.clone()),
-                status: Some(csi::controller_get_volume_response::VolumeStatus {
-                    published_node_ids: pv.published_node_ids.iter().cloned().collect(),
-                    volume_condition: Some(pv.condition.clone()),
-                }),
-            })),
-            None => Err(Status::not_found(format!("No such volume: {volume_id}"))),
-        }
+        #[cfg(feature = "tracing")]
+        warn!("request = {:#?}", request.into_inner());
+        crate::todo!("controller_get_volume")
     }
 
     async fn controller_modify_volume(

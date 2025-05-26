@@ -13,11 +13,15 @@ set -x
 
 # LVM VGs
 for vg in $(vgs --noheadings -o vg_name | awk '{$1=$1};1'); do
+    tags="$(vgs --noheadings -o tags "${vg}" | tr ',' '\n')"
+    if echo "${tags}" | grep -Posq '(^ *|,)data-pond.csi.ulagbulag.io/volume_id=[0-9a-z_-]+(,|$)'; then
+        continue
+    fi
     echo '{
         "id": "'"${vg}"'",
         "pond_id": "'"${NODE_ID}"'",
-        "layer": 1,
-        "source": 1,
+        "layer": "lvm",
+        "source": "nvme",
         "capacity": '"$(vgs --noheadings --units b --nosuffix -o vg_size "${vg}" | awk '{$1=$1};1')"',
         "group": true
 }' | jq -c

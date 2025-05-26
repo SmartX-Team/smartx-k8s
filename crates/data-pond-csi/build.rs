@@ -49,6 +49,7 @@ async fn main() -> Result<()> {
         .enum_attribute("DeviceSource.Type", DERIVE_STRUM)
         .enum_attribute("DeviceSource.Type", SERDE_RENAME)
         .enum_attribute("DeviceSource.Type", STRUM_RENAME)
+        .type_attribute("VolumeBindingMetadata", DERIVE_SERDE)
         .type_attribute("VolumeOptions", DERIVE_SERDE);
     let protos = &[Path::new("proto/pond.proto"), path.as_path()];
     let includes = &[Path::new("proto"), out_dir.as_path()];

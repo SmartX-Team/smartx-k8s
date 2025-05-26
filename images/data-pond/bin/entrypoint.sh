@@ -32,11 +32,17 @@ function terminate() {
 
     # Unload driver
     for target in $(echo "${DATA_POND_IO_TARGETS}" | tr ',' '\n'); do
-        "$(dirname "$0")/${target}-target-unload.sh" >&2
+        script="$(dirname "$0")/${target}-target-unload.sh"
+        if [ -f "${script}" ]; then
+            "${script}" >&2
+        fi
     done
     for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
         driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
-        "$(dirname "$0")/${source}-source-${!driver}-unload.sh" >&2
+        script="$(dirname "$0")/${source}-source-${!driver}-unload.sh"
+        if [ -f "${script}" ]; then
+            "${script}" >&2
+        fi
     done
 }
 
@@ -47,10 +53,16 @@ trap -- 'terminate' SIGTERM
 terminate
 for source in $(echo "${DATA_POND_IO_SOURCES}" | tr ',' '\n'); do
     driver="$(echo "${source}" | tr a-z A-Z)_DRIVER"
-    "$(dirname "$0")/${source}-source-${!driver}-load.sh" >&2
+    script="$(dirname "$0")/${source}-source-${!driver}-load.sh"
+    if [ -f "${script}" ]; then
+        "${script}" >&2
+    fi
 done
 for target in $(echo "${DATA_POND_IO_TARGETS}" | tr ',' '\n'); do
-    "$(dirname "$0")/${target}-target-load.sh" >&2
+    script="$(dirname "$0")/${target}-target-load.sh"
+    if [ -f "${script}" ]; then
+        "${script}" >&2
+    fi
 done
 
 # Load node controller

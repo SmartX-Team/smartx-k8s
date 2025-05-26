@@ -71,13 +71,14 @@ enum Service {
 
 #[derive(Debug, Default)]
 struct State {
-    devices: RwLock<HashMap<String, api_pond::Device>>,
+    bindings: HashMap<String, api_pond::VolumeBindingMetadata>,
+    devices: HashMap<String, api_pond::Device>,
 }
 
 impl State {
-    async fn discover(&self, server: &Server) -> Result<()> {
-        let endpoint = self::discovery::discover_devices(server).await?;
-        *self.devices.write().await = endpoint;
+    async fn discover(&mut self, server: &Server) -> Result<()> {
+        self.devices = self::discovery::discover_devices(server).await?;
+        self.bindings = self::discovery::discover_volumes(server).await?;
         Ok(())
     }
 }
@@ -109,6 +110,16 @@ struct Server {
     #[arg(long, env = "DRIVER_NAME")]
     driver_name: String,
 
+    #[arg(
+        long,
+        env = "DATA_POND_IO_LAYERS",
+        value_name = "SOURCE",
+        value_delimiter = ',',
+        num_args = 1..,
+        required = true,
+    )]
+    layers: Vec<String>,
+
     #[arg(long, env = "NODE_ID")]
     node_id: String,
 
@@ -134,7 +145,7 @@ struct Server {
     sources: Vec<String>,
 
     #[clap(skip)]
-    state: Arc<State>,
+    state: Arc<RwLock<State>>,
 }
 
 impl Server {
@@ -226,7 +237,10 @@ async fn try_main(args: Args) -> Result<()> {
             #[cfg(feature = "tracing")]
             info!("Listening pond server on tcp://{addr}");
 
-            server.state.discover(&server).await?;
+            {
+                let mut state = server.state.write().await;
+                state.discover(&server).await?;
+            }
             transport::Server::builder()
                 .add_service(PondServer::new(server.clone()))
                 .serve(addr)
@@ -248,7 +262,7 @@ async fn main() {
     ::openark_core::init_once();
 
     #[cfg(feature = "tracing")]
-    ::tracing::info!("Welcome to Data Pond Node Server!");
+    ::tracing::info!("Welcome to Data Pond!");
 
     try_main(args).await.expect("running a server")
 }

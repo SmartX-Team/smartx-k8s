@@ -13,4 +13,8 @@ set -e -o pipefail
 inputs="$(cat | jq)"
 
 # Unpublish a volume
-exec umount "$(echo "${inputs}" | jq -r '.target_path')"
+target_path="$(echo "${inputs}" | jq -r '.target_path')"
+if [ -d "${target_path}" ]; then
+    umount "${target_path}"
+    rmdir "${target_path}"
+fi

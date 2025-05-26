@@ -14,11 +14,10 @@ service Pond {
 
 message AllocateVolumeRequest {
   string device_id = 1;
-  string volume_id = 2;
-  int64 capacity = 3;
-  VolumeOptions options = 4;
-  map<string, string> attributes = 5;
-  map<string, string> secrets = 6;
+  VolumeBindingMetadata binding = 2;
+  VolumeOptions options = 3;
+  map<string, string> attributes = 4;
+  map<string, string> secrets = 5;
 }
 
 message AllocateVolumeResponse {}
@@ -29,6 +28,7 @@ message ListDevicesResponse {
   string id = 1;
   repeated Device devices = 2;
   DeviceTopology topology = 3;
+  repeated VolumeBindingMetadata bindings = 4;
 }
 
 message Device {
@@ -37,7 +37,7 @@ message Device {
   optional string uid = 3;
   DeviceLayer.Type layer = 4;
   DeviceSource.Type source = 5;
-  optional string addr = 6;
+  string addr = 6;
   int64 capacity = 7;
 }
 
@@ -58,6 +58,15 @@ message DeviceSource {
 message DeviceTopology {
   map<string, string> required = 1;
   map<string, string> provides = 2;
+}
+
+message VolumeBindingMetadata {
+  string volume_id = 1;
+  string device_id = 2;
+  int32 index_bindings = 3;
+  int32 total_bindings = 4;
+  int64 offset = 5;
+  int64 reserved = 6;
 }
 
 message VolumeOptions {
