@@ -101,18 +101,16 @@ struct State {
 }
 
 impl State {
-    fn get_volume(&mut self, volume_id: &str) -> Result<&mut Volume> {
+    #[inline]
+    fn get_volume(&mut self, volume_id: &str) -> Option<&mut Volume> {
         // Use cached volume
-        self.volumes
-            .get_mut(volume_id)
-            .ok_or_else(|| Status::not_found(format!("No such volume: {volume_id}")))
+        self.volumes.get_mut(volume_id)
     }
 
     async fn get_volume_or_provision(
         &mut self,
         volume_id: &str,
         options: pond::VolumeOptions,
-        attributes: &VolumeAttributes,
     ) -> Result<&mut Volume> {
         if !self.volumes.contains_key(volume_id) {
             // Discover the volume bindings
@@ -125,7 +123,6 @@ impl State {
                 {
                     let device_id = &metadata.device_id;
                     bindings.push(VolumeBindingClaim {
-                        attributes: attributes.clone(),
                         device: pond
                             .devices
                             .iter()
@@ -268,6 +265,8 @@ impl Server {
                     .into_inner();
 
                 let pond = Pond {
+                    // `uri.host()` == `record`
+                    addr: uri.host().unwrap().into(),
                     bindings,
                     client: Mutex::new(client),
                     devices,
@@ -406,7 +405,6 @@ impl Controller for Server {
                     };
                     let offset = state.allocated.get(&key).copied().unwrap_or_default();
                     VolumeBindingClaim {
-                        attributes: attributes.clone(),
                         device,
                         metadata: pond::VolumeBindingMetadata {
                             device_id: key.device_id,
@@ -556,6 +554,7 @@ impl Controller for Server {
         // Step 1: Validate volume parameters
         // ****************************************
 
+        let options = Default::default();
         let secrets: VolumeSecrets = secrets.parse()?;
 
         // ****************************************
@@ -564,7 +563,7 @@ impl Controller for Server {
 
         // Find the volume
         let mut state = self.fetch_ponds().await?;
-        let volume = state.get_volume(&volume_id)?;
+        let volume = state.get_volume_or_provision(&volume_id, options).await?;
 
         // Stop if the published nodes exist
         let published_node_ids = &volume.published_node_ids;
@@ -639,9 +638,7 @@ impl Controller for Server {
 
         // Find the volume
         let mut state = self.fetch_ponds().await?;
-        let volume = state
-            .get_volume_or_provision(&volume_id, options, &attributes)
-            .await?;
+        let volume = state.get_volume_or_provision(&volume_id, options).await?;
 
         // Stop if the volume group is not shared and one of the nodes has been published as write mode.
         let published_node_ids = &mut volume.published_node_ids;
@@ -672,12 +669,14 @@ impl Controller for Server {
                     .bindings
                     .iter()
                     .map(|binding| VolumeBindingContext {
+                        addr: binding.pond.addr.clone(),
                         device: binding.device.clone(),
                         layer: binding.device.layer(),
                         metadata: binding.metadata.clone(),
                         source: binding.device.source(),
                     })
                     .collect(),
+                layer: attributes.layer,
             }
             .to_dict()?;
 
@@ -722,7 +721,10 @@ impl Controller for Server {
 
         // Find the volume
         let mut state = self.fetch_ponds().await?;
-        let volume = state.get_volume(&volume_id)?;
+        let volume = match state.get_volume(&volume_id) {
+            Some(volume) => volume,
+            None => return Ok(Response::new(csi::ControllerUnpublishVolumeResponse {})),
+        };
 
         // ****************************************
         // Step 3: [C] Unpublish node

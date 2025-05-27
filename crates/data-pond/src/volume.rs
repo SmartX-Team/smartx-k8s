@@ -15,6 +15,7 @@ use tonic::{Result, Status, transport::Channel};
 
 #[derive(Debug)]
 pub(crate) struct Pond {
+    pub(crate) addr: String,
     pub(crate) bindings: Vec<pond::VolumeBindingMetadata>,
     pub(crate) client: Mutex<PondClient<Channel>>,
     pub(crate) devices: Vec<pond::Device>,
@@ -35,7 +36,7 @@ pub(crate) trait PondVolumeAllocate {
 #[async_trait]
 impl PondVolumeAllocate for VolumeAllocateContext<'_> {
     async fn execute(&self, kind: &str) -> Result<()> {
-        let layer = self.parameters.attributes.layer;
+        let layer = self.binding.device.layer();
         let program = format!("./{layer}-{kind}.sh");
         let mut process = Command::new(program)
             .stdin(Stdio::piped())
@@ -71,7 +72,6 @@ impl PondVolumeAllocate for VolumeAllocateContext<'_> {
 
 #[derive(Clone, Debug)]
 pub(crate) struct VolumeBindingClaim {
-    pub(crate) attributes: VolumeAttributes,
     pub(crate) device: pond::Device,
     pub(crate) metadata: pond::VolumeBindingMetadata,
     pub(crate) pond: Arc<Pond>,
@@ -101,7 +101,6 @@ impl VolumeBindingClaim {
         options: pond::VolumeOptions,
     ) -> Result<pond::AllocateVolumeRequest> {
         Ok(pond::AllocateVolumeRequest {
-            attributes: self.attributes.to_dict()?,
             binding: Some(self.metadata.clone()),
             device_id: self.device.id.clone(),
             options: Some(options),
@@ -279,6 +278,14 @@ impl VolumeParametersSource<VolumePublishControllerContext> for HashMap<String, 
                         Status::invalid_argument(format!("Invalid bindings: {error}"))
                     })
                 })?,
+            layer: self
+                .get(VolumePublishControllerContext::LABEL_LAYER)
+                .ok_or_else(|| Status::not_found("Empty layer"))
+                .and_then(|s| {
+                    ::serde_json::from_str(s).map_err(|error| {
+                        Status::invalid_argument(format!("Invalid layer: {error}"))
+                    })
+                })?,
         })
     }
 }
@@ -296,12 +303,6 @@ where
         .map_err(|error| Status::internal(format!("Failed to export {kind}: {error}")))
 }
 
-impl VolumeParametersExport for VolumeAttributes {
-    fn to_dict(&self) -> Result<HashMap<String, String>> {
-        serialize_from("volume attributes", self)
-    }
-}
-
 impl VolumeParametersExport for VolumeSecrets {
     fn to_dict(&self) -> Result<HashMap<String, String>> {
         serialize_from("volume secrets", self)
@@ -310,13 +311,19 @@ impl VolumeParametersExport for VolumeSecrets {
 
 impl VolumeParametersExport for VolumePublishControllerContext {
     fn to_dict(&self) -> Result<HashMap<String, String>> {
-        let Self { bindings } = self;
+        let Self { bindings, layer } = self;
 
         let mut map = HashMap::default();
         map.insert(
             Self::LABEL_BINDINGS.into(),
             ::serde_json::to_string(bindings).map_err(|error| {
                 Status::invalid_argument(format!("Failed to export bindings: {error}"))
+            })?,
+        );
+        map.insert(
+            Self::LABEL_LAYER.into(),
+            ::serde_json::to_string(layer).map_err(|error| {
+                Status::invalid_argument(format!("Failed to export layer: {error}"))
             })?,
         );
         Ok(map)

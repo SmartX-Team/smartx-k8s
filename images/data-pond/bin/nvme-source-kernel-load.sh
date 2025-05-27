@@ -22,24 +22,48 @@ modprobe nvmet-tcp
 
 declare -ig index=$((1))
 
+function toggle_subsystems() {
+    for subsystem in $(
+        find '/sys/kernel/config/nvmet/subsystems/' -mindepth 1 -maxdepth 1 -type d |
+            sort
+    ); do
+        for namespace in $(
+            find "${subsystem}/namespaces/" -mindepth 1 -maxdepth 1 -type d |
+                sort
+        ); do
+            echo "$1" >"${namespace}/enable"
+        done
+    done
+}
+
 function add_port {
     port="/sys/kernel/config/nvmet/ports/${index}"
-    if [ ! -d "${port}" ]; then
-        mkdir "${port}"
-        cd "${port}"
-        (
-            type="$1"
-            case "${type}" in
-            'tcp')
-                echo "${NVME_FABRIC_TCP_FAMILY}" >./addr_adrfam
-                echo "${NVME_FABRIC_TCP_ADDRESS}" >./addr_traddr
-                echo "${NVME_FABRIC_TCP_PORT}" >./addr_trsvcid
-                ;;
-            esac
+    mkdir -p "${port}"
+    cd "${port}"
+
+    # Disable all subsystems
+    subsystems="$(ls ./subsystems/)"
+    for subsystem in ${subsystems}; do
+        rm "./subsystems/${subsystem}"
+    done
+
+    (
+        type="$1"
+        case "${type}" in
+        'tcp')
+            echo "${NVME_FABRIC_TCP_FAMILY}" >./addr_adrfam
+            echo "${NVME_FABRIC_TCP_ADDRESS}" >./addr_traddr
+            echo "${NVME_FABRIC_TCP_PORT}" >./addr_trsvcid
             echo 'tcp' >./addr_trtype
-        )
-        index=$((index + 1))
-    fi
+            ;;
+        esac
+    )
+    index=$((index + 1))
+
+    # Enable all subsystems
+    for subsystem in ${subsystems}; do
+        ln -s "/sys/kernel/config/nvmet/subsystems/${subsystem}" "./subsystems/${subsystem}"
+    done
 }
 
 # TCP

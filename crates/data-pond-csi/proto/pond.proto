@@ -16,8 +16,7 @@ message AllocateVolumeRequest {
   string device_id = 1;
   VolumeBindingMetadata binding = 2;
   VolumeOptions options = 3;
-  map<string, string> attributes = 4;
-  map<string, string> secrets = 5;
+  map<string, string> secrets = 4;
 }
 
 message AllocateVolumeResponse {}
@@ -37,8 +36,7 @@ message Device {
   optional string uid = 3;
   DeviceLayer.Type layer = 4;
   DeviceSource.Type source = 5;
-  string addr = 6;
-  int64 capacity = 7;
+  int64 capacity = 6;
 }
 
 message DeviceLayer {

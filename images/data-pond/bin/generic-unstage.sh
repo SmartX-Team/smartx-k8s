@@ -20,10 +20,9 @@ if [ -d "${target_path}" ]; then
     rmdir "${target_path}"
 fi
 
-# Disaggregate devices
-# FIXME: To be implemented! (LVM)
+# Disaggregate devices (LVM)
 volume_id="$(echo "${inputs}" | jq -r '.volume_id')"
-if [ -d "${volume_id}" ]; then
+if [ -L "/dev/${volume_id}/${volume_id}" ]; then
     lvremove -f "${volume_id}/${volume_id}"
     vgremove -f "${volume_id}"
 fi

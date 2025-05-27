@@ -8,9 +8,6 @@
 
 # Prehibit errors
 set -e -o pipefail
-# FIXME: To be removed!
-# Verbose
-set -x
 
 # Parse inputs
 inputs="$(cat | jq)"

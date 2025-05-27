@@ -12,6 +12,17 @@ set -e -o pipefail
 # Parse inputs
 inputs="$(cat | jq)"
 
+# Parse arguments
+device_id="$(echo "${inputs}" | jq -r '.device_id')"
+volume_id="$(echo "${inputs}" | jq -r '.volume_id')"
+
+# Unpublish the volume
+"$(dirname "$0")/$(echo "${inputs}" | jq -r '.source')-source-kernel-unpublish.sh" \
+    "${volume_id}" \
+    "/dev/${device_id}/${volume_id}"
+
 # Deallocate a volume
-exec lvremove -f \
-    "$(echo "${inputs}" | jq -r '.device_id')/$(echo "${inputs}" | jq -r '.volume_id')"
+if [ -L "/dev/${device_id}/${volume_id}" ]; then
+    pvremove -f "/dev/${device_id}/${volume_id}" || true
+    lvremove -f "${device_id}/${volume_id}"
+fi

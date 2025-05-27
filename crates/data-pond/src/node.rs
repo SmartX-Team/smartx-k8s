@@ -2,7 +2,7 @@ use std::{collections::HashMap, process::Stdio};
 
 use async_trait::async_trait;
 use data_pond_api::{
-    VolumeAllocateContext, VolumeParameters, VolumePublishContext, VolumePublishControllerContext,
+    VolumeAllocateContext, VolumePublishContext, VolumePublishControllerContext,
     VolumeUnpublishContext,
 };
 use data_pond_csi::csi::{self, node_server::Node};
@@ -21,7 +21,6 @@ struct NodePublishVolumeRequest {
     staging_target_path: String,
     target_path: Option<String>,
     volume_capability: Option<csi::VolumeCapability>,
-    volume_context: HashMap<String, String>,
     volume_id: String,
 }
 
@@ -33,7 +32,7 @@ impl From<csi::NodeStageVolumeRequest> for NodePublishVolumeRequest {
             staging_target_path,
             volume_capability,
             secrets,
-            volume_context,
+            volume_context: _,
         } = value;
 
         Self {
@@ -43,7 +42,6 @@ impl From<csi::NodeStageVolumeRequest> for NodePublishVolumeRequest {
             staging_target_path,
             target_path: None,
             volume_capability,
-            volume_context,
             volume_id,
         }
     }
@@ -59,7 +57,7 @@ impl From<csi::NodePublishVolumeRequest> for NodePublishVolumeRequest {
             volume_capability,
             readonly,
             secrets,
-            volume_context,
+            volume_context: _,
         } = value;
 
         Self {
@@ -69,7 +67,6 @@ impl From<csi::NodePublishVolumeRequest> for NodePublishVolumeRequest {
             staging_target_path,
             target_path: Some(target_path),
             volume_capability,
-            volume_context,
             volume_id,
         }
     }
@@ -129,7 +126,6 @@ impl super::Server {
             staging_target_path,
             target_path,
             volume_capability,
-            volume_context,
             volume_id,
         } = request;
 
@@ -146,10 +142,7 @@ impl super::Server {
 
         // Validate parameters
         let controller: VolumePublishControllerContext = publish_context.parse()?;
-        let parameters = VolumeParameters {
-            attributes: volume_context.parse()?,
-            secrets: secrets.parse()?,
-        };
+        let secrets = secrets.parse()?;
 
         // ****************************************
         // Step 3: [E] Allocate volumes
@@ -175,7 +168,7 @@ impl super::Server {
             let context = VolumeAllocateContext {
                 binding,
                 options: &options,
-                parameters: &parameters,
+                secrets: &secrets,
             };
             context.allocate().await?;
         }
@@ -188,15 +181,15 @@ impl super::Server {
         let context = VolumePublishContext {
             controller,
             options,
-            parameters,
             read_only,
+            secrets,
             staging_target_path,
             target_path,
             volume_id,
         };
 
         // Execute a program
-        let layer = context.parameters.attributes.layer;
+        let layer = context.controller.layer;
         let program = format!("./{layer}-{kind}.sh");
         let mut process = Command::new(program)
             .stdin(Stdio::piped())

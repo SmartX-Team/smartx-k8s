@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use data_pond_api::{VolumeAllocateContext, VolumeBindingContext, VolumeParameters};
+use data_pond_api::{VolumeAllocateContext, VolumeBindingContext};
 use data_pond_csi::pond::{self, pond_server::Pond};
 use tonic::{Request, Response, Result, Status};
 #[cfg(feature = "tracing")]
@@ -26,7 +26,6 @@ impl super::Server {
             binding,
             device_id,
             options,
-            attributes,
             secrets,
         } = request;
 
@@ -42,10 +41,7 @@ impl super::Server {
         // Step 2: Validate volume parameters
         // ****************************************
 
-        let parameters = VolumeParameters {
-            attributes: vec![attributes].parse()?,
-            secrets: secrets.parse()?,
-        };
+        let secrets = secrets.parse()?;
 
         // ****************************************
         // Step 3: [C] Validate device
@@ -64,6 +60,7 @@ impl super::Server {
 
         // Build context
         let binding = VolumeBindingContext {
+            addr: self.pod_ip.to_string(),
             device: device.clone(),
             layer: device.layer(),
             metadata: binding.clone(),
@@ -72,7 +69,7 @@ impl super::Server {
         let context = VolumeAllocateContext {
             binding: &binding,
             options: &options,
-            parameters: &parameters,
+            secrets: &secrets,
         };
 
         // Execute a program

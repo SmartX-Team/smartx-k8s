@@ -17,7 +17,6 @@ struct Device {
     uid: Option<String>,
     layer: pond::device_layer::Type,
     source: pond::device_source::Type,
-    addr: Option<String>,
     capacity: i64,
 }
 
@@ -75,7 +74,6 @@ pub(crate) async fn discover_devices(
                          uid,
                          layer,
                          source,
-                         addr,
                          capacity,
                      }| {
                         let device = pond::Device {
@@ -84,7 +82,6 @@ pub(crate) async fn discover_devices(
                             uid,
                             layer: layer.into(),
                             source: source.into(),
-                            addr: addr.unwrap_or_else(|| server.pod_ip.to_string()),
                             capacity,
                         };
                         (id, device)

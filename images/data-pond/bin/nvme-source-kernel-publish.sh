@@ -13,23 +13,26 @@ set -e -o pipefail
 volume_id="$1"
 device_path="$2"
 
-# Create a subsystem
 SUBSYSTEM_HOME="/sys/kernel/config/nvmet/subsystems/${NVME_SUBSYSTEM_NQN}:${volume_id}"
-mkdir -p "${SUBSYSTEM_HOME}"
-cd "${SUBSYSTEM_HOME}"
-(
-    echo 1 >./attr_allow_any_host
-)
 
-# Add a volume into the subsystem
-namespace_id="$(("$(ls 'namespaces/' | wc -l)" + 1))"
-mkdir "./namespaces/${namespace_id}"
-pushd "./namespaces/${namespace_id}" >/dev/null
-if [ "$(cat ./enable)" == '0' ]; then
-    echo -n "${device_path}" >./device_path
-    echo 1 >./enable
+# Create a subsystem
+if [ ! -d "${SUBSYSTEM_HOME}" ]; then
+    mkdir -p "${SUBSYSTEM_HOME}"
+    cd "${SUBSYSTEM_HOME}"
+    (
+        echo 1 >./attr_allow_any_host
+    )
+
+    # Add a volume into the subsystem
+    namespace_id="$(("$(ls 'namespaces/' | wc -l)" + 1))"
+    mkdir "./namespaces/${namespace_id}"
+    pushd "./namespaces/${namespace_id}" >/dev/null
+    if [ "$(cat ./enable)" == '0' ]; then
+        echo -n "${device_path}" >./device_path
+        echo 1 >./enable
+    fi
+    popd >/dev/null
 fi
-popd >/dev/null
 
 # Attach ports
 for port in $(
