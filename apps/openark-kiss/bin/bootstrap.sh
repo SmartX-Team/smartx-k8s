@@ -77,9 +77,9 @@ yq -i "select(.metadata.name != \"${cluster_name}\")" "${apps_file}"
 kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || true
 
 # Install CNI
+cni_name='cilium'
+cni_namespace="$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.app.namespace')"
 (
-    cni_name='cilium'
-    cni_namespace="$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.app.namespace')"
     cni_file="${BASEDIR}/${cni_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${cni_name}\") | .spec.sources.0.helm.valuesObject" >"${cni_file}"
     kubectl create namespace "${cni_namespace}" || true
@@ -99,9 +99,9 @@ kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || tru
 )
 
 # Install CSR Approver
+csr_name='kubelet-csr-approver'
+csr_namespace="$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.app.namespace')"
 (
-    csr_name='kubelet-csr-approver'
-    csr_namespace="$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.app.namespace')"
     csr_file="${BASEDIR}/${csr_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${csr_name}\") | .spec.sources.0.helm.valuesObject" >"${csr_file}"
     kubectl create namespace "${csr_namespace}" || true
@@ -136,9 +136,9 @@ kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || tru
 )
 
 # Install Argo CD
+argocd_name='argo-cd'
+argo_namespace="$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq '.spec.app.namespace')"
 (
-    argocd_name='argo-cd'
-    argo_namespace="$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq '.spec.app.namespace')"
     argocd_file="${BASEDIR}/${argocd_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${argocd_name}\") | .spec.sources.0.helm.valuesObject" >"${argocd_file}"
     kubectl create namespace "${argo_namespace}" || true
@@ -162,9 +162,9 @@ kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || tru
 )
 
 # Install Argo Workflow
+argowf_name='argo-workflows'
+argowf_file="${BASEDIR}/${argowf_name}.yaml"
 (
-    argowf_name='argo-workflows'
-    argowf_file="${BASEDIR}/${argowf_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${argowf_name}\") | .spec.sources.0.helm.valuesObject" >"${argowf_file}"
 
     helm repo add "${argowf_name}" "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq '.spec.source.repoUrl')"
@@ -229,8 +229,10 @@ kubectl -n "${argo_namespace}" apply -f "${apps_file}" --server-side=true
 )
 
 # Mark the bootstrapped node as "standalone"
-node_id="$(cat "${values_file}" | yq '.bootstrapper.node.name')"
-kubectl label nodes "${node_id}" --overwrite node-role.kubernetes.io/standalone='true'
+(
+    node_id="$(cat "${values_file}" | yq '.bootstrapper.node.name')"
+    kubectl label nodes "${node_id}" --overwrite node-role.kubernetes.io/standalone='true'
+)
 
 # Cleanup
 exec systemctl disable 'smartx-k8s-bootstrap.service'
