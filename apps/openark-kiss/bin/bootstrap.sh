@@ -200,7 +200,8 @@ kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || tru
 
     # Connect to incluster Argo CD
     kubectl config rename-context 'kubernetes-admin@ops.openark' "${cluster_name}" || true
-    kubectl config set-context --current --namespace="${argo_namespace}"
+    kubectl config use-context "${cluster_name}"
+    kubectl config set-context "${cluster_name}" --namespace="${argo_namespace}"
     argocd login --core
 
     # Add cluster
