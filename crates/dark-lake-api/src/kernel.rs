@@ -10,11 +10,11 @@ use crate::{
     builder::Builder,
     format::DynFormat,
     parser::Parser,
+    script::{Edge, Node, NodeMetadata, Script, TypedEdge},
     sink::Sink,
     src::Source,
     store::DynStore,
     table::DynTable,
-    vm::{Edge, Node, NodeMetadata, TypedEdge, VirtualMachine},
 };
 
 macro_rules! define_context {
@@ -46,7 +46,7 @@ macro_rules! define_context {
             }
 
             #[derive(Default)]
-            pub struct VirtualMachineInstance {
+            pub struct CompiledScript {
                 $(
                     pub [< "nodes_" $name >]: BTreeMap<String, $ty>,
                 )*
@@ -88,9 +88,9 @@ macro_rules! define_context {
                     }
                 )*
 
-                fn build(&mut self, vm: VirtualMachine) -> Result<VirtualMachineInstance> {
-                    let VirtualMachine { nodes, edges } = vm;
-                    let mut vmi = VirtualMachineInstance::default();
+                fn build(&mut self, script: Script) -> Result<CompiledScript> {
+                    let Script { nodes, edges } = script;
+                    let mut compiled = CompiledScript::default();
 
                     // Parse edges
                     let convert_edge = |name: &str| {
@@ -109,7 +109,7 @@ macro_rules! define_context {
                         }
                     };
                     for Edge { src, sink } in edges {
-                        vmi.edges.push(TypedEdge {
+                        compiled.edges.push(TypedEdge {
                             src: convert_edge(&src)?,
                             sink: convert_edge(&sink)?,
                         });
@@ -126,7 +126,7 @@ macro_rules! define_context {
                                         .get_mut(model)
                                         .ok_or_else(|| anyhow!("No such {}: {model}", stringify!($name)))?;
                                     let value = builder.build(params)?;
-                                    if vmi.[< "nodes_" $name >].insert(name.clone(), value).is_some() {
+                                    if compiled.[< "nodes_" $name >].insert(name.clone(), value).is_some() {
                                         bail!("Multiple nodes are found: {metadata}");
                                     }
                                 }
@@ -134,7 +134,7 @@ macro_rules! define_context {
                         }
                     }
 
-                    Ok(vmi)
+                    Ok(compiled)
                 }
             }
         }
@@ -152,7 +152,7 @@ define_context!(
 );
 
 pub trait Kernel {
-    fn wait(&mut self, vmi: VirtualMachineInstance) -> Result<()>;
+    fn wait(&mut self, script: CompiledScript) -> Result<()>;
 }
 
 #[derive(Default)]
@@ -183,12 +183,12 @@ where
     R: Kernel,
 {
     #[inline]
-    pub fn parse(&self, expr: &str) -> Result<VirtualMachine> {
+    pub fn parse(&self, expr: &str) -> Result<Script> {
         self.parser.parse(expr)
     }
 
     #[inline]
-    pub fn wait(self, vm: VirtualMachine) -> Result<()> {
+    pub fn wait(self, vm: Script) -> Result<()> {
         let Self {
             mut context,
             parser,

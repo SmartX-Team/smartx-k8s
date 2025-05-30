@@ -1,41 +1,52 @@
-use io_uring::opcode;
+use io_uring::{opcode, types};
 
 use crate::{
-    handler::{Closure, Handler, Phase},
-    proc::ProcessID,
-    sched::Interrupt,
+    handler::{Closure, Handler},
+    proc::Phase,
+    sched::{Interrupt, Result, State},
 };
 
+mod serial;
 mod signal;
 mod splice;
 
-pub use self::{signal::Signal, splice::Splice};
+pub use self::{serial::Serial, signal::Signal, splice::Splice};
 
 #[derive(Debug, Default)]
 pub enum ProgramState {
     #[default]
     Nop,
+    Serial(Serial),
     Signal(Signal),
     Splice(Splice),
 }
 
 impl ProgramState {
-    pub(crate) fn poll<H>(&mut self, closure: &mut Closure<'_, H>) -> Result<(), Interrupt>
+    pub(crate) fn poll<H>(&mut self, closure: &mut Closure<'_, H>) -> Result
     where
         H: Handler,
     {
         let phase = closure.phase();
 
         match self {
-            ProgramState::Nop => Err(Interrupt::Term),
-            ProgramState::Signal(Signal { fd, buf }) => match phase {
+            Self::Nop => Ok(State::Terminate),
+            Self::Serial(Serial(children)) => {
+                for child in children {
+                    match child.poll(closure)? {
+                        State::Retry => return Ok(State::Retry),
+                        State::Sleep => continue,
+                        State::Terminate => return Ok(State::Terminate),
+                    }
+                }
+                Ok(State::Sleep)
+            }
+            Self::Signal(Signal { fd, buf }) => match phase {
                 Phase::Init => {
                     let fd = *fd;
                     let len = size_of_val(buf) as _;
                     let buf = (&raw mut *buf) as _;
                     let entry = opcode::Read::new(fd, buf, len).build();
-                    closure.poll(entry)?;
-                    Ok(())
+                    closure.poll(entry)
                 }
                 Phase::Running | Phase::Terminating => {
                     let signal = unsafe { buf.assume_init_ref() };
@@ -45,48 +56,49 @@ impl ProgramState {
                     }
                 }
             },
-            ProgramState::Splice(ctx) => {
-                if matches!(phase, Phase::Init) {
-                    return Ok(());
-                }
-                if matches!(phase, Phase::Terminating) || ctx.remaining == 0 {
-                    return Err(Interrupt::Term);
+            Self::Splice(Splice { rx, tx, remaining }) => {
+                if matches!(phase, Phase::Terminating) || *remaining == 0 {
+                    return Ok(State::Terminate);
                 }
 
-                let chunk = if ctx.remaining != -1 {
-                    let chunk = (ctx.buf as i64).min(ctx.remaining);
-                    ctx.remaining -= chunk;
-                    chunk
-                } else {
-                    ctx.buf as _
+                let buf_size = match (rx.buf_size(), tx.buf_size()) {
+                    (-1, -1) => -1,
+                    (-1, size) | (size, -1) => size,
+                    (a, b) => a.min(b),
                 };
 
-                if ctx.off_in != -1 {
-                    ctx.off_in += chunk;
+                if *remaining == -1 && rx.offset != -1 && rx.len != -1 {
+                    *remaining = rx.len - rx.offset;
                 }
-                if ctx.off_out != -1 {
-                    ctx.off_out += chunk;
-                }
+                let chunk = if *remaining != -1 {
+                    let chunk = (buf_size as i64).min(*remaining);
+                    *remaining -= chunk;
+                    chunk
+                } else {
+                    buf_size as _
+                };
 
-                let Splice {
-                    fd_in,
-                    fd_out,
-                    off_in,
-                    off_out,
-                    flags: squeue_flags,
-                    ..
-                } = *ctx;
+                let off_in = rx.offset;
+                if off_in != -1 {
+                    rx.offset += chunk;
+                }
+                let fd_in = types::Fd(rx.fd());
+
+                let off_out = tx.offset;
+                if off_out != -1 {
+                    tx.offset += chunk;
+                }
+                let fd_out = types::Fd(tx.fd());
 
                 let mut flags = ::libc::SPLICE_F_NONBLOCK | ::libc::SPLICE_F_MOVE;
-                if ctx.remaining != 0 {
+                if *remaining > 0 {
                     flags |= ::libc::SPLICE_F_MORE;
                 }
 
                 let len = chunk as _;
                 let entry = opcode::Splice::new(fd_in, off_in, fd_out, off_out, len)
                     .flags(flags)
-                    .build()
-                    .flags(squeue_flags);
+                    .build();
                 closure.poll(entry)
             }
         }
@@ -96,25 +108,12 @@ impl ProgramState {
 #[derive(Debug, Default)]
 pub struct Program {
     pub(crate) ctx: ProgramState,
-    depends: Vec<ProcessID>,
     kernel: bool,
-    src: Vec<ProcessID>,
 }
 
 impl Program {
     pub fn new(ctx: ProgramState) -> Self {
-        Self {
-            ctx,
-            depends: Default::default(),
-            kernel: false,
-            src: Default::default(),
-        }
-    }
-
-    #[inline]
-    pub fn with_src(mut self, src: Vec<ProcessID>) -> Self {
-        self.src = src;
-        self
+        Self { ctx, kernel: false }
     }
 
     #[inline]
@@ -126,15 +125,5 @@ impl Program {
     #[inline]
     pub const fn kernel(&self) -> bool {
         self.kernel
-    }
-
-    #[inline]
-    pub(crate) const fn depends(&self) -> &[ProcessID] {
-        self.depends.as_slice()
-    }
-
-    #[inline]
-    pub const fn src(&self) -> &[ProcessID] {
-        self.src.as_slice()
     }
 }

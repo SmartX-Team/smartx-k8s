@@ -40,7 +40,7 @@ pub type TypedEdge = Edge<NodeMetadata>;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct VirtualMachine {
+pub struct Script {
     #[serde(default)]
     pub nodes: Vec<Node>,
 

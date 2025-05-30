@@ -27,6 +27,7 @@ tracing = ["dep:tracing"]
 
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
+bitflags = { workspace = true, features = ["std"] }
 dark-lake-api = { workspace = true, features = ["std"] }
 io-uring = { workspace = true }
 libc = { workspace = true }

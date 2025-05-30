@@ -1,11 +1,34 @@
-use std::{collections::HashMap, fmt};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    fmt, io,
+};
+
+#[cfg(feature = "tracing")]
+use tracing::info;
 
 use crate::{
     handler::{Handler, HandlerExt},
-    pipe::PipePool,
+    pipe::{Pipe, Pipe2, Pipe2Pool, PipePool},
     prog::Program,
-    sched::Interrupt,
+    sched::{Interrupt, Result, State, SystemInterrupt},
 };
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) enum Phase {
+    #[default]
+    Init,
+    Running,
+    Terminating,
+}
+
+impl Phase {
+    pub(crate) fn set_running(&mut self) {
+        if matches!(self, Self::Init) {
+            *self = Self::Running;
+        }
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
@@ -52,74 +75,138 @@ impl ProcessID {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+pub(crate) struct Context {
+    id: ProcessID,
+    phase: Phase,
+    pub(crate) count: usize,
+}
+
+impl Context {
+    #[inline]
+    pub(crate) const fn pid(&self) -> ProcessID {
+        self.id
+    }
+
+    #[inline]
+    pub(crate) const fn phase(&self) -> Phase {
+        self.phase
+    }
+
+    #[inline]
+    pub(crate) const fn count(&self) -> usize {
+        self.count
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct Process {
-    id: ProcessID,
+    ctx: Context,
     prog: Program,
-    pub(crate) next: Vec<ProcessID>,
+    next: Vec<ProcessID>,
     sink: Vec<ProcessID>,
 }
 
 impl Process {
+    #[inline]
+    pub(crate) const fn pid(&self) -> ProcessID {
+        self.ctx.pid()
+    }
+
+    #[inline]
+    pub(crate) const fn phase(&self) -> Phase {
+        self.ctx.phase()
+    }
+
     #[inline]
     pub(crate) const fn kernel(&self) -> bool {
         self.prog.kernel()
     }
 
     #[inline]
-    pub(crate) fn poll<H>(&mut self, handler: &mut H) -> Result<(), Interrupt>
+    pub(crate) fn poll<H>(&mut self, handler: &mut H) -> Result
     where
         H: Handler,
     {
-        handler.poll_within(self.id, |closure| self.prog.ctx.poll(closure))
+        handler.poll_within(self.ctx, |closure| self.prog.ctx.poll(closure))
     }
 }
 
+#[derive(Debug)]
+pub(crate) enum Next<'a> {
+    Forget,
+    Reschedule,
+    Retry,
+    Later(Cow<'a, [ProcessID]>),
+}
+
 pub(crate) struct ControlGroups {
-    kernel: Vec<ProcessID>,
-    pipes: PipePool,
+    kernel: HashSet<ProcessID>,
+    pipe: PipePool,
+    pipe2: Pipe2Pool,
     proc: HashMap<ProcessID, Process>,
     seed: ProcessID,
+    terminating: bool,
 }
 
 impl Default for ControlGroups {
     fn default() -> Self {
         Self {
             kernel: Default::default(),
-            pipes: PipePool::new(4, 1 << 20).expect("failed to build pipe pool"),
+            pipe: PipePool::default(),
+            pipe2: Pipe2Pool::new(1 << 20),
             proc: Default::default(),
             seed: ProcessID::INIT,
+            terminating: false,
         }
     }
 }
 
 impl ControlGroups {
-    pub(crate) fn completed(&self) -> bool {
-        self.kernel.len() == self.proc.len()
+    fn completed(&self) -> bool {
+        self.kernel.len() <= self.proc.len()
+            && self.proc.keys().all(|pid| self.kernel.contains(pid))
     }
 
-    pub(crate) fn exit(&mut self) {
+    fn exit(&mut self) {
         self.kernel.clear();
         self.proc.clear();
         self.seed = ProcessID::INIT;
+        self.terminating = false;
+    }
+
+    #[inline]
+    pub(crate) fn alloc_file(
+        &mut self,
+        path: &str,
+        oflag: ::libc::c_int,
+        mode: ::libc::c_uint,
+    ) -> io::Result<Pipe> {
+        self.pipe.register_file(path, oflag, mode)
+    }
+
+    #[inline]
+    pub(crate) fn alloc_pipe(&mut self) -> io::Result<Pipe2> {
+        self.pipe2.dequeue()
+    }
+
+    #[inline]
+    pub(crate) fn dealloc_pipe(&mut self, pipe: Pipe) {
+        self.pipe2.enqueue(pipe)
     }
 
     pub(crate) fn spawn(&mut self, prog: Program) -> ProcessID {
         let pid = self.seed.next();
         if prog.kernel() {
-            self.kernel.push(pid);
-        }
-        for src in prog.depends() {
-            let proc = self.proc.get_mut(src).expect("missing process");
-            proc.next.push(pid);
-        }
-        for src in prog.src() {
-            let proc = self.proc.get_mut(src).expect("missing process");
-            proc.sink.push(pid);
+            self.kernel.insert(pid);
         }
 
         let proc = Process {
-            id: pid,
+            ctx: Context {
+                id: pid,
+                phase: Default::default(),
+                count: 0,
+            },
             prog,
             next: Default::default(),
             sink: Default::default(),
@@ -129,17 +216,56 @@ impl ControlGroups {
     }
 
     #[inline]
-    pub(crate) fn proc(&mut self, pid: ProcessID) -> &mut Process {
-        match self.proc.get_mut(&pid) {
+    pub(crate) fn poll<H>(
+        &mut self,
+        pid: ProcessID,
+        handler: &mut H,
+    ) -> Result<Next, SystemInterrupt>
+    where
+        H: Handler,
+    {
+        let proc = match self.proc.get_mut(&pid) {
             Some(proc) => proc,
             None => panic!("missing process: {pid}"),
+        };
+        if self.terminating {
+            proc.ctx.phase = Phase::Terminating;
+        }
+
+        let result = proc.poll(handler);
+        match result {
+            Ok(State::Retry) => Ok(Next::Retry),
+            Ok(State::Sleep) => {
+                proc.ctx.phase.set_running();
+                Ok(Next::Forget)
+            }
+            Ok(State::Terminate) => self.terminate(pid),
+            Err(Interrupt::EmptyPipe) => Ok(Next::Retry),
+            Err(Interrupt::Full) => Ok(Next::Reschedule),
+            Err(Interrupt::Halt) => {
+                {
+                    #[cfg(feature = "tracing")]
+                    info!("Terminating...");
+                    self.terminating = true;
+                    proc.ctx.phase = Phase::Terminating;
+                }
+                self.terminate(pid)
+            }
+            Err(Interrupt::System(interrupt)) => Err(interrupt),
         }
     }
 
-    pub(crate) fn terminate(&mut self, pid: ProcessID) -> Vec<ProcessID> {
-        self.proc
-            .remove(&pid)
-            .map(|proc| proc.next)
-            .unwrap_or_default()
+    fn terminate(&mut self, pid: ProcessID) -> Result<Next, SystemInterrupt> {
+        self.kernel.remove(&pid);
+        let proc = self.proc.remove(&pid).expect("missing process");
+
+        // FIXME: return pipe & pipe2
+        if !proc.next.is_empty() {
+            Ok(Next::Later(Cow::Owned(proc.next)))
+        } else if self.completed() {
+            Err(SystemInterrupt::Completed)
+        } else {
+            Ok(Next::Forget)
+        }
     }
 }

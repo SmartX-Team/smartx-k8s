@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Result, bail};
 use clap::{Parser, Subcommand};
-use dark_lake_api::{kernel::DarkLake, vm::VirtualMachine};
+use dark_lake_api::{kernel::DarkLake, script::Script};
 
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -34,7 +34,7 @@ struct RunArgs {
     expr: String,
 }
 
-fn load_vm(path: &Path) -> Result<VirtualMachine> {
+fn load_vm(path: &Path) -> Result<Script> {
     match path.extension().and_then(|s| s.to_str()) {
         Some("json") => {
             let rdr = File::open(path)?;
