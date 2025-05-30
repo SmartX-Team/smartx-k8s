@@ -8,6 +8,8 @@ Type=simple
 ExecStart=/usr/local/bin/smartx-k8s-bootstrap.sh
 Restart=on-failure
 RestartSec=30
+User=root
+Group=root
 
 [Install]
 WantedBy=multi-user.target
