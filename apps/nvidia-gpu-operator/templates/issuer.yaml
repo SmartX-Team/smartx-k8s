@@ -4,6 +4,8 @@ kind: Issuer
 metadata:
   name: {{ include "helm.fullname" $ | quote }}
   namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
