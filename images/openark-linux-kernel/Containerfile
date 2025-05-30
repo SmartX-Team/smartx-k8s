@@ -1,0 +1,53 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Server Configuration
+WORKDIR /ipxe
+ENTRYPOINT [ "/usr/bin/env", "bash" ]
+CMD [ "-c", "cp /ipxe/* /var/lib/tftpboot/" ]
+
+# Be ready for building
+FROM server AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+        autoconf \
+        bc \
+        bison \
+        build-essential \
+        dkms \
+        flex \
+        git \
+        libelf-dev \
+        libiberty-dev \
+        libncurses-dev gawk \
+        libpci-dev \
+        libssl-dev \
+        libudev-dev \
+        llvm \
+        openssl \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download source code
+WORKDIR /src
+RUN git clone --depth=1 \
+        -b {{ printf "v%s" .Release.Version | quote }} \
+        "{{ .Values.linux.repo.baseUrl }}/{{ .Values.linux.repo.owner }}/{{ .Values.linux.repo.name }}.git" \
+    && cd {{ printf "./%s" .Values.linux.repo.name | quote }} \
+    && git submodule update --init --depth=1
+
+# Build it!
+WORKDIR {{ printf "/src/%s" .Values.linux.repo.name | quote }}
+RUN --mount=type=cache,target={{ printf "/src/%s/build" .Values.linux.repo.name | quote }} \
+    make defconfig \
+    && make
+
+# Copy executable files
+FROM server
+COPY --from=builder /ipxe/* /ipxe/

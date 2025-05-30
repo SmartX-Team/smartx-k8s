@@ -44,7 +44,7 @@ cp "${ROOT}/values.yaml" "${IMAGE_HOME}/clusters/default.yaml"
 # Download preset
 if [ "x${PRESET_URL}" != 'x' ]; then
     if echo "${PRESET_URL}" | grep -Posq '^(git@|https://)'; then
-        git clone "${PRESET_URL}" "${IMAGE_HOME}/preset"
+        git clone --depth=1 "${PRESET_URL}" "${IMAGE_HOME}/preset"
     else
         cp -Lr "${PRESET_URL}" "${IMAGE_HOME}/preset"
     fi

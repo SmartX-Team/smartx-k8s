@@ -92,7 +92,7 @@ function main() {
     # Download preset
     if [ "x${PRESET_URL}" != 'x' ]; then
         if echo "${PRESET_URL}" | grep -Posq '^(git@|https://)'; then
-            git clone "${PRESET_URL}" "${WORKDIR}/preset"
+            git clone --depth=1 "${PRESET_URL}" "${WORKDIR}/preset"
         else
             cp -Lr "${PRESET_URL}" "${WORKDIR}/preset"
         fi

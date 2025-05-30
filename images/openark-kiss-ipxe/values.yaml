@@ -17,4 +17,4 @@ ipxe:
     baseUrl: https://github.com
     owner: ipxe
     name: ipxe
-    revision: 9f17d1116d27696ec76c48c5c77df34cba521380
+    revision: master

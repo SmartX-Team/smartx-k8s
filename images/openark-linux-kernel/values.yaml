@@ -1,0 +1,11 @@
+---
+debian:
+  image:
+    repo: docker.io/library/debian
+    tag: bookworm
+
+linux:
+  repo:
+    baseUrl: https://github.com
+    owner: torvalds
+    name: linux

@@ -30,10 +30,11 @@ RUN apt-get update && apt-get install -y \
 
 # Build build dependency: sblim-sfcc
 WORKDIR /src
-RUN git clone "{{ .Values.sfcc.repo.baseUrl }}/{{ .Values.sfcc.repo.owner }}/{{ .Values.sfcc.repo.name }}.git" \
+RUN git clone --depth=1 \
+        -b {{ .Values.sfcc.repo.revision | quote }} \
+        "{{ .Values.sfcc.repo.baseUrl }}/{{ .Values.sfcc.repo.owner }}/{{ .Values.sfcc.repo.name }}.git" \
     && cd {{ .Values.sfcc.repo.name | quote }} \
-    && git checkout {{ .Values.sfcc.repo.revision | quote }} \
-    && git submodule update --init \
+    && git submodule update --init --depth=1 \
     && ./autoconfiscate.sh \
     && ./configure \
     && make \
@@ -41,10 +42,11 @@ RUN git clone "{{ .Values.sfcc.repo.baseUrl }}/{{ .Values.sfcc.repo.owner }}/{{ 
 
 # Build build dependency: openwsman
 WORKDIR /src
-RUN git clone "{{ .Values.openwsman.repo.baseUrl }}/{{ .Values.openwsman.repo.owner }}/{{ .Values.openwsman.repo.name }}.git" \
+RUN git clone --depth=1 \
+        -b {{ .Values.openwsman.repo.revision | quote }} \
+        "{{ .Values.openwsman.repo.baseUrl }}/{{ .Values.openwsman.repo.owner }}/{{ .Values.openwsman.repo.name }}.git" \
     && cd {{ .Values.openwsman.repo.name | quote }} \
-    && git checkout {{ .Values.openwsman.repo.revision | quote }} \
-    && git submodule update --init \
+    && git submodule update --init --depth=1 \
     && mkdir build \
     && cd build \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
@@ -54,10 +56,11 @@ RUN git clone "{{ .Values.openwsman.repo.baseUrl }}/{{ .Values.openwsman.repo.ow
 # Build it!
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig"
 WORKDIR /src
-RUN git clone "{{ .Values.wsmancli.repo.baseUrl }}/{{ .Values.wsmancli.repo.owner }}/{{ .Values.wsmancli.repo.name }}.git" \
+RUN git clone --depth=1 \
+        -b {{ .Values.wsmancli.repo.revision | quote }} \
+        "{{ .Values.wsmancli.repo.baseUrl }}/{{ .Values.wsmancli.repo.owner }}/{{ .Values.wsmancli.repo.name }}.git" \
     && cd {{ .Values.wsmancli.repo.name | quote }} \
-    && git checkout {{ .Values.wsmancli.repo.revision | quote }} \
-    && git submodule update --init \
+    && git submodule update --init --depth=1 \
     && ./bootstrap \
     && ./configure \
     && make

@@ -18,15 +18,20 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*
 
+# Download source code
+WORKDIR /src
+RUN git clone --depth=1 \
+        -b {{ .Values.edk2.repo.revision | quote }} \
+        "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ .Values.edk2.repo.name }}.git" \
+    && cd {{ .Values.edk2.repo.name | quote }} \
+    && git submodule update --init --depth=1
+
 # Build edk2
 SHELL ["/bin/bash", "-c"]
-WORKDIR /src
-RUN git clone "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ .Values.edk2.repo.name }}.git" \
-    && cd {{ .Values.edk2.repo.name | quote }} \
-    && git checkout {{ .Values.edk2.repo.revision | quote }} \
-    && git submodule update --init \
+WORKDIR {{ printf "/src/%s" .Values.edk2.repo.name | quote }}
+RUN --mount=type=cache,target={{ printf "/src/%s/Build" .Values.edk2.repo.name | quote }} \
     # Build
-    && make -C 'BaseTools' \
+    make -C 'BaseTools' \
     && source edksetup.sh \
     && export EDK_TOOLS_PATH="$(pwd)/BaseTools" \
     && build -a X64 -p OvmfPkg/OvmfPkgX64.dsc -t GCC5 -b RELEASE \
@@ -34,12 +39,14 @@ RUN git clone "{{ .Values.edk2.repo.baseUrl }}/{{ .Values.edk2.repo.owner }}/{{ 
         -D TPM_ENABLE=TRUE \
     && cd './Build/OvmfX64/RELEASE_GCC5/FV' \
     && cp 'OVMF_CODE.fd' 'OVMF_CODE.secboot.fd' \
-    && cp 'OVMF_VARS.fd' 'OVMF_VARS.secboot.fd'
+    && cp 'OVMF_VARS.fd' 'OVMF_VARS.secboot.fd' \
+    && mkdir /out \
+    && cp -r ./. /out/
 
 # Be ready for serving
 FROM "{{ .Values.virtLauncher.image.repo }}:{{ .Values.virtLauncher.image.tag | default .Release.Version }}" AS server
 
 # Replace edk2
 COPY --chmod=444 --from=builder-edk2 \
-    "/src/{{ .Values.edk2.repo.name }}/Build/OvmfX64/RELEASE_GCC5/FV/*.fd" \
+    "/out/*.fd" \
     "/usr/share/edk2/ovmf/"
