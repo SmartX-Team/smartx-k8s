@@ -2,10 +2,7 @@ pub mod item;
 pub mod solvers;
 mod state;
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    convert::identity,
-};
+use std::collections::{BTreeMap, BTreeSet};
 
 use good_lp::{ResolutionError, solvers::ObjectiveDirection};
 use openark_spectrum_api::schema::{CommitState, PoolResource};
@@ -41,7 +38,7 @@ pub fn schedule<'a, S, T>(
         .weights
         .iter()
         .copied()
-        .filter_map(identity)
+        .flatten()
         .min()
         .unwrap_or_default()
         .into_inner()
@@ -51,7 +48,7 @@ pub fn schedule<'a, S, T>(
         .weights
         .iter()
         .copied()
-        .filter_map(identity)
+        .flatten()
         .max()
         .unwrap_or_default()
         .into_inner()

@@ -160,7 +160,7 @@ impl VineSessionArgs {
     ///
     #[must_use]
     pub const fn feature_gateway(&self) -> bool {
-        self.feature_ingress
+        self.feature_gateway
     }
 
     /// Return `true` if ingress feature is enabled.
@@ -711,7 +711,7 @@ impl<'a> NodeSession<'a> {
                     SessionBindingUserKind::Guest => None,
                     SessionBindingUserKind::User => binding.spec.user.name.clone(),
                 };
-                self.metadata.compute_mode = Some(infer_compute_mode(&profile));
+                self.metadata.compute_mode = Some(infer_compute_mode(profile));
                 self.set_taint(&self.metadata.args.label_bind, "true".into(), timestamp);
                 self.set_taint(
                     &self.metadata.args.label_bind_profile,

@@ -7,9 +7,6 @@ autoinstall:
     fallback: abort
     geoip: true
     preserve_sources_list: false
-    mirror-selection:
-      primary:
-        - country-mirror
   kernel:
 {{- if eq "edge" .Values.kiss.os.kernel }}
     flavor: hwe

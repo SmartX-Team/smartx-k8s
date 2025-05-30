@@ -73,14 +73,21 @@ impl Store {
     const TABLE_CLAIM: TableDefinition<'static, Key, Value> = TableDefinition::new("claim");
     const TABLE_READY: TableDefinition<'static, Key, u8> = TableDefinition::new("ready");
 
-    pub fn read<F, R>(&self, closure: F) -> Result<R, Error>
+    pub fn read<F, R>(&self, closure: F) -> Result<R, Box<Error>>
     where
-        F: FnOnce(&ReadGuard) -> Result<R, Error>,
+        F: FnOnce(&ReadGuard) -> Result<R, Box<Error>>,
     {
-        let txn = self.db.begin_read()?;
+        let txn = self
+            .db
+            .begin_read()
+            .map_err(|error| Box::new(error.into()))?;
         {
-            let table_claim = txn.open_table(Self::TABLE_CLAIM)?;
-            let table_ready = txn.open_table(Self::TABLE_READY)?;
+            let table_claim = txn
+                .open_table(Self::TABLE_CLAIM)
+                .map_err(|error| Box::new(error.into()))?;
+            let table_ready = txn
+                .open_table(Self::TABLE_READY)
+                .map_err(|error| Box::new(error.into()))?;
             let guard = ReadGuard {
                 table_claim,
                 table_ready,
@@ -116,12 +123,13 @@ pub struct ReadGuard {
 }
 
 impl ReadGuard {
-    pub fn get(&self, key: &ObjectReference) -> Result<PoolResource, Error> {
+    pub fn get(&self, key: &ObjectReference) -> Result<PoolResource, Box<Error>> {
         Ok(PoolResource {
             claim: self
                 .table_claim
                 .get(key.to_string().as_str())
-                .map(|option| option.map(|guard| guard.value()))?,
+                .map(|option| option.map(|guard| guard.value()))
+                .map_err(|error| Box::new(error.into()))?,
             state: self
                 .table_ready
                 .get(key.to_string().as_str())
@@ -129,7 +137,8 @@ impl ReadGuard {
                     option
                         .and_then(|guard| CommitState::from_raw(guard.value()))
                         .unwrap_or_default()
-                })?,
+                })
+                .map_err(|error| Box::new(error.into()))?,
         })
     }
 }

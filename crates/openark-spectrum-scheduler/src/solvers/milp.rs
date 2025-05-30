@@ -72,9 +72,9 @@ impl Solver {
 
         // (a) Bind each resource to an item
         let mut constraints = Vec::default();
-        for row in 0..n_i {
+        for row in y.iter().take(n_i) {
             let init = Expression::default();
-            let expr = (0..n_j).fold(init, |acc, col| acc + y[row][col]);
+            let expr = (0..n_j).fold(init, |acc, col| acc + row[col]);
             let constraint = if use_all {
                 // Required
                 constraint!(expr == 1.0)
@@ -127,8 +127,8 @@ impl Solver {
                     for (col_j2, &j2) in targets.iter().enumerate() {
                         let weight2 = items[j2].resource.weight as f64;
                         let expr2 = (filled[j2] + load[col_j2].clone()) / weight2;
-                        constraints.push(constraint!(expr1.clone() - expr2.clone() <= d.clone()));
-                        constraints.push(constraint!(expr2 - expr1.clone() <= d.clone()));
+                        constraints.push(constraint!(expr1.clone() - expr2.clone() <= d));
+                        constraints.push(constraint!(expr2 - expr1.clone() <= d));
                     }
                 }
                 d.into_expression()

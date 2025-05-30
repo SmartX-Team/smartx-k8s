@@ -38,6 +38,8 @@ version = "0.0.0" # A placeholder
 blocks_in_conditions = "allow" # opentelemetry tracing macro would be noisy
 
 [workspace.dependencies]
+dark-lake-api = { path = "crates/dark-lake-api" }
+dark-lake-rt-io-uring = { path = "crates/dark-lake-rt-io-uring" }
 data-pond-api = { path = "crates/data-pond-api" }
 data-pond-csi = { path = "crates/data-pond-csi" }
 openark-admission-controller-base = { path = "crates/openark-admission-controller-base" }
@@ -68,14 +70,15 @@ actix-web-opentelemetry = { version = "=0.22", default-features = false }
 anyhow = { version = "=1.0", default-features = false }
 async-trait = { version = "=0.1", default-features = false }
 base64 = { version = "=0.22", default-features = false }
+bytes = { version = "*", default-features = false }
 chrono = { version = "=0.4", default-features = false }
 clap = { version = "=4.5", default-features = false }
 cookie = { version = "=0.18", default-features = false }
 codesnake = { version = "=0.2", default-features = false }
-convert-case = { package = "convert_case", version = "0.8", default-features = false }
+convert-case = { package = "convert_case", version = "=0.8", default-features = false }
 futures = { version = "=0.3", default-features = false }
 getrandom = { version = "=0.3", default-features = false }
-good-lp = { package = "good_lp", version = "1.13", features = [
+good-lp = { package = "good_lp", version = "=1.13", features = [
     "coin_cbc",
     "lp-solvers",
     "singlethread-cbc",
@@ -89,6 +92,7 @@ hickory-server = { version = "=0.25", default-features = false, features = [
 ] }
 hifijson = { version = "=0.2", default-features = false }
 http = { version = "=1.3", default-features = false }
+io-uring = { version = "=0.7", default-features = false }
 ipnet = { version = "=2.11", default-features = false }
 itertools = { version = "=0.14", default-features = false }
 jaq-core = { version = "=2.2", default-features = false }
@@ -109,8 +113,9 @@ libc = { version = "=0.2", default-features = false }
 opentelemetry = { version = "=0.29", default-features = false }
 opentelemetry-appender-tracing = { version = "=0.29", default-features = false }
 opentelemetry-otlp = { version = "=0.29", default-features = false }
-opentelemetry-sdk = { package = "opentelemetry_sdk", version = "0.29", default-features = false }
+opentelemetry-sdk = { package = "opentelemetry_sdk", version = "=0.29", default-features = false }
 ordered-float = { version = "=5.0", default-features = false }
+pastey = { version = "=0.1", default-features = false }
 prometheus-http-query = { version = "=0.8", default-features = false }
 prost = { version = "=0.13", default-features = false }
 prost-types = { version = "=0.13", default-features = false }
@@ -128,8 +133,8 @@ schemars = { version = "=0.8", default-features = false, features = [
     "preserve_order",
 ] }
 serde = { version = "=1.0", default-features = false }
-serde-json = { package = "serde_json", version = "1.0", default-features = false }
-serde-urlencoded = { package = "serde_urlencoded", version = "0.7", default-features = false }
+serde-json = { package = "serde_json", version = "=1.0", default-features = false }
+serde-urlencoded = { package = "serde_urlencoded", version = "=0.7", default-features = false }
 strum = { version = "=0.27", default-features = false }
 thiserror = { version = "=2.0", default-features = false }
 tonic = { version = "=0.13", default-features = false, features = [
@@ -158,5 +163,4 @@ yewdux = { version = "=0.11", default-features = false, features = ["future"] }
 [patch.crates-io]
 # FIXME: Wait a PR to be merged
 good_lp = { git = "https://github.com/ulagbulag/good_lp.git", branch = "feat/impl-clone-for-constraint-and-problem-variables" }
-# FIXME: Wait for this PR to be merged: https://github.com/kube-rs/kube/pull/1756, https://github.com/kube-rs/kube/pull/1758
-kube = { git = "https://github.com/ulagbulag/kube", branch = "k8s-025" }
+io-uring = { path = "../io-uring" }

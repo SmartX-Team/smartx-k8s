@@ -46,7 +46,7 @@ fn convert_value(val: &Val) -> Result<Value> {
             .map(Value::Number)
             .ok_or(Error::InvalidNumber),
         Val::Num(v) => v.parse().map(Value::Number).map_err(Error::Json),
-        Val::Str(v) => Ok(Value::String((&**v).clone())),
+        Val::Str(v) => Ok(Value::String((**v).clone())),
         Val::Arr(list) => list
             .iter()
             .map(convert_value)
@@ -54,7 +54,7 @@ fn convert_value(val: &Val) -> Result<Value> {
             .map(Value::Array),
         Val::Obj(map) => map
             .iter()
-            .map(|(key, val)| convert_value(val).map(|val| ((&**key).clone(), val)))
+            .map(|(key, val)| convert_value(val).map(|val| ((**key).clone(), val)))
             .collect::<Result<_>>()
             .map(Value::Object),
     }

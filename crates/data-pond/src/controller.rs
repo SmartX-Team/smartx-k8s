@@ -76,7 +76,7 @@ impl VolumeClaim {
 
         // Deallocate volumes
         bindings
-            .into_iter()
+            .iter()
             .map(|binding| binding.deallocate(secrets.clone(), options.clone()))
             .collect::<FuturesOrdered<_>>()
             .try_collect::<()>()
@@ -458,7 +458,7 @@ impl Controller for Server {
             let total_required = required * num_replicas;
             for _ in 0..num_replicas {
                 let mut filled = 0;
-                while let Some(mut binding) = available.next() {
+                for mut binding in available.by_ref() {
                     let remaining = required - filled;
                     let reserved = binding.reserve(remaining);
                     bindings.push(binding);

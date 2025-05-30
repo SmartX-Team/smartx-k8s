@@ -8,7 +8,7 @@ use crate::{
 };
 
 fn get_token(req: &HttpRequest) -> Option<String> {
-    const AUTHORIZATION_HEADER_PREFIX: &'static str = "Bearer ";
+    const AUTHORIZATION_HEADER_PREFIX: &str = "Bearer ";
 
     req.cookie(super::cookies::ACCESS_TOKEN)
         .map(|c| c.value().into())

@@ -108,12 +108,12 @@ async fn exchange_token(
     };
 
     // Relay to the OpenID provider
-    match client.get_auth_token(args, &configs, &code).await {
+    match client.get_auth_token(args, &configs, code).await {
         Ok(token) => Some(token),
         Err(error) => {
             #[cfg(feature = "tracing")]
             ::tracing::error!("Failed to get OIDC token: {error}");
-            return None;
+            None
         }
     }
 }

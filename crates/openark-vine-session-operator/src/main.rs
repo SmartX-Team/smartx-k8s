@@ -140,7 +140,6 @@ enum AppState {
     NodeNotReady,
 }
 
-#[must_use]
 fn build_owned_session_profile(
     ctx: &Context,
     node: &Node,

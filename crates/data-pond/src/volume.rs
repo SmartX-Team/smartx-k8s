@@ -95,6 +95,7 @@ impl VolumeBindingClaim {
         reserved
     }
 
+    #[allow(clippy::result_large_err)]
     fn build(
         &self,
         secrets: VolumeSecrets,
@@ -144,16 +145,17 @@ impl VolumeBindingClaim {
 }
 
 pub(crate) trait VolumeOptionsExt {
+    #[allow(clippy::result_large_err)]
     fn apply_volume_capability(&mut self, volume_capability: csi::VolumeCapability) -> Result<()>;
 
+    #[allow(clippy::result_large_err)]
     fn apply_volume_capabilities(
         &mut self,
         volume_capabilities: Vec<csi::VolumeCapability>,
     ) -> Result<()> {
         volume_capabilities
             .into_iter()
-            .map(|volume_capability| self.apply_volume_capability(volume_capability))
-            .collect()
+            .try_for_each(|volume_capability| self.apply_volume_capability(volume_capability))
     }
 }
 
@@ -218,9 +220,11 @@ impl VolumeOptionsExt for pond::VolumeOptions {
 }
 
 pub(crate) trait VolumeParametersSource<T> {
+    #[allow(clippy::result_large_err)]
     fn parse(self) -> Result<T>;
 }
 
+#[allow(clippy::result_large_err)]
 fn deserialize_into<T>(kind: &str, dict: HashMap<String, String>) -> Result<T>
 where
     T: DeserializeOwned,
@@ -291,9 +295,11 @@ impl VolumeParametersSource<VolumePublishControllerContext> for HashMap<String, 
 }
 
 pub(crate) trait VolumeParametersExport {
+    #[allow(clippy::result_large_err)]
     fn to_dict(&self) -> Result<HashMap<String, String>>;
 }
 
+#[allow(clippy::result_large_err)]
 fn serialize_from<T>(kind: &str, dict: T) -> Result<HashMap<String, String>>
 where
     T: Serialize,

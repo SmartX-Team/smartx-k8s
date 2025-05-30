@@ -68,7 +68,7 @@ fn convert(app: Application, apiserver_base_url: Option<&str>) -> Option<Session
         .spec
         .sources
         .as_ref()?
-        .get(0)?
+        .first()?
         .helm
         .as_ref()?
         .values_object
@@ -84,7 +84,7 @@ fn convert(app: Application, apiserver_base_url: Option<&str>) -> Option<Session
         .as_ref()
         .and_then(|req| req.limits.as_ref());
 
-    const GPU_PREFIX: &'static str = "nvidia.com/";
+    const GPU_PREFIX: &str = "nvidia.com/";
     let gpus = limits
         .map(|limits| {
             limits

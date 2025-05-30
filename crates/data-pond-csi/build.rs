@@ -28,11 +28,11 @@ async fn main() -> Result<()> {
         file.write_all(&text).await?;
     }
 
-    const DERIVE_SERDE: &'static str = "#[derive(::serde::Serialize, ::serde::Deserialize)]";
-    const DERIVE_STRUM: &'static str = "#[derive(::strum::Display, ::strum::EnumString)]";
+    const DERIVE_SERDE: &str = "#[derive(::serde::Serialize, ::serde::Deserialize)]";
+    const DERIVE_STRUM: &str = "#[derive(::strum::Display, ::strum::EnumString)]";
 
-    const SERDE_RENAME: &'static str = "#[serde(rename_all = \"snake_case\")]";
-    const STRUM_RENAME: &'static str = "#[strum(serialize_all = \"snake_case\")]";
+    const SERDE_RENAME: &str = "#[serde(rename_all = \"snake_case\")]";
+    const STRUM_RENAME: &str = "#[strum(serialize_all = \"snake_case\")]";
 
     // Parse spec
     let config = ::tonic_build::configure()

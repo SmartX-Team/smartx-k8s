@@ -346,9 +346,7 @@ where
         .join(" ")
 }
 
-const fn sort_nodes_by_date<'a>(
-    node: &'a ClusterBoxState,
-) -> (bool, Option<&'a Time>, &'a ClusterBoxState) {
+const fn sort_nodes_by_date(node: &ClusterBoxState) -> (bool, Option<&Time>, &ClusterBoxState) {
     (
         // Place the unready node to the last
         // so that the cluster info should be preferred.
@@ -358,7 +356,7 @@ const fn sort_nodes_by_date<'a>(
     )
 }
 
-const fn sort_nodes_by_name<'a>(node: &'a ClusterBoxState) -> (bool, Uuid) {
+const fn sort_nodes_by_name(node: &ClusterBoxState) -> (bool, Uuid) {
     (
         // Place the unready node to the last
         // so that the cluster info should be preferred.

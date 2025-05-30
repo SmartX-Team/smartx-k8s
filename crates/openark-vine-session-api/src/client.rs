@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use http::Method;
-use opanark_core::client::{Client, RequestCredentials};
+use openark_core::client::{Client, RequestCredentials};
 use url::Url;
 
 use crate::{command::SessionCommandView, exec::ExecArgs};

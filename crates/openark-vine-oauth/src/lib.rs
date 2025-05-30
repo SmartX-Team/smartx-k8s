@@ -17,8 +17,8 @@ pub use self::kube::KubernetesClient;
 pub use self::parser::{OptionalUserGuard, UserGuard};
 
 pub mod cookies {
-    pub const ACCESS_TOKEN: &'static str = "_openark_vine_oauth_access_token";
-    pub const REFRESH_TOKEN: &'static str = "_openark_vine_oauth_refresh_token";
+    pub const ACCESS_TOKEN: &str = "_openark_vine_oauth_access_token";
+    pub const REFRESH_TOKEN: &str = "_openark_vine_oauth_refresh_token";
 }
 
 const NONCE_SIZE: usize = 16;

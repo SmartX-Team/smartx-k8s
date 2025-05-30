@@ -77,6 +77,7 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.typeCheckingMode": "standard",
   "python.defaultInterpreterPath": "./images/h2pc/.venv/bin/python",
+  "rust-analyzer.check.command": "clippy",
   "search.exclude": {
     "apps/exdns-2/values.yaml": true,
     "apps/template/defaults.yaml": true,

@@ -49,7 +49,7 @@ async fn execute_probe_http(
     let mut response = response.error_for_status()?;
 
     // Consume chunks
-    while let Some(_) = response.chunk().await? {}
+    while response.chunk().await?.is_some() {}
 
     #[cfg(feature = "tracing")]
     {
@@ -100,7 +100,7 @@ impl Pool {
                 spawn(async move {
                     let mut is_completed = true;
                     for (index, probe) in probes.iter().enumerate() {
-                        match execute_probe(&client, &address, &probe).await {
+                        match execute_probe(&client, &address, probe).await {
                             Ok(()) => continue,
                             Err(error) => {
                                 #[cfg(feature = "tracing")]

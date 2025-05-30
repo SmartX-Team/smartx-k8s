@@ -144,7 +144,7 @@ fn try_handle_commit<'a>(store: web::Data<Store>, args: PoolCommitRequest<'a>) -
             resource,
         } in orders.values()
         {
-            match txn.put(resource, *claim_name, *address, *lifecycle)? {
+            match txn.put(resource, claim_name, address, lifecycle)? {
                 CommitState::Pending => break,
                 CommitState::Preparing | CommitState::Running => continue,
             }

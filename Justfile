@@ -27,6 +27,11 @@ bootstrap REPO:
 box *ARGS:
     @./hack/box-ls.sh {{ ARGS }}
 
+# Run development package: dark-lake
+run-dark-lake PROFILE *ARGS:
+    @RUSTFLAGS="--cfg=io_uring_skip_arch_check" \
+        cargo run --package dark-lake --profile "{{ PROFILE }}" -- {{ ARGS }} \
+
 # Run development package: openark-spectrum-backend
 run-openark-spectrum-backend:
     @cargo run --package openark-spectrum-backend -- \

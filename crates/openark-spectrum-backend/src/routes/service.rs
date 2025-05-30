@@ -56,7 +56,7 @@ async fn try_handle(
             service_name = {name:?},
         }}"#
     )
-    .replace(&[' ', '\n'], "");
+    .replace([' ', '\n'], "");
 
     // Evaluate a PromQL query
     let response = client.query(query).get().await?;

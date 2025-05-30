@@ -113,11 +113,12 @@ async fn handle_apply(
             let serial = 0;
             authority.upsert(record, serial).await;
 
-            Ok(handler
+            handler
                 .catalog
                 .write()
                 .await
-                .upsert(name.into(), vec![Arc::new(authority)]))
+                .upsert(name.into(), vec![Arc::new(authority)]);
+            Ok(())
         })
         .collect::<FuturesUnordered<_>>()
         .try_collect()
