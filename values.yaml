@@ -196,6 +196,7 @@ features:
   - org.ulagbulag.io/object-store
   - org.ulagbulag.io/object-store/minio
   - org.ulagbulag.io/observability
+  - org.ulagbulag.io/observability/vector
   - org.ulagbulag.io/registry
   - org.ulagbulag.io/registry/container
   - org.ulagbulag.io/registry/container/harbor

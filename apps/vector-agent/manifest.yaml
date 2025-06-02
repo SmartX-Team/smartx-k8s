@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.vector-agent
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: vector
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/observability/vector
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: vector
+    repoUrl: "https://helm.vector.dev"
+    version: 0.43.0

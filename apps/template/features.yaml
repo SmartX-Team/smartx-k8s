@@ -290,11 +290,15 @@ org.ulagbulag.io/object-store/minio:
 org.ulagbulag.io/observability:
   requires:
     - org.ulagbulag.io/cni
-    - org.ulagbulag.io/csi/block
   optional:
     - org.ulagbulag.io/auth
+    - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/csi/object
     - org.ulagbulag.io/monitoring
+
+org.ulagbulag.io/observability/vector:
+  requires:
+    - org.ulagbulag.io/observability
 
 org.ulagbulag.io/registry:
   requires:

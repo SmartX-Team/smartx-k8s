@@ -1,0 +1,15 @@
+---
+# Each role is created with the following workloads:
+# Agent = DaemonSet
+# Aggregator = StatefulSet
+# Stateless-Aggregator = Deployment
+role: Agent
+
+# tolerations -- Configure Vector Pods to be scheduled on [tainted](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)
+# nodes.
+tolerations: []
+
+# Configuration for Vector's data persistence.
+persistence:
+  # persistence.enabled -- If true, create and use PersistentVolumeClaims.
+  enabled: false
