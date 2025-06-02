@@ -117,11 +117,8 @@ impl ::dark_lake_api::kernel::Kernel for Kernel {
         {
             let mode = 0o644;
 
-            let fd_in = groups.alloc_file(
-                "/tmp/bigfile",
-                ::libc::O_RDONLY | ::libc::O_NONBLOCK | ::libc::O_DIRECT,
-                mode,
-            )?;
+            let fd_in =
+                groups.alloc_file("/tmp/bigfile", ::libc::O_RDONLY | ::libc::O_NONBLOCK, mode)?;
             let fd_out = groups.alloc_file(
                 "/tmp/bigfile2",
                 ::libc::O_WRONLY
@@ -132,23 +129,24 @@ impl ::dark_lake_api::kernel::Kernel for Kernel {
                 mode,
             )?;
 
-            let self::pipe::Pipe2 { tx, rx } = groups.alloc_pipe()?;
-
-            let proc = groups.spawn(Program::new(ProgramState::Serial(self::prog::Serial(
-                vec![
-                    ProgramState::Splice(self::prog::Splice {
-                        rx: fd_in,
-                        tx,
-                        remaining: -1,
-                    }),
-                    ProgramState::Splice(self::prog::Splice {
-                        rx,
-                        tx: fd_out,
-                        remaining: -1,
-                    }),
-                ],
-            ))));
-            sched.request(proc);
+            {
+                let self::pipe::Pipe2 { tx, rx } = groups.alloc_pipe()?;
+                let proc = groups.spawn(Program::new(ProgramState::Serial(self::prog::Serial(
+                    vec![
+                        ProgramState::Splice(self::prog::Splice {
+                            rx: fd_in,
+                            tx,
+                            remaining: -1,
+                        }),
+                        ProgramState::Splice(self::prog::Splice {
+                            rx,
+                            tx: fd_out,
+                            remaining: -1,
+                        }),
+                    ],
+                ))));
+                sched.request(proc);
+            }
         }
 
         // Boot
