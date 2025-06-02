@@ -6,9 +6,8 @@
 FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
 
 # Server Configuration
-WORKDIR /ipxe
+WORKDIR /boot
 ENTRYPOINT [ "/usr/bin/env", "bash" ]
-CMD [ "-c", "cp /ipxe/* /var/lib/tftpboot/" ]
 
 # Be ready for building
 FROM server AS builder
@@ -48,6 +47,8 @@ RUN --mount=type=cache,target={{ printf "/src/%s/build" .Values.linux.repo.name 
     make defconfig \
     && make
 
+RUN ls -alth /src/linux && false
+
 # Copy executable files
 FROM server
-COPY --from=builder /ipxe/* /ipxe/
+COPY --from=builder /boot/* /boot/
