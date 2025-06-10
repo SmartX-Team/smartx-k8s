@@ -22,6 +22,9 @@ openark:
     org.ulagbulag.io/topology-block: {{ index .Values.openark.labels "org.ulagbulag.io/topology-block" | quote }}
     org.ulagbulag.io/topology-rack: {{ index .Values.openark.labels "org.ulagbulag.io/topology-rack" | quote }}
 
+tower:
+  domainName: {{ .Values.tower.domainName | quote }}
+
 volumes:
   public:
     enabled: {{ has "org.ulagbulag.io/csi/filesystem" .Values.features }}

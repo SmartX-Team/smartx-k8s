@@ -162,7 +162,12 @@ Create a SmartX application
 {{- $towerProjectName := ( printf "%s-%s" $towerClusterName $towerGroupName ) }}
 {{- $_ := set $.Values "group" dict }}
 {{- $_ := set $.Values.group "name" $groupName }}
+{{- $_ := set $.Values "tower" ( $.Values.tower | default dict ) }}
+{{- $_ := set $.Values.tower "domainName" ( $.Values.tower.domainName | default $.Values.ingress.domainName ) }}
 {{- $_ := set $.Values "ingress" ( $.Values.ingress | default dict ) }}
+{{- if not $.Values.tower.controlPlane }}
+{{- $_ := set $.Values.ingress "domainName" ( printf "%s.%s" $.Values.cluster.name $.Values.tower.domainName ) }}
+{{- end }}
 {{- $_ := set $.Values.ingress "namespace" ( printf "ingress-%s" ( $.Values.ingress.domainName | replace "." "-" ) ) }}
 {{- $_ := set $.Values "auth" ( $.Values.auth | default dict ) }}
 {{- $_ := set $.Values.auth "domainName" ( $.Values.auth.domainName | default ( printf "auth.%s" $.Values.ingress.domainName ) ) }}

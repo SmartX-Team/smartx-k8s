@@ -383,6 +383,8 @@ rust:
 # TODO(user): Configure it!
 tower:
   cluster: smartx
+  controlPlane: true
+  domainName: ""
   group: ops
 
 # SmartX Digital Twin

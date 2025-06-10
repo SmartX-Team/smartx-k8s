@@ -31,7 +31,7 @@ spec:
     windows:
       eula: {{ .windows.eula }}
       source:
-        url: "https://api.minio.{{ $.Values.ingress.domainName }}/openark-vine-session/vm/cdrom/{{ .cdrom.filename }}"
+        url: "https://api.minio.{{ $.Values.tower.domainName }}/openark-vine-session/vm/cdrom/{{ .cdrom.filename }}"
   volumes:
     home:
       type: LocalShared
