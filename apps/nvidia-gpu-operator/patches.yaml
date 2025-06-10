@@ -58,6 +58,17 @@ node-feature-discovery:
         operator: Exists
         effect: NoExecute
   worker:
+{{- if not $.Values.cluster.standalone }}
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: NotIn
+                  values:
+                    - ControlPlane
+{{- end }}
     tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Equal

@@ -135,6 +135,18 @@ node-feature-discovery:
   enableNodeFeatureApi: false
   gc:
     enable: true
+  master:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/kiss
+                  operator: In
+                  values:
+                    - ControlPlane
+                - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
+                  operator: DoesNotExist
 
 nodeStatusExporter:
   enabled: true
