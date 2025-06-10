@@ -1,6 +1,9 @@
 ---
 apiserver:
-  enabled: {{ has "org.ulagbulag.io/auth" .Values.features }}
+  enabled: {{ and
+    ( has "org.ulagbulag.io/auth" .Values.features )
+    ( has "org.ulagbulag.io/ingress" .Values.features )
+  }}
 
 {{- if has "org.ulagbulag.io/tower" .Values.features }}
 argo:
