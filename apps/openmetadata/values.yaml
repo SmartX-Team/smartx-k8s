@@ -1,0 +1,118 @@
+---
+# Overrides the openmetadata config file with the help of Environment Variables
+# Below are defaults as per openmetadata-dependencies Helm Chart Values
+openmetadata:
+  config:
+    # Values can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL
+    logLevel: INFO
+    elasticsearch:
+      enabled: true
+      host: opensearch-cluster-master
+      searchType: opensearch
+    database:
+      enabled: true
+      host: mysql
+      port: 3306
+      driverClass: com.mysql.cj.jdbc.Driver
+      dbScheme: mysql
+      databaseName: openmetadata
+      auth:
+        username: openmetadata
+        password:
+          secretRef: mysql-openmetadata
+          secretKey: password
+    pipelineServiceClientConfig:
+      enabled: true
+      # endpoint url for airflow
+      apiEndpoint: http://openmetadata-airflow-web:8080
+      auth:
+        enabled: true
+        username: admin
+        password:
+          secretRef: airflow-openmetadata
+          secretKey: password
+    authorizer:
+      enabled: true
+      enforcePrincipalDomain: false
+      useRolesFromProvider: false
+    authentication:
+      enabled: true
+      oidcConfiguration:
+        oidcType: keycloak
+        clientId:
+          secretRef: openmetadata-oidc
+          secretKey: clientID
+        clientSecret:
+          secretRef: openmetadata-oidc
+          secretKey: clientSecret
+        scope: openid email profile groups
+    jwtTokenConfiguration:
+      enabled: true
+    eventMonitor:
+      enabled: true
+    secretsManager:
+      enabled: true
+      # Possible values are db, aws, aws-ssm, managed-aws, managed-aws-ssm, in-memory, managed-azure-kv, azure-kv, gcp
+      provider: db
+    web:
+      enabled: true
+      hsts:
+        enabled: false
+      frameOptions:
+        enabled: false
+      contentTypeOptions:
+        enabled: false
+      xssProtection:
+        enabled: false
+      csp:
+        enabled: false
+      referrerPolicy:
+        enabled: false
+      permissionPolicy:
+        enabled: false
+
+networkPolicy:
+  # If networkPolicy is true, following values can be set
+  # for ingress on port 8585 and 8586
+  enabled: false
+
+resources:
+  limits:
+    cpu: 2
+    memory: 2Gi
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+        weight: 1
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Gateway
+        weight: 2
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - ControlPlane
+                - Gateway
+
+podDisruptionBudget:
+  enabled: false
+
+# Prerequisites for enabling Horizontal Pod Autoscaler (HPA):
+# 1. Install metrics-server (https://github.com/kubernetes-sigs/metrics-server)
+# 2. Define resource request and limits for the pods
+hpa:
+  enabled: false

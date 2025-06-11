@@ -1,0 +1,107 @@
+---
+## @param fullnameOverride String to fully override common.names.fullname template
+##
+fullnameOverride: mysql
+## @param serviceBindings.enabled Create secret for service binding (Experimental)
+## Ref: https://servicebinding.io/service-provider/
+##
+serviceBindings:
+  enabled: false
+## @param architecture MySQL architecture (`standalone` or `replication`)
+##
+architecture: standalone
+## @param initdbScripts Dictionary of initdb scripts
+## Specify dictionary of scripts to be run at first boot
+## Example:
+## initdbScripts:
+##   my_init_script.sh: |
+##      #!/bin/bash
+##      echo "Do something."
+##
+# TODO(user): Configure it!
+initdbScripts:
+  init_airflow_db_scripts.sql: |
+    CREATE DATABASE airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE USER 'airflow'@'%' IDENTIFIED BY 'airflow_pass';
+    GRANT ALL PRIVILEGES ON airflow.* TO 'airflow'@'%' WITH GRANT OPTION;
+    commit;
+  init_openmetadata_db_scripts.sql: |
+    CREATE DATABASE openmetadata;
+    CREATE USER 'openmetadata'@'%' IDENTIFIED BY 'openmetadata_password';
+    GRANT ALL PRIVILEGES ON openmetadata.* TO 'openmetadata'@'%' WITH GRANT OPTION;
+    commit;
+## MySQL Authentication parameters
+##
+auth:
+  ## @param auth.rootPassword Password for the `root` user. Ignored if existing secret is provided
+  ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mysql#setting-the-root-password-on-first-run
+  ##
+  # TODO(user): Configure it!
+  rootPassword: ""
+  ## @param auth.createDatabase Whether to create the .Values.auth.database or not
+  ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mysql#creating-a-database-on-first-run
+  ##
+  createDatabase: false
+## @section MySQL Primary parameters
+##
+primary:
+  ## @param primary.affinity Affinity for MySQL primary pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## Note: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Storage
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - Storage
+  ## @param primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources:
+    requests:
+      cpu: 2
+      memory: 512Mi
+  ## @param primary.extraFlags MySQL primary additional command line flags
+  ## Can be used to specify command line flags, for example:
+  ## E.g.
+  ## extraFlags: "--max-connect-errors=1000 --max_connections=155"
+  ##
+  extraFlags: "--sort_buffer_size=10M"
+  ## Enable persistence using Persistent Volume Claims
+  ## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+  ##
+  persistence:
+    ## @param primary.persistence.enabled Enable persistence on MySQL primary replicas using a `PersistentVolumeClaim`. If false, use emptyDir
+    ##
+    enabled: true
+    ## @param primary.persistence.storageClass MySQL primary persistent volume storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ceph-block
+    ## @param primary.persistence.size MySQL primary persistent volume size
+    ##
+    size: 50Gi

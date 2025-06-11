@@ -1,0 +1,29 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openmetadata-airflow
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: omd
+    patched: true
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/data/discovery
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: airflow
+    repoUrl: https://airflow-helm.github.io/charts
+    version: 8.9.0

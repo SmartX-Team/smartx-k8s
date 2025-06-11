@@ -1,0 +1,35 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openmetadata-opensearch
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: omd
+    patched: false
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/data/discovery
+    ignoreDifferences:
+      - group: apps
+        kind: StatefulSet
+        name: opensearch
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: opensearch
+    repoUrl: https://opensearch-project.github.io/helm-charts
+    version: 3.0.0

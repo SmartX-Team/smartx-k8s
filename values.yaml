@@ -21,6 +21,11 @@ auth:
     name: ""
     clientId: ""
     clientSecret: ""
+    domainName: ""
+    defaultRoles:
+      admin:
+        users: []
+        groups: []
   sources:
     - name: google
       kind: Google
@@ -175,6 +180,8 @@ features:
   - org.ulagbulag.io/csi/block
   - org.ulagbulag.io/csi/filesystem
   - org.ulagbulag.io/csi/object
+  - org.ulagbulag.io/data
+  - org.ulagbulag.io/data/discovery
   - org.ulagbulag.io/desktop-environment
   - org.ulagbulag.io/desktop-environment/vine
   - org.ulagbulag.io/dev

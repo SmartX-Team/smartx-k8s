@@ -1,0 +1,416 @@
+---
+########################################
+## CONFIG | Airflow Configs
+########################################
+airflow:
+  ## configs for the airflow container image
+  ##
+  image:
+    repository: docker.getcollate.io/openmetadata/ingestion
+    tag: 1.7.2
+    pullPolicy: IfNotPresent
+
+  ## the airflow executor type to use
+  ## - allowed values: "CeleryExecutor", "KubernetesExecutor", "CeleryKubernetesExecutor"
+  ## - customize the "KubernetesExecutor" pod-template with `airflow.kubernetesPodTemplate.*`
+  ##
+  executor: KubernetesExecutor
+
+  ## environment variables for airflow configs
+  ## - airflow env-vars are structured: "AIRFLOW__{config_section}__{config_name}"
+  ## - airflow configuration reference:
+  ##   https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html
+  ##
+  ## ____ EXAMPLE _______________
+  ##   config:
+  ##     # dag configs
+  ##     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  ##     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+  ##
+  ##     # email configs
+  ##     AIRFLOW__EMAIL__EMAIL_BACKEND: "airflow.utils.email.send_email_smtp"
+  ##     AIRFLOW__SMTP__SMTP_HOST: "smtpmail.example.com"
+  ##     AIRFLOW__SMTP__SMTP_MAIL_FROM: "admin@example.com"
+  ##     AIRFLOW__SMTP__SMTP_PORT: "25"
+  ##     AIRFLOW__SMTP__SMTP_SSL: "False"
+  ##     AIRFLOW__SMTP__SMTP_STARTTLS: "False"
+  ##
+  ##     # domain used in airflow emails
+  ##     AIRFLOW__WEBSERVER__BASE_URL: "http://airflow.example.com"
+  ##
+  ##     # ether environment variables
+  ##     HTTP_PROXY: "http://proxy.example.com:8080"
+  ##
+  config:
+    # This is required for OpenMetadata UI to fetch status of DAGs
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.session,airflow.api.auth.backend.basic_auth
+    # OpenMetadata Airflow Apis Plugin DAGs Configuration
+    AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: /opt/airflow/dags
+    # OpenMetadata Airflow Secrets Manager Configuration
+    AIRFLOW__OPENMETADATA_SECRETS_MANAGER__AWS_REGION: ""
+    AIRFLOW__OPENMETADATA_SECRETS_MANAGER__AWS_ACCESS_KEY_ID: ""
+    AIRFLOW__OPENMETADATA_SECRETS_MANAGER__AWS_ACCESS_KEY: ""
+
+  ## a list of users to create
+  ## - templates can ONLY be used in: `password`, `email`, `firstName`, `lastName`
+  ## - templates used a bash-like syntax: ${MY_USERNAME}, $MY_USERNAME
+  ## - templates are defined in `usersTemplates`
+  ## - `role` can be a single role or a list of roles
+  ##
+  # TODO(user): Configure it!
+  users:
+    - username: admin
+      password: admin
+      role: Admin
+      email: admin@example.com
+      firstName: admin
+      lastName: admin
+
+  ## default affinity configs for airflow Pods (is overridden by pod-specific values)
+  ## - spec for Affinity:
+  ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#affinity-v1-core
+  ##
+  defaultAffinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  ########################################
+  ## COMPONENT | db-migrations Deployment
+  ########################################
+  dbMigrations:
+    ## if the db-migrations Deployment/Job is created
+    ## - [WARNING] if `false`, you have to MANUALLY run `airflow db upgrade` when required
+    ##
+    enabled: true
+
+    ## if a post-install helm Job should be used (instead of a Deployment)
+    ## - [WARNING] setting `true` will NOT work with the helm `--wait` flag,
+    ##   this is because post-install helm Jobs run AFTER the main resources become Ready,
+    ##   which will cause a deadlock, as other resources require db-migrations to become Ready
+    ##
+    runAsJob: false
+
+###################################
+## COMPONENT | Airflow Scheduler
+###################################
+scheduler:
+  ## the number of scheduler Pods to run
+  ## - if you set this >1 we recommend defining a `scheduler.podDisruptionBudget`
+  ##
+  replicas: 1
+
+  ## the affinity configs for the scheduler Pods
+  ## - spec of Affinity:
+  ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#affinity-v1-core
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  ## if we add the annotation: "cluster-autoscaler.kubernetes.io/safe-to-evict" = "true"
+  ##
+  safeToEvict: true
+
+  ## configs for the PodDisruptionBudget of the scheduler
+  ##
+  podDisruptionBudget:
+    ## if a PodDisruptionBudget resource is created for the scheduler
+    ##
+    enabled: false
+
+  ## configs for the log-cleanup sidecar of the scheduler
+  ## - helps prevent excessive log buildup by regularly deleting old files
+  ##
+  logCleanup:
+    ## if the log-cleanup sidecar is enabled
+    ## - [WARNING] must be disabled if `logs.persistence.enabled` is `true`
+    ##
+    enabled: false
+
+###################################
+## COMPONENT | Airflow Webserver
+###################################
+web:
+  ## the affinity configs for the web Pods
+  ## - spec for Affinity:
+  ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#affinity-v1-core
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+  # ## extra VolumeMounts for the web Pods
+  # ## - spec for VolumeMount:
+  # ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#volumemount-v1-core
+  # ##
+  # extraVolumeMounts:
+  #   - name: pod-template
+  #     readOnly: true
+  #     subPath: pod_template.yaml
+  #     mountPath: /opt/airflow/pod_templates/pod_template.yaml
+
+  # ## extra Volumes for the web Pods
+  # ## - spec for Volume:
+  # ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#volume-v1-core
+  # ##
+  # extraVolumes:
+  #   - name: pod-template
+  #     configMap:
+  #       name: openmetadata-pod-template
+  #       defaultMode: 420
+
+###################################
+## COMPONENT | Airflow Workers
+###################################
+workers:
+  ## if the airflow workers StatefulSet should be deployed
+  ##
+  enabled: false
+
+###################################
+## COMPONENT | Triggerer
+###################################
+triggerer:
+  ## if the airflow triggerer should be deployed
+  ## - [WARNING] the triggerer component was added in airflow 2.2.0
+  ## - [WARNING] if `airflow.legacyCommands` is `true` the triggerer will NOT be deployed
+  ##
+  enabled: true
+
+  ## the affinity configs for the web Pods
+  ## - spec for Affinity:
+  ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#affinity-v1-core
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+###################################
+## COMPONENT | Flower
+###################################
+flower:
+  ## if the airflow flower UI should be deployed
+  ##
+  enabled: false
+
+###################################
+## CONFIG | Airflow Logs
+###################################
+logs:
+  ## configs for the logs PVC
+  ##
+  persistence:
+    ## if a persistent volume is mounted at `logs.path`
+    ##
+    enabled: true
+
+    ## the name of the StorageClass used by the PVC
+    ## - if set to "", then `PersistentVolumeClaim/spec.storageClassName` is omitted
+    ## - if set to "-", then `PersistentVolumeClaim/spec.storageClassName` is set to ""
+    ##
+    storageClass: ceph-filesystem
+
+    ## the size of PVC to request
+    ##
+    size: 1Gi
+
+###################################
+## CONFIG | Airflow DAGs
+###################################
+dags:
+  ## configs for the dags PVC
+  ##
+  persistence:
+    ## if a persistent volume is mounted at `dags.path`
+    ##
+    enabled: true
+
+    ## the name of the StorageClass used by the PVC
+    ## - if set to "", then `PersistentVolumeClaim/spec.storageClassName` is omitted
+    ## - if set to "-", then `PersistentVolumeClaim/spec.storageClassName` is set to ""
+    ##
+    storageClass: ceph-filesystem
+
+    ## the access mode of the PVC
+    ## - [WARNING] must be "ReadOnlyMany" or "ReadWriteMany" otherwise airflow pods will fail to start
+    ##
+    accessMode: ReadWriteMany
+
+    ## the size of PVC to request
+    ##
+    size: 1Gi
+
+  ## configs for the git-sync sidecar (https://github.com/kubernetes/git-sync)
+  ##
+  gitSync:
+    ## if the git-sync sidecar container is enabled
+    ##
+    enabled: false
+
+###################################
+## CONFIG | Kubernetes Ingress
+###################################
+ingress:
+  ## if we should deploy Ingress resources
+  ##
+  enabled: false
+
+###################################
+## CONFIG | Kubernetes ServiceAccount
+###################################
+serviceAccount:
+  ## if a Kubernetes ServiceAccount is created
+  ## - if `false`, you must create the service account outside this chart with name: `serviceAccount.name`
+  ##
+  create: true
+
+  ## the name of the ServiceAccount
+  ## - by default the name is generated using the `airflow.serviceAccountName` template in `_helpers/common.tpl`
+  ##
+  name: airflow
+
+###################################
+## DATABASE | PgBouncer
+###################################
+pgbouncer:
+  ## if the pgbouncer Deployment is created
+  ##
+  enabled: true
+
+  ## the affinity configs for the pgbouncer Pods
+  ## - spec for Affinity:
+  ##   https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#affinity-v1-core
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+          weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+                  - ControlPlane
+
+###################################
+## DATABASE | Embedded Postgres
+###################################
+postgresql:
+  ## if the `stable/postgresql` chart is used
+  ## - [WARNING] the embedded Postgres is NOT SUITABLE for production deployments of Airflow
+  ## - [WARNING] consider using an external database with `externalDatabase.*`
+  ## - set to `false` if using `externalDatabase.*`
+  ##
+  enabled: false
+
+###################################
+## DATABASE | External Database
+###################################
+externalDatabase:
+  ## the type of external database
+  ## - allowed values: "mysql", "postgres"
+  ##
+  type: mysql
+
+  ## the host of the external database
+  ##
+  host: mysql
+
+  ## the port of the external database
+  ##
+  port: 3306
+
+  ## the database/scheme to use within the external database
+  ##
+  database: airflow
+
+  ## the username for the external database
+  ##
+  user: airflow
+
+  ## the name of a pre-created secret containing the external database password
+  ## - if set, this overrides `externalDatabase.password`
+  ##
+  passwordSecret: mysql-airflow
+
+  ## the key within `externalDatabase.passwordSecret` containing the password string
+  ##
+  passwordSecretKey: password
+
+###################################
+## DATABASE | Embedded Redis
+###################################
+redis:
+  ## if the `stable/redis` chart is used
+  ## - set to `false` if `airflow.executor` is `KubernetesExecutor`
+  ## - set to `false` if using `externalRedis.*`
+  ##
+  enabled: false

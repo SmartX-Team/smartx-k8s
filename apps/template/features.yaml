@@ -163,6 +163,18 @@ org.ulagbulag.io/csi/object:
   requires:
     - org.ulagbulag.io/csi
 
+org.ulagbulag.io/data:
+  requires:
+    - org.ulagbulag.io/cni
+    - org.ulagbulag.io/csi
+
+org.ulagbulag.io/data/discovery:
+  requires:
+    - org.ulagbulag.io/csi/block
+    - org.ulagbulag.io/data
+  optional:
+    - org.ulagbulag.io/csi/object
+
 org.ulagbulag.io/desktop-environment:
   requires:
     - org.ulagbulag.io/cni

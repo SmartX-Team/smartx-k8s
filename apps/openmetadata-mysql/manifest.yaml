@@ -1,0 +1,35 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.openmetadata-mysql
+spec:
+  group: ops
+  phase: beta
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: omd
+    patched: true
+    unsafe: true # PVC
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/data/discovery
+    ignoreDifferences:
+      - group: apps
+        kind: StatefulSet
+        name: mysql
+        jsonPointers:
+          - /spec/volumeClaimTemplates/0/apiVersion
+          - /spec/volumeClaimTemplates/0/kind
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: mysql
+    repoUrl: registry-1.docker.io/bitnamicharts
+    version: 13.0.1

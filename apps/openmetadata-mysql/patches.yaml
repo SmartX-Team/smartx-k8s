@@ -1,0 +1,4 @@
+---
+## @param clusterDomain Cluster domain
+##
+clusterDomain: {{ .Values.cluster.domainName | quote }}

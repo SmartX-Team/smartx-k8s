@@ -347,24 +347,28 @@ nginx-ingress:
 ## See requirements.yaml for current version
 postgresql:
   install: true
+
+  ## @param architecture PostgreSQL architecture (`standalone` or `replication`)
+  ##
+  architecture: standalone
+
+  ## @section PostgreSQL Primary parameters
+  ##
   primary:
+    ## @param primary.affinity Affinity for PostgreSQL primary pods assignment
+    ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+    ## Note: primary.podAffinityPreset, primary.podAntiAffinityPreset, and primary.nodeAffinityPreset will be ignored when it's set
+    ##
     affinity:
       nodeAffinity:
         preferredDuringSchedulingIgnoredDuringExecution:
-          - preference:
+          - weight: 1
+            preference:
               matchExpressions:
                 - key: node-role.kubernetes.io/kiss
                   operator: In
                   values:
-                    - Compute
-            weight: 1
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Gateway
-            weight: 2
+                    - Storage
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
@@ -372,11 +376,24 @@ postgresql:
                   operator: In
                   values:
                     - Compute
-                    - ControlPlane
-                    - Gateway
+                    - Storage
+
+    ## PostgreSQL Primary persistence configuration
+    ##
     persistence:
+      ## @param primary.persistence.enabled Enable PostgreSQL Primary data persistence using PVC
+      ##
       enabled: true
+      ## @param primary.persistence.storageClass PVC Storage Class for PostgreSQL Primary data volume
+      ## If defined, storageClassName: <storageClass>
+      ## If set to "-", storageClassName: "", which disables dynamic provisioning
+      ## If undefined (the default) or set to null, no storageClassName spec is
+      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+      ##   GKE, AWS & OpenStack)
+      ##
       storageClass: ceph-block
+      ## @param primary.persistence.size PVC Storage Request for PostgreSQL volume
+      ##
       size: 20Gi
 
 ## Installation & configuration of stable/prometheus

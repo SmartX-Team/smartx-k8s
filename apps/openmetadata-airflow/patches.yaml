@@ -1,0 +1,36 @@
+---
+########################################
+## CONFIG | Airflow Configs
+########################################
+airflow:
+  ## kubernetes cluster domain name
+  ## - configured in the kubelet with `--cluster-domain` flag (deprecated):
+  ##   https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+  ## - or configured in the kubelet with configuration file `clusterDomain` option:
+  ##   https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/
+  ##
+  clusterDomain: {{ .Values.cluster.domainName | quote }}
+
+###################################
+## CONFIG | ServiceMonitor (Prometheus Operator)
+###################################
+serviceMonitor:
+  ## if ServiceMonitor resources should be deployed for airflow webserver
+  ## - [WARNING] you will need a metrics exporter in your `airflow.image`, for example:
+  ##   https://github.com/epoch8/airflow-exporter
+  ## - ServiceMonitor is a resource from prometheus-operator:
+  ##   https://github.com/prometheus-operator/prometheus-operator
+  ##
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+###################################
+## CONFIG | PrometheusRule (Prometheus Operator)
+###################################
+prometheusRule:
+  ## if PrometheusRule resources should be deployed for airflow webserver
+  ## - [WARNING] you will need a metrics exporter in your `airflow.image`, for example:
+  ##   https://github.com/epoch8/airflow-exporter
+  ## - PrometheusRule is a resource from prometheus-operator:
+  ##   https://github.com/prometheus-operator/prometheus-operator
+  ##
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

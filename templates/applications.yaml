@@ -172,6 +172,7 @@ Create a SmartX application
 {{- $_ := set $.Values "auth" ( $.Values.auth | default dict ) }}
 {{- $_ := set $.Values.auth "domainName" ( $.Values.auth.domainName | default ( printf "auth.%s" $.Values.ingress.domainName ) ) }}
 {{- $_ := set $.Values.auth "realms" ( $.Values.auth.realms | default dict ) }}
+{{- $_ := set $.Values.auth.realms "domainName" ( $.Values.auth.realms.domainName | default $.Values.ingress.domainName ) }}
 {{- $_ := set $.Values.auth.realms "name" ( $.Values.auth.realms.name | default $clusterName ) }}
 {{- $_ := set $.Values "cluster" ( $.Values.cluster | default dict ) }}
 {{- $_ := set $.Values.cluster "domainBase" ( $.Values.cluster.domainBase | default "openark" ) }}

@@ -1,0 +1,51 @@
+---
+# Overrides the openmetadata config file with the help of Environment Variables
+# Below are defaults as per openmetadata-dependencies Helm Chart Values
+openmetadata:
+  config:
+    authorizer:
+      initialAdmins: {{ .Values.auth.realms.defaultRoles.admin.users | toYaml | nindent 8 }}
+      principalDomain: {{ .Values.auth.realms.domainName | quote }}
+{{- if and
+  ( has "org.ulagbulag.io/auth" .Values.features )
+  ( has "org.ulagbulag.io/ingress" .Values.features )
+}}
+    authentication:
+      clientType: confidential
+      provider: custom-oidc
+      publicKeys:
+        - http://localhost:8585/api/v1/system/config/jwk
+        - {{ printf "https://%s/realms/%s/protocol/openid-connect/certs" .Values.auth.domainName .Values.auth.realms.name | quote }}
+      authority: {{ printf "https://%s/realms/%s" .Values.auth.domainName .Values.auth.realms.name | quote }}
+      clientId: {{ .Values.auth.realms.clientId | quote }}
+      callbackUrl: {{ printf "https://catalog.%s/callback" .Values.ingress.domainName | quote }}
+      oidcConfiguration:
+        enabled: true
+        oidcType: {{ .Values.auth.realms.name | quote }}
+        discoveryUri: {{ printf "https://%s/realms/%s/.well-known/openid-configuration" .Values.auth.domainName .Values.auth.realms.name | quote }}
+        callbackUrl: {{ printf "https://catalog.%s/callback" .Values.ingress.domainName | quote }}
+        serverUrl: {{ printf "https://%s" .Values.ingress.domainName | quote }}
+{{- end }}
+{{- if ( has "org.ulagbulag.io/ingress" .Values.features ) }}
+    jwtTokenConfiguration:
+      jwtissuer: {{ .Values.ingress.domainName | quote }}
+{{- end }}
+
+# Service monitor for Prometheus metrics
+serviceMonitor:
+  enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+ingress:
+  enabled: {{ has "org.ulagbulag.io/ingress" .Values.features }}
+  className: {{ .Values.ingress.domainName | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.domainName | quote }}
+  hosts:
+    - host: {{ printf "catalog.%s" .Values.ingress.domainName | quote }}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: {{ printf "catalog.%s-tls" .Values.ingress.domainName | quote }}
+      hosts:
+        - {{ printf "catalog.%s" .Values.ingress.domainName | quote }}

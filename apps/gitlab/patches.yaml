@@ -47,3 +47,8 @@ nginx-ingress:
       labels:
         {{ index .Values.openark.labels "org.ulagbulag.io/is-external" | quote }}: "true"
       loadBalancerIP: {{ .Values.ingress.loadBalancerIPs.gitlab | quote }}
+
+postgresql:
+  ## @param clusterDomain Kubernetes Cluster Domain
+  ##
+  clusterDomain: {{ .Values.cluster.domainName | quote }}
