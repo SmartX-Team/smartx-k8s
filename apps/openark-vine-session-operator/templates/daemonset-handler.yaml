@@ -73,11 +73,15 @@ spec:
               value: {{ .Chart.Name | quote }}
             - name: DRY_RUN
               value: "false"
+            - name: LOCAL_VOLUME_HOME
+              value: /mnt
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: OPENARK_LABEL_BIND_STORAGE
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.storage" | quote }}
             - name: OPENARK_LABEL_SIGNED_OUT
               value: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
             - name: RUST_LOG
@@ -100,6 +104,8 @@ spec:
           volumeMounts:
             - name: host-run
               mountPath: /run
+            - name: mnt
+              mountPath: /mnt
       priorityClassName: system-node-critical
       securityContext:
         appArmorProfile:
@@ -115,3 +121,7 @@ spec:
           hostPath:
             path: /run
             type: Directory
+        - name: mnt
+          hostPath:
+            path: {{ .Values.volumes.hostPathPrefix | quote }}
+            type: DirectoryOrCreate

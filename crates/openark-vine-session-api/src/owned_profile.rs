@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     binding::SessionBindingUserSpec,
     profile::{
-        ExternalServicesSpec, FeaturesSpec, GreeterSpec, PersistenceSpec, RegionSpec, ServicesSpec,
-        SessionMode, SessionSpec, UserSpec, VMSpec, VolumesSpec,
+        DriversSpec, ExternalServicesSpec, FeaturesSpec, GreeterSpec, PersistenceSpec, RegionSpec,
+        ServicesSpec, SessionMode, SessionSpec, UserSpec, VMSpec, VolumesSpec,
     },
 };
 
@@ -22,6 +22,9 @@ use crate::{
 pub struct OwnedSessionProfileSpec {
     #[cfg_attr(feature = "serde", serde(default))]
     pub auth: OwnedAuthSpec,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub drivers: DriversSpec,
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub external_services: ExternalServicesSpec,
@@ -152,6 +155,9 @@ pub struct OwnedOpenArkLabelsSpec {
 
     #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind.persistent"))]
     pub bind_persistent: String,
+
+    #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind.profile"))]
+    pub bind_profile: String,
 
     #[cfg_attr(feature = "serde", serde(rename = "org.ulagbulag.io/bind.user"))]
     pub bind_user: String,

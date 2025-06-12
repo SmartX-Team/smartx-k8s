@@ -20,6 +20,11 @@ driver:
   env:
     - name: ACCEPT_LICENSE
       value: {{ .Values.driver.nvidia.gpu.eula | quote }}
+{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+  nvidiaDriverCRD:
+    nodeSelector:
+      {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "false"
+{{- end }}
 
 driverHook:
   tolerations:

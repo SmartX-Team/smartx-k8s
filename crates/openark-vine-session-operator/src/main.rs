@@ -40,6 +40,7 @@ use openark_vine_session_api::{
     },
     profile::{RegionSpec, SessionProfileCrd, SessionProfileSpec, VolumeSharingSpec},
 };
+use serde_json::json;
 #[cfg(feature = "tracing")]
 use tracing::{Level, debug, info, instrument, warn};
 
@@ -85,6 +86,45 @@ struct Context {
     patch_params: PatchParams,
     post_params: PostParams,
     recorder: Recorder,
+}
+
+impl Context {
+    async fn init_nodes(&self) -> Result<()> {
+        // List all nodes
+        let api = &self.api_node;
+        let lp = ListParams::default();
+        let nodes = api.list_metadata(&lp).await?;
+
+        // Label nodes
+        let label_bind = self.args.api.label_bind();
+        for node in nodes
+            .items
+            .into_iter()
+            .filter(|node| !node.labels().contains_key(label_bind))
+        {
+            use k8s_openapi::Resource;
+
+            // Apply the updated info
+            let name = node.name_any();
+            let patch = Patch::Strategic(json!({
+                "apiVersion": Node::API_VERSION,
+                "kind": Node::KIND,
+                "metadata": {
+                    "name": name,
+                    "labels": {
+                        label_bind: "false",
+                    },
+                },
+            }));
+            api.patch_metadata(&name, &self.patch_params, &patch)
+                .await?;
+            {
+                #[cfg(feature = "tracing")]
+                info!("updated node/{name}: {patch:?}");
+            }
+        }
+        Ok(())
+    }
 }
 
 #[must_use]
@@ -148,6 +188,7 @@ fn build_owned_session_profile(
     profile: &SessionProfileSpec,
 ) -> Result<OwnedSessionProfileSpec, AppState> {
     let SessionProfileSpec {
+        drivers,
         external_services,
         extra_services,
         features,
@@ -233,6 +274,7 @@ fn build_owned_session_profile(
 
     Ok(OwnedSessionProfileSpec {
         auth: ctx.args.api.to_openark_auth_spec(),
+        drivers: drivers.unwrap_or_default(),
         external_services: external_services.unwrap_or_default(),
         extra_services: extra_services.unwrap_or_default(),
         features: OwnedFeaturesSpec {
@@ -745,6 +787,7 @@ async fn try_main(args: Args) -> Result<()> {
         post_params,
         recorder: recorder.clone(),
     });
+    context.init_nodes().await?;
 
     Controller::new(api_node.clone(), watcher_config)
         .run(reconcile, error_policy, context)

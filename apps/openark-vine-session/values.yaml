@@ -9,6 +9,13 @@ ananicy:
 auth:
   domainName: ""
 
+drivers:
+  nvidiaGpu:
+    eula: true
+    repository: quay.io/ulagbulag
+    image: openark-gpu-nvidia-driver
+    version: 535.183.01
+
 externalServices:
   notebook:
     image:
@@ -112,8 +119,8 @@ session:
     root: false
     sudo: true
   image:
-    repo: quay.io/ulagbulag/openark-vine-desktop
-    tag: ubuntu-24.04-v30
+    repo: quay.io/ulagbulag/openark-vine-session
+    tag: ubuntu-24.04-20250617
     pullPolicy: IfNotPresent
 
   locale:
@@ -184,7 +191,7 @@ vm:
   #     product: "2107"
 
 volumes:
-  hostPathPrefix: /mnt
+  hostPathPrefix: /mnt/openark-vine-session
   home:
     type: Temporary # Options: LocalOwned, LocalShared, RemoteOwned, Temporary
   vm:

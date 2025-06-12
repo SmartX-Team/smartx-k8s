@@ -178,7 +178,7 @@ where
         let app = App::new().app_data(Data::clone(&service));
 
         let app = app
-            .route("", route().method(Method::POST).to(index::<T>))
+            .route("/", route().method(Method::POST).to(index::<T>))
             .service(ping)
             .service(health);
 

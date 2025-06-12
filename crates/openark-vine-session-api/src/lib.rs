@@ -177,6 +177,13 @@ impl VineSessionArgs {
         self.feature_vm
     }
 
+    /// Return the `bind` label.
+    ///
+    #[must_use]
+    pub fn label_bind(&self) -> &str {
+        &self.label_bind
+    }
+
     /// Return a SmartX source path.
     ///
     #[must_use]
@@ -241,6 +248,7 @@ impl VineSessionArgs {
             bind_mode: self.label_bind_mode.clone(),
             bind_node: self.label_bind_node.clone(),
             bind_persistent: self.label_bind_persistent.clone(),
+            bind_profile: self.label_bind_profile.clone(),
             bind_user: self.label_bind_user.clone(),
             is_private: self.label_is_private.clone(),
             signed_out: self.label_signed_out.clone(),
@@ -272,6 +280,7 @@ pub enum ComputeMode {
 }
 
 impl ComputeMode {
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_replicas(&self) -> u32 {
         match self {
@@ -280,6 +289,7 @@ impl ComputeMode {
         }
     }
 
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_workload_config(&self) -> &str {
         match self {
@@ -584,6 +594,7 @@ impl<'a> NodeSession<'a> {
 
     /// Append node labels.
     ///
+    #[cfg(feature = "serde")]
     #[must_use]
     pub fn append_labels(&self, mut labels: BTreeMap<String, String>) -> BTreeMap<String, String> {
         for (key, value) in self.metadata.build_labels() {
@@ -642,24 +653,6 @@ impl<'a> NodeSession<'a> {
                     .filter(|&v| v >= 0)
                     .unwrap_or_default();
                 self.metadata.bind_memory = Some(Quantity(memory.to_string()));
-            }
-
-            // Bind Storage
-            {
-                let storage = allocatable
-                    .get("ephemeral-storage")
-                    .and_then(|q| ParsedQuantity::try_from(q).ok())
-                    .and_then(|q| q.to_bytes_f64())
-                    .unwrap_or_default();
-
-                // Subtract required storage size
-                let storage = (storage * 0.8 * 0.5).floor(); // both Container & VM
-                let storage = if storage.is_finite() && storage.is_sign_positive() {
-                    storage as u128
-                } else {
-                    0
-                };
-                self.metadata.bind_storage = Some(Quantity(storage.to_string()));
             }
         }
         self.metadata.bind_node = self.metadata.name.clone();

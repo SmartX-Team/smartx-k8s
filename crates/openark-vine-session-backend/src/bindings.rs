@@ -208,7 +208,7 @@ fn convert(app: Application, apiserver_base_url: Option<&str>) -> Option<Session
                         port = 443,
                     )),
                     None => format!(
-                        "https://vnc.{node_name}.node.sessions.{domain_name}",
+                        "https://vnc.{node_name}.node.sessions.{domain_name}/vnc.html?autoconnect=true&reconnect=true&resize=scale&shared=true",
                         domain_name = &profile.ingress.domain_name,
                         node_name = &profile.node.name,
                     )

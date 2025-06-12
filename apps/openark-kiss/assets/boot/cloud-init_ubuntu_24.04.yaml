@@ -124,7 +124,7 @@ autoinstall:
         name: lv_containerd
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 120G
+        size: 200G
       - id: format_containerd
         type: format
         fstype: {{ .Values.storage.fstype | quote }}

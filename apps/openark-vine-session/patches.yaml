@@ -13,6 +13,7 @@ openark:
     org.ulagbulag.io/bind: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
     org.ulagbulag.io/bind.node: {{ index .Values.openark.labels "org.ulagbulag.io/bind.node" | quote }}
     org.ulagbulag.io/bind.persistent: {{ index .Values.openark.labels "org.ulagbulag.io/bind.persistent" | quote }}
+    org.ulagbulag.io/bind.profile: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
     org.ulagbulag.io/bind.user: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
     org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
     org.ulagbulag.io/signed-out: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}

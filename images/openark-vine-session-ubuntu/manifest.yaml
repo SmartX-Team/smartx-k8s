@@ -1,0 +1,22 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.images.openark-vine-session-ubuntu
+spec:
+  group: ops
+  phase: beta
+  scale: medium
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  containerImage:
+    name: openark-vine-session
+    namespace: vine-session
+    period: "0 0 * * *"
+    version: ubuntu-24.04-20250617
+    buildArgs:
+      - name: HTTP_PROXY
+      - name: HTTPS_PROXY
+      - name: NGC_CLI_API_KEY
+      - name: NO_PROXY

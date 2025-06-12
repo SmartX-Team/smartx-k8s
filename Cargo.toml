@@ -164,4 +164,4 @@ yewdux = { version = "=0.11", default-features = false, features = ["future"] }
 [patch.crates-io]
 # FIXME: Wait a PR to be merged
 good_lp = { git = "https://github.com/ulagbulag/good_lp.git", branch = "feat/impl-clone-for-constraint-and-problem-variables" }
-io-uring = { path = "../io-uring" }
+# io-uring = { path = "../io-uring" }

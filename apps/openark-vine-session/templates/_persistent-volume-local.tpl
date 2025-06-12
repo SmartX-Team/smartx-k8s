@@ -11,7 +11,7 @@
 {{- end }}
 
 {{- define "helm.localPVPath" -}}
-{{- printf "%s/%s" .Values.volumes.hostPathPrefix ( include "helm.name" $ ) }}
+{{- printf "%s" .Values.volumes.hostPathPrefix }}
 {{- end }}
 
 {{- define "helm.localPVPath.vm.cdrom" -}}

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, string::String, vec::Vec};
+use std::{collections::BTreeMap, path::PathBuf, string::String, vec::Vec};
 
 use k8s_openapi::{
     api::core::v1::{
@@ -48,6 +48,12 @@ use url::Url;
     )
 )]
 pub struct SessionProfileSpec {
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub drivers: Option<DriversSpec>,
+
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
@@ -116,6 +122,16 @@ pub struct SessionProfileSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub volumes: Option<VolumesSpec>,
+}
+
+pub type DriversSpec = BTreeMap<String, DriverSpec>;
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct DriverSpec {
+    pub version: String,
 }
 
 pub type ExternalServicesSpec = BTreeMap<String, ExternalServiceSpec>;
@@ -600,6 +616,12 @@ pub struct VolumesSpec {
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub vm: VolumeSpec,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub host_path_prefix: Option<PathBuf>,
 
     #[cfg_attr(
         feature = "serde",

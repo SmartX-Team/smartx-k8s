@@ -1,0 +1,73 @@
+{{- if and
+  ( not .Values.vm.enabled )
+  ( or
+    ( hasKey ( .Values.session.resources.limits | default dict ) "nvidia.com/gpu" )
+    ( hasKey ( .Values.session.resources.requests | default dict ) "nvidia.com/gpu" )
+  )
+}}
+---
+apiVersion: nvidia.com/v1alpha1
+kind: NVIDIADriver
+metadata:
+  name: {{ printf "session-%s" ( include "helm.fullname" $ | sha256sum | substr 0 7 ) | quote }}
+{{- include "helm.podMetadata" $ | nindent 2 }}
+spec:
+  driverType: gpu
+  env:
+    - name: ACCEPT_LICENSE
+      value: {{ .Values.drivers.nvidiaGpu.eula | quote }}
+  gdrcopy:
+    enabled: false
+  image: {{ .Values.drivers.nvidiaGpu.image | quote }}
+  kernelModuleType: auto
+  manager:
+    env:
+      - name: ENABLE_AUTO_DRAIN
+        value: "true"
+      - name: ENABLE_GPU_POD_EVICTION
+        value: "true"
+      - name: DRAIN_DELETE_EMPTYDIR_DATA
+        value: "true"
+      - name: DRAIN_POD_SELECTOR_LABEL
+        value: ""
+      - name: DRAIN_TIMEOUT_SECONDS
+        value: 0s
+      - name: DRAIN_USE_FORCE
+        value: "true"
+    # image: k8s-driver-manager
+    # imagePullPolicy: IfNotPresent
+    # repository: nvcr.io/nvidia/cloud-native
+    # version: v0.8.0
+  nodeSelector:
+    {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
+{{- if not ( empty .Values.node.name ) }}
+    {{ index .Values.openark.labels "org.ulagbulag.io/bind.node" | quote }}: {{ .Values.node.name | quote }}
+{{- end }}
+{{- if eq "Guest" .Values.user.kind }}
+    {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}: ""
+{{- else }}
+    {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}: {{ .Values.user.name | quote }}
+{{- end }}
+  rdma:
+    enabled: false
+    useHostMofed: false
+  repository: {{ .Values.drivers.nvidiaGpu.repository | quote }}
+  # startupProbe:
+  #   failureThreshold: 120
+  #   initialDelaySeconds: 60
+  #   periodSeconds: 10
+  #   timeoutSeconds: 60
+  tolerations:
+    - effect: NoSchedule
+      key: nvidia.com/gpu
+      operator: Exists
+    - effect: NoExecute
+      key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
+      operator: Equal
+      value: "true"
+    - effect: NoExecute
+      key: {{ index .Values.openark.labels "org.ulagbulag.io/bind.profile" | quote }}
+      operator: Exists
+  usePrecompiled: false
+  version: {{ .Values.drivers.nvidiaGpu.version | quote }}
+{{- end }}

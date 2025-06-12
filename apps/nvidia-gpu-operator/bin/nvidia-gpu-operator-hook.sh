@@ -56,5 +56,10 @@ ret_patch 'Mounted host filesystem' '[
             "mountPropagation": "HostToContainer",
             "readOnly": true
         }
+    },
+    {
+        "op": "add",
+        "path": "/spec/hostNetwork",
+        "value": true
     }
 ]'

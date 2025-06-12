@@ -1,4 +1,7 @@
-use std::process::{Stdio, exit};
+use std::{
+    path::PathBuf,
+    process::{Output, Stdio, exit},
+};
 
 use anyhow::{Result, bail};
 use clap::Parser;
@@ -27,8 +30,14 @@ struct Args {
     #[arg(long, env = "DRY_RUN")]
     dry_run: bool,
 
+    #[arg(long, env = "OPENARK_LABEL_BIND_STORAGE")]
+    label_bind_storage: String,
+
     #[arg(long, env = "OPENARK_LABEL_SIGNED_OUT")]
     label_signed_out: String,
+
+    #[arg(long, env = "LOCAL_VOLUME_HOME")]
+    local_volume_home: PathBuf,
 
     #[arg(long, env = "NODE_NAME")]
     node_name: String,
@@ -147,6 +156,55 @@ impl Service<'_> {
         }
         Ok(())
     }
+
+    /// Update the current node's annotations
+    ///
+    #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
+    async fn update_node_info(&self) -> Result<()> {
+        let command = format!(
+            "set -e -x -o pipefail && df --block-size=1 {path} | tail -n 1 | awk '{{print $2}}'",
+            path = self.args.local_volume_home.display(),
+        );
+        let Output { stdout, .. } = Command::new("bash")
+            .arg("-c")
+            .arg(command)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .output()
+            .await?;
+
+        let available_size: u128 = String::from_utf8(stdout)?.trim().parse()?;
+
+        // Subtract required storage size
+        let storage = (available_size as f64 * 0.8 * 0.5).floor(); // both Container & VM
+        let storage = if storage.is_finite() && storage.is_sign_positive() {
+            storage as u128
+        } else {
+            0
+        };
+
+        // Apply the updated info
+        let name = &self.args.node_name;
+        let patch = Patch::Strategic(json!({
+            "apiVersion": Node::API_VERSION,
+            "kind": Node::KIND,
+            "metadata": {
+                "name": name,
+                "labels": {
+                    &self.args.label_bind_storage: storage.to_string(),
+                },
+            },
+        }));
+        self.api
+            .patch_metadata(name, &self.patch_params, &patch)
+            .await?;
+        {
+            #[cfg(feature = "tracing")]
+            info!("updated node/{name}");
+        }
+        Ok(())
+    }
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO))]
@@ -167,7 +225,7 @@ async fn systemctl_exec(command: &str, service_name: &str) -> Result<()> {
 
 async fn try_main(args: &Args) -> Result<()> {
     let client = Client::try_default().await?;
-    let api = Api::all(client.clone());
+    let api = Api::all(client);
 
     let mut service = Service {
         api: api.clone(),
@@ -180,6 +238,7 @@ async fn try_main(args: &Args) -> Result<()> {
         },
         running: None,
     };
+    service.update_node_info().await?;
 
     let watcher_config = watcher::Config {
         label_selector: Some(format!("kubernetes.io/hostname={}", &args.node_name)),

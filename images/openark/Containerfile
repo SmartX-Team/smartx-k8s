@@ -78,7 +78,7 @@ ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
 COPY --from=builder /out/* /usr/local/bin/
 
 # Mark as executable
-CMD [ "./arkctl" ]
+CMD [ "./openark-cli" ]
 ENTRYPOINT [ "/usr/bin/env" ]
 USER user
 WORKDIR /usr/local/bin/

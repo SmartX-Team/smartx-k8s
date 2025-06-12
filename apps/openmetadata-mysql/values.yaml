@@ -15,7 +15,7 @@ architecture: standalone
 ## Example:
 ## initdbScripts:
 ##   my_init_script.sh: |
-##      #!/bin/bash
+##      #!/usr/bin/env bash
 ##      echo "Do something."
 ##
 # TODO(user): Configure it!
