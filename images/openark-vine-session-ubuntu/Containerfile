@@ -1,0 +1,301 @@
+# Copyright (c) 2023-2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Configure user-specific environment variables
+ENV SHELL={{ .Values.user.shell | quote }}
+ENV USER_SHELL={{ .Values.user.shell | quote }}
+ENV XDG_RUNTIME_DIR={{ printf "/run/user/%d" ( .Values.user.uid | int ) | quote }}
+
+# Package Manager Configuration
+ENV DEBIAN_FRONTEND='noninteractive'
+
+# Configure H/W-specific environment variables
+ENV NVIDIA_DRIVER_CAPABILITIES="all"
+
+# Configure build-time proxy
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+
+# SystemD Configuration
+ENV container=docker
+STOPSIGNAL SIGRTMIN+3
+
+# Client Configuration
+WORKDIR /root/
+ENTRYPOINT [ "/usr/bin/env" ]
+CMD [ "/usr/bin/systemctl", "init", {{ printf "%s.service" .Release.Name | quote }}, "--user" ]
+
+# Volumes Configuration
+{{- $home := printf "/home/%s" .Values.user.name }}
+VOLUME [ {{ $home | quote }} ]
+
+# Configure OS-specific settings
+RUN true \
+    # Fix base image bugs
+    ## NVIDIA
+    ### Fix library link issue (duplicated library binaries)
+    && ( \
+        which find >/dev/null \
+            && /sbin/ldconfig.real 2>&1 | grep -Po '/usr/local/lib/lib[a-z0-9_.]+' | xargs rm -f \
+            && /sbin/ldconfig.real \
+    ) || true \
+    # Install base dependencies
+    && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        apt-transport-https \
+        apt-utils \
+        ca-certificates \
+        curl \
+        gettext-base \
+        gnupg \
+        openssl \
+        software-properties-common \
+    # Enable multiarch support
+    && if test "X$(uname -m)" = 'Xx86_64'; then dpkg --add-architecture 'i386'; fi \
+    # Install apt-fast
+    && add-apt-repository -y 'ppa:apt-fast/stable' \
+    && apt-get install -y apt-fast \
+    && echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections \
+    && echo debconf apt-fast/dlflag boolean true | debconf-set-selections \
+    && echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure 3rd-party repositories
+ADD ./etc/apt/apt.conf.d/* /etc/apt/apt.conf.d/
+ADD ./etc/apt/keyrings/* /etc/apt/keyrings/
+ADD ./etc/apt/preferences.d/* /etc/apt/preferences.d/
+ADD ./etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/
+RUN true \
+    # Get the latest kubernetes informations
+    && export KUBERNETES_VERSION=$( \
+        curl -s "https://api.github.com/repos/kubernetes/kubernetes/releases/latest" \
+            | grep -Po '"tag_name": +"v\K[0-9]+\.[0-9]+' \
+    ) \
+    # Get OS informations
+    && . /etc/os-release \
+    && export ARCH="$(uname -m)" \
+    && export VERSION_CODENAME="${VERSION_CODENAME}" \
+    && export VERSION_ID="${VERSION_ID}" \
+    && export VERSION_ID_MAJOR="${VERSION_ID%\.[0-9]*}" \
+    && export VERSION_ID_MINOR="${VERSION_ID#[0-9]*\.}" \
+    # Update keyrings
+    && find /etc/apt/keyrings/ -type f -exec sh -c \
+        'cat "{}" | gpg --dearmor --yes -o "/etc/apt/keyrings/$(basename "{}")"' \; \
+    # Update repositories
+    && find /etc/apt/sources.list.d/ -type f -exec sh -c \
+        'mv "{}" "{}.bak" && envsubst < "{}.bak" >"{}" && rm "{}".bak' \; \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+{{- /* Collect Requirements */}}
+{{- $requirements := dict }}
+{{- range $package := .Values.packages }}
+    {{- $package_req := list }}
+    {{- range $_ := .dependencies }}
+        {{- if eq .kind "Group" }}
+            {{- if empty .name }}
+                {{- fail ( printf "Empty group in %s" $package.name ) }}
+            {{- end }}
+            {{- $package_req = append $package_req .name }}
+        {{- end }}
+    {{- end }}
+    {{- $_ := set $requirements $package.name ( $package_req | uniq | sortAlpha ) }}
+{{- end }}
+
+{{- /* Sort Packages */}}
+{{- $packageKeys := list }}
+{{- range $_, $_ := until ( $requirements | len ) }}
+    {{- $next := list }}
+    {{- range $name, $_ := $requirements }}
+        {{- if empty . }}
+            {{- $next = append $next $name }}
+        {{- end }}
+    {{- end }}
+    {{- $packageKeys = concat $packageKeys $next }}
+    {{- range $_ := $next }}
+        {{- $_ := unset $requirements . }}
+    {{- end }}
+    {{- range $name, $_ := $requirements }}
+        {{- $package_req := list }}
+        {{- range $_ := . }}
+            {{- if not ( has . $next ) }}
+                {{- $package_req = append $package_req . }}
+            {{- end }}
+        {{- end }}
+        {{- $_ := set $requirements $name $package_req }}
+    {{- end }}
+{{- end }}
+{{- if not ( empty $requirements ) }}
+    {{- fail ( printf "Circular dependency has been found: %s" $requirements ) }}
+{{- end }}
+
+{{- /* Collect Packages */}}
+{{- $packages := list }}
+{{- range $name := $packageKeys }}
+    {{- range $_ := $.Values.packages }}
+        {{- if eq $name .name }}
+            {{- /* TODO: Validate arch, locales */}}
+            {{- $packages = append $packages . }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+
+{{- /* Execute pre-install */}}
+{{- range $_ := $packages }}
+    {{- $filePath := printf "bin/packages/pre/%s.containerfile" .name }}
+    {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+        {{ tpl ( $.Files.Get $filePath ) $ }}
+    {{- end }}
+{{- end }}
+
+{{- /* Execute install */}}
+{{- if .Values.build.incremental }}
+{{- range $_ := $packages }}
+RUN true \
+    # Pre-install
+    {{- $filePath := printf "bin/packages/pre/%s.sh" .name }}
+    {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+        && ( \
+            SCRIPT_PATH='/tmp/script.sh' \
+                && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                && chmod u+x "${SCRIPT_PATH}" \
+                && "${SCRIPT_PATH}" \
+                && rm "${SCRIPT_PATH}" \
+        ) \
+    {{- end }}
+    # Install
+    {{- $dependencies := list }}
+    {{- range $_ := .dependencies }}
+        {{- if eq ( .kind | default "ExternalPackage" ) "ExternalPackage" }}
+            {{- $dependency := .name }}
+            {{- if eq false .state }}
+                {{- $dependency = printf "%s-" .name }}
+            {{- end }}
+            {{- if not ( empty .version ) }}
+                {{- $dependency = printf "%s=%s" .name .version }}
+            {{- end }}
+            {{- $dependencies = append $dependencies ( $dependency | quote ) }}
+        {{- end }}
+    {{- end }}
+    {{- if not ( empty $dependencies ) }}
+        && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
+        {{- printf " %s" ( $dependencies | join " " ) }} \
+    {{- end }}
+    # Execute build scripts
+    {{- range $_ := .dependencies }}
+        {{- if eq .kind "BuildScript" }}
+            {{- $filePath := printf "bin/packages/%s.sh" .name }}
+            {{- if empty ( $.Files.Glob $filePath ) }}
+                {{- fail ( printf "Build script not found: %s" .name ) }}
+            {{- end }}
+            && ( \
+                SCRIPT_PATH='/tmp/script.sh' \
+                    && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                    && chmod u+x "${SCRIPT_PATH}" \
+                    && "${SCRIPT_PATH}" \
+                    && rm "${SCRIPT_PATH}" \
+            ) \
+        {{- end }}
+    {{- end }}
+    # Post-install
+    {{- $filePath := printf "bin/packages/post/%s.sh" .name }}
+    {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+        && ( \
+            SCRIPT_PATH='/tmp/script.sh' \
+                && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                && chmod u+x "${SCRIPT_PATH}" \
+                && "${SCRIPT_PATH}" \
+                && rm "${SCRIPT_PATH}" \
+        ) \
+    {{- end }}
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo {{ printf "Completed %s!" .name | quote }}
+{{- end }}
+{{- else }}
+RUN true \
+    # Pre-install
+    {{- range $_ := $packages }}
+        {{- $filePath := printf "bin/packages/pre/%s.sh" .name }}
+        {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+            && ( \
+                SCRIPT_PATH='/tmp/script.sh' \
+                    && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                    && chmod u+x "${SCRIPT_PATH}" \
+                    && "${SCRIPT_PATH}" \
+                    && rm "${SCRIPT_PATH}" \
+            ) \
+        {{- end }}
+    {{- end }}
+    # Install
+    {{- $dependencies := list }}
+    {{- range $_ := $packages }}
+        {{- range $_ := .dependencies }}
+            {{- if eq ( .kind | default "ExternalPackage" ) "ExternalPackage" }}
+                {{- $dependency := .name }}
+                {{- if eq false .state }}
+                    {{- $dependency = printf "%s-" .name }}
+                {{- end }}
+                {{- if not ( empty .version ) }}
+                    {{- $dependency = printf "%s=%s" .name .version }}
+                {{- end }}
+                {{- $dependencies = append $dependencies ( $dependency | quote ) }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- if not ( empty $dependencies ) }}
+        && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
+        {{- printf " %s" ( $dependencies | join " " ) }} \
+    {{- end }}
+    # Execute build scripts
+    {{- range $_ := $packages }}
+        {{- range $_ := .dependencies }}
+            {{- if eq .kind "BuildScript" }}
+                {{- $filePath := printf "bin/packages/%s.sh" .name }}
+                {{- if empty ( $.Files.Glob $filePath ) }}
+                    {{- fail ( printf "Build script not found: %s" .name ) }}
+                {{- end }}
+                && ( \
+                    SCRIPT_PATH='/tmp/script.sh' \
+                        && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                        && chmod u+x "${SCRIPT_PATH}" \
+                        && "${SCRIPT_PATH}" \
+                        && rm "${SCRIPT_PATH}" \
+                ) \
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    # Post-install
+    {{- range $_ := $packages }}
+        {{- $filePath := printf "bin/packages/post/%s.sh" .name }}
+        {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+            && ( \
+                SCRIPT_PATH='/tmp/script.sh' \
+                    && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
+                    && chmod u+x "${SCRIPT_PATH}" \
+                    && "${SCRIPT_PATH}" \
+                    && rm "${SCRIPT_PATH}" \
+            ) \
+        {{- end }}
+    {{- end }}
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo 'Completed!'
+{{- end }}
+
+{{/* Execute post-install */}}
+{{- range $_ := $packages }}
+    {{- $filePath := printf "bin/packages/post/%s.containerfile" .name }}
+    {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
+        {{ tpl ( $.Files.Get $filePath ) $ }}
+    {{- end }}
+{{- end }}

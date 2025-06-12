@@ -1,0 +1,2 @@
+deb [arch=amd64, signed-by=/etc/apt/keyrings/hamonikr.gpg] https://repo.hamonikr.org jammy main
+#deb-src [arch=amd64, signed-by=/etc/apt/keyrings/hamonikr.gpg] https://repo.hamonikr.org jammy main

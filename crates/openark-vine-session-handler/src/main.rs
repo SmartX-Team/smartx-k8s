@@ -1,4 +1,4 @@
-use std::process::{Stdio, exit};
+use std::process::{Output, Stdio, exit};
 
 use anyhow::{Result, bail};
 use clap::Parser;
@@ -26,6 +26,9 @@ struct Args {
 
     #[arg(long, env = "DRY_RUN")]
     dry_run: bool,
+
+    #[arg(long, env = "OPENARK_LABEL_BIND_STORAGE")]
+    label_bind_storage: String,
 
     #[arg(long, env = "OPENARK_LABEL_SIGNED_OUT")]
     label_signed_out: String,
@@ -147,6 +150,55 @@ impl Service<'_> {
         }
         Ok(())
     }
+
+    /// Update the current node's annotations
+    ///
+    #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
+    async fn update_node_info(&self) -> Result<()> {
+        let Output { stdout, .. } = Command::new("bash")
+            .arg("-c")
+            .arg(format!(
+                "df --block-size=1 {path} | tail -n 1 | awk '{{print $4}}'",
+                // TODO: parse from args
+                path = "/mnt/openark-vine-session",
+            ))
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .output()
+            .await?;
+
+        let available_size: f64 = String::from_utf8(stdout)?.parse()?;
+
+        // Subtract required storage size
+        let storage = (available_size * 0.8 * 0.5).floor(); // both Container & VM
+        let storage = if storage.is_finite() && storage.is_sign_positive() {
+            storage as u128
+        } else {
+            0
+        };
+
+        // Apply the updated info
+        let name = &self.args.node_name;
+        let patch = Patch::Strategic(json!({
+            "apiVersion": Node::API_VERSION,
+            "kind": Node::KIND,
+            "metadata": {
+                "name": name,
+                "annotations": {
+                    &self.args.label_bind_storage: storage,
+                },
+            },
+        }));
+        self.api
+            .patch_metadata(name, &self.patch_params, &patch)
+            .await?;
+        {
+            #[cfg(feature = "tracing")]
+            info!("updated node/{name}");
+        }
+        Ok(())
+    }
 }
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO))]
@@ -167,7 +219,7 @@ async fn systemctl_exec(command: &str, service_name: &str) -> Result<()> {
 
 async fn try_main(args: &Args) -> Result<()> {
     let client = Client::try_default().await?;
-    let api = Api::all(client.clone());
+    let api = Api::all(client);
 
     let mut service = Service {
         api: api.clone(),
@@ -180,6 +232,7 @@ async fn try_main(args: &Args) -> Result<()> {
         },
         running: None,
     };
+    service.update_node_info().await?;
 
     let watcher_config = watcher::Config {
         label_selector: Some(format!("kubernetes.io/hostname={}", &args.node_name)),

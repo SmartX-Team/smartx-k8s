@@ -287,7 +287,7 @@ persistence:
 pdb:
   ## @param pdb.create Enable/disable a Pod Disruption Budget creation
   ##
-  create: true
+  create: false
   ## @param pdb.minAvailable Minimum number/percentage of pods that must still be available after the eviction
   ##
   minAvailable: ""

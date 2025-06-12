@@ -5,7 +5,7 @@ apiserver:
   image:
     repo: quay.io/ulagbulag/openark
     tag: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 argo:
   destination:
@@ -47,7 +47,7 @@ operator:
   image:
     repo: quay.io/ulagbulag/openark
     tag: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
   # Duration for signing out nodes as seconds.
   # TODO: Use labels to detect completing signout out

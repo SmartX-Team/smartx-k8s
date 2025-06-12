@@ -39,10 +39,18 @@ BASE_IMAGE_REPO="$(
     cat ${CONFIGMAP_PATH} |
         yq '.metadata.annotations."images.ulagbulag.io/base.repo"'
 )"
+IMAGE_NAME="$(
+    cat ${CONFIGMAP_PATH} |
+        yq '.metadata.name'
+)"
 IMAGE_VERSION="$(
     cat ${CONFIGMAP_PATH} |
         yq '.metadata.labels."app.kubernetes.io/version"'
 )"
+eval EXTRA_ARGS=\""$(
+    cat ${CONFIGMAP_PATH} |
+        yq '.data.args'
+)"\"
 
 IMAGE_TAG="${BASE_IMAGE_REPO}/${IMAGE_NAME}:${IMAGE_VERSION}"
 
@@ -56,6 +64,7 @@ set +e +o pipefail
 "${CONTAINER_RUNTIME}" build \
     --tag "${IMAGE_TAG}" \
     ${CONTAINER_RUNTIME_EXTRA_ARGS} \
+    ${EXTRA_ARGS} \
     "${IMAGE_HOME}"
 exit_code="$?"
 

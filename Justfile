@@ -27,6 +27,11 @@ bootstrap REPO:
 box *ARGS:
     @./hack/box-ls.sh {{ ARGS }}
 
+# Run development package: openark-cli
+run *ARGS:
+    @cargo run --package openark-cli -- \
+        {{ ARGS }} \
+
 # Run development package: dark-lake
 run-dark-lake PROFILE *ARGS:
     @RUSTFLAGS="--cfg=io_uring_skip_arch_check" \

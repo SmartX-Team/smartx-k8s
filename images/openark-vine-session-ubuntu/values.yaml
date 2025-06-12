@@ -1,0 +1,634 @@
+---
+build:
+  # Whether to install package one by one. Useful for debugging.
+  incremental: true
+
+debian:
+  image:
+    repo: docker.io/library/ubuntu
+    tag: "24.04"
+
+packages:
+  - name: core
+    dependencies:
+      - name: bash
+      - name: binutils
+      - name: busybox
+      - name: cmake
+      - name: curl
+      - name: fakeroot
+      - name: findutils
+      - name: gpg
+      - name: libtool
+      - name: just
+      - name: make
+      - name: meson
+      - name: nasm
+      - name: pkg-config
+      - name: rclone
+      - name: rsync
+      - name: sqlite3
+      - name: sudo
+      - name: uidmap
+      - name: wget
+      - name: zip
+  - name: audio
+    dependencies:
+      - kind: Group
+        name: core
+      - name: blueman
+      - name: libldacbt-abr2
+      - name: libldacbt-enc2
+      - name: libpipewire-0.3-common
+      - name: libspa-0.2-bluetooth
+      - name: pavucontrol
+      - name: pipewire
+      - name: pipewire-audio-client-libraries
+      - name: pipewire-media-session
+        state: false
+      - name: pipewire-pulse
+      - name: pulseaudio-module-bluetooth
+        state: false
+      - name: pulseaudio-utils
+      - name: wireplumber
+  - name: bmc
+    dependencies:
+      - kind: Group
+        name: core
+      - name: ipmitool
+  - name: browser
+    dependencies:
+      - kind: Group
+        name: desktop-environment-gtk
+  - name: browser-firefox
+    dependencies:
+      - kind: Group
+        name: browser
+      - name: firefox
+      - name: firefox-locale-ko
+        locales:
+          - ko_KR.UTF-8
+  - name: browser-google-chrome
+    dependencies:
+      - kind: Group
+        name: browser
+      - name: google-chrome-stable
+  - name: browser-rdp
+    dependencies:
+      - kind: Group
+        name: browser
+      - name: rdesktop
+  - name: browser-thunderbird
+    dependencies:
+      - kind: Group
+        name: browser
+      - name: thunderbird
+      - name: thunderbird-locale-ko
+        locales:
+          - ko_KR.UTF-8
+  - name: cli
+    dependencies:
+      - kind: Group
+        name: core
+      - name: jq
+      - name: yq
+  - name: container
+    dependencies:
+      - kind: Group
+        name: core
+      - name: containernetworking-plugins
+      - name: nvidia-container-toolkit-base
+  - name: container-podman
+    dependencies:
+      - kind: Group
+        name: container
+      - kind: Group
+        name: devel-go
+      - name: aardvark-dns
+      - name: buildah
+      - name: crun
+      - name: duperemove
+      - name: libassuan-dev
+      - name: libbtrfs-dev
+      - name: libc6-dev
+      - name: libcap-dev
+      - name: libdevmapper-dev
+      - name: libyajl-dev
+      - name: netavark
+      - kind: BuildScript
+        name: podman
+      - name: podman-docker
+      - name: slirp4netns
+  - name: dbus
+    dependencies:
+      - kind: Group
+        name: core
+      - name: dbus-user-session
+      - name: python3-dbus
+  - name: desktop-environment
+    dependencies:
+      - kind: Group
+        name: audio
+      - kind: Group
+        name: core
+      - kind: Group
+        name: dbus
+      - kind: Group
+        name: graphics-x11
+      - kind: Group
+        name: ime
+      - kind: Group
+        name: systemd
+      - name: dialog
+      - name: gvfs
+      - name: libnotify-bin
+      - name: libunwind-dev
+      - name: trash-cli
+      - name: tumbler
+      - name: xauth
+      - name: xdg-dbus-proxy
+      - name: xdg-user-dirs
+      - name: xmlstarlet
+  - name: desktop-environment-gtk
+    dependencies:
+      - kind: Group
+        name: desktop-environment
+      - name: file-roller
+      - name: gnome-bluetooth
+      - name: libwebkit2gtk-4.1
+      - name: network-manager-gnome
+      - name: picom
+      - name: plank
+      - name: xdg-desktop-portal-gtk
+      - name: zenity
+  - name: desktop-environment-qt
+    dependencies:
+      - kind: Group
+        name: desktop-environment
+      - name: libqt5printsupport5t64
+      - name: qtbase5-dev
+  - name: desktop-environment-xfce4
+    dependencies:
+      - kind: Group
+        name: desktop-environment-gtk
+      - name: thunar
+      - name: thunar-archive-plugin
+      - name: thunar-volman
+      - name: xfce4-appfinder
+      - name: xfce4-notifyd
+      - name: xfce4-panel
+      - name: xfce4-pulseaudio-plugin
+      - name: xfce4-screenshooter
+      - name: xfce4-session
+      - name: xfce4-settings
+      - name: xfce4-terminal
+      - name: xfconf
+      - name: xfdesktop4
+      - name: xfwm4
+  - name: devel
+    dependencies:
+      - kind: Group
+        name: cli
+      - name: autoconf
+      - name: automake
+      - name: build-essential
+      - name: cmake
+      - name: git
+      - name: git-lfs
+      - name: libcap-dev
+      - name: libpcap-dev
+      - name: libseccomp-dev
+      - name: libsystemd-dev
+      - name: libtool
+      - name: m4
+      # - name: pkgconfig
+  - name: devel-asm
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: llvm-dev
+  - name: devel-cpp
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: clang
+      - name: gcc
+      - name: g++
+      - name: libclang-dev
+  - name: devel-go
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: go-md2man
+      - name: golang-go
+  - name: devel-gtk
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: libgtk2.0-dev
+  - name: devel-hardware
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: libhwloc-dev
+      - name: libudev-dev
+  - name: devel-java
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: default-jre
+  - name: devel-linker
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: mold
+  - name: devel-mobile
+    dependencies:
+      - kind: Group
+        name: devel
+  # - name: devel-mobile-android
+  #   dependencies:
+  #     - kind: Group
+  #       name: devel-mobile
+  #     - name: android-build-tools-installer
+  - name: devel-networking
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: libprotobuf-dev
+      - name: libprotobuf-c-dev
+      - name: libprotoc-dev
+      - name: libssl-dev
+      - name: protobuf-compiler
+  - name: devel-python3
+    dependencies:
+      - kind: Group
+        name: devel
+      - kind: Group
+        name: python3
+      - name: python3-pip
+  - name: devel-rust
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: rustup
+  - name: devel-web
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: nodejs
+      - name: npm
+  - name: editor
+    dependencies:
+      - kind: Group
+        name: core
+      - name: nano
+      - name: screen
+      - name: vim
+  - name: filesystem
+    dependencies:
+      - kind: Group
+        name: core
+      - name: btrfs-progs
+      - name: fuse-overlayfs
+      - name: libfuse-dev
+  - name: fonts
+    dependencies:
+      - kind: Group
+        name: core
+      - name: fonts-noto
+      - name: fonts-noto-cjk-extra
+      - name: fonts-noto-color-emoji
+      - name: fonts-noto-extra
+      - name: fonts-noto-mono
+      - name: fonts-noto-ui-core
+      - name: fonts-noto-ui-extra
+      - name: fonts-noto-unhinted
+  - name: games
+    dependencies:
+      - kind: Group
+        name: graphics-3d
+      - name: gamemode
+  - name: games-wine
+    dependencies:
+      - kind: Group
+        name: devel
+      - kind: Group
+        name: games
+      - name: lutris
+      - kind: BuildScript
+        name: lutris
+      - name: steam
+      - name: wine
+      - kind: BuildScript
+        name: wine
+      - name: wine32
+        arch:
+          - x86_64
+      - name: wine64
+        arch:
+          - x86_64
+  - name: graphics
+    dependencies:
+      - kind: Group
+        name: core
+      - kind: Group
+        name: fonts
+  - name: graphics-3d
+    dependencies:
+      - kind: Group
+        name: graphics
+      - name: glslang-tools
+      - name: libegl1-mesa-dev
+      - name: libgles2-mesa-dev
+      - name: libglu1-mesa
+      - name: libnsl2
+      - name: libosmesa6
+      - name: libvdpau-va-gl1
+      - name: libvulkan1
+      - name: mesa-drm-shim
+      - name: mesa-libgallium
+      - name: mesa-opencl-icd
+      - name: mesa-utils
+      - name: mesa-va-drivers
+      - name: mesa-vdpau-drivers
+      - name: mesa-vulkan-drivers
+      - name: vulkan-icd
+      - name: vulkan-tools
+  - name: graphics-3d-nvidia
+    dependencies:
+      - kind: Group
+        name: graphics-3d
+      - name: libnvidia-egl-wayland1
+  - name: graphics-wayland
+    dependencies:
+      - kind: Group
+        name: audio
+      - kind: Group
+        name: desktop-environment-gtk
+      - kind: Group
+        name: devel
+      - kind: Group
+        name: graphics-3d
+      - kind: Group
+        name: graphics-x11
+      - kind: Group
+        name: gstreamer
+      - name: freerdp2-dev
+      - name: freerdp3-dev
+      - name: gnutls-dev
+      - name: hwdata
+      - name: libdisplay-info-dev
+      - name: libgmp-dev
+      - name: libgtk-3-dev
+      - name: libinput-dev
+      - name: liblcms2-dev
+      - name: libneatvnc-dev
+      - name: libpam-dev
+      - name: libpipewire-0.3-dev
+      - name: libseat-dev
+      - name: libturbojpeg-dev
+      - name: libva-dev
+      - name: libvulkan-dev
+      - name: libwayland-client0
+      - name: libwayland-dev
+      - name: libwayland-egl-backend-dev
+      - name: libwayland-egl1
+      - name: libx11-xcb-dev
+      - name: libxcb-composite0-dev
+      - name: libxcb-cursor-dev
+      - name: libxcb-xkb-dev
+      - name: libxkbcommon-dev
+      - name: nettle-dev
+      - name: wayland-protocols
+      - name: wayland-utils
+      - name: weston
+      - kind: BuildScript
+        name: weston
+      - name: winpr-utils
+      - name: xwayland
+  - name: graphics-x11
+    dependencies:
+      - kind: Group
+        name: graphics
+      - name: dbus-x11
+      - name: wmctrl
+      - name: x11-utils
+      - name: xdotool
+  - name: gstreamer
+    dependencies:
+      - kind: Group
+        name: audio
+      - kind: Group
+        name: desktop-environment-gtk
+      - kind: Group
+        name: graphics-3d
+      - name: gstreamer1.0-alsa
+      - name: gstreamer1.0-gl
+      - name: gstreamer1.0-gtk3
+      - name: gstreamer1.0-libav
+      - name: gstreamer1.0-pipewire
+      - name: gstreamer1.0-plugins-bad
+      - name: gstreamer1.0-plugins-base
+      - name: gstreamer1.0-plugins-good
+      - name: gstreamer1.0-plugins-ugly
+      - name: gstreamer1.0-pulseaudio
+      - name: gstreamer1.0-qt5
+      - name: gstreamer1.0-tools
+      - name: gstreamer1.0-vaapi
+      - name: gstreamer1.0-x
+      - name: libges-1.0-dev
+      - name: libgstreamer1.0-dev
+      - name: libgstreamer-plugins-bad1.0-dev
+      - name: libgstreamer-plugins-base1.0-dev
+      - name: libgstrtspserver-1.0-dev
+  - name: ide
+    dependencies:
+      - kind: Group
+        name: desktop-environment-gtk
+      - name: android-studio
+      - name: code
+  - name: ime
+    dependencies:
+      - kind: Group
+        name: locales
+  - name: ime-nimf
+    dependencies:
+      - kind: Group
+        name: core
+      - name: libnimf1
+      - name: nimf
+      - name: nimf-dev
+      - name: nimf-libhangul
+        locales:
+          - name: ko_KR.UTF-8
+  - name: kubernetes
+    dependencies:
+      - kind: Group
+        name: core
+      - name: kubectl
+  - name: locales
+    dependencies:
+      - kind: Group
+        name: core
+      - name: language-pack-ko
+        locales:
+          - name: ko_KR.UTF-8
+      - name: locales
+  - name: networking
+    dependencies:
+      - kind: Group
+        name: core
+      - name: dnsutils
+      - name: iptables
+      - name: iputils-ping
+      - name: libgpgme-dev
+      - name: nmap
+      - name: openssh-client
+      - name: openssh-server
+      - name: ssh-askpass
+      - name: traceroute
+  - name: nvidia-deepstream
+    dependencies:
+      - kind: Group
+        name: devel
+      - kind: Group
+        name: graphics-3d-nvidia
+      - kind: Group
+        name: gstreamer
+      # CUDA
+      - name: cuda-toolkit-11-8
+      - name: cuda-toolkit-12-1
+      # NVIDIA Nsights
+      - name: nsight-compute-2022.3.0
+      - name: nsight-systems-2022.4.2
+      # DeepStream dependencies
+      - kind: BuildScript
+        name: nvidia-deepstream
+      - name: libcufft11
+      - name: libnvinfer-dev
+        version: 8.6.1.6-1+cuda12.0
+      - name: libnvinfer-headers-dev
+        version: 8.6.1.6-1+cuda12.0
+      - name: libnvinfer-headers-plugin-dev
+        version: 8.6.1.6-1+cuda12.0
+      - name: libnvinfer-plugin-dev
+        version: 8.6.1.6-1+cuda12.0
+      - name: libnvonnxparsers-dev
+        version: 8.6.1.6-1+cuda12.0
+      - name: libyaml-cpp-dev
+      - name: libyaml-cpp0.7
+  - name: office
+    dependencies:
+      - kind: Group
+        name: desktop-environment-gtk
+  - name: office-latex
+    dependencies:
+      - kind: Group
+        name: office
+      - name: chktex
+      - name: latexmk
+      - name: texlive-full
+  - name: office-libreoffice
+    dependencies:
+      - kind: Group
+        name: office
+      - name: libreoffice
+      - name: libreoffice-gtk3
+  - name: pci
+    dependencies:
+      - kind: Group
+        name: core
+      - name: fancontrol
+      - name: i2c-tools
+      - name: lm-sensors
+      - name: pciutils
+      - name: read-edid
+  - name: printer
+    dependencies:
+      - kind: Group
+        name: core
+      - name: cups
+      - name: cups-bsd
+      - name: cups-client
+      - name: cups-filters
+      - name: hp-ppd
+      - name: hpijs-ppds
+      - name: hplip
+      - name: openprinting-ppds
+      - name: printer-driver-all
+      - name: printer-driver-cups-pdf
+      - name: system-config-printer
+  - name: python3
+    dependencies:
+      - kind: Group
+        name: core
+      - name: python3
+      - name: python3-certifi
+      - name: python3-distro
+      - name: python3-lxml
+      - name: python3-pillow
+      - name: python3-requests
+      - name: python3-yaml
+  - name: sched
+    dependencies:
+      - kind: Group
+        name: core
+      - kind: Group
+        name: devel
+      - kind: BuildScript
+        name: ananicy
+      - name: schedtool
+  - name: shell
+    dependencies:
+      - kind: Group
+        name: core
+  - name: shell-bash
+    dependencies:
+      - kind: Group
+        name: shell
+      - name: bash
+      - name: bash-completion
+  - name: shell-zsh
+    when:
+      - name: '{{ eq "zsh" .Values.user.shell }}'
+    dependencies:
+      - kind: Group
+        name: shell
+      - name: zsh
+      - name: zsh-autosuggestions
+      - name: zsh-completions
+      - name: zsh-syntax-highlighting
+  - name: systemd
+    dependencies:
+      - kind: Group
+        name: python3
+      - name: procps
+      - name: systemd
+  - name: virtual-machine
+    dependencies:
+      - kind: Group
+        name: desktop-environment-gtk
+      - name: qemu-system
+      - name: virt-manager
+      - name: virt-viewer
+
+systemd:
+  journalctl:
+    path: https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/journalctl3.py
+  systemctl:
+    path: https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py
+
+user:
+  uid: 2000
+  gid: 2000
+  name: user
+  sudo: true
+  shell: zsh
+  groups:
+    - audio
+    - cdrom
+    - input
+    - lpadmin
+    - render
+    - video

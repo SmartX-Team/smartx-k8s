@@ -272,6 +272,7 @@ pub enum ComputeMode {
 }
 
 impl ComputeMode {
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_replicas(&self) -> u32 {
         match self {
@@ -280,6 +281,7 @@ impl ComputeMode {
         }
     }
 
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_workload_config(&self) -> &str {
         match self {
@@ -584,6 +586,7 @@ impl<'a> NodeSession<'a> {
 
     /// Append node labels.
     ///
+    #[cfg(feature = "serde")]
     #[must_use]
     pub fn append_labels(&self, mut labels: BTreeMap<String, String>) -> BTreeMap<String, String> {
         for (key, value) in self.metadata.build_labels() {
@@ -642,24 +645,6 @@ impl<'a> NodeSession<'a> {
                     .filter(|&v| v >= 0)
                     .unwrap_or_default();
                 self.metadata.bind_memory = Some(Quantity(memory.to_string()));
-            }
-
-            // Bind Storage
-            {
-                let storage = allocatable
-                    .get("ephemeral-storage")
-                    .and_then(|q| ParsedQuantity::try_from(q).ok())
-                    .and_then(|q| q.to_bytes_f64())
-                    .unwrap_or_default();
-
-                // Subtract required storage size
-                let storage = (storage * 0.8 * 0.5).floor(); // both Container & VM
-                let storage = if storage.is_finite() && storage.is_sign_positive() {
-                    storage as u128
-                } else {
-                    0
-                };
-                self.metadata.bind_storage = Some(Quantity(storage.to_string()));
             }
         }
         self.metadata.bind_node = self.metadata.name.clone();

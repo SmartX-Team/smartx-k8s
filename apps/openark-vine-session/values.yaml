@@ -112,8 +112,8 @@ session:
     root: false
     sudo: true
   image:
-    repo: quay.io/ulagbulag/openark-vine-desktop
-    tag: ubuntu-24.04-v30
+    repo: quay.io/ulagbulag/openark-vine-session
+    tag: ubuntu-24.04-20250612
     pullPolicy: IfNotPresent
 
   locale:
