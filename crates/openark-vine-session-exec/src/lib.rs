@@ -46,7 +46,7 @@ pub async fn exec(kube: Client, args: &ExecArgs) -> Result<ExecSession> {
     let pods = api.list(&lp).await?.items;
 
     // Create processes
-    let container = "session";
+    let container = "desktop";
     let wait = *wait;
     let ap = AttachParams {
         container: Some(container.into()),

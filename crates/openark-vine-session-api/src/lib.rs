@@ -272,6 +272,7 @@ pub enum ComputeMode {
 }
 
 impl ComputeMode {
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_replicas(&self) -> u32 {
         match self {
@@ -280,6 +281,7 @@ impl ComputeMode {
         }
     }
 
+    #[cfg(feature = "serde")]
     #[must_use]
     const fn as_nvidia_gpu_workload_config(&self) -> &str {
         match self {
@@ -584,6 +586,7 @@ impl<'a> NodeSession<'a> {
 
     /// Append node labels.
     ///
+    #[cfg(feature = "serde")]
     #[must_use]
     pub fn append_labels(&self, mut labels: BTreeMap<String, String>) -> BTreeMap<String, String> {
         for (key, value) in self.metadata.build_labels() {
