@@ -14,7 +14,7 @@ spec:
     name: openark-vine-session
     namespace: vine-session
     period: "0 0 * * *"
-    version: ubuntu-24.04-20250617
+    version: ubuntu-24.04-20250626
     buildArgs:
       - name: HTTP_PROXY
       - name: HTTPS_PROXY

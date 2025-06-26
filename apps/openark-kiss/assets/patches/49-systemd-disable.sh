@@ -11,6 +11,10 @@ set -e -o pipefail
 # Verbose
 set -x
 
+# AppArmor
+rm -f \
+    /etc/apparmor.d/usr.lib.snapd.snap-confine.real
+
 # Default Services
 cd /etc/systemd/system/
 rm -f \
@@ -81,7 +85,6 @@ rm -f \
 # SYSINIT
 cd /etc/systemd/system/sysinit.target.wants/
 rm -f \
-    apparmor.service \
     multipathd.service \
     open-iscsi.service
 

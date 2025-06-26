@@ -54,11 +54,12 @@ mkdir -p \
     /var/lib/shared/overlay-images \
     /var/lib/shared/overlay-layers \
     /var/lib/shared/vfs-images \
-    /var/lib/shared/vfs-layers \
-    touch /var/lib/shared/overlay-images/images.lock \
-    touch /var/lib/shared/overlay-layers/layers.lock \
-    touch /var/lib/shared/vfs-images/images.lock \
-    touch /var/lib/shared/vfs-layers/layers.lock
+    /var/lib/shared/vfs-layers
+touch \
+    /var/lib/shared/overlay-images/images.lock \
+    /var/lib/shared/overlay-layers/layers.lock \
+    /var/lib/shared/vfs-images/images.lock \
+    /var/lib/shared/vfs-layers/layers.lock
 
 ## generate a CDI specification that refers to all NVIDIA devices
 mkdir -p /etc/cdi/

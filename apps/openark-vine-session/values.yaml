@@ -120,7 +120,7 @@ session:
     sudo: true
   image:
     repo: quay.io/ulagbulag/openark-vine-session
-    tag: ubuntu-24.04-20250617
+    tag: ubuntu-24.04-20250626
     pullPolicy: IfNotPresent
 
   locale:

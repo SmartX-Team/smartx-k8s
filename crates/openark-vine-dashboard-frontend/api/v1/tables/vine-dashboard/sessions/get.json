@@ -75,7 +75,7 @@
         "kind": "String",
         "optional": false,
         "maxLength": 256,
-        "placeholder": "quay.io/ulagbulag/openark-vine-session:ubuntu-24.04-20250617"
+        "placeholder": "quay.io/ulagbulag/openark-vine-session:ubuntu-24.04-20250626"
       },
       {
         "name": "cpu",
