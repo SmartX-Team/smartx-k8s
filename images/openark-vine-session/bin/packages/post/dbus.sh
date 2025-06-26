@@ -3,11 +3,14 @@
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
-# Remove conflicted repositories
+# DBus Configuration
 
 # Prehibit errors
 set -e -o pipefail
 # Verbose
 set -x
 
-rm /etc/apt/sources.list.d/microsoft.list
+patch_src='/var/lib/dpkg/statoverride'
+if [ -f "${patch_src}" ]; then
+    sed -i '/^root \+messagebus .*$/ d' /var/lib/dpkg/statoverride
+fi

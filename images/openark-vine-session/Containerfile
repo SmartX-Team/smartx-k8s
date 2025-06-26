@@ -3,7 +3,9 @@
 # found in the LICENSE file.
 
 # Be ready for serving
-FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+{{ $dist := index .Values.dist .Values.dist.kind }}
+{{ $_ := set .Values.dist "current" $dist }}
+FROM "{{ $dist.image.repo }}:{{ $dist.image.tag }}" AS server
 
 # Configure user-specific environment variables
 ENV SHELL={{ .Values.user.shell | quote }}
@@ -36,16 +38,57 @@ VOLUME [ {{ $home | quote }} ]
 
 # Configure OS-specific settings
 RUN true \
+{{- if eq .Values.dist.kind "archlinux" }}
+    {{- $packageManagerName := index ( $dist.packageManager.install | split " " ) "_3" }}
+    {{- if not ( eq "pacman" $packageManagerName ) }}
+        {{- $packageManager := printf "%s%s"
+            $packageManagerName
+            ( $dist.packageManager.binary | ternary "-bin" "" )
+        }}
+        # Install AUR package manager
+        && pacman -Sy --needed --noconfirm \
+            base-devel \
+            curl \
+            git \
+            gzip \
+            sudo \
+            tar \
+        && useradd _pacman -m -s /bin/bash \
+        && passwd -d _pacman \
+        && printf '\n# AUR Builder\n_pacman ALL=(ALL) NOPASSWD: ALL\n' | tee -a /etc/sudoers >/dev/null \
+        && cd /opt \
+            && curl -sSL -o {{ printf "./%s.tar.gz" $packageManager | quote }} \
+                {{ printf "https://aur.archlinux.org/cgit/aur.git/snapshot/%s.tar.gz" $packageManager | quote }} \
+            && tar xf {{ printf "./%s.tar.gz" $packageManager | quote }} \
+            && cd {{ $packageManager | quote }} \
+                && chown -R _pacman:_pacman . \
+                && sudo -u _pacman makepkg \
+                && pacman -U --noconfirm {{ printf "./%s-[0-9\\.]*-[0-9]*.pkg.tar.zst" $packageManager }} \
+        && cd / \
+        && rm -rf \
+            {{ printf "/opt/%s" $packageManager | quote }} \
+            {{ printf "/opt/%s.tar.gz" $packageManager | quote }} \
+    {{- else if not $dist.packageManager.binary }}
+        {{- fail "pacman package should be binary" }}
+    {{- end }}
+    # Install which
+    && {{ $dist.packageManager.install }} which \
+{{- end }}
+{{- if not ( eq $dist.ldconfig.path "/sbin/ldconfig.real" ) }}
+    # Alias ldconfig.real
+    && ln -s {{ $dist.ldconfig.path | quote }} '/sbin/ldconfig.real' \
+{{- end }}
     # Fix base image bugs
     ## NVIDIA
     ### Fix library link issue (duplicated library binaries)
     && ( \
         which find >/dev/null \
-            && /sbin/ldconfig.real 2>&1 | grep -Po '/usr/local/lib/lib[a-z0-9_.]+' | xargs rm -f \
-            && /sbin/ldconfig.real \
+            && {{ $dist.ldconfig.path | quote }} 2>&1 | grep -Po '/usr/local/lib/lib[a-z0-9_.]+' | xargs rm -f \
+            && {{ $dist.ldconfig.path | quote }} \
     ) || true \
+{{- if eq .Values.dist.kind "debian" }}
     # Install base dependencies
-    && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+    && {{ $dist.packageManager.install }} \
         apt-transport-https \
         apt-utils \
         ca-certificates \
@@ -58,15 +101,16 @@ RUN true \
     && if test "X$(uname -m)" = 'Xx86_64'; then dpkg --add-architecture 'i386'; fi \
     # Install apt-fast
     && add-apt-repository -y 'ppa:apt-fast/stable' \
-    && apt-get install -y apt-fast \
+    && {{ $dist.packageManager.install }} apt-fast \
     && echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections \
     && echo debconf apt-fast/dlflag boolean true | debconf-set-selections \
     && echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections \
+{{- end }}
     # Cleanup
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && {{ $dist.packageManager.clean }}
 
 # Configure 3rd-party repositories
+{{- if eq .Values.dist.kind "debian" }}
 ADD ./etc/apt/apt.conf.d/* /etc/apt/apt.conf.d/
 ADD ./etc/apt/keyrings/* /etc/apt/keyrings/
 ADD ./etc/apt/preferences.d/* /etc/apt/preferences.d/
@@ -91,8 +135,8 @@ RUN true \
     && find /etc/apt/sources.list.d/ -type f -exec sh -c \
         'mv "{}" "{}.bak" && envsubst < "{}.bak" >"{}" && rm "{}".bak' \; \
     # Cleanup
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && {{ $dist.packageManager.clean }}
+{{- end }}
 
 {{- /* Collect Requirements */}}
 {{- $requirements := dict }}
@@ -140,9 +184,24 @@ RUN true \
 {{- $packages := list }}
 {{- range $name := $packageKeys }}
     {{- range $_ := $.Values.packages }}
-        {{- if eq $name .name }}
-            {{- /* TODO: Validate arch, locales */}}
-            {{- $packages = append $packages . }}
+        {{- /* TODO: Validate arch, locales */}}
+        {{- if and
+            ( eq $name .name)
+            ( or ( empty .dist ) ( has $.Values.dist.kind .dist ) )
+        }}
+            {{- $dependencies := list }}
+            {{- range $_ := .dependencies }}
+                {{- /* TODO: Validate arch, locales */}}
+                {{- if and
+                    ( or ( empty .dist ) ( has $.Values.dist.kind .dist ) )
+                }}
+                    {{- $dependencies = append $dependencies . }}
+                {{- end }}
+            {{- end }}
+            {{- $packages = append $packages ( dict
+                "name" $name
+                "dependencies" $dependencies
+            ) }}
         {{- end }}
     {{- end }}
 {{- end }}
@@ -156,8 +215,7 @@ RUN true \
 {{- end }}
 
 {{- /* Execute install */}}
-{{- if .Values.build.incremental }}
-{{- range $_ := $packages }}
+{{- range $package := $packages }}
 RUN true \
     # Pre-install
     {{- $filePath := printf "bin/packages/pre/%s.sh" .name }}
@@ -179,13 +237,16 @@ RUN true \
                 {{- $dependency = printf "%s-" .name }}
             {{- end }}
             {{- if not ( empty .version ) }}
+                {{- if empty .dist }}
+                    {{- fail ( printf "pinning external package version should be with dist: %s/%s" $package.name .name ) }}
+                {{- end }}
                 {{- $dependency = printf "%s=%s" .name .version }}
             {{- end }}
             {{- $dependencies = append $dependencies ( $dependency | quote ) }}
         {{- end }}
     {{- end }}
     {{- if not ( empty $dependencies ) }}
-        && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
+        && {{ $dist.packageManager.install }}
         {{- printf " %s" ( $dependencies | join " " ) }} \
     {{- end }}
     # Execute build scripts
@@ -216,80 +277,8 @@ RUN true \
         ) \
     {{- end }}
     # Cleanup
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/* \
+    && {{ $dist.packageManager.clean }} \
     && echo {{ printf "Completed %s!" .name | quote }}
-{{- end }}
-{{- else }}
-RUN true \
-    # Pre-install
-    {{- range $_ := $packages }}
-        {{- $filePath := printf "bin/packages/pre/%s.sh" .name }}
-        {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
-            && ( \
-                SCRIPT_PATH='/tmp/script.sh' \
-                    && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
-                    && chmod u+x "${SCRIPT_PATH}" \
-                    && "${SCRIPT_PATH}" \
-                    && rm "${SCRIPT_PATH}" \
-            ) \
-        {{- end }}
-    {{- end }}
-    # Install
-    {{- $dependencies := list }}
-    {{- range $_ := $packages }}
-        {{- range $_ := .dependencies }}
-            {{- if eq ( .kind | default "ExternalPackage" ) "ExternalPackage" }}
-                {{- $dependency := .name }}
-                {{- if eq false .state }}
-                    {{- $dependency = printf "%s-" .name }}
-                {{- end }}
-                {{- if not ( empty .version ) }}
-                    {{- $dependency = printf "%s=%s" .name .version }}
-                {{- end }}
-                {{- $dependencies = append $dependencies ( $dependency | quote ) }}
-            {{- end }}
-        {{- end }}
-    {{- end }}
-    {{- if not ( empty $dependencies ) }}
-        && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
-        {{- printf " %s" ( $dependencies | join " " ) }} \
-    {{- end }}
-    # Execute build scripts
-    {{- range $_ := $packages }}
-        {{- range $_ := .dependencies }}
-            {{- if eq .kind "BuildScript" }}
-                {{- $filePath := printf "bin/packages/%s.sh" .name }}
-                {{- if empty ( $.Files.Glob $filePath ) }}
-                    {{- fail ( printf "Build script not found: %s" .name ) }}
-                {{- end }}
-                && ( \
-                    SCRIPT_PATH='/tmp/script.sh' \
-                        && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
-                        && chmod u+x "${SCRIPT_PATH}" \
-                        && "${SCRIPT_PATH}" \
-                        && rm "${SCRIPT_PATH}" \
-                ) \
-            {{- end }}
-        {{- end }}
-    {{- end }}
-    # Post-install
-    {{- range $_ := $packages }}
-        {{- $filePath := printf "bin/packages/post/%s.sh" .name }}
-        {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
-            && ( \
-                SCRIPT_PATH='/tmp/script.sh' \
-                    && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
-                    && chmod u+x "${SCRIPT_PATH}" \
-                    && "${SCRIPT_PATH}" \
-                    && rm "${SCRIPT_PATH}" \
-            ) \
-        {{- end }}
-    {{- end }}
-    # Cleanup
-    && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo 'Completed!'
 {{- end }}
 
 {{/* Execute post-install */}}

@@ -13,7 +13,9 @@ set -x
 WINE_REPO="https://github.com/Kron4ek/Wine-Builds/releases/download"
 WINE_VERSION_API="https://api.github.com/repos/Kron4ek/Wine-Builds/releases/latest"
 
+{{- if eq "debian" .Values.dist.kind }}
 apt-mark hold wine
+{{- end }}
 
 # Get the latest version
 ## ARCH

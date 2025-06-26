@@ -2,7 +2,7 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.images.openark-vine-session-ubuntu
+  name: smartx.images.openark-vine-session
 spec:
   group: ops
   phase: beta
@@ -14,7 +14,12 @@ spec:
     name: openark-vine-session
     namespace: vine-session
     period: "0 0 * * *"
-    version: ubuntu-24.04-20250626
+    version: {{ printf "%s-%s-%s"
+        .Values.dist.kind
+        ( index .Values.dist .Values.dist.kind "image" "tag" )
+        "20250626"
+      | quote
+    }}
     buildArgs:
       - name: HTTP_PROXY
       - name: HTTPS_PROXY

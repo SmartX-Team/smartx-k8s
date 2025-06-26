@@ -23,8 +23,13 @@ for file in ${ADDONS_HOME}/share/autostart/*.desktop; do
     ln -s "${file}" "/etc/xdg/autostart/$(basename "${file}")"
 done
 
+# Add system groups
+{{- if eq "archlinux" .Values.dist.kind }}
+groupadd --gid "24" "cdrom"
+{{- end }}
+
 # Add a user
-/sbin/ldconfig.real
+{{ .Values.dist.current.ldconfig.path | quote }}
 groupadd \
     -g {{ printf "%d" ( .Values.user.gid | int ) | quote }} \
     -o {{ .Values.user.name | quote }}

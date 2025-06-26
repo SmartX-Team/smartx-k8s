@@ -24,11 +24,11 @@
     {{- end }}
   {{- end }}
   {{- $_ := set $.Release "Namespace" $.Manifest.spec.containerImage.namespace }}
-  {{- $_ := set $.Release "Version" (
+  {{- $_ := set $.Release "Version" ( tpl (
     $.Manifest.spec.containerImage.version
     | default $.Cluster.Values.openark.version
     | default $.Chart.AppVersion
-  ) }}
+  ) $ ) }}
 {{- end }}
 
 {{/* Create a Containerfile ConfigMap */}}

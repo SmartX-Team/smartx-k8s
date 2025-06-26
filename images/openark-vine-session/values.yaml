@@ -1,12 +1,32 @@
 ---
-build:
-  # Whether to install package one by one. Useful for debugging.
-  incremental: true
-
 debian:
   image:
     repo: docker.io/library/ubuntu
     tag: "24.04"
+
+dist:
+  kind: debian
+
+  archlinux:
+    image:
+      repo: docker.io/library/archlinux
+      tag: base
+    ldconfig:
+      path: /sbin/ldconfig
+    packageManager:
+      binary: true
+      clean: sudo -u _pacman yay -Scc --noconfirm && rm -rf /var/cache/pacman/pkg/*
+      install: sudo -u _pacman yay -Sy --needed --noconfirm
+
+  debian:
+    image:
+      repo: docker.io/library/ubuntu
+      tag: "24.04"
+    ldconfig:
+      path: /sbin/ldconfig.real
+    packageManager:
+      clean: apt-get clean all && rm -rf /var/lib/apt/lists/*
+      install: apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
 
 packages:
   - name: core
@@ -18,7 +38,12 @@ packages:
       - name: curl
       - name: fakeroot
       - name: findutils
+      - name: gnupg
+        dist:
+          - archlinux
       - name: gpg
+        dist:
+          - debian
       - name: libtool
       - name: just
       - name: make
@@ -27,9 +52,14 @@ packages:
       - name: pkg-config
       - name: rclone
       - name: rsync
+      - name: shadow
+        dist:
+          - archlinux
       - name: sqlite3
       - name: sudo
       - name: uidmap
+        dist:
+          - debian
       - name: wget
       - name: zip
   - name: audio
@@ -38,18 +68,34 @@ packages:
         name: core
       - name: blueman
       - name: libldacbt-abr2
+        dist:
+          - debian
       - name: libldacbt-enc2
+        dist:
+          - debian
       - name: libpipewire-0.3-common
+        dist:
+          - debian
       - name: libspa-0.2-bluetooth
+        dist:
+          - debian
       - name: pavucontrol
       - name: pipewire
       - name: pipewire-audio-client-libraries
+        dist:
+          - debian
       - name: pipewire-media-session
+        dist:
+          - debian
         state: false
       - name: pipewire-pulse
       - name: pulseaudio-module-bluetooth
+        dist:
+          - debian
         state: false
       - name: pulseaudio-utils
+        dist:
+          - debian
       - name: wireplumber
   - name: bmc
     dependencies:
@@ -65,14 +111,26 @@ packages:
       - kind: Group
         name: browser
       - name: firefox
+      - name: firefox-i18n-ko
+        dist:
+          - archlinux
+        locales:
+          - ko_KR.UTF-8
       - name: firefox-locale-ko
+        dist:
+          - debian
         locales:
           - ko_KR.UTF-8
   - name: browser-google-chrome
     dependencies:
       - kind: Group
         name: browser
+      - name: google-chrome
+        dist:
+          - archlinux
       - name: google-chrome-stable
+        dist:
+          - debian
   - name: browser-rdp
     dependencies:
       - kind: Group
@@ -83,7 +141,14 @@ packages:
       - kind: Group
         name: browser
       - name: thunderbird
+      - name: thunderbird-i18n-ko
+        dist:
+          - archlinux
+        locales:
+          - ko_KR.UTF-8
       - name: thunderbird-locale-ko
+        dist:
+          - debian
         locales:
           - ko_KR.UTF-8
   - name: cli
@@ -96,8 +161,19 @@ packages:
     dependencies:
       - kind: Group
         name: core
+      - name: cni-plugins
+        dist:
+          - archlinux
       - name: containernetworking-plugins
+        dist:
+          - debian
+      - name: nvidia-container-toolkit
+        dist:
+          - archlinux
       - name: nvidia-container-toolkit-base
+        dist:
+          - debian
+        version: 1.17.7-1
   - name: container-podman
     dependencies:
       - kind: Group
@@ -109,22 +185,46 @@ packages:
       - name: crun
       - name: duperemove
       - name: libassuan-dev
+        dist:
+          - debian
       - name: libbtrfs-dev
+        dist:
+          - debian
       - name: libc6-dev
-      - name: libcap-dev
+        dist:
+          - debian
       - name: libdevmapper-dev
+        dist:
+          - debian
       - name: libyajl-dev
+        dist:
+          - debian
       - name: netavark
+      - name: podman
+        dist:
+          - archlinux
       - kind: BuildScript
         name: podman
+        dist:
+          - debian
       - name: podman-docker
       - name: slirp4netns
   - name: dbus
     dependencies:
       - kind: Group
         name: core
+      - name: dbus
+        dist:
+          - archlinux
       - name: dbus-user-session
+        dist:
+          - debian
+      - name: python-dbus
+        dist:
+          - archlinux
       - name: python3-dbus
+        dist:
+          - debian
   - name: desktop-environment
     dependencies:
       - kind: Group
@@ -141,14 +241,29 @@ packages:
         name: systemd
       - name: dialog
       - name: gvfs
+      - name: libnotify
+        dist:
+          - archlinux
       - name: libnotify-bin
+        dist:
+          - debian
+      - name: libunwind
+        dist:
+          - archlinux
       - name: libunwind-dev
+        dist:
+          - debian
       - name: trash-cli
       - name: tumbler
       - name: xauth
+        dist:
+          - debian
       - name: xdg-dbus-proxy
       - name: xdg-user-dirs
       - name: xmlstarlet
+      - name: xorg-xauth
+        dist:
+          - archlinux
   - name: desktop-environment-gtk
     dependencies:
       - kind: Group
@@ -156,17 +271,34 @@ packages:
       - name: file-roller
       - name: gnome-bluetooth
       - name: libwebkit2gtk-4.1
+        dist:
+          - debian
+      - name: network-manager-applet
+        dist:
+          - archlinux
       - name: network-manager-gnome
+        dist:
+          - debian
       - name: picom
       - name: plank
       - name: xdg-desktop-portal-gtk
+      - name: webkit2gtk-4.1
+        dist:
+          - archlinux
       - name: zenity
   - name: desktop-environment-qt
     dependencies:
       - kind: Group
         name: desktop-environment
       - name: libqt5printsupport5t64
+        dist:
+          - debian
+      - name: qt5-base
+        dist:
+          - archlinux
       - name: qtbase5-dev
+        dist:
+          - debian
   - name: desktop-environment-xfce4
     dependencies:
       - kind: Group
@@ -183,7 +315,12 @@ packages:
       - name: xfce4-settings
       - name: xfce4-terminal
       - name: xfconf
+      - name: xfdesktop
+        dist:
+          - archlinux
       - name: xfdesktop4
+        dist:
+          - debian
       - name: xfwm4
   - name: devel
     dependencies:
@@ -191,14 +328,36 @@ packages:
         name: cli
       - name: autoconf
       - name: automake
+      - name: base-devel
+        dist:
+          - archlinux
       - name: build-essential
+        dist:
+          - debian
       - name: cmake
       - name: git
       - name: git-lfs
+      - name: libcap
+        dist:
+          - archlinux
       - name: libcap-dev
+        dist:
+          - debian
+      - name: libpcap
+        dist:
+          - archlinux
       - name: libpcap-dev
+        dist:
+          - debian
+      - name: libseccomp
+        dist:
+          - archlinux
       - name: libseccomp-dev
+        dist:
+          - debian
       - name: libsystemd-dev
+        dist:
+          - debian
       - name: libtool
       - name: m4
       # - name: pkgconfig
@@ -206,7 +365,15 @@ packages:
     dependencies:
       - kind: Group
         name: devel
+      - name: llvm
+        dist:
+          - archlinux
       - name: llvm-dev
+        dist:
+          - debian
+      - name: llvm-libs
+        dist:
+          - archlinux
   - name: devel-cpp
     dependencies:
       - kind: Group
@@ -214,29 +381,55 @@ packages:
       - name: clang
       - name: gcc
       - name: g++
+        dist:
+          - debian
       - name: libclang-dev
+        dist:
+          - debian
   - name: devel-go
     dependencies:
       - kind: Group
         name: devel
+      - name: go
+        dist:
+          - archlinux
       - name: go-md2man
       - name: golang-go
+        dist:
+          - debian
   - name: devel-gtk
     dependencies:
       - kind: Group
         name: devel
+      - name: gtk2
+        dist:
+          - archlinux
       - name: libgtk2.0-dev
+        dist:
+          - debian
   - name: devel-hardware
     dependencies:
       - kind: Group
         name: devel
+      - name: hwloc
+        dist:
+          - archlinux
       - name: libhwloc-dev
+        dist:
+          - debian
       - name: libudev-dev
+        dist:
+          - debian
   - name: devel-java
     dependencies:
       - kind: Group
         name: devel
       - name: default-jre
+        dist:
+          - debian
+      - name: java-runtime
+        dist:
+          - archlinux
   - name: devel-linker
     dependencies:
       - kind: Group
@@ -256,17 +449,47 @@ packages:
       - kind: Group
         name: devel
       - name: libprotobuf-dev
+        dist:
+          - debian
       - name: libprotobuf-c-dev
+        dist:
+          - debian
       - name: libprotoc-dev
+        dist:
+          - debian
       - name: libssl-dev
+        dist:
+          - debian
+      - name: openssl
+        dist:
+          - archlinux
+      - name: protobuf
+        dist:
+          - archlinux
+      - name: protobuf-c
+        dist:
+          - archlinux
       - name: protobuf-compiler
+        dist:
+          - debian
   - name: devel-python3
     dependencies:
       - kind: Group
         name: devel
       - kind: Group
         name: python3
+      - name: python-pip
+        dist:
+          - archlinux
+      - name: python-poetry
+        dist:
+          - archlinux
       - name: python3-pip
+        dist:
+          - debian
+      - name: python3-poetry
+        dist:
+          - debian
   - name: devel-rust
     dependencies:
       - kind: Group
@@ -291,19 +514,55 @@ packages:
         name: core
       - name: btrfs-progs
       - name: fuse-overlayfs
+      - name: fuse2
+        dist:
+          - archlinux
+      - name: fuse3
+        dist:
+          - archlinux
       - name: libfuse-dev
+        dist:
+          - debian
   - name: fonts
     dependencies:
       - kind: Group
         name: core
       - name: fonts-noto
+        dist:
+          - debian
       - name: fonts-noto-cjk-extra
+        dist:
+          - debian
       - name: fonts-noto-color-emoji
+        dist:
+          - debian
       - name: fonts-noto-extra
+        dist:
+          - debian
       - name: fonts-noto-mono
+        dist:
+          - debian
       - name: fonts-noto-ui-core
+        dist:
+          - debian
       - name: fonts-noto-ui-extra
+        dist:
+          - debian
       - name: fonts-noto-unhinted
+        dist:
+          - debian
+      - name: noto-fonts
+        dist:
+          - archlinux
+      - name: noto-fonts-cjk
+        dist:
+          - archlinux
+      - name: noto-fonts-emoji
+        dist:
+          - archlinux
+      - name: noto-fonts-extra
+        dist:
+          - archlinux
   - name: games
     dependencies:
       - kind: Group
@@ -318,16 +577,24 @@ packages:
       - name: lutris
       - kind: BuildScript
         name: lutris
+        dist:
+          - debian
       - name: steam
+        dist:
+          - debian
       - name: wine
       - kind: BuildScript
         name: wine
       - name: wine32
         arch:
           - x86_64
+        dist:
+          - debian
       - name: wine64
         arch:
           - x86_64
+        dist:
+          - debian
   - name: graphics
     dependencies:
       - kind: Group
@@ -338,28 +605,93 @@ packages:
     dependencies:
       - kind: Group
         name: graphics
+      - name: glslang
+        dist:
+          - archlinux
+      - name: glu
+        dist:
+          - archlinux
       - name: glslang-tools
+        dist:
+          - debian
       - name: libegl1-mesa-dev
+        dist:
+          - debian
       - name: libgles2-mesa-dev
+        dist:
+          - debian
       - name: libglu1-mesa
+        dist:
+          - debian
+      - name: libnsl
+        dist:
+          - archlinux
       - name: libnsl2
+        dist:
+          - debian
       - name: libosmesa6
+        dist:
+          - debian
+      - name: libvdpau-va-gl
+        dist:
+          - archlinux
       - name: libvdpau-va-gl1
+        dist:
+          - debian
       - name: libvulkan1
+        dist:
+          - debian
+      - name: mesa
+        dist:
+          - archlinux
       - name: mesa-drm-shim
+        dist:
+          - debian
       - name: mesa-libgallium
+        dist:
+          - debian
       - name: mesa-opencl-icd
+        dist:
+          - debian
       - name: mesa-utils
       - name: mesa-va-drivers
+        dist:
+          - debian
       - name: mesa-vdpau-drivers
+        dist:
+          - debian
       - name: mesa-vulkan-drivers
+        dist:
+          - debian
+      - name: vulkan-headers
+        dist:
+          - archlinux
       - name: vulkan-icd
+        dist:
+          - debian
+      - name: vulkan-icd-loader
+        dist:
+          - archlinux
+      - name: vulkan-mesa-layers
+        dist:
+          - archlinux
+      - name: vulkan-nouveau
+        dist:
+          - archlinux
       - name: vulkan-tools
   - name: graphics-3d-nvidia
     dependencies:
       - kind: Group
         name: graphics-3d
+      - name: libva-nvidia-driver
+        dist:
+          - archlinux
+      - name: libvdpau
+        dist:
+          - archlinux
       - name: libnvidia-egl-wayland1
+        dist:
+          - debian
   - name: graphics-wayland
     dependencies:
       - kind: Group
@@ -374,46 +706,124 @@ packages:
         name: graphics-x11
       - kind: Group
         name: gstreamer
+      - name: egl-wayland
+        dist:
+          - archlinux
+      - name: freerdp
+        dist:
+          - archlinux
+      - name: freerdp2
+        dist:
+          - archlinux
       - name: freerdp2-dev
+        dist:
+          - debian
       - name: freerdp3-dev
+        dist:
+          - debian
       - name: gnutls-dev
+        dist:
+          - debian
       - name: hwdata
+        dist:
+          - debian
       - name: libdisplay-info-dev
+        dist:
+          - debian
       - name: libgmp-dev
+        dist:
+          - debian
       - name: libgtk-3-dev
+        dist:
+          - debian
       - name: libinput-dev
+        dist:
+          - debian
       - name: liblcms2-dev
+        dist:
+          - debian
       - name: libneatvnc-dev
+        dist:
+          - debian
       - name: libpam-dev
+        dist:
+          - debian
       - name: libpipewire-0.3-dev
+        dist:
+          - debian
       - name: libseat-dev
+        dist:
+          - debian
       - name: libturbojpeg-dev
+        dist:
+          - debian
       - name: libva-dev
+        dist:
+          - debian
       - name: libvulkan-dev
+        dist:
+          - debian
       - name: libwayland-client0
+        dist:
+          - debian
       - name: libwayland-dev
+        dist:
+          - debian
       - name: libwayland-egl-backend-dev
+        dist:
+          - debian
       - name: libwayland-egl1
+        dist:
+          - debian
       - name: libx11-xcb-dev
+        dist:
+          - debian
       - name: libxcb-composite0-dev
+        dist:
+          - debian
       - name: libxcb-cursor-dev
+        dist:
+          - debian
       - name: libxcb-xkb-dev
+        dist:
+          - debian
       - name: libxkbcommon-dev
+        dist:
+          - debian
       - name: nettle-dev
+        dist:
+          - debian
       - name: wayland-protocols
+        dist:
+          - debian
       - name: wayland-utils
+        dist:
+          - debian
       - name: weston
       - kind: BuildScript
         name: weston
+        dist:
+          - debian
       - name: winpr-utils
+        dist:
+          - debian
+      - name: xorg-xwayland
+        dist:
+          - archlinux
       - name: xwayland
+        dist:
+          - debian
   - name: graphics-x11
     dependencies:
       - kind: Group
         name: graphics
       - name: dbus-x11
+        dist:
+          - debian
       - name: wmctrl
       - name: x11-utils
+        dist:
+          - debian
       - name: xdotool
   - name: gstreamer
     dependencies:
@@ -423,31 +833,113 @@ packages:
         name: desktop-environment-gtk
       - kind: Group
         name: graphics-3d
+      - name: gst-devtools
+        dist:
+          - archlinux
+      - name: gst-libav
+        dist:
+          - archlinux
+      - name: gst-plugin-gtk
+        dist:
+          - archlinux
+      - name: gst-plugin-gtk4
+        dist:
+          - archlinux
+      - name: gst-plugin-pipewire
+        dist:
+          - archlinux
+      - name: gst-plugin-va
+        dist:
+          - archlinux
+      - name: gst-plugins-bad
+        dist:
+          - archlinux
+      - name: gst-plugins-base
+        dist:
+          - archlinux
+      - name: gst-plugins-good
+        dist:
+          - archlinux
+      - name: gst-plugins-ugly
+        dist:
+          - archlinux
+      - name: gst-rtsp-server
+        dist:
+          - archlinux
+      - name: gst-webrtc-signalling-server
+        dist:
+          - archlinux
       - name: gstreamer1.0-alsa
+        dist:
+          - debian
       - name: gstreamer1.0-gl
+        dist:
+          - debian
       - name: gstreamer1.0-gtk3
+        dist:
+          - debian
       - name: gstreamer1.0-libav
+        dist:
+          - debian
       - name: gstreamer1.0-pipewire
+        dist:
+          - debian
       - name: gstreamer1.0-plugins-bad
+        dist:
+          - debian
       - name: gstreamer1.0-plugins-base
+        dist:
+          - debian
       - name: gstreamer1.0-plugins-good
+        dist:
+          - debian
       - name: gstreamer1.0-plugins-ugly
+        dist:
+          - debian
       - name: gstreamer1.0-pulseaudio
+        dist:
+          - debian
       - name: gstreamer1.0-qt5
+        dist:
+          - debian
       - name: gstreamer1.0-tools
+        dist:
+          - debian
       - name: gstreamer1.0-vaapi
+        dist:
+          - debian
       - name: gstreamer1.0-x
+        dist:
+          - debian
+      - name: gstreamer-vaapi
+        dist:
+          - archlinux
       - name: libges-1.0-dev
+        dist:
+          - debian
       - name: libgstreamer1.0-dev
+        dist:
+          - debian
       - name: libgstreamer-plugins-bad1.0-dev
+        dist:
+          - debian
       - name: libgstreamer-plugins-base1.0-dev
+        dist:
+          - debian
       - name: libgstrtspserver-1.0-dev
+        dist:
+          - debian
   - name: ide
     dependencies:
       - kind: Group
         name: desktop-environment-gtk
       - name: android-studio
       - name: code
+        dist:
+          - debian
+      - name: visual-studio-code-bin
+        dist:
+          - archlinux
   - name: ime
     dependencies:
       - kind: Group
@@ -456,10 +948,26 @@ packages:
     dependencies:
       - kind: Group
         name: core
+      # - name: libhangul-git
+      #   dist:
+      #     - archlinux
+      #   locales:
+      #     - name: ko_KR.UTF-8
       - name: libnimf1
+        dist:
+          - debian
       - name: nimf
+        dist:
+          - debian
       - name: nimf-dev
+        dist:
+          - debian
+      # - name: nimf-git
+      #   dist:
+      #     - archlinux
       - name: nimf-libhangul
+        dist:
+          - debian
         locales:
           - name: ko_KR.UTF-8
   - name: kubernetes
@@ -489,6 +997,8 @@ packages:
       - name: ssh-askpass
       - name: traceroute
   - name: nvidia-deepstream
+    dist:
+      - debian
     dependencies:
       - kind: Group
         name: devel
@@ -507,14 +1017,24 @@ packages:
         name: nvidia-deepstream
       - name: libcufft11
       - name: libnvinfer-dev
+        dist:
+          - debian
         version: 8.6.1.6-1+cuda12.0
       - name: libnvinfer-headers-dev
+        dist:
+          - debian
         version: 8.6.1.6-1+cuda12.0
       - name: libnvinfer-headers-plugin-dev
+        dist:
+          - debian
         version: 8.6.1.6-1+cuda12.0
       - name: libnvinfer-plugin-dev
+        dist:
+          - debian
         version: 8.6.1.6-1+cuda12.0
       - name: libnvonnxparsers-dev
+        dist:
+          - debian
         version: 8.6.1.6-1+cuda12.0
       - name: libyaml-cpp-dev
       - name: libyaml-cpp0.7
@@ -527,14 +1047,62 @@ packages:
       - kind: Group
         name: office
       - name: chktex
+        dist:
+          - debian
+      - name: ed
+        dist:
+          - archlinux
       - name: latexmk
+        dist:
+          - debian
+      - name: perl-file-homedir
+        dist:
+          - archlinux
+      - name: perl-yaml-tiny
+        dist:
+          - archlinux
+      - name: python-pygments
+        dist:
+          - archlinux
+      - name: texlive-binextra
+        dist:
+          - archlinux
       - name: texlive-full
+        dist:
+          - debian
+      - name: texlive-latexextra
+        dist:
+          - archlinux
+      - name: wdiff
+        dist:
+          - archlinux
   - name: office-libreoffice
     dependencies:
       - kind: Group
         name: office
       - name: libreoffice
+        dist:
+          - debian
+      - name: libreoffice-extension-texmaths
+        dist:
+          - archlinux
+      - name: libreoffice-extension-writer2latex
+        dist:
+          - archlinux
+      - name: libreoffice-fresh
+        dist:
+          - archlinux
+      - name: libreoffice-fresh-ko
+        dist:
+          - archlinux
+        locales:
+          - ko_KR.UTF-8
       - name: libreoffice-gtk3
+        dist:
+          - debian
+      - name: unoconv
+        dist:
+          - archlinux
   - name: pci
     dependencies:
       - kind: Group
@@ -550,34 +1118,88 @@ packages:
         name: core
       - name: cups
       - name: cups-bsd
+        dist:
+          - debian
       - name: cups-client
+        dist:
+          - debian
       - name: cups-filters
       - name: hp-ppd
+        dist:
+          - debian
       - name: hpijs-ppds
+        dist:
+          - debian
       - name: hplip
       - name: openprinting-ppds
+        dist:
+          - debian
       - name: printer-driver-all
+        dist:
+          - debian
       - name: printer-driver-cups-pdf
+        dist:
+          - debian
       - name: system-config-printer
   - name: python3
     dependencies:
       - kind: Group
         name: core
+      - name: python
+        dist:
+          - archlinux
+      - name: python-certifi
+        dist:
+          - archlinux
+      - name: python-distro
+        dist:
+          - archlinux
+      - name: python-lxml
+        dist:
+          - archlinux
+      - name: python-pillow
+        dist:
+          - archlinux
+      - name: python-requests
+        dist:
+          - archlinux
+      - name: python-yaml
+        dist:
+          - archlinux
       - name: python3
+        dist:
+          - debian
       - name: python3-certifi
+        dist:
+          - debian
       - name: python3-distro
+        dist:
+          - debian
       - name: python3-lxml
+        dist:
+          - debian
       - name: python3-pillow
+        dist:
+          - debian
       - name: python3-requests
+        dist:
+          - debian
       - name: python3-yaml
+        dist:
+          - debian
   - name: sched
     dependencies:
       - kind: Group
         name: core
       - kind: Group
         name: devel
+      - name: ananicy
+        dist:
+          - archlinux
       - kind: BuildScript
         name: ananicy
+        dist:
+          - debian
       - name: schedtool
   - name: shell
     dependencies:
@@ -605,11 +1227,18 @@ packages:
         name: python3
       - name: procps
       - name: systemd
+        dist:
+          - debian
   - name: virtual-machine
     dependencies:
       - kind: Group
         name: desktop-environment-gtk
+      - name: qemu-common
+        dist:
+          - archlinux
       - name: qemu-system
+        dist:
+          - debian
       - name: virt-manager
       - name: virt-viewer
 

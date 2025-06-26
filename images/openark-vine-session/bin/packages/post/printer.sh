@@ -10,6 +10,10 @@ set -e -o pipefail
 # Verbose
 set -x
 
+{{- if eq "archlinux" .Values.dist.kind }}
+groupadd --gid "104" "lpadmin"
+{{- end }}
+
 echo 'a4'
 mkdir -p \
     /etc/cups \
