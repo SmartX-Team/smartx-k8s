@@ -11,6 +11,7 @@ spec:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
   app:
+    autoPrune: true
     autoSync: true
     namespace: vine-session
     patched: true

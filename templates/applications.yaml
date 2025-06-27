@@ -309,7 +309,7 @@ Create applications
 {{- $_ := set $.Manifest "AppOfApps" false }}
 {{- $_ := set $.Manifest "AppProject" $projectName }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
-{{- $_ := set $.Manifest "AutoPrune" false }}
+{{- $_ := set $.Manifest "AutoPrune" ( $.Manifest.Raw.spec.app.autoPrune | default false ) }}
 {{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}
 {{- $_ := set $.Manifest "Cluster" $clusterName }}
 {{- $_ := set $.Manifest "FilePath" $manifestPath }}

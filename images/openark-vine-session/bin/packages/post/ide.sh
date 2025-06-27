@@ -10,6 +10,6 @@ set -e -o pipefail
 # Verbose
 set -x
 
-{{- if eq "debian" .Values.dist.kind }}
+{{- if eq "debian" .Values.dist.current.kind }}
 rm /etc/apt/sources.list.d/microsoft.list
 {{- end }}

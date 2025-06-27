@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 # Be ready for serving
-{{ $dist := index .Values.dist .Values.dist.kind }}
+{{ $dist := index .Values.dist .Values.dist.name }}
 {{ $_ := set .Values.dist "current" $dist }}
 FROM "{{ $dist.image.repo }}:{{ $dist.image.tag }}" AS server
 
@@ -38,7 +38,7 @@ VOLUME [ {{ $home | quote }} ]
 
 # Configure OS-specific settings
 RUN true \
-{{- if eq .Values.dist.kind "archlinux" }}
+{{- if eq $dist.kind "archlinux" }}
     {{- $packageManagerName := index ( $dist.packageManager.install | split " " ) "_3" }}
     {{- if not ( eq "pacman" $packageManagerName ) }}
         {{- $packageManager := printf "%s%s"
@@ -86,7 +86,7 @@ RUN true \
             && {{ $dist.ldconfig.path | quote }} 2>&1 | grep -Po '/usr/local/lib/lib[a-z0-9_.]+' | xargs rm -f \
             && {{ $dist.ldconfig.path | quote }} \
     ) || true \
-{{- if eq .Values.dist.kind "debian" }}
+{{- if eq $dist.kind "debian" }}
     # Install base dependencies
     && {{ $dist.packageManager.install }} \
         apt-transport-https \
@@ -110,7 +110,7 @@ RUN true \
     && {{ $dist.packageManager.clean }}
 
 # Configure 3rd-party repositories
-{{- if eq .Values.dist.kind "debian" }}
+{{- if eq $dist.kind "debian" }}
 ADD ./etc/apt/apt.conf.d/* /etc/apt/apt.conf.d/
 ADD ./etc/apt/keyrings/* /etc/apt/keyrings/
 ADD ./etc/apt/preferences.d/* /etc/apt/preferences.d/
@@ -187,13 +187,13 @@ RUN true \
         {{- /* TODO: Validate arch, locales */}}
         {{- if and
             ( eq $name .name)
-            ( or ( empty .dist ) ( has $.Values.dist.kind .dist ) )
+            ( or ( empty .dist ) ( has $dist.kind .dist ) )
         }}
             {{- $dependencies := list }}
             {{- range $_ := .dependencies }}
                 {{- /* TODO: Validate arch, locales */}}
                 {{- if and
-                    ( or ( empty .dist ) ( has $.Values.dist.kind .dist ) )
+                    ( or ( empty .dist ) ( has $dist.kind .dist ) )
                 }}
                     {{- $dependencies = append $dependencies . }}
                 {{- end }}

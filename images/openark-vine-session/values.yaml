@@ -5,9 +5,10 @@ debian:
     tag: "24.04"
 
 dist:
-  kind: debian
+  name: ubuntu
 
   archlinux:
+    kind: archlinux
     image:
       repo: docker.io/library/archlinux
       tag: base
@@ -18,7 +19,8 @@ dist:
       clean: sudo -u _pacman yay -Scc --noconfirm && rm -rf /var/cache/pacman/pkg/*
       install: sudo -u _pacman yay -Sy --needed --noconfirm
 
-  debian:
+  ubuntu:
+    kind: debian
     image:
       repo: docker.io/library/ubuntu
       tag: "24.04"

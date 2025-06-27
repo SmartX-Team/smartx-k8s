@@ -15,7 +15,7 @@ CRUN_VERSION="1.21"
 PODMAN_REPO="https://github.com/containers/podman.git"
 PODMAN_VERSION="5.5"
 
-{{- if eq "debian" .Values.dist.kind }}
+{{- if eq "debian" .Values.dist.current.kind }}
 apt-mark hold crun podman
 {{- end }}
 

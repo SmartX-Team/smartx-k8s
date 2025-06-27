@@ -15,8 +15,8 @@ spec:
     namespace: vine-session
     period: "0 0 * * *"
     version: {{ printf "%s-%s-%s"
-        .Values.dist.kind
-        ( index .Values.dist .Values.dist.kind "image" "tag" )
+        .Values.dist.name
+        ( index .Values.dist .Values.dist.name "image" "tag" )
         "20250626"
       | quote
     }}

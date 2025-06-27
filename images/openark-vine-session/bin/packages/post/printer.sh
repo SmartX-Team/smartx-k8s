@@ -10,7 +10,7 @@ set -e -o pipefail
 # Verbose
 set -x
 
-{{- if eq "archlinux" .Values.dist.kind }}
+{{- if eq "archlinux" .Values.dist.current.kind }}
 groupadd --gid "104" "lpadmin"
 {{- end }}
 

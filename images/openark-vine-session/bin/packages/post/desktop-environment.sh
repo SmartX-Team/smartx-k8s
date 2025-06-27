@@ -24,7 +24,7 @@ for file in ${ADDONS_HOME}/share/autostart/*.desktop; do
 done
 
 # Add system groups
-{{- if eq "archlinux" .Values.dist.kind }}
+{{- if eq "archlinux" .Values.dist.current.kind }}
 groupadd --gid "24" "cdrom"
 {{- end }}
 
