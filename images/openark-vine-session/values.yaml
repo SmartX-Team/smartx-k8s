@@ -1000,7 +1000,8 @@ packages:
       - name: traceroute
   - name: nvidia-deepstream
     dist:
-      - debian
+      # - debian
+      - nobody
     dependencies:
       - kind: Group
         name: devel

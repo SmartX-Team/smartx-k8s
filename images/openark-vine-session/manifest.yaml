@@ -17,7 +17,7 @@ spec:
     version: {{ printf "%s-%s-%s"
         .Values.dist.name
         ( index .Values.dist .Values.dist.name "image" "tag" )
-        "20250626"
+        "20250627"
       | quote
     }}
     buildArgs:
