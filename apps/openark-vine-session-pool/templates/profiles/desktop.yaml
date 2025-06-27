@@ -1,4 +1,4 @@
-{{- range $_ := .Values.profiles | default list }}
+{{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
 {{- if eq .kind "Desktop" }}
 
 ---

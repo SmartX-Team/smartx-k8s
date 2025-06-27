@@ -47,6 +47,8 @@ profiles:
     windows:
       eula: false
 
+extraProfiles: []
+
 bindings:
   []
   # - profileName: pytorch
