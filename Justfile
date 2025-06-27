@@ -6,9 +6,9 @@
 set dotenv-load
 
 # Build and push an image within ./images
-build-image NAME:
+build-image NAME *ARGS:
     @clear
-    @IMAGE_NAME={{ NAME }} ./hack/image-build.sh
+    @IMAGE_NAME={{ NAME }} ./hack/image-build.sh {{ ARGS }}
 
 # Build and push an ISO with specific preset repository (local path or URL)
 build-iso REPO:

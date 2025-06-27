@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 # Be ready for serving
-{{ $dist := index .Values.dist .Values.dist.name }}
-{{ $_ := set .Values.dist "current" $dist }}
+{{- $dist := index .Values.dist .Values.dist.name }}
+{{- $_ := set .Values.dist "current" $dist }}
 FROM "{{ $dist.image.repo }}:{{ $dist.image.tag }}" AS server
 
 # Configure user-specific environment variables

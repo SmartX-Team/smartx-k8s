@@ -16,7 +16,7 @@ livenessProbe:
     command:
       - test
       - -S
-      - /run/user/2000/pulse/native
+      - {{ printf "/run/user/%d/pulse/native" ( .Values.session.context.uid | int ) | quote }}
   initialDelaySeconds: 1
   periodSeconds: 5
 readinessProbe:

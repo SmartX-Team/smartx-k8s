@@ -593,6 +593,7 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
         let binding = bindings
             .items
             .into_iter()
+            .filter(|binding| binding.metadata.deletion_timestamp.is_none())
             .filter(|binding| binding.spec.enabled.unwrap_or(true))
             .filter(|binding| {
                 is_selected(

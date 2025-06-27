@@ -9,8 +9,9 @@ set -e -o pipefail
 set -x
 
 # User Directory Permissions
+{{- $containersHome := include "helm.userContainersHome" $ }}
 mkdir -p \
-    "${HOME}/.local/share/containers/storage" \
+    {{ printf "%s/storage" $containersHome | quote }} \
     '/mnt/public' \
     '/run/dbus' \
     "/run/user/${TARGET_UID}" \
@@ -18,16 +19,14 @@ mkdir -p \
     '/tmp/.X11-unix'
 chown "${TARGET_UID}" \
     "${HOME}/" \
-    "${HOME}/.local" \
-    "${HOME}/.local/share" \
-    "${HOME}/.local/share/containers" \
-    "${HOME}/.local/share/containers/storage" \
+    {{ $containersHome | quote }} \
+    {{ printf "%s/storage" $containersHome | quote }} \
     '/mnt/public' \
     '/run/dbus' \
     "/run/user/${TARGET_UID}"
 chmod 700 \
     "${HOME}" \
-    "${HOME}/.local/share/containers/storage" \
+    {{ printf "%s/storage" $containersHome | quote }} \
     '/run/dbus' \
     "/run/user/${TARGET_UID}"
 chmod 777 \

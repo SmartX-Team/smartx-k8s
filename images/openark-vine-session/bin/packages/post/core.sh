@@ -3,7 +3,7 @@
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
-# Docker (Podman) Configuration
+# Common Configuration
 
 # Prehibit errors
 set -e -o pipefail
@@ -15,3 +15,18 @@ set -x
 echo {{ printf "%s ALL=(ALL) NOPASSWD: ALL" .Values.user.name | quote }} >/etc/sudoers.d/10-wheel
 chmod 440 /etc/sudoers.d/10-wheel
 {{- end }}
+
+# Environment Variables Configuration
+ln -sf /usr/local/bin /opt/bin
+cat <<EOF >/etc/profile.d/path-local-bin.sh
+# local binary path registration
+export PATH=${PATH}:/usr/games
+export PATH=${PATH}:/usr/local/bin
+export PATH=${PATH}:/opt/bin
+EOF
+
+cat <<EOF >/etc/ld.so.conf.d/100-path-local-lib.conf
+# local library path registration
+/usr/local/lib
+/usr/local/lib64
+EOF

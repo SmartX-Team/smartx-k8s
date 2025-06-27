@@ -163,6 +163,8 @@ packages:
     dependencies:
       - kind: Group
         name: core
+      - kind: Group
+        name: devel-go
       - name: cni-plugins
         dist:
           - archlinux
@@ -172,10 +174,11 @@ packages:
       - name: nvidia-container-toolkit
         dist:
           - archlinux
+      - kind: BuildScript
+        name: nvidia-container-toolkit
       - name: nvidia-container-toolkit-base
         dist:
           - debian
-        version: 1.17.7-1
   - name: container-podman
     dependencies:
       - kind: Group
@@ -584,6 +587,12 @@ packages:
       - name: steam
         dist:
           - debian
+      # - name: umu-launcher
+      #   dist:
+      #     - archlinux
+      - name: vkd3d
+        dist:
+          - archlinux
       - name: wine
       - kind: BuildScript
         name: wine
@@ -597,6 +606,9 @@ packages:
           - x86_64
         dist:
           - debian
+      - name: winetricks
+        dist:
+          - archlinux
   - name: graphics
     dependencies:
       - kind: Group

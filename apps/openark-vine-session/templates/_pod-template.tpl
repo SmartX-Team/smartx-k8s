@@ -37,7 +37,11 @@ User home directory path (server-side)
 User containers directory path
 */}}
 {{- define "helm.userContainersHome" -}}
+{{- if .Values.session.context.root }}
+{{- printf "/var/lib/containers" }}
+{{- else }}
 {{- printf "%s/.local/share/containers" ( include "helm.userHome" $ ) }}
+{{- end }}
 {{- end }}
 
 {{- /*
@@ -374,7 +378,7 @@ securityContext:
   seccompProfile:
     type: Unconfined
 serviceAccount: {{ include "helm.serviceAccountName" $ | quote }}
-shareProcessNamespace: true
+shareProcessNamespace: true  # TODO: To be removed!
 terminationGracePeriodSeconds: 60
 tolerations:
   - operator: Exists

@@ -48,17 +48,14 @@ spec:
               value: "107"
 {{- else }}
             - name: TARGET_UID
-              value: "2000"
+              value: {{ .Values.session.context.uid | quote }}
             - name: TARGET_GID
-              value: "2000"
+              value: {{ .Values.session.context.gid | quote }}
 {{- end }}
           resources:
             requests:
               cpu: 50m
               memory: 20Mi
-            limits:
-              cpu: "1"
-              memory: 1Gi
           securityContext:
             privileged: false
             runAsNonRoot: false

@@ -18,7 +18,7 @@ livenessProbe:
     command:
       - test
       - -S
-      - /run/user/2000/pipewire-0
+      - {{ printf "/run/user/%d/pipewire-0" ( .Values.session.context.uid | int ) | quote }}
   initialDelaySeconds: 1
   periodSeconds: 5
 restartPolicy: Always

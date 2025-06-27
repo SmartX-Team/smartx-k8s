@@ -11,6 +11,8 @@ metadata:
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
+  drivers:
+{{- .drivers | default dict | toYaml | nindent 4 }}
   features: {}
   mode: Manual
   persistence:

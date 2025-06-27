@@ -12,7 +12,7 @@ set -e -o pipefail
 
 export ROOT="${ROOT:-$(pwd)}"
 
-IMAGE_HOME="$($(dirname "$0")/image-prepare.sh)"
+IMAGE_HOME="$($(dirname "$0")/image-prepare.sh ${@:1})"
 
 ###########################################################
 #   Auto-detect Container Runtime                         #

@@ -8,7 +8,7 @@ command:
   - -c
 args:
   - |
-{{- .Files.Get "bin/init_check_permissions.sh" | trim | nindent 4 }}
+{{- tpl ( .Files.Get "bin/init_check_permissions.sh" ) . | trim | nindent 4 }}
 env:
   - name: HOME
     value: {{ include "helm.userHome" $ | quote }}

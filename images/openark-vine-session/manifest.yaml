@@ -14,12 +14,16 @@ spec:
     name: openark-vine-session
     namespace: vine-session
     period: "0 0 * * *"
-    version: {{ printf "%s-%s-%s"
-        .Values.dist.name
-        ( index .Values.dist .Values.dist.name "image" "tag" )
-        "20250627"
-      | quote
-    }}
+    version:
+      {{- if not ( hasKey .Values.dist .Values.dist.name ) }}
+          {{- fail ( printf "No such dist: %s" .Values.dist.name ) }}
+      {{- end }}
+      {{ printf "%s-%s-%s"
+          .Values.dist.name
+          ( index .Values.dist .Values.dist.name "image" "tag" )
+          "20250627"
+        | quote
+      }}
     buildArgs:
       - name: HTTP_PROXY
       - name: HTTPS_PROXY

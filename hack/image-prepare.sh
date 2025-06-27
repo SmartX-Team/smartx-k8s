@@ -63,7 +63,7 @@ cat "${ROOT}/Chart.yaml" |
         >"${IMAGE_HOME}/Chart.yaml"
 
 # Build a template
-helm template "${IMAGE_NAME}" "${IMAGE_HOME}" \
+helm template "${IMAGE_NAME}" "${IMAGE_HOME}" ${@:1} \
     --output-dir "${IMAGE_HOME}" >/dev/null
 
 # Extract Containerfile
