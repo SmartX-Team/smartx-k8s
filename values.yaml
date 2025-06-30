@@ -294,6 +294,29 @@ kiss:
       username: ""
       password: ""
 
+  # Local Storage Configuration
+  storage:
+    fstype: ext4
+    lvm: true
+    match:
+      size: smallest
+      ssd: true
+    size: "0" # Use `0` to use full disk
+
+    volumes:
+      boot:
+        size: 1G
+      containerd:
+        size: 200G
+      etcd:
+        size: 10G
+      log:
+        size: 10G
+      rootfs:
+        size: 10G
+      vine:
+        size: 200G
+
 # Optional Kubespray Configuration
 kubespray:
   ## Container runtime

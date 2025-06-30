@@ -65,7 +65,7 @@ autoinstall:
       # Root drive
       - id: disk0
         type: disk
-        match: {{- .Values.storage.match | toYaml | nindent 10 }}
+        match: {{- .Values.kiss.storage.match | toYaml | nindent 10 }}
         ptable: gpt
         grub_device: true
         preserve: false
@@ -73,7 +73,7 @@ autoinstall:
       # Partition / EFI
       - id: partition_efi
         type: partition
-        size: 1G
+        size: {{ .Values.kiss.storage.volumes.boot.size | quote }}
         device: disk0
         flag: boot
         grub_device: true
@@ -88,14 +88,14 @@ autoinstall:
         path: /boot/efi
         device: format_efi
 
-{{- if .Values.storage.lvm }}
+{{- if .Values.kiss.storage.lvm }}
       # Partition / LVM
       - id: partition_lvm
         type: partition
-{{- if eq "0" ( .Values.storage.size | toString ) }}
+{{- if eq "0" ( .Values.kiss.storage.size | toString ) }}
         size: -1
 {{- else }}
-        size: {{ .Values.storage.size }}
+        size: {{ .Values.kiss.storage.size }}
 {{- end }}
         device: disk0
         preserve: false
@@ -109,10 +109,10 @@ autoinstall:
         name: lv_root
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 10G
+        size: {{ .Values.kiss.storage.volumes.rootfs.size | quote }}
       - id: format_root
         type: format
-        fstype: {{ .Values.storage.fstype | quote }}
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
         volume: lv_root
         preserve: false
       - id: mount_root
@@ -124,10 +124,10 @@ autoinstall:
         name: lv_containerd
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 200G
+        size: {{ .Values.kiss.storage.volumes.containerd.size | quote }}
       - id: format_containerd
         type: format
-        fstype: {{ .Values.storage.fstype | quote }}
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
         volume: lv_containerd
         preserve: false
       - id: mount_containerd
@@ -139,10 +139,10 @@ autoinstall:
         name: lv_log
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 10G
+        size: {{ .Values.kiss.storage.volumes.log.size | quote }}
       - id: format_log
         type: format
-        fstype: {{ .Values.storage.fstype | quote }}
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
         volume: lv_log
         preserve: false
       - id: mount_log
@@ -154,37 +154,54 @@ autoinstall:
         name: lv_etcd
         type: lvm_partition
         volgroup: vg_rootfs
-        size: 10G
+        size: {{ .Values.kiss.storage.volumes.etcd.size | quote }}
       - id: format_etcd
         type: format
-        fstype: {{ .Values.storage.fstype | quote }}
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
         volume: lv_etcd
         preserve: false
       - id: mount_etcd
         type: mount
         path: /opt/etcd
         device: format_etcd
+{{- if has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
+      # Logical Volume / OpenARK VINE Session
+      - id: lv_openark_vine_session
+        name: lv_openark_vine_session
+        type: lvm_partition
+        volgroup: vg_rootfs
+        size: {{ .Values.kiss.storage.volumes.vine.size | quote }}
+      - id: format_openark_vine_session
+        type: format
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
+        volume: lv_openark_vine_session
+        preserve: false
+      - id: mount_openark_vine_session
+        type: mount
+        path: /opt/etcd
+        device: format_openark_vine_session
+{{- end }}
 {{- else }}
       # Partition / Root
       - id: partition_root
         type: partition
-{{- if eq "0" ( .Values.storage.size | toString ) }}
+{{- if eq "0" ( .Values.kiss.storage.size | toString ) }}
         size: -1
 {{- else }}
-        size: {{ .Values.storage.size }}
+        size: {{ .Values.kiss.storage.size }}
 {{- end }}
         device: disk0
         preserve: false
       - id: format_root
         type: format
-        fstype: {{ .Values.storage.fstype | quote }}
+        fstype: {{ .Values.kiss.storage.fstype | quote }}
         volume: partition_root
         preserve: false
       - id: mount_root
         type: mount
         path: /
         device: format_root
-{{- if ne "0" ( .Values.storage.size | toString ) }}
+{{- if ne "0" ( .Values.kiss.storage.size | toString ) }}
       # Partition / Free
       - id: partition_free
         type: partition
