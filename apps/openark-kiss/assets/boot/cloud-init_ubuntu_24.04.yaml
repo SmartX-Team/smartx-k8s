@@ -178,7 +178,7 @@ autoinstall:
         preserve: false
       - id: mount_openark_vine_session
         type: mount
-        path: /opt/etcd
+        path: /mnt/openark-vine-session
         device: format_openark_vine_session
 {{- end }}
 {{- else }}

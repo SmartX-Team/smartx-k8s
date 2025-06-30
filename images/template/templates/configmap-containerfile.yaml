@@ -10,8 +10,8 @@
   {{- $_ := set $ "Values" ( tpl ( $.Files.Get $path ) $.Cluster | fromYaml | merge $.Values ) }}
 {{- end }}
 
-{{/* Patch base image */}}
-{{- $_ := set $.Values "baseImage" $.Cluster.Values.baseImage }}
+{{/* Patch base image if not defined */}}
+{{- $_ := set $.Values "baseImage" ( $.Values.baseImage | default $.Cluster.Values.baseImage ) }}
 
 {{/* Load manifest */}}
 {{- range $path, $_ := $.Files.Glob "manifest.yaml" }}
