@@ -174,6 +174,12 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- end }}
 
 {{- /********************************/}}
+- name: host-sys
+  mountPath: /sys/bus
+  subPath: bus
+  readOnly: true
+
+{{- /********************************/}}
 - name: machine-id
   mountPath: /etc/machine-id
   subPath: machine-id

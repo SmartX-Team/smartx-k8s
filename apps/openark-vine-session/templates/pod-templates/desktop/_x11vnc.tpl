@@ -19,10 +19,15 @@ securityContext:
   runAsNonRoot: {{ not ( .Values.session.context.root | default .Values.session.context.sudo ) }}
   runAsUser: {{ include "helm.userId" $ }}
 volumeMounts:
+
+{{- /********************************/}}
   - name: tmp-ice
     mountPath: /tmp/.ICE-unix
     readOnly: true
+
+{{- /********************************/}}
   - name: tmp-x11
     mountPath: /tmp/.X11-unix
     readOnly: true
+
 {{- end }}

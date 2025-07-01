@@ -36,6 +36,10 @@ volumeMounts:
     readOnly: true
 
 {{- /********************************/}}
+  - name: host-sys
+    mountPath: /sys
+
+{{- /********************************/}}
   - name: runtime-dbus
     mountPath: /run/dbus
     readOnly: true

@@ -1010,6 +1010,26 @@ packages:
       - name: openssh-server
       - name: ssh-askpass
       - name: traceroute
+  - name: nvidia-cuda-toolkit-11-8
+    dependencies:
+      - kind: Group
+        name: graphics-3d-nvidia
+      - name: cuda-toolkit-11-8
+        dist:
+          - debian
+  - name: nvidia-cuda-toolkit-12-1
+    dependencies:
+      - kind: Group
+        name: graphics-3d-nvidia
+      - name: cuda-toolkit-12-1
+        dist:
+          - debian
+  - name: nvidia-cuda-toolkit-stable
+    dependencies:
+      - kind: Group
+        name: nvidia-cuda-toolkit-11-8
+      - kind: Group
+        name: nvidia-cuda-toolkit-12-1
   - name: nvidia-deepstream
     dist:
       # - debian
@@ -1022,8 +1042,8 @@ packages:
       - kind: Group
         name: gstreamer
       # CUDA
-      - name: cuda-toolkit-11-8
-      - name: cuda-toolkit-12-1
+      - kind: Group
+        name: nvidia-cuda-toolkit-stable
       # NVIDIA Nsights
       - name: nsight-compute-2022.3.0
       - name: nsight-systems-2022.4.2

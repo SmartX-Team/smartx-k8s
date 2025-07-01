@@ -48,16 +48,30 @@ securityContext:
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
   runAsUser: {{ include "helm.userId" $ }}
 volumeMounts:
+
+{{- /********************************/}}
   - name: containerd-sock
     mountPath: /run/containerd/containerd.sock
+
+{{- /********************************/}}
   - name: dev-input
     mountPath: /dev/input
     readOnly: true
+
+{{- /********************************/}}
   - name: dev-snd
     mountPath: /dev/snd
     readOnly: true
+
+{{- /********************************/}}
+  - name: host-sys
+    mountPath: /sys
+
+{{- /********************************/}}
   - name: runtime-dbus
     mountPath: /run/dbus
+
+{{- /********************************/}}
   - name: runtime-udev
 {{- if not .Values.features.hostUdev }}
 {{- fail "Host display cannot be enabled without host Udev" }}
@@ -65,10 +79,17 @@ volumeMounts:
     mountPath: /run/udev
     readOnly: true
 {{- end }}
+
+{{- /********************************/}}
   - name: runtime-user
     mountPath: "/run/user/{{ include "helm.userId" $ }}"
+
+{{- /********************************/}}
   - name: tmp-ice
     mountPath: /tmp/.ICE-unix
+
+{{- /********************************/}}
   - name: tmp-x11
     mountPath: /tmp/.X11-unix
+
 {{- end }}

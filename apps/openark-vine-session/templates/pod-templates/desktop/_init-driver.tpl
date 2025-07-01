@@ -20,10 +20,8 @@ workingDir: /
 volumeMounts:
 
 {{- /********************************/}}
-{{- if not .Values.session.context.privileged }}
   - name: host-sys
     mountPath: /sys
-{{- end }}
 
 {{- /********************************/}}
   - name: modules

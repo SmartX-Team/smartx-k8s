@@ -36,12 +36,22 @@ securityContext:
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
   runAsUser: {{ include "helm.userId" $ }}
 volumeMounts:
+
+{{- /********************************/}}
   - name: dev-snd
     mountPath: /dev/snd
     readOnly: true
+
+{{- /********************************/}}
+  - name: host-sys
+    mountPath: /sys
+
+{{- /********************************/}}
   - name: runtime-dbus
     mountPath: /run/dbus
     readOnly: true
+
+{{- /********************************/}}
   - name: runtime-udev
 {{- if not .Values.features.hostUdev }}
 {{- fail "Host audio cannot be enabled without host Udev" }}
@@ -49,14 +59,23 @@ volumeMounts:
     mountPath: /run/udev
     readOnly: true
 {{- end }}
+
+{{- /********************************/}}
   - name: runtime-user
     mountPath: "/run/user/{{ include "helm.userId" $ }}"
+
+{{- /********************************/}}
   - name: tmp
     mountPath: /tmp
+
+{{- /********************************/}}
   - name: tmp-ice
     mountPath: /tmp/.ICE-unix
     readOnly: true
+
+{{- /********************************/}}
   - name: tmp-x11
     mountPath: /tmp/.X11-unix
     readOnly: true
+
 {{- end }}

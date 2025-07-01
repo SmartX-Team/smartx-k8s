@@ -24,6 +24,9 @@ securityContext:
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
   runAsUser: {{ include "helm.userId" $ }}
 volumeMounts:
+
+{{- /********************************/}}
   - name: runtime-dbus
     mountPath: /run/dbus
+
 {{- end }}
