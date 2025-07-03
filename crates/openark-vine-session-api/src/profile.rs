@@ -612,6 +612,9 @@ pub struct VMSourceSpec {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct VolumesSpec {
     #[cfg_attr(feature = "serde", serde(default))]
+    pub container: VolumeContainerSpec,
+
+    #[cfg_attr(feature = "serde", serde(default))]
     pub home: VolumeSpec,
 
     #[cfg_attr(feature = "serde", serde(default))]
@@ -652,6 +655,15 @@ pub struct VolumeClaimSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub capacity: Option<BTreeMap<String, Quantity>>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct VolumeContainerSpec {
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub root: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

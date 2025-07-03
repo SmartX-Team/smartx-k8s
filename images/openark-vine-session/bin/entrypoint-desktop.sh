@@ -18,15 +18,18 @@ rm -rf "${__ENV_HOME}"
 touch "${__ENV_HOME}"
 
 # Assert home directory's permission
-if sudo whoami >/dev/null; then
-    sudo mkdir -p "${HOME}/.local/share/containers/storage"
-    sudo chown "$(id -u):$(id -g)" \
-        "${HOME}/" \
-        "${HOME}/.local" \
-        "${HOME}/.local/share" \
-        "${HOME}/.local/share/containers" \
-        "${HOME}/.local/share/containers/storage"
+if sudo true >/dev/null; then
+    __PREFIX='sudo '
+else
+    __PREFIX=''
 fi
+${__PREFIX} mkdir -p "${HOME}/.local/share/containers/storage"
+${__PREFIX} chown "$(id -u):$(id -g)" \
+    "${HOME}/" \
+    "${HOME}/.local" \
+    "${HOME}/.local/share" \
+    "${HOME}/.local/share/containers" \
+    "${HOME}/.local/share/containers/storage"
 
 # Initialize rootless container xdg session
 "$(dirname "$0")/init-desktop-xdg.sh"
@@ -35,7 +38,9 @@ fi
 "$(dirname "$0")/init-desktop-wayland.sh"
 
 # Initialize rootless container ssh session
+set +x
 "$(dirname "$0")/init-desktop-ssh.sh"
+set -x
 unset USER_PASSWORD
 unset USER_SHELL
 

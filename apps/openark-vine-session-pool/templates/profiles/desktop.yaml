@@ -36,6 +36,10 @@ spec:
   session:
 {{- .session | default dict | toYaml | nindent 4 }}
   volumes:
+{{- if and .volumes .volumes.container }}
+    container:
+{{- .volumes.container | toYaml | nindent 6 }}
+{{- end }}
     home:
       type: LocalShared
 

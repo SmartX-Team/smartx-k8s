@@ -14,6 +14,8 @@ env:
     value: {{ include "helm.userHome" $ | quote }}
   - name: TARGET_UID
     value: {{ include "helm.userId" $ | quote }}
+  - name: TARGET_GID
+    value: {{ .Values.session.context.gid | quote }}
 resources:
   limits:
     cpu: 100m

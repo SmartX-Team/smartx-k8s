@@ -37,11 +37,7 @@ User home directory path (server-side)
 User containers directory path
 */}}
 {{- define "helm.userContainersHome" -}}
-{{- if .Values.session.context.root }}
 {{- printf "/var/lib/containers" }}
-{{- else }}
-{{- printf "%s/.local/share/containers" ( include "helm.userHome" $ ) }}
-{{- end }}
 {{- end }}
 
 {{- /*

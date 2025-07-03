@@ -8,9 +8,15 @@ set -e -o pipefail
 # Verbose
 set -x
 
+if [ "x$(stat -c '%u' '/var/lib/containers')" == "x$(id -u)" ]; then
+    PREFIX=''
+else
+    PREFIX='sudo '
+fi
+
 function _reset_podman() {
     # Initialize rootless podman
-    podman system migrate
+    ${PREFIX} podman system migrate
 
     # Generate a CDI specification that refers to all NVIDIA devices
     if ! nvidia-ctk cdi generate --device-name-strategy=type-index --format=json >/etc/cdi/nvidia.json; then
@@ -18,18 +24,20 @@ function _reset_podman() {
     fi
 
     # Ignore welcome warnings
-    podman version
+    ${PREFIX} podman version
 }
 
 # Copy podman containers configuration file
 if which podman; then
     mkdir -p "${HOME}/.config/containers"
-    rm -rf "${HOME}/.config/containers/containers.conf"
+    rm -rf \
+        "${HOME}/.config/containers/containers.conf" \
+        "${HOME}/.config/containers/storage.conf" \
+        ${HOME}/.local/share/containers
 
     # Patch rootless containers
-    if [ "x$(id -u)" != 'x0' ]; then
-        cp /etc/containers/podman-containers.conf "${HOME}/.config/containers/containers.conf"
-    fi
+    cp /etc/containers/podman-containers.conf "${HOME}/.config/containers/containers.conf"
+    cp /etc/containers/storage.conf "${HOME}/.config/containers/storage.conf"
 
     # Initialize rootless podman, without modifying at all
     if _reset_podman; then
@@ -37,11 +45,7 @@ if which podman; then
     fi
 
     # Cleanup old DB, resetting database static dir
-    if [ "x$(id -u)" == 'x0' ]; then
-        rm -f /var/lib/containers/db.sql
-    else
-        rm -f "${HOME}/.local/share/containers/db.sql"
-    fi
+    ${PREFIX} rm -f "/var/lib/containers/db.sql"
 
     # Initialize rootless podman, with cleaning DB
     if _reset_podman; then
@@ -49,11 +53,7 @@ if which podman; then
     fi
 
     # Cleanup containers
-    if [ "x$(id -u)" == 'x0' ]; then
-        rm -rf /var/lib/containers/*
-    else
-        rm -rf ${HOME}/.local/share/containers/*
-    fi
+    ${PREFIX} rm -rf /var/lib/containers/*
 
     # Initialize rootless podman, with cleaning ALL
     _reset_podman || true

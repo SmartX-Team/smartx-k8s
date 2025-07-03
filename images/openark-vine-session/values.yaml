@@ -212,6 +212,7 @@ packages:
         name: podman
         dist:
           - debian
+      - name: podman-compose
       - name: podman-docker
       - name: slirp4netns
   - name: dbus
@@ -962,6 +963,8 @@ packages:
     dependencies:
       - kind: Group
         name: core
+      - kind: Group
+        name: desktop-environment-qt
       # - name: libhangul-git
       #   dist:
       #     - archlinux
@@ -1078,6 +1081,9 @@ packages:
       - kind: Group
         name: desktop-environment-gtk
   - name: office-latex
+    dist:
+      # - debian
+      - nobody
     dependencies:
       - kind: Group
         name: office

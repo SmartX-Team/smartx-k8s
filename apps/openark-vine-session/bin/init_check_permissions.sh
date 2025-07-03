@@ -9,24 +9,19 @@ set -e -o pipefail
 set -x
 
 # User Directory Permissions
-{{- $containersHome := include "helm.userContainersHome" $ }}
 mkdir -p \
-    {{ printf "%s/storage" $containersHome | quote }} \
     '/mnt/public' \
     '/run/dbus' \
     "/run/user/${TARGET_UID}" \
     '/tmp/.ICE-unix' \
     '/tmp/.X11-unix'
-chown "${TARGET_UID}" \
+chown "${TARGET_UID}:${TARGET_GID}" \
     "${HOME}/" \
-    {{ $containersHome | quote }} \
-    {{ printf "%s/storage" $containersHome | quote }} \
     '/mnt/public' \
     '/run/dbus' \
     "/run/user/${TARGET_UID}"
 chmod 700 \
     "${HOME}" \
-    {{ printf "%s/storage" $containersHome | quote }} \
     '/run/dbus' \
     "/run/user/${TARGET_UID}"
 chmod 777 \

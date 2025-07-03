@@ -9,20 +9,23 @@ set -e -o pipefail
 set -x
 
 {{- /* Collect volumes */}}
-{{- $_ := set $ "Volumes" list }}
+{{- $_ := set $ "Volumes" ( dict
+    "root" list
+    "user" list
+) }}
 {{- if .Values.vm.enabled }}
 
 {{- /********************************/}}
-{{- $_ := set $ "Volumes" ( append $.Volumes (
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user (
     include "helm.localPVPath.vm.cdrom" $
 ) ) }}
-{{- $_ := set $ "Volumes" ( append $.Volumes (
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user (
     include "helm.localPVPath.vm.cdrom.scratch" $
 ) ) }}
 
 {{- /********************************/}}
 {{- if eq .Values.volumes.vm.type "LocalShared" }}
-{{- $_ := set $ "Volumes" ( append $.Volumes (
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user (
     include "helm.localPVPath.vm.shared" $
 ) ) }}
 {{- end }}
@@ -35,11 +38,21 @@ set -x
     ( eq .Values.volumes.home.type "LocalOwned" )
     ( eq .Values.volumes.home.type "LocalShared" )
 ) }}
-{{- $_ := set $ "Volumes" ( append $.Volumes ( printf "%s/%s"
-    ( include "helm.localPVPath" $ ) (
-        include "helm.userContainersHomeSubPath" $
-    )
+{{- $containerHome := printf "%s/%s"
+    ( include "helm.localPVPath" $ )
+    ( include "helm.userContainersHomeSubPath" $ )
+}}
+{{- if or .Values.session.context.root .Values.volumes.container.root }}
+{{- $_ := set $.Volumes "root" ( append $.Volumes.root $containerHome ) }}
+{{- $_ := set $.Volumes "root" ( append $.Volumes.root ( printf "%s/storage"
+   $containerHome
 ) ) }}
+{{- else }}
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user $containerHome ) }}
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user ( printf "%s/storage"
+   $containerHome
+) ) }}
+{{- end }}
 {{- end }}
 
 {{- /********************************/}}
@@ -48,7 +61,7 @@ set -x
     ( eq .Values.volumes.home.type "LocalOwned" )
     ( eq .Values.volumes.home.type "LocalShared" )
 ) }}
-{{- $_ := set $ "Volumes" ( append $.Volumes ( printf "%s/%s"
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user ( printf "%s/%s"
     ( include "helm.localPVPath" $ ) (
         include "helm.userDataHomeSubPath" $
     )
@@ -60,7 +73,7 @@ set -x
   ( eq .Values.volumes.home.type "LocalOwned" )
   ( eq .Values.volumes.home.type "LocalShared" )
 }}
-{{- $_ := set $ "Volumes" ( append $.Volumes ( printf "%s/%s"
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user ( printf "%s/%s"
     ( include "helm.localPVPath" $ ) (
         include "helm.userHomeSubPath" $
     )
@@ -68,7 +81,7 @@ set -x
 
 {{- /********************************/}}
 {{- if .Values.services.ssh.enabled }}
-{{- $_ := set $ "Volumes" ( append $.Volumes ( printf "%s/%s"
+{{- $_ := set $.Volumes "user" ( append $.Volumes.user ( printf "%s/%s"
     ( include "helm.localPVPath" $ ) (
         include "helm.userSshHomeSubPath" $
     )
@@ -79,7 +92,11 @@ set -x
 {{- end }}
 
 # Create local volumes
-{{- range $_ := $.Volumes }}
+{{- range $_ := $.Volumes.root }}
+mkdir -p {{ . | quote }}
+chown -R "0:0" {{ . | quote }}
+{{- end }}
+{{- range $_ := $.Volumes.user }}
 mkdir -p {{ . | quote }}
 chown -R "${TARGET_UID}:${TARGET_GID}" {{ . | quote }}
 {{- end }}

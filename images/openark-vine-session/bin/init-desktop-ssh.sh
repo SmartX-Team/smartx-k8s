@@ -58,6 +58,7 @@ cat "${__ENV_HOME}" |
     sudo tee -a /etc/environment >/dev/null
 
 # Share public environment variables
+set +x
 for env_key in $(
     export |
         grep -Po '^declare \-x \K[a-zA-Z0-9_]+'
@@ -78,6 +79,7 @@ for env_key in $(
 
     echo "${env_key}=\"${!env_key}\"" | sudo tee -a /etc/environment >/dev/null
 done
+set -x
 
 # Run SSH Server
 sudo /usr/sbin/sshd -D &

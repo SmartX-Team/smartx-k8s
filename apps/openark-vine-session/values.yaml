@@ -120,7 +120,7 @@ session:
     sudo: true
   image:
     repo: quay.io/ulagbulag/openark-vine-session
-    tag: ubuntu-24.04-20250701
+    tag: ubuntu-24.04-20250703
     pullPolicy: IfNotPresent
 
   locale:
@@ -192,6 +192,8 @@ vm:
 
 volumes:
   hostPathPrefix: /mnt/openark-vine-session
+  container:
+    root: false # mount /var/lib/containers
   home:
     type: Temporary # Options: LocalOwned, LocalShared, RemoteOwned, Temporary
   vm:
