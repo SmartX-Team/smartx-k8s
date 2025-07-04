@@ -17,6 +17,10 @@ version = { workspace = true }
 [lints]
 workspace = true
 
+[[bin]]
+name = "ark"
+path = "./src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
