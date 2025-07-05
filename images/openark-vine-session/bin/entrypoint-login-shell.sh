@@ -14,7 +14,7 @@ SCREEN_HEIGHT="480"
 # Configure screen size
 function update_screen_size() {
     echo "Finding displays..."
-    screens="$(xrandr --current | grep ' connected ' | awk '{print $1}')"
+    screens="$(xrandr --current | grep ' connected ' | awk '{print $1}' || true)"
     if [ "x${screens}" == "x" ]; then
         echo 'Display not found!'
         exit 1

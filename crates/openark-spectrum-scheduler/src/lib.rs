@@ -15,7 +15,7 @@ use crate::{
 
 pub fn schedule<'a, S, T>(
     items: Vec<Item<'a, T>>,
-    binded: Vec<PoolResource<usize>>,
+    bound: Vec<PoolResource<usize>>,
     resources: WeightedItems<S>,
 ) -> Result<Vec<ScheduledItem<S, T>>, ResolutionError> {
     // ****************************************
@@ -66,7 +66,7 @@ pub fn schedule<'a, S, T>(
     let mut filled = vec![0.0f64; n_j];
     let mut remaining = BTreeSet::default();
 
-    for (i, last) in binded.iter().enumerate() {
+    for (i, last) in bound.iter().enumerate() {
         let PoolResource { claim, state } = last;
         match (claim, state) {
             // Locked
@@ -84,7 +84,7 @@ pub fn schedule<'a, S, T>(
     // Define state
     let mut state = State {
         allocated,
-        binded,
+        bound,
         filled,
         items,
         remaining,
@@ -218,14 +218,14 @@ mod tests {
     fn build_resources_unbound<'a>(
         weights: Vec<Option<f64>>,
     ) -> (Vec<PoolResource<usize>>, WeightedItems<usize>) {
-        let binded = (0..weights.len())
+        let bound = (0..weights.len())
             .map(|_| PoolResource::default())
             .collect();
         let resources = WeightedItems {
             items: (0..weights.len()).collect(),
             weights: weights.into_iter().map(|x| x.map(OrderedFloat)).collect(),
         };
-        (binded, resources)
+        (bound, resources)
     }
 
     #[inline]
@@ -274,7 +274,7 @@ mod tests {
     #[test]
     fn test_distribute_best_effort() {
         let items = vec![define_item("a"), define_item("b")];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -282,7 +282,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 1, 3], vec![2, 4]]);
         assert_eq!(weights, &[700.0, 800.0]);
@@ -294,7 +294,7 @@ mod tests {
             define_item_with_priority("a", 0),
             define_item_with_priority("b", 1),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -302,7 +302,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 1, 3], vec![2, 4]]);
         assert_eq!(weights, &[700.0, 800.0]);
@@ -314,7 +314,7 @@ mod tests {
             define_item_with_weight("a", 1),
             define_item_with_weight("b", 2),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -322,7 +322,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![1, 2], vec![0, 3, 4]]);
         assert_eq!(weights, &[500.0, 1000.0]);
@@ -334,7 +334,7 @@ mod tests {
             define_item_with_weight("a", 1),
             define_item_with_weight("b", 3),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -342,7 +342,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 2], vec![1, 3, 4]]);
         assert_eq!(weights, &[400.0, 1100.0]);
@@ -354,7 +354,7 @@ mod tests {
             define_item_with_weight("a", 1),
             define_item_with_weight("b", 4),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -362,7 +362,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 1], vec![2, 3, 4]]);
         assert_eq!(weights, &[300.0, 1200.0]);
@@ -392,7 +392,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -400,7 +400,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 2, 3], vec![4, 1]]);
         assert_eq!(weights, &[800.0, 700.0]);
@@ -440,7 +440,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -448,7 +448,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![3], vec![0, 1, 4], vec![2]]);
         // + Step 2-B: [[3], [0, 1], [2]] -> [400.0, 300.0, 300.0]
@@ -490,7 +490,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -498,7 +498,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![4], vec![0, 3], vec![1, 2]]);
         assert_eq!(weights, &[500.0, 500.0, 500.0]);
@@ -538,7 +538,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -546,7 +546,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![2, 4], vec![3], vec![0, 1]]);
         assert_eq!(weights, &[800.0, 400.0, 300.0]);
@@ -576,7 +576,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -584,7 +584,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 3, 4], vec![1, 2]]);
         assert_eq!(weights, &[1000.0, 500.0]);
@@ -614,7 +614,7 @@ mod tests {
                 },
             ),
         ];
-        let (binded, resources) = build_resources_unbound(vec![
+        let (bound, resources) = build_resources_unbound(vec![
             Some(100.0),
             Some(200.0),
             Some(300.0),
@@ -622,7 +622,7 @@ mod tests {
             Some(500.0),
         ]);
 
-        let items = schedule(items, binded, resources.clone()).unwrap();
+        let items = schedule(items, bound, resources.clone()).unwrap();
         let (indices, weights) = aggregate_resources(&items, &resources);
         assert_eq!(indices, &[vec![0, 3, 4], vec![1, 2]]);
         assert_eq!(weights, &[1000.0, 500.0]);

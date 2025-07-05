@@ -2,9 +2,6 @@
 bastion:
   baseUrl: /
 
-cluster:
-  domainName: ""
-
 debian:
   image:
     repo: docker.io/library/ubuntu
@@ -14,6 +11,9 @@ driver:
   nvidia:
     enabled: false
     version: ""
+
+ingress:
+  domainName: ""
 
 user:
   uid: 2000

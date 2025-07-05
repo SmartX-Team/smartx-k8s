@@ -49,7 +49,7 @@ pub struct PoolRequest<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct PoolResponse {
-    pub binded: Vec<PoolResource>,
+    pub bound: Vec<PoolResource>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

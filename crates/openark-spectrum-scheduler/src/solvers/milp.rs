@@ -30,7 +30,7 @@ impl Solver {
 
         let State {
             allocated,
-            binded,
+            bound,
             filled,
             items,
             remaining,
@@ -61,7 +61,7 @@ impl Solver {
         let mut load: Vec<Expression> = vec![Expression::default(); n_j];
         for (row, &i) in remaining.iter().enumerate() {
             for (col, &j) in targets.iter().enumerate() {
-                let penalty = match binded[i].claim {
+                let penalty = match bound[i].claim {
                     None => 0.0,
                     Some(j2) if j == j2 => 0.0,
                     Some(_) => items[j].resource.penalty,

@@ -43,6 +43,10 @@ resources:
 {{- end }}
 restartPolicy: Always
 securityContext:
+  capabilities:
+    add:
+      - NET_ADMIN
+      - SYS_ADMIN
   # FIXME: How to disable privileged permission?
   privileged: true # required to access to: /dev/input
   runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
@@ -75,10 +79,16 @@ volumeMounts:
   - name: runtime-udev
 {{- if not .Values.features.hostUdev }}
 {{- fail "Host display cannot be enabled without host Udev" }}
-{{- else }}
+{{- end }}
+{{- if not .Values.session.context.hostNetwork }}
+{{- /*
+  host network is required to operate through PF_NETLINK sockets,
+  which are used by udev monitor to receive kernel events
+*/}}
+{{- fail "Host Udev cannot be enabled without host network" }}
+{{- end }}
     mountPath: /run/udev
     readOnly: true
-{{- end }}
 
 {{- /********************************/}}
   - name: runtime-user

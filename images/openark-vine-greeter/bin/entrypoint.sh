@@ -109,7 +109,7 @@ until timeout 1 xrandr --listactivemonitors >/dev/null; do
 done
 
 echo "Finding displays..."
-monitor="$(xrandr --current | grep ' connected ' | awk '{print $1}' | head -n1)"
+monitor="$(xrandr --current | grep ' connected ' | awk '{print $1}' | head -n1 || true)"
 if [ "x${monitor}" == "x" ]; then
     echo 'Display not found!' >&2
     exec true

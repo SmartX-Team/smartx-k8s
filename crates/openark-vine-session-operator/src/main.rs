@@ -55,6 +55,10 @@ struct Args {
     #[arg(long, env = "DESTINATION_NAME")]
     destination_name: String,
 
+    /// Whether to drain unreachable nodes
+    #[arg(long, env = "DRAIN_UNREACHABLE_NODES")]
+    drain_unreachable_nodes: bool,
+
     #[arg(long, env = "OPENARK_LABEL_SELECTOR")]
     label_selector: String,
 
@@ -615,9 +619,39 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
         binding.zip(profile)
     };
     let profile_state = next.apply_profile(next_profile.as_ref(), timestamp);
+    {
+        #[cfg(feature = "tracing")]
+        if profile_state.has_changed() {
+            info!("Profile has been changed: {name}");
+        }
+    }
+
+    let unreachable = match (ctx.args.drain_unreachable_nodes, next.unreachable()) {
+        (_, false) => false,
+        (false, true) => {
+            #[cfg(feature = "tracing")]
+            {
+                info!("Node is unreachable; skipping: {name}");
+            }
+            return Ok(Action::await_change());
+        }
+        (true, true) => {
+            #[cfg(feature = "tracing")]
+            {
+                info!("Node is unreachable; draining: {name}");
+            }
+            true
+        }
+    };
 
     // Sign out if the node is not ready
-    let must_sign_out = profile_state.has_changed() || next.unreachable();
+    let must_sign_out = profile_state.has_changed() || unreachable;
+    {
+        #[cfg(feature = "tracing")]
+        if must_sign_out {
+            info!("Node is not ready; start signing out: {name}");
+        }
+    }
     let mut sign_out_remaining = next.set_sign_out(timestamp, must_sign_out);
 
     // Grant creating app if all conditions are met

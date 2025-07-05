@@ -34,7 +34,7 @@ if [ -e "${dev}/driver/module" ]; then
         echo 0 >"${dev}/enable" 2>/dev/null || true
         sleep 0.2
     done
-    echo "INFO: Unbinded PCI device: ${pci_id} <- ${driver}"
+    echo "INFO: Unbound PCI device: ${pci_id} <- ${driver}"
 
     PCI_ID_PATTERN='^[0-9]{4}(:[0-9]{2}){2}\.[0-9]$'
     if [ "x${driver}" != 'xvfio-pci' ] && ! ls "/sys/bus/pci/drivers/${driver}" |

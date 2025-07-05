@@ -8,7 +8,7 @@ use crate::item::{Item, ScheduledItem, WeightedItems};
 
 pub(crate) struct State<'a, T> {
     pub(crate) allocated: Vec<Vec<usize>>,
-    pub(crate) binded: Vec<PoolResource<usize>>,
+    pub(crate) bound: Vec<PoolResource<usize>>,
     pub(crate) filled: Vec<f64>,
     pub(crate) items: Vec<Item<'a, T>>,
     pub(crate) remaining: BTreeSet<usize>,

@@ -217,4 +217,4 @@ WORKDIR "/opt/{{ .Release.Name }}"
 # Configure environment variables
 ENV DISPLAY=":0"
 ENV IMAGE="{{ .Values.baseImage.repo }}/{{ .Release.Name }}:latest"
-ENV URL="https://{{ .Values.cluster.domainName }}{{ .Values.bastion.baseUrl }}"
+ENV URL="https://{{ .Values.ingress.domainName }}{{ .Values.bastion.baseUrl }}"

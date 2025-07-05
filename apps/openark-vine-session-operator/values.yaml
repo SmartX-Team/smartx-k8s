@@ -49,6 +49,9 @@ operator:
     tag: ""
     pullPolicy: IfNotPresent
 
+  # Whether to drain unreachable nodes
+  drainUnreachableNodes: false
+
   # Duration for signing out nodes as seconds.
   # TODO: Use labels to detect completing signout out
   signOutTimeoutSeconds: 90

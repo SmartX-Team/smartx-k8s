@@ -21,5 +21,10 @@ if [ ! -f /etc/X11/xorg.conf ]; then
     ln -sf "${HOME}/xorg.conf.new" /etc/X11/xorg.conf
 fi
 
+# Check for input devices to be bound
+if ! find /dev/input -maxdepth 1 -type c; then
+    exec false
+fi
+
 # Open Xorg session
 exec Xorg "${DISPLAY}"

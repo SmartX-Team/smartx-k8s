@@ -141,7 +141,7 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
             .collect(),
         namespace: namespace.into(),
     };
-    let PoolResponse { binded } = match client
+    let PoolResponse { bound } = match client
         .get_service_binding_states(pool_url.clone(), &args)
         .await
     {
@@ -156,7 +156,7 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
     };
 
     // Map binding states
-    let binded = binded
+    let bound = bound
         .into_iter()
         .map(|PoolResource { claim, state }| PoolResource {
             claim: claim.as_deref().and_then(|claim_name| {
@@ -171,7 +171,7 @@ pub(super) async fn update_resources(ctx: Context<'_>) -> Result<Result<(), Stat
         .collect();
 
     // Allocate resources into items
-    let items = match schedule(items, binded, resources) {
+    let items = match schedule(items, bound, resources) {
         Ok(items) => items,
         Err(error) => {
             return Ok(Err(Status {

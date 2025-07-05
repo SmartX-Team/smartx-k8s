@@ -48,7 +48,7 @@ fn try_handle(store: web::Data<Store>, args: PoolRequest<'static>) -> Result<Poo
                 })
                 .collect::<Result<_, _>>()
         })
-        .map(|binded| PoolResponse { binded })
+        .map(|bound| PoolResponse { bound })
         .map_err(Into::into)
 }
 

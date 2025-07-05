@@ -115,6 +115,7 @@ session:
     gid: 2000
     hostIPC: false
     hostNetwork: false
+    hostPID: false
     privileged: false
     root: false
     sudo: true

@@ -96,11 +96,11 @@ if [ "x${driver}" != 'xvfio-pci' ]; then
     until [ -c "${card}" ] && [ -c "${renderer}" ]; do
         sleep 0.1
     done
-    echo "INFO: Binded PCI device: ${pci_id} -> ${driver}"
+    echo "INFO: Bound PCI device: ${pci_id} -> ${driver}"
 
 # Load vfio-pci to the devices in the same IOMMU group
 else
-    echo "INFO: Binded PCI device: ${pci_id} -> ${driver}"
+    echo "INFO: Bound PCI device: ${pci_id} -> ${driver}"
 
     # Do not reexec
     propagate="$3"

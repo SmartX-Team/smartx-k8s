@@ -341,8 +341,9 @@ containers:
 {{- /********************************
     Pod Context
 *************************************/}}
-hostIPC: {{ .Values.session.context.hostIPC }}
+hostIPC: {{ or .Values.session.context.hostIPC }}
 hostNetwork: {{ .Values.session.context.hostNetwork }}
+hostPID: {{ .Values.session.context.hostPID }}
 hostname: "{{ include "helm.fullname" $ }}-{{ .Release.Namespace }}"
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
 # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
@@ -374,7 +375,7 @@ securityContext:
   seccompProfile:
     type: Unconfined
 serviceAccount: {{ include "helm.serviceAccountName" $ | quote }}
-shareProcessNamespace: true  # TODO: To be removed!
+shareProcessNamespace: {{ not .Values.session.context.hostPID }}  # TODO: To be removed!
 terminationGracePeriodSeconds: 60
 tolerations:
   - operator: Exists
