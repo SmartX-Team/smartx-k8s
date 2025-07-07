@@ -2,7 +2,7 @@
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
-{{- $package := "openark-vine-dashboard-frontend" }}
+{{- $package := .Release.Name }}
 
 # Install node dependencies
 RUN npm install --package-lock-only && ./node_modules/npm/bin/npm clean-install

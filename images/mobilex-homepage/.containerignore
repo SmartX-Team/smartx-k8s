@@ -1,0 +1,22 @@
+# Jekyll
+
+/\_site
+/.sass-cache
+/.jekyll-cache
+/.jekyll-metadata
+/assets/\_site
+/Gemfile.lock
+/vendor
+
+# Helm
+
+/.git
+/.gitattributes
+/.gitignore
+/charts
+/forms
+/kiss
+/manifest.yaml
+/patches
+/projects
+/values.yaml

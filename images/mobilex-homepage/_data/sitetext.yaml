@@ -1,0 +1,192 @@
+---
+#
+# Work based on https://github.com/mmistakes/minimal-mistakes/blob/master/_data/ui-text.yml
+#
+# Configuration: Add to _config.yml
+# locale: "en-US"  [YOUR PREFERRED LOCALE]
+#
+# How to use:
+# {{ site.data.ui-text[site.locale].<var_name> | default: 'text' }}
+
+# English (default)
+# -----------------
+en: &DEFAULT_EN
+  header:
+    title: Welcome to MobileX!
+    text: 클라우드와 PC가 연결되는 세상
+    button: Tell Me More
+    buttonlink: "#services"
+
+  services:
+    title: Features
+    text: >
+      MobileX 는 쿠버네티스 기반 데스크톱 클러스터 환경에서 데스크톱 컨테이너 세션을 효율적으로 관리하기 위한 클라우드-네이티브 서비스입니다.
+      개인 사용자를 위한 PC형 클라우드부터 조직을 위한 관리형 PC 클라우드, 데이터센터 급 장비 관리를 위한 On-premise 쿠버네티스 클러스터 환경을 지원합니다.
+    section: services
+    list:
+      - title: 쉬운 설치
+        desc: >
+          일반적인 운영체제(OS) 설치와 같은 방식으로 [**USB** 에 담아](https://github.com/SmartX-Team/smartx-k8s/releases) 간편하게 설치할 수 있습니다.
+        icon: fab fa-usb #find more at https://fontawesome.com/icons
+      - title: 무료 Linux OS
+        desc: >
+          완전 무료에 디자인도 예쁜 Linux PC 환경을 지원합니다.
+        icon: fab fa-linux
+      - title: 클라우드 PC
+        desc: >
+          개인용, 사무용 PC에 **AI+클라우드**를 더할 수 있습니다.
+          집 밖에서, 사무실 밖에서 PC에 안전하게 접근할 수 있습니다.
+        icon: fas fa-laptop
+      - title: 자동화된 설치
+        desc: >
+          사무실과 같이 여러 대를 동시에 설치할 땐 관리용 서버를 별도 구매하시거나 [**관리용 OS**를 USB에 담아](https://github.com/SmartX-Team/smartx-k8s?tab=readme-ov-file#standalone-mode-build-an-iso) 설치할 수 있습니다.
+          관리용 OS가 있다면 다른 PC들은 인터넷 연결만 되어 있다면 USB 없이 자동으로 OS를 설치할 수 있습니다.
+        icon: fas fa-cogs
+      - title: Windows OS
+        desc: >
+          Windows OS 를 자동으로 설치해 사용할 수 있습니다. (라이선스 별도 구매)
+        icon: fab fa-windows
+      - title: 로그인 시스템 통합 (SSO)
+        desc: >
+          Google, GitHub 와 같은 로그인 시스템을 무료로 연동할 수 있습니다.
+          조직용 사용자 관리 및 로그인 시스템으로 많이 채택되는 LDAP, SSO (OpenID) 방식을 지원합니다.
+        icon: fas fa-key
+      - title: 최신 H/W 지원
+        desc: >
+          최신 NVIDIA GPU (PC용, 서버용, AI), SmartNIC, DPU, CXL, NVMe 과 같은 최신 데이터센터 기술을 도입하였습니다.
+          데이터센터 급 인프라를 쿠버네티스 클러스터에서 활용할 수 있습니다.
+        icon: fas fa-rocket
+      - title: "[무료 & 오픈소스](https://github.com/SmartX-Team/smartx-k8s)"
+        desc: >
+          소스코드는 무료로 다운로드하고 편집, 기여할 수 있습니다.
+        icon: fab fa-osi
+      - title: 보안 (Security)
+        desc: >
+          [알려진 보안 결함 (CVE)](https://www.cve.org/)을 신속히 해결하고 시스템의 상태를 항상 최신으로 유지할 수 있습니다.
+        icon: fas fa-lock
+
+  portfolio:
+    title: Portfolio
+    text: >
+      MobileX 는 다양한 교육 프로젝트에 활용되고 있습니다
+    section: portfolio
+    closebutton: Close Project
+
+  timeline:
+    title: Timeline
+    text: MobileX Team 의 여정
+    section: timeline
+    # left is the default
+    #start_align: left
+    events:
+      - title: 작은 의문
+        year: "December 2022"
+        desc: >
+          GIST NetAI 연구실의 주요 연구주제인 **SmartX 자동화** 기술을 데스크톱과 엣지-컴퓨팅에도 도입할 수 있지 않을까-하는 의문이 들었습니다.
+          산업 표준 클러스터링 기술인 쿠버네티스를 활용하면 개인용, 사무용, 교육용 PC를 클라우드화할 수 있고,
+          이를 통해 다가오는 AI의 비싼 구독 수수료와 유지관리 비용을 덜어낼 수 있을 것이라 생각했습니다.
+        image: assets/img/timeline/1.jpg
+        alt:
+      - title: 프로젝트의 탄생
+        year: "January 2023"
+        desc: >
+          프로젝트는 신속하고 조용하게 시작되었습니다.
+          GIST SCENT (슈퍼컴퓨팅센터)에 인프라를 구축하고 이동식 고성능 데스크톱인 **MobileX Station**을 제작했습니다.
+          수십대의 고성능 PC들을 Wi-Fi 환경에서 유지관리하는 것은 쉽지 않은 도전과제를 낳았습니다.
+        image: assets/img/timeline/2.jpg
+        alt:
+      - title: GIST 여름학교 강의 실습
+        year: "July-August 2023"
+        desc: >
+          총 30대의 MobileX Station을 동원하여 여름학교 강의가 시작되었습니다.
+          고성능의 PC가 한번에 자원을 삼키면서 많은 문제가 발생했습니다.
+          대표적으로 전력망의 불안정함, Wi-Fi 연결 불량, 데스크톱 세션이 갑자기 끊어지는 현상 등이 발생했습니다.
+          그럼에도 신속하게 전력망 배분, 유선망과 Wi-Fi 혼합, 데스크톱 세션 우선순위 조정과 같은 방식으로 끝내 성공적으로 강의를 마칠 수 있었습니다.
+          이러한 시행착오는 MobileX 프로젝트가 나아가야 할 방향을 알려주었습니다: 최대한 쉽고, 간편하고, 견고하게 만들자!
+        image: assets/img/timeline/3.jpg
+        alt: image alt text
+      - title: 소스코드 자주권 확보
+        year: "2023-2025"
+        desc: >
+          쉽고 간편하고 견고한 시스템을 만든다는 것은 즉 우리가 시스템에 들어가는 **구성요소를 모두 이해**하고 있어야 한다는 뜻이 됩니다.
+          이를 위해 [Linux](https://www.linux.org/), [Kubernetes](https://kubernetes.io/), [Rook-Ceph](https://rook.io/) 와 같은 대규모 오픈소스 프로젝트에 직접 기여하거나
+          [ArgoCD](https://argoproj.github.io/cd/)에 기반한 독자적인 공급망을 구축하였습니다.
+          NVIDIA의 GPU 드라이버와 같이 특정 기업에 소속된 소스코드도 예외없이 내재화하였습니다.
+          이로써 처음 겪는 문제에 부딛혔을 때에도 신속한 대응이 가능하게 되었고, 극한 환경에서 Station들을 실험하여 많은 시나리오에서 문제없이 작동하기 시작했습니다.
+        image: assets/img/timeline/4.jpg
+        alt:
+        # you can enforce the alignment
+        align: right
+    end: 우리의 이야기는 <br/> 이제 <br/> 시작입니다!
+
+  about:
+    title: About Us
+    text: GIST NetAI Laboratory
+    body: >
+      We like to [code](https://github.com/SmartX-Team). We like Big Things (Kubernetes, HPC). We like startups.
+      We like the convergence of AI with other fields.
+      We love to treat all of these like toys and do the most tech-intensive research in the world.
+      Do you think so too? Check out our playground and start your research!
+    section: about
+
+  clients:
+    section: clients
+    max-height: 100px
+    horizontal-scrolling: "" #"yes/no"
+    list:
+      - title: GIST
+        url: https://ai.gist.ac.kr
+        logo: assets/img/clients/gist.png
+
+  team:
+    title: OUR AMAZING TEAM
+    text: GIST AI융합학과 출신 연구개발진을 소개합니다
+    subtext: >
+      **MobileX** 팀에 관심이 있으신가요? 아래의 **CONTECT US**를 통해 부담없이 연락바랍니다!
+    section: team
+    people:
+      - name: JongWon Kim
+        role: Lead Professor
+        image: assets/img/team/jongwon-kim.png
+        social: []
+      - name: Gwangmin Yu
+        role: Lead Operator
+        image: assets/img/team/500x500.jpg
+        social: []
+      - name: Ho Kim
+        role: Lead Developer
+        image: assets/img/team/ho-kim.png
+        social:
+          - url: https://github.com/HoKim98
+            icon: fab fa-github
+          - url: https://www.linkedin.com/in/ho-kim-91916832b
+            icon: fab fa-linkedin-in
+
+  contact:
+    title: Contact Us
+    text: 대한민국 광주광역시 첨단과기로 123 (오룡동, 광주과학기술원), AI융합학과 (건물번호 S7) 101호
+    section: contact
+    name: Name*
+    name-validation: Please enter your name.
+    email: Email*
+    email-validation: Please enter your email address.
+    phone: Phone Number
+    phone-validation: Please enter your phone number.
+    message: Message*
+    message-validation: Please enter a message.
+    subject: Contact Form Submission
+    submit: Send Message
+
+  footer:
+    legal: Privacy Policy
+    social:
+      - url: https://github.com/SmartX-Team/smartx-k8s
+        icon: fab fa-github
+en-US:
+  <<: *DEFAULT_EN
+en-CA:
+  <<: *DEFAULT_EN
+en-GB:
+  <<: *DEFAULT_EN
+en-AU:
+  <<: *DEFAULT_EN

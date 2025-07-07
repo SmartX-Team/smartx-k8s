@@ -1,0 +1,53 @@
+---
+affinity:
+  # Node affinity rules
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+        weight: 1
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Gateway
+        weight: 2
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - ControlPlane
+                - Gateway
+
+image:
+  repo: quay.io/ulagbulag/mobilex-homepage
+  tag: ""
+  pullPolicy: Always
+
+ingress:
+  domainName: ""
+  path: /
+  pathType: Prefix
+
+openark:
+  labels: {}
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 200Mi
+  limits:
+    cpu: 500m
+    memory: 500Mi
+
+service:
+  type: ClusterIP
+  port: 6080

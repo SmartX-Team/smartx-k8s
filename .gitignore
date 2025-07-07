@@ -26,6 +26,15 @@
 /**/.DS_Store
 /.idea/
 
+# Jekyll
+/images/*/_site/
+/images/*/.sass-cache/
+/images/*/.jekyll-cache/
+/images/*/.jekyll-metadata
+/images/*/assets/_site/
+/images/*/Gemfile.lock
+/images/*/vendor
+
 # JS
 /**/node_modules/
 /**/package-lock.json

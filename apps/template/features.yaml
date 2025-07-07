@@ -1,5 +1,9 @@
 ---
 # Available features
+mobilex.kr/homepage:
+  requires:
+    - org.ulagbulag.io/ingress
+
 nvidia.com/gpu:
   requires:
     - org.ulagbulag.io/cni

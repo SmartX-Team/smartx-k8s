@@ -1,0 +1,36 @@
+---
+#
+# Work based on https://github.com/mmistakes/minimal-mistakes/blob/master/_data/ui-text.yml
+#
+# Configuration: Add to _config.yml
+# locale: en-US  [YOUR PREFERRED LOCALE]
+#
+# How to use:
+# {{ site.data.navigation[site.locale].nav.<var_name> | default: 'text' }}
+
+# English (default)
+# -----------------
+en: &DEFAULT_EN
+  nav:
+    - title: Features
+      section: services
+    - title: Portfolio
+      section: portfolio
+    - title: About
+      section: about
+    - title: Timeline
+      section: timeline
+    - title: Team
+      section: team
+    - title: Contact
+      section: contact
+    - title: GitHub
+      url: https://github.com/SmartX-Team/smartx-k8s
+en-US:
+  <<: *DEFAULT_EN
+en-CA:
+  <<: *DEFAULT_EN
+en-GB:
+  <<: *DEFAULT_EN
+en-AU:
+  <<: *DEFAULT_EN

@@ -1,0 +1,11 @@
+---
+nginx:
+  image:
+    repo: docker.io/library/nginx
+    tag: stable
+    otel: true
+
+ruby:
+  image:
+    repo: docker.io/library/ruby
+    tag: bullseye

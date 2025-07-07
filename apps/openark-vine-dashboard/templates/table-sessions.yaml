@@ -9,7 +9,7 @@ metadata:
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
-  baseUrl: "https://{{ .Values.ingress.domainName }}{{ .Values.apiserver.baseUrl }}/bindings/"
+  baseUrl: "https://dashboard.{{ .Values.ingress.domainName }}{{ .Values.apiserver.baseUrl }}/bindings/"
   services:
     create:
       enabled: true

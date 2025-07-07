@@ -49,6 +49,15 @@
 /apps/template/manifest.yaml
 /apps/template/values.yaml
 
+# Jekyll
+/images/*/_site/
+/images/*/.sass-cache/
+/images/*/.jekyll-cache/
+/images/*/.jekyll-metadata
+/images/*/assets/_site/
+/images/*/Gemfile.lock
+/images/*/vendor
+
 # JS
 /*/node_modules/
 /*/package-lock.json

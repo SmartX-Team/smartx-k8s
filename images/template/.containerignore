@@ -40,6 +40,14 @@
 /templates/
 /values.yaml
 
+# Jekyll
+/**/_site/
+/**/.sass-cache/
+/**/.jekyll-cache/
+/**/.jekyll-metadata
+/**/Gemfile.lock
+/**/vendor
+
 # JS
 /**/node_modules/
 /**/output.css

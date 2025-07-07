@@ -1,0 +1,41 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+
+# Be ready for building
+FROM {{ printf "%s:%s" .Values.ruby.image.repo .Values.ruby.image.tag | quote }} AS builder
+
+# Install dependencies
+RUN gem install bundler jekyll
+
+# Build plugins
+WORKDIR /src
+ADD ./404.html /src/404.html
+ADD ./Gemfile /src/Gemfile
+ADD ./_config.yml /src/_config.yml
+RUN bundle install
+
+# Build pages
+ADD ./assets /src/assets
+ADD ./_data /src/_data
+ADD ./_portfolio /src/_portfolio
+ADD ./LICENSE /src/LICENSE
+ADD ./README.md /src/README.md
+RUN bundle exec jekyll build
+
+# Be ready for serving
+FROM "{{ .Values.nginx.image.repo }}:{{ .Values.nginx.image.tag }}{{ .Values.nginx.image.otel | ternary "-otel" "" }}" AS server
+
+# Copy executable files
+COPY --from=builder /src/_site /usr/share/nginx/html
+
+# Copy static files
+ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+ADD ./nginx/robots.txt /usr/share/nginx/html/
+# ADD ./assets/favicon.ico /usr/share/nginx/html/favicon.ico
+ADD ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Mark as executable
+EXPOSE 6080/tcp

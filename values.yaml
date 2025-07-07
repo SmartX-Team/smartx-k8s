@@ -151,6 +151,7 @@ driver:
 # Enable SmartX features
 # TODO(user): Configure it!
 features:
+  - mobilex.kr/homepage
   - nvidia.com/gpu
   - nvidia.com/gpu/dynamic-resource-allocation
   - nvidia.com/network

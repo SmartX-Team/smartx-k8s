@@ -86,7 +86,7 @@ spec:
                   name: oidc
                   key: OAUTH_CLIENT_ID
             - name: OAUTH_CLIENT_REDIRECT_URL
-              value: "https://{{ .Values.ingress.domainName }}/oauth/oidc/callback"
+              value: "https://dashboard.{{ .Values.ingress.domainName }}/oauth/oidc/callback"
             - name: OAUTH_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -164,11 +164,11 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.domainName | quote }}
   tls:
-    - secretName: "{{ .Values.ingress.domainName }}-tls"
+    - secretName: {{ printf "dashboard.%s-tls" .Values.ingress.domainName | quote }}
       hosts:
-        - {{ .Values.ingress.domainName | quote }}
+        - {{ printf "dashboard.%s" .Values.ingress.domainName | quote }}
   rules:
-    - host: {{ .Values.ingress.domainName | quote }}
+    - host: {{ printf "dashboard.%s" .Values.ingress.domainName | quote }}
       http:
         paths:
           - path: "{{ .Values.apiserver.baseUrl }}/bindings"

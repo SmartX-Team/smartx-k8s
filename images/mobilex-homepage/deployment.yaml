@@ -1,0 +1,104 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mobilex-docs
+  namespace: vine-dashboard
+  labels:
+    app: mobilex-docs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mobilex-docs
+  template:
+    metadata:
+      labels:
+        app: mobilex-docs
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+              weight: 1
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Gateway
+              weight: 2
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - Compute
+                      - ControlPlane
+                      - Gateway
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: harbor.mobilex.kr/ulagbulag/mobilex:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              protocol: TCP
+              containerPort: 6080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mobilex-docs
+  namespace: vine-dashboard
+  labels:
+    app: mobilex-docs
+    ark.ulagbulag.io/is-external: "true"
+    ark.ulagbulag.io/is-private: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app: mobilex-docs
+  ports:
+    - port: 6080
+      protocol: TCP
+      targetPort: 6080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mobilex-docs
+  namespace: vine-dashboard
+  annotations:
+    cert-manager.io/cluster-issuer: mobilex.kr
+    nginx.ingress.kubernetes.io/auth-url: "https://auth.mobilex.kr/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.mobilex.kr/oauth2/start?rd=https://$host$escaped_request_uri"
+  labels:
+    app: mobilex-docs
+spec:
+  ingressClassName: mobilex.kr
+  rules:
+    - host: docs.mobilex.kr
+      http:
+        paths:
+          - backend:
+              service:
+                name: mobilex-docs
+                port:
+                  number: 6080
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - docs.mobilex.kr
+      secretName: docs.mobilex.kr-tls

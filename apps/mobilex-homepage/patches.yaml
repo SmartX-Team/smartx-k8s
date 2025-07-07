@@ -1,0 +1,7 @@
+---
+ingress:
+  domainName: {{ .Values.ingress.domainName | quote }}
+
+openark:
+  labels:
+    org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}

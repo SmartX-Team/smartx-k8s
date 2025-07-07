@@ -120,11 +120,11 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.domainName | quote }}
   tls:
-    - secretName: "{{ .Values.ingress.domainName }}-tls"
+    - secretName: {{ printf "dashboard.%s-tls" .Values.ingress.domainName | quote }}
       hosts:
-        - {{ .Values.ingress.domainName | quote }}
+        - {{ printf "dashboard.%s" .Values.ingress.domainName | quote }}
   rules:
-    - host: {{ .Values.ingress.domainName | quote }}
+    - host: {{ printf "dashboard.%s" .Values.ingress.domainName | quote }}
       http:
         paths:
           - path: "{{ .Values.apiserver.baseUrl }}/bindings/vnc(/|$)(.*)"

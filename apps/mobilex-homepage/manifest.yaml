@@ -1,0 +1,26 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.mobilex-homepage
+spec:
+  enabled: true
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: mobilex
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - mobilex.kr/homepage
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
