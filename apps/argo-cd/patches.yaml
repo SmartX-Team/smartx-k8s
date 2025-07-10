@@ -71,7 +71,10 @@ configs:
     # -- File containing user-defined policies and role definitions.
     # @default -- `''` (See [values.yaml])
     policy.csv: |
+      g, admin, role:admin
+      g, {{ printf "%s-%s" .Values.cluster.name "admin" }}, role:admin
       g, {{ .Values.group.name }}, role:admin
+      g, {{ printf "%s-%s" .Values.cluster.name .Values.group.name }}, role:admin
       g, {{ .Values.cluster.name }}, role:readonly
 
 ## Application controller

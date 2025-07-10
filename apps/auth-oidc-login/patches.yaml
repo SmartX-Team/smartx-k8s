@@ -17,7 +17,13 @@ features:
   vine: {{ has "org.ulagbulag.io/desktop-environment/vine" .Values.features }}
 
 groups:
+  - name: {{ "admin" | quote }}
+    role: Admin # Can be one of: Admin, Dev, Sec, Ops, Viewer
+  - name: {{ printf "%s-%s" .Values.cluster.name "admin" | quote }}
+    role: Admin # Can be one of: Admin, Dev, Sec, Ops, Viewer
   - name: {{ .Values.group.name | quote }}
+    role: Ops # Can be one of: Admin, Dev, Sec, Ops, Viewer
+  - name: {{ printf "%s-%s" .Values.cluster.name .Values.group.name | quote }}
     role: Ops # Can be one of: Admin, Dev, Sec, Ops, Viewer
   - name: {{ .Values.cluster.name | quote }}
     role: Dev # Can be one of: Admin, Dev, Sec, Ops, Viewer
