@@ -375,6 +375,7 @@ openark:
     org.ulagbulag.io/category: org.ulagbulag.io/category
     org.ulagbulag.io/compute-mode: org.ulagbulag.io/compute-mode
     org.ulagbulag.io/description: org.ulagbulag.io/description
+    org.ulagbulag.io/gpu: org.ulagbulag.io/gpu
     org.ulagbulag.io/is-external: ark.ulagbulag.io/is-external
     org.ulagbulag.io/is-private: ark.ulagbulag.io/is-private
     org.ulagbulag.io/is-proxy: ark.ulagbulag.io/is-proxy

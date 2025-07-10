@@ -15,7 +15,7 @@ use kube::{
         watcher::{self, Event},
     },
 };
-use openark_vine_session_api::filter_taint;
+use openark_vine_session_api::{VineSessionGPU, filter_taint};
 use serde_json::json;
 use tokio::process::Command;
 #[cfg(feature = "tracing")]
@@ -32,6 +32,9 @@ struct Args {
 
     #[arg(long, env = "OPENARK_LABEL_BIND_STORAGE")]
     label_bind_storage: String,
+
+    #[arg(long, env = "OPENARK_LABEL_GPU")]
+    label_gpu: String,
 
     #[arg(long, env = "OPENARK_LABEL_SIGNED_OUT")]
     label_signed_out: String,
@@ -157,10 +160,35 @@ impl Service<'_> {
         Ok(())
     }
 
-    /// Update the current node's annotations
-    ///
-    #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
-    async fn update_node_info(&self) -> Result<()> {
+    async fn get_primary_gpu(&self) -> Result<Option<VineSessionGPU>> {
+        let command = r#"set -e -x -o pipefail
+
+primary_dev=''
+for dev in $(
+    find -L /sys/bus/pci/devices \
+        -maxdepth 2 -mindepth 2 -name 'boot_vga'
+); do
+    if [ "x$(cat "${dev}")" == 'x1' ]; then
+        primary_dev="$(dirname "${dev}")"
+        break
+    fi
+done
+exec cat "${primary_dev}/vendor"
+"#;
+        let Output { stdout, .. } = Command::new("bash")
+            .arg("-c")
+            .arg(command)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .output()
+            .await?;
+
+        let vendor = String::from_utf8(stdout)?;
+        Ok(VineSessionGPU::try_from_vendor(vendor.trim()))
+    }
+
+    async fn get_available_storage_size(&self) -> Result<u128> {
         let command = format!(
             "set -e -x -o pipefail && df --block-size=1 {path} | tail -n 1 | awk '{{print $2}}'",
             path = self.args.local_volume_home.display(),
@@ -178,12 +206,17 @@ impl Service<'_> {
 
         // Subtract required storage size
         let storage = (available_size as f64 * 0.8 * 0.5).floor(); // both Container & VM
-        let storage = if storage.is_finite() && storage.is_sign_positive() {
-            storage as u128
+        if storage.is_finite() && storage.is_sign_positive() {
+            Ok(storage as u128)
         } else {
-            0
-        };
+            Ok(0)
+        }
+    }
 
+    /// Update the current node's annotations
+    ///
+    #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
+    async fn update_node_info(&self) -> Result<()> {
         // Apply the updated info
         let name = &self.args.node_name;
         let patch = Patch::Strategic(json!({
@@ -192,7 +225,8 @@ impl Service<'_> {
             "metadata": {
                 "name": name,
                 "labels": {
-                    &self.args.label_bind_storage: storage.to_string(),
+                    &self.args.label_bind_storage: self.get_available_storage_size().await?.to_string(),
+                    &self.args.label_gpu: self.get_primary_gpu().await?.map(|v| v.to_string()),
                 },
             },
         }));

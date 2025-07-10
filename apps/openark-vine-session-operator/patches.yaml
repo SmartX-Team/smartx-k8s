@@ -18,12 +18,15 @@ auth:
 features:
   gateway: {{ has "org.ulagbulag.io/gateway" .Values.features }}
   gpu:
-{{- if has "nvidia.com/gpu" .Values.features }}
-    default: nvidia
-{{- end }}
     nvidia: {{ has "nvidia.com/gpu" .Values.features }}
   ingress: {{ has "org.ulagbulag.io/ingress" .Values.features }}
   vm: {{ has "org.ulagbulag.io/vm/kubevirt" .Values.features }}
+
+{{- if not $.Values.cluster.standalone }}
+greeter:
+  image:
+    pullPolicy: Always
+{{- end }}
 
 ingress:
   domainName: {{ .Values.ingress.domainName | quote }}
@@ -33,6 +36,12 @@ nodeSelector:
   node-role.kubernetes.io/kiss: Desktop
 {{- end }}
 {{- .Values.vine.session.nodeSelector | toYaml | nindent 2 }}
+
+{{- if not $.Values.cluster.standalone }}
+novnc:
+  image:
+    pullPolicy: Always
+{{- end }}
 
 openark:
   labels:
@@ -50,10 +59,16 @@ openark:
     org.ulagbulag.io/bind.timestamp: {{ index .Values.openark.labels "org.ulagbulag.io/bind.timestamp" | quote }}
     org.ulagbulag.io/bind.user: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
     org.ulagbulag.io/compute-mode: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}
+    org.ulagbulag.io/gpu: {{ index .Values.openark.labels "org.ulagbulag.io/gpu" | quote }}
     org.ulagbulag.io/is-private: {{ index .Values.openark.labels "org.ulagbulag.io/is-private" | quote }}
     org.ulagbulag.io/signed-out: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
 
 operator:
+{{- if not $.Values.cluster.standalone }}
+  image:
+    pullPolicy: Always
+{{- end }}
+
   tolerations:
     - key: {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}
       operator: Exists

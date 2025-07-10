@@ -26,6 +26,14 @@ pci_id="$(basename "${dev}")"
 port="$(dirname "$(readlink -e "${dev}")")"
 port_id="$(basename "${port}")"
 
+# Skip if integrated
+case "$(cat "${dev}/vendor")" in
+'0x8086')
+    echo "INFO: Integrated device; skipping resetting: ${pci_id}"
+    exec true
+    ;; # intel
+esac
+
 # Remove the devices
 "$(dirname "$0")/pci-remove-group.sh" "${port}"
 

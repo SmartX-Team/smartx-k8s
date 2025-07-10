@@ -111,6 +111,8 @@ spec:
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
             - name: OPENARK_LABEL_COMPUTE_MODE
               value: {{ index .Values.openark.labels "org.ulagbulag.io/compute-mode" | quote }}
+            - name: OPENARK_LABEL_GPU
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/gpu" | quote }}
             - name: OPENARK_LABEL_SELECTOR
               value: >
 {{- $_ := set $ "NodeSelector" list }}
@@ -154,8 +156,8 @@ spec:
               cpu: 30m
               memory: 20Mi
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 200m
+              memory: 400Mi
       securityContext:
         seccompProfile:
           type: RuntimeDefault

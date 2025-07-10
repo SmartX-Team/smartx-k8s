@@ -48,11 +48,31 @@ use crate::{
     profile::SessionProfileCrd,
 };
 
-#[derive(Copy, Clone, Debug, Display, EnumString, PartialEq, Eq)]
+/// An enumeration of available primary GPU.
+///
+/// NOTE: The items are ordered by priority as primary GPU.
+///
+#[derive(Copy, Clone, Debug, Display, EnumString, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "clap", derive(Parser))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[strum(serialize_all = "kebab-case")]
-enum VineSessionGPU {
+pub enum VineSessionGPU {
+    Intel,
     Nvidia,
+}
+
+impl VineSessionGPU {
+    /// Parse the GPU by vendor ID.
+    ///
+    pub fn try_from_vendor(vendor: &str) -> Option<Self> {
+        match vendor {
+            "0x8086" => Some(Self::Intel),
+            "0x10de" => Some(Self::Nvidia),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -121,6 +141,9 @@ pub struct VineSessionArgs {
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_COMPUTE_MODE"))]
     label_compute_mode: String,
+
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_GPU"))]
+    label_gpu: String,
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_IS_PRIVATE"))]
     label_is_private: String,
@@ -333,6 +356,7 @@ pub struct Metadata<'a> {
     bind_timestamp: Option<Time>,
     bind_user: Option<String>,
     compute_mode: Option<ComputeMode>,
+    gpu: Option<VineSessionGPU>,
     name: Option<String>,
     signed_out: Option<bool>,
 }
@@ -396,6 +420,9 @@ impl<'a> Metadata<'a> {
                 .cloned(),
             compute_mode: labels
                 .and_then(|map| map.get(&args.label_compute_mode))
+                .and_then(|value| value.parse().ok()),
+            gpu: labels
+                .and_then(|map| map.get(&args.label_gpu))
                 .and_then(|value| value.parse().ok()),
             name: metadata.name.clone(),
             signed_out: labels
@@ -844,22 +871,38 @@ impl<'a> NodeSession<'a> {
         }
 
         // Find GPU
-        let gpu = self.metadata.args.force_gpu.or_else(|| {
-            let labels = self.node.labels();
-            if labels
-                .get("nvidia.com/gpu.present")
-                .and_then(|value| value.parse().ok())
-                .unwrap_or(false)
-            {
-                Some(VineSessionGPU::Nvidia)
-            } else {
-                None
-            }
-        });
+        let gpu = self
+            .metadata
+            .args
+            .force_gpu
+            .or(self.metadata.gpu)
+            .or_else(|| {
+                let labels = self.node.labels();
+                if labels
+                    .get("nvidia.com/gpu.present")
+                    .and_then(|value| value.parse().ok())
+                    .unwrap_or(false)
+                {
+                    Some(VineSessionGPU::Nvidia)
+                } else {
+                    None
+                }
+            });
 
         // Attach GPU
         if let Some(gpu) = gpu {
             match gpu {
+                VineSessionGPU::Intel => match self.metadata.compute_mode {
+                    Some(ComputeMode::Container | ComputeMode::Kueue) => {
+                        // TODO: To be implemented!
+                        ()
+                    }
+                    Some(ComputeMode::VM) => {
+                        // TODO: To be implemented!
+                        ()
+                    }
+                    None => (),
+                },
                 VineSessionGPU::Nvidia => match self.metadata.compute_mode {
                     Some(ComputeMode::Container | ComputeMode::Kueue) => {
                         map.insert("nvidia.com/gpu".into(), Quantity("1".into()));

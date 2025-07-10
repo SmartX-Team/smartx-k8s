@@ -82,6 +82,8 @@ spec:
                   fieldPath: spec.nodeName
             - name: OPENARK_LABEL_BIND_STORAGE
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.storage" | quote }}
+            - name: OPENARK_LABEL_GPU
+              value: {{ index .Values.openark.labels "org.ulagbulag.io/gpu" | quote }}
             - name: OPENARK_LABEL_SIGNED_OUT
               value: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
             - name: RUST_LOG

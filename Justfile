@@ -109,6 +109,7 @@ run-openark-vine-session-operator:
         --label-bind-timestamp "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.timestamp"')" \
         --label-bind-user "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.user"')" \
         --label-compute-mode "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/compute-mode"')" \
+        --label-gpu "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/gpu"')" \
         --label-is-private "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/is-private"')" \
         --label-signed-out "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/signed-out"')" \
         --session-namespace 'vine-session' \
