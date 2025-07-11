@@ -24,6 +24,8 @@ en: &DEFAULT_EN
       section: team
     - title: Contact
       section: contact
+    - title: Dashboard
+      url: https://dashboard.mobilex.kr
     - title: GitHub
       url: https://github.com/SmartX-Team/smartx-k8s
 en-US:
