@@ -10,6 +10,8 @@ args:
   - |
 {{- .Files.Get "bin/xorg.sh" | trim | nindent 4 }}
 env:
+  - name: DBUS_SYSTEM_BUS_ADDRESS
+    value: "unix:path=/run/dbus/system_bus_socket"
   - name: DISPLAY
     value: ":0"
   - name: NVIDIA_DRIVER_CAPABILITIES

@@ -18,6 +18,7 @@ spec:
     dbus: true
     devicePassthrough: true
     hostAudio: true
+    hostBluetooth: true
     hostDBus: true
     hostDisplay: true
     hostUdev: true

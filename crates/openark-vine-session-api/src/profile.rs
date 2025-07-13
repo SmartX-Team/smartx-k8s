@@ -191,6 +191,12 @@ pub struct FeaturesSpec {
 
     #[cfg_attr(
         feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub host_bluetooth: Option<bool>,
+
+    #[cfg_attr(
+        feature = "serde",
         serde(default, rename = "hostDBus", skip_serializing_if = "Option::is_none")
     )]
     pub host_dbus: Option<bool>,

@@ -1,41 +1,29 @@
-{{- define "podTemplate.pipewire" -}}
-name: pipewire
+{{- define "podTemplate.bluetoothd" -}}
+name: bluetoothd
 image: "{{ .Values.greeter.image.repo }}:{{ .Values.greeter.image.tag | default .Chart.AppVersion }}"
 imagePullPolicy: {{ .Values.greeter.image.pullPolicy | quote }}
 command:
   - /usr/bin/env
-  - pipewire
+  - bluetoothd
+  - --experimental
+  - --kernel
+  - --nodetach
 args: []
 env:
   - name: DBUS_SYSTEM_BUS_ADDRESS
     value: "unix:path=/run/dbus/system_bus_socket"
-  - name: DISABLE_RTKIT
-    value: "y"
-  - name: DISPLAY
-    value: ":0"
-  - name: XDG_RUNTIME_DIR
-    value: "/run/user/{{ include "helm.userId" $ }}"
-livenessProbe:
-  exec:
-    command:
-      - test
-      - -S
-      - {{ printf "/run/user/%d/pipewire-0" ( .Values.session.context.uid | int ) | quote }}
-  initialDelaySeconds: 1
-  periodSeconds: 5
 restartPolicy: Always
 securityContext:
   # FIXME: How to disable privileged permission?
-  # FIXME: Maybe related to: /proc/asound/cards
-  privileged: true
-  runAsNonRoot: {{ not ( .Values.session.context.root | default false ) }}
-  runAsUser: {{ include "helm.userId" $ }}
+  privileged: true # required to access to: /dev/snd (ALSA)
+  runAsNonRoot: false
+  runAsUser: 0
 volumeMounts:
 
 {{- /********************************/}}
-  - name: dev-snd
-    mountPath: /dev/snd
-    readOnly: true
+  - name: home
+    mountPath: /var/lib/bluetooth
+    subPath: {{ include "helm.userDataBluetoothSubPath" $ | quote }}
 
 {{- /********************************/}}
   - name: host-sys
@@ -47,8 +35,9 @@ volumeMounts:
     readOnly: true
 
 {{- /********************************/}}
-  - name: runtime-user
-    mountPath: "/run/user/{{ include "helm.userId" $ }}"
+  - name: runtime-udev
+    mountPath: /run/udev
+    readOnly: true
 
 {{- /********************************/}}
   - name: tmp

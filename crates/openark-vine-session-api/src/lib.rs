@@ -893,15 +893,11 @@ impl<'a> NodeSession<'a> {
         if let Some(gpu) = gpu {
             match gpu {
                 VineSessionGPU::Intel => match self.metadata.compute_mode {
-                    Some(ComputeMode::Container | ComputeMode::Kueue) => {
-                        // TODO: To be implemented!
-                        ()
-                    }
+                    Some(ComputeMode::Container | ComputeMode::Kueue) | None => (),
                     Some(ComputeMode::VM) => {
                         // TODO: To be implemented!
                         ()
                     }
-                    None => (),
                 },
                 VineSessionGPU::Nvidia => match self.metadata.compute_mode {
                     Some(ComputeMode::Container | ComputeMode::Kueue) => {

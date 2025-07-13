@@ -7,6 +7,8 @@
 -
 {{- . | toYaml | nindent 8 }}
 {{- end }}
+- name: DBUS_SYSTEM_BUS_ADDRESS
+  value: "unix:path=/run/dbus/system_bus_socket"
 - name: DISPLAY
   value: ":0"
 - name: HOME
@@ -136,7 +138,7 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- if .Values.services.ssh.enabled }}
 - name: home
   mountPath: /etc/ssh
-  subPath: {{ include "helm.userSshHomeSubPath" $ | quote }}
+  subPath: {{ include "helm.userDataSshHomeSubPath" $ | quote }}
 {{- end }}
 
 {{- /********************************/}}
@@ -240,26 +242,7 @@ env:
 {{- include "podTemplate.desktop.env" $ | nindent 2 }}
 ports:
 {{- include "podTemplate.desktop.ports" $ | nindent 2 }}
-{{- /* Resources */}}
-{{- if or
-  .Values.features.containers
-  .Values.volumes.public.enabled
-  .Values.volumes.static.enabled
-}}
-{{- $_ := set $.Values.session.resources "limits" ( .Values.session.resources.limits | default dict ) }}
-{{- $_ := set $.Values.session.resources.limits "squat.ai/fuse" "1" }}
-{{- end }}
-{{- if $.Values.session.resources.limits }}
-resources:
-  limits:
-{{- range $key, $value := $.Values.session.resources.limits }}
-{{- if not ( has $key ( list "cpu" "memory" ) ) }}
-    # {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-    # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
-    {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
+{{- include "helm.podResources" $ }}
 securityContext:
 {{- include "podTemplate.desktop.securityContext" $ | nindent 2 }}
 workingDir: {{ include "helm.userHome" $ | quote }}

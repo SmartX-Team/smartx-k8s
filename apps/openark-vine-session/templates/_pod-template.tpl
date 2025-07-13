@@ -74,15 +74,28 @@ User data directory path (server-side)
 {{- end }}
 
 {{- /*
-User SSH directory path (server-side)
+User data directory path (server-side / bluetoothd)
 */}}
-{{- define "helm.userSshHomeSubPath" -}}
+{{- define "helm.userDataBluetoothSubPath" -}}
 {{- if eq .Values.volumes.home.type "LocalOwned" }}
-{{- printf "ssh/%s" ( include "helm.userName" $ ) }}
+{{- printf "data/%s/%s" "_bluetooth" ( include "helm.userName" $ ) }}
 {{- else if eq .Values.volumes.home.type "LocalShared" }}
-{{- printf "ssh/_shared" }}
+{{- printf "data/%s/_shared" "_bluetooth" }}
 {{- else }} {{- /* Remote | Temporary */}}
-{{- printf "ssh" }}
+{{- printf "data/%s" "_bluetooth" }}
+{{- end }}
+{{- end }}
+
+{{- /*
+User data directory path (server-side / sshd)
+*/}}
+{{- define "helm.userDataSshHomeSubPath" -}}
+{{- if eq .Values.volumes.home.type "LocalOwned" }}
+{{- printf "data/%s/%s" "_ssh" ( include "helm.userName" $ ) }}
+{{- else if eq .Values.volumes.home.type "LocalShared" }}
+{{- printf "data/%s/_shared" "_ssh" }}
+{{- else }} {{- /* Remote | Temporary */}}
+{{- printf "data/%s" "_ssh" }}
 {{- end }}
 {{- end }}
 
@@ -196,23 +209,53 @@ env:
 {{- range $_ := .env | default list }}
   - {{- . | toYaml | nindent 4 }}
 {{- end }}
-{{- /* Resources */}}
-{{- if $.Values.session.resources.limits }}
-resources:
-  limits:
-{{- range $key, $value := $.Values.session.resources.limits }}
-{{- if not ( has $key ( list "cpu" "memory" ) ) }}
-    # {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-    # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
-    {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
+{{- include "helm.podResources" $ }}
 securityContext:
 {{- include "podTemplate.desktop.securityContext" $ | nindent 2 }}
 workingDir: {{ include "helm.userHome" $ | quote }}
 volumeMounts:
 {{- include "podTemplate.desktop.volumeMounts" $ | nindent 2 }}
+{{- end }}
+
+{{- /*
+Pod resources
+*/}}
+{{- define "helm.podResources" -}}
+{{- if not ( has $.Values.session.qos ( list "Burstable" "Guaranteed" ) ) }}
+{{- fail "Unknown QoS Policy: %s" ( $.Values.session.qos | quote ) }}
+{{- end }}
+{{- if or
+  $.Values.features.containers
+  $.Values.volumes.public.enabled
+  $.Values.volumes.static.enabled
+}}
+{{- $_ := set $.Values.session.resources "limits" ( $.Values.session.resources.limits | default dict ) }}
+{{- $_ := set $.Values.session.resources.limits "squat.ai/fuse" "1" }}
+{{- end }}
+{{- if not ( empty $.Values.session.resources ) }}
+resources:
+{{- if $.Values.session.resources.claims }}
+  claims:
+{{- $.Values.session.resources.claims | toYaml | nindent 4 }}
+{{- end }}
+  limits:
+{{- range $key, $value := $.Values.session.resources.limits | default dict }}
+{{- if or
+  ( and ( eq $.Values.session.qos "Burstable"  ) ( not ( has $key ( list "cpu" ) ) ) )
+  ( and ( eq $.Values.session.qos "Guaranteed" ) )
+}}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- if ne $.Values.session.qos "Guaranteed" }}
+  requests:
+{{- range $key, $value := $.Values.session.resources.limits | default dict | merge ( $.Values.session.resources.requests | default dict ) }}
+{{- if has $key ( list "cpu" "memory" ) }}
+    {{ $key | quote }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{- /*
@@ -265,6 +308,19 @@ initContainers:
 {{- end }}
 
 {{- /********************************
+    Bluetooth Daemon
+*************************************/}}
+{{- if .Values.features.hostBluetooth }}
+{{- if not .Values.features.dbus }}
+{{- fail "host bluetooth cannot be enabled without DBus" }}
+{{- end }}
+{{- if ne "Desktop" .Values.mode }}
+{{- fail "host bluetooth cannot be enabled without desktop environment" }}
+{{- end }}
+  - {{- include "podTemplate.bluetoothd" $ | nindent 4 }}
+{{- end }}
+
+{{- /********************************
     PipeWire Audio Daemon
 *************************************/}}
 {{- if .Values.features.audio }}
@@ -282,6 +338,17 @@ initContainers:
   - {{- include "podTemplate.pipewire" $ | nindent 4 }}
   - {{- include "podTemplate.wireplumber" $ | nindent 4 }}
   - {{- include "podTemplate.pipewire-pulse" $ | nindent 4 }}
+{{- end }}
+
+{{- /********************************
+    Bluetooth Daemon
+*************************************/}}
+{{- if eq "Desktop" .Values.mode }}
+{{- if eq "picom" .Values.session.compositor.x11 }}
+  - {{- include "podTemplate.picom" $ | nindent 4 }}
+{{- else }}
+{{- fail "Unknown X11 compositor: %s" ( .Values.session.compositor.x11 | quote ) }}
+{{- end }}
 {{- end }}
 
 {{- end }}
@@ -348,26 +415,6 @@ hostname: "{{ include "helm.fullname" $ }}-{{ .Release.Namespace }}"
 priorityClassName: {{ .Values.session.priorityClassName | quote }}
 # TODO(HoKim98): Improve `PodLevelResources` feature gate (maybe co-work?)
 # resources:
-{{- if $.Values.session.resources.claims }}
-  # claims:
-{{- $.Values.session.resources.claims | toYaml | nindent 4 }}
-{{- end }}
-{{- if $.Values.session.resources.limits }}
-  # limits:
-{{- range $key, $value := $.Values.session.resources.limits }}
-{{- if has $key ( list "cpu" "memory" ) }}
-    # {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- if $.Values.session.resources.requests }}
-  # requests:
-{{- range $key, $value := $.Values.session.resources.requests }}
-{{- if has $key ( list "cpu" "memory" ) }}
-    # {{ $key | quote }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
-{{- end }}
 restartPolicy: {{ .Values.persistence.enabled | ternary "Always" "Never" | quote }}
 securityContext:
   appArmorProfile:

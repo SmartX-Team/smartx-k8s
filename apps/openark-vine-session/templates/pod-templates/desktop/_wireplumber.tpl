@@ -7,6 +7,8 @@ command:
   - wireplumber
 args: []
 env:
+  - name: DBUS_SYSTEM_BUS_ADDRESS
+    value: "unix:path=/run/dbus/system_bus_socket"
   - name: DISABLE_RTKIT
     value: "y"
   - name: XDG_RUNTIME_DIR
