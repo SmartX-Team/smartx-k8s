@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.vector-agent
 spec:
+  enabled: false
   group: ops
   phase: beta
   scale: small
