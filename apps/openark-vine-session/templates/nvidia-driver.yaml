@@ -34,10 +34,12 @@ spec:
         value: 0s
       - name: DRAIN_USE_FORCE
         value: "true"
-    # image: k8s-driver-manager
-    # imagePullPolicy: IfNotPresent
-    # repository: nvcr.io/nvidia/cloud-native
-    # version: v0.8.0
+      - name: NVDRAIN_DEBUG
+        value: "true"
+    image: {{ .Values.drivers.nvidiaGpu.manager.image | quote }}
+    imagePullPolicy: {{ .Values.drivers.nvidiaGpu.manager.pullPolicy | quote }}
+    repository: {{ .Values.drivers.nvidiaGpu.manager.repository | quote }}
+    version: {{ .Values.drivers.nvidiaGpu.manager.version | default .Chart.AppVersion | quote }}
   nodeSelector:
     {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"
 {{- if not ( empty .Values.node.name ) }}

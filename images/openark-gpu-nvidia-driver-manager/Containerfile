@@ -1,0 +1,31 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+        curl \
+        jq \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies / kubectl
+RUN K8S_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" \
+    && ARCH="$(dpkg --print-architecture)" \
+    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl" \
+    && chmod 0555 '/usr/local/bin/kubectl'
+
+# Copy executable files
+ADD ./LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+ADD ./bin/entrypoint.sh /usr/local/bin/driver-manager
+
+# Mark as executable
+CMD [ "./driver-manager" ]
+ENTRYPOINT [ "/usr/bin/env" ]
+WORKDIR /usr/local/bin/

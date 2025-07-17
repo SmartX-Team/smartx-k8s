@@ -102,6 +102,8 @@ driver:
         value: "0s"
       - name: DRAIN_USE_FORCE
         value: "true"
+      - name: NVDRAIN_DEBUG
+        value: "true"
 
   # vGPU licensing configuration
   licensingConfig:

@@ -11,6 +11,7 @@ set -e -o pipefail
 KERNEL_CONF_HOME='/drivers'
 KERNEL_VERSION="$(uname -r)"
 PID_FILE="${RUN_DIR}/${0##*/}.pid"
+USE_HOST_KERNEL="${USE_HOST_KERNEL:-"true"}"
 
 DAEMON_LIST=(
     'nvidia-persistenced/nvidia-persistenced'
@@ -40,7 +41,7 @@ function _install_dependencies() (
     rm -rf "${dst_dir}"
     mkdir -p "${dst_dir}/proc"
 
-    if [ -d "/host/usr/src/linux-headers-${KERNEL_VERSION}" ]; then
+    if [ "x${USE_HOST_KERNEL}" == 'xtrue' ] && [ -d "/host/usr/src/linux-headers-${KERNEL_VERSION}" ]; then
         echo 'Using host Linux kernel headers...'
         cp -ar "/host${dst_dir}/build" "${dst_dir}"
         for path in $(find /host/usr/src -maxdepth 1 -mindepth 1 -type d); do
@@ -49,12 +50,12 @@ function _install_dependencies() (
     else
         echo 'Installing Linux kernel headers...'
         apt-get update
-        apt-get install -qq --no-install-recommends \
+        apt-get install -y --no-install-recommends \
             "linux-headers-${KERNEL_VERSION}" \
             >/dev/null
     fi
 
-    if [ -d "/host${dst_dir}/kernel" ]; then
+    if [ "x${USE_HOST_KERNEL}" == 'xtrue' ] && [ -d "/host${dst_dir}/kernel" ]; then
         echo 'Using host Linux kernel module files...'
         for path in $(find "/host${dst_dir}" -maxdepth 1 -mindepth 1 -name 'modules.*' -type f); do
             ln -sf "${path}" "$(echo "${path}" | grep -Po '^/host\K.*$')"
@@ -62,9 +63,9 @@ function _install_dependencies() (
         cp -r "/host${dst_dir}/kernel" "${dst_dir}/kernel"
     else
         echo 'Downloading Linux kernel module files...'
-        apt-get -qq download "linux-image-${KERNEL_VERSION}"
+        apt-get download -y "linux-image-${KERNEL_VERSION}"
         dpkg -x ./linux-image-*.deb .
-        apt-get -qq download "linux-modules-${KERNEL_VERSION}"
+        apt-get download -y "linux-modules-${KERNEL_VERSION}"
         dpkg -x ./linux-modules-*.deb .
         rm ./linux-*.deb
 
@@ -214,15 +215,47 @@ function _unload_driver() {
         refcnt_file="/sys/module/${name}/refcnt"
         if [ -f "${refcnt_file}" ]; then
             while [ -f "${refcnt_file}" ] && [ $(<"${refcnt_file}") -gt 0 ]; do
-                echo "- daemon/${name}/load: Terminating (Still in use)"
+                echo "- module/${name}/load: Terminating (Still in use)"
+                grep -l 'nvidia' /proc/*/maps | awk -F '/' '{print $3}' | sort -u | xargs kill
                 sleep 0.1
             done
-            echo "- daemon/${name}/load: Terminating"
+            echo "- module/${name}/load: Terminating"
             rmmod "${name}"
             echo "- module/${name}/load: Terminated"
         else
             echo "- module/${name}/load: Skipped"
         fi
+    done
+
+    # Unload the other kernel modules
+    for pci_id in $(ls /sys/bus/pci/devices); do
+        dev="/sys/bus/pci/devices/${pci_id}"
+        # Select NVIDIA products
+        if [ ! -f "${dev}/vendor" ] || ! cat "${dev}/vendor" | grep -Posq '^0x10de$'; then
+            continue
+        fi
+        # Select GPUs and Audio devices
+        # - GPU: 0x030000
+        # - Audio: 0x040300
+        if [ ! -f "${dev}/class" ] || ! cat "${dev}/class" | grep -Posq '^(0x030000|0x040300)$'; then
+            continue
+        fi
+        # Completed filtering devices
+        if [ ! -L "${dev}/driver" ]; then
+            echo "- device/${pci_id}/load: Skipped"
+            continue
+        fi
+        # Unload driver
+        echo "- device/${pci_id}/load: Terminating"
+        echo >"${dev}/driver_override"
+        echo "${pci_id}" >"${dev}/driver/unbind"
+        # Enable device
+        echo "- device/${pci_id}/load: Terminating (Reloading)"
+        until [ "x$(cat "${dev}/enable")" == 'x1' ]; do
+            echo 1 >"${dev}/enable" 2>/dev/null || true
+            sleep 0.2
+        done
+        echo "- device/${pci_id}/load: Terminated"
     done
 }
 
@@ -252,6 +285,13 @@ function _shutdown() {
     return 1
 }
 
+function _shutdown_fail() {
+    if [ -f '/var/log/nvidia-installer.log' ]; then
+        cat '/var/log/nvidia-installer.log'
+    fi
+    _shutdown
+}
+
 function main() {
     # Check whether the driver instance already exists
     exec 3>"${PID_FILE}"
@@ -263,7 +303,7 @@ function main() {
 
     # Revert loading kernel modules if halted while loading
     trap "echo 'Caught signal'; exit 1" HUP INT QUIT PIPE TERM
-    trap "_shutdown" EXIT
+    trap "_shutdown_fail" EXIT
 
     # Cleanup old driver
     _unload_driver
