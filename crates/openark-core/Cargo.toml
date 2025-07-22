@@ -58,7 +58,7 @@ operator = [
 reqwest = ["client", "dep:reqwest"]
 
 # OpenTelemetry
-opentelemetry = ["openark-core-opentelemetry/opentelemetry", "std"]
+opentelemetry = ["openark-core-opentelemetry/opentelemetry", "std", "tracing"]
 opentelemetry-all = [
     "openark-core-opentelemetry/opentelemetry-all",
     "opentelemetry-logs",

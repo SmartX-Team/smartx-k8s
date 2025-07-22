@@ -1,10 +1,12 @@
 #[cfg(not(target_arch = "wasm32"))]
-use std::{env, ffi::OsStr};
+use std::env;
 
 #[cfg(feature = "opentelemetry-otlp")]
 use opentelemetry_otlp as otlp;
 #[cfg(feature = "opentelemetry-otlp")]
 use opentelemetry_sdk as sdk;
+#[cfg(not(target_arch = "wasm32"))]
+use tracing::Level;
 use tracing::{Subscriber, debug, dispatcher};
 use tracing_subscriber::{
     Layer, Registry, layer::SubscriberExt, registry::LookupSpan, util::SubscriberInitExt,
@@ -183,14 +185,14 @@ pub fn init_once() {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn init_once_with(level: impl AsRef<OsStr>, export: bool) {
+pub fn init_once_with(level: Level, export: bool) {
     // Skip init if has been set
     if dispatcher::has_been_set() {
         return;
     }
 
     // set custom tracing level
-    unsafe { env::set_var(KEY, level) };
+    unsafe { env::set_var(KEY, level.as_str()) };
 
     init_once_opentelemetry(export)
 }
@@ -214,15 +216,14 @@ pub fn init_once_with_default(export: bool) {
 pub fn init_once_with_level_int(level: u8, export: bool) {
     // You can see how many times a particular flag or argument occurred
     // Note, only flags can have multiple occurrences
-    let debug_level = match level {
-        0 => "WARN",
-        1 => "INFO",
-        2 => "DEBUG",
-        3 => "TRACE",
+    let level = match level {
+        0 => Level::WARN,
+        1 => Level::INFO,
+        2 => Level::DEBUG,
+        3 => Level::TRACE,
         level => panic!("too high debug level: {level}"),
     };
-    unsafe { env::set_var("RUST_LOG", debug_level) };
-    init_once_with(debug_level, export)
+    init_once_with(level, export)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
