@@ -12,6 +12,12 @@ use tracing_subscriber::{
     Layer, Registry, layer::SubscriberExt, registry::LookupSpan, util::SubscriberInitExt,
 };
 
+#[cfg(not(target_arch = "wasm32"))]
+mod consts {
+    pub(super) const SERVICE_NAME_KEY: &str = "OTEL_SERVICE_NAME";
+    pub(super) const SERVICE_NAME_VALUE: &str = env!("CARGO_CRATE_NAME");
+}
+
 fn init_once_opentelemetry(export: bool) {
     #[cfg(feature = "opentelemetry-otlp")]
     use sdk::runtime::Tokio as Runtime;
@@ -22,13 +28,9 @@ fn init_once_opentelemetry(export: bool) {
     }
 
     // Set default service name
-    #[cfg(not(target_arch = "wasm32"))]
     {
-        const SERVICE_NAME_KEY: &str = "OTEL_SERVICE_NAME";
-        const SERVICE_NAME_VALUE: &str = env!("CARGO_CRATE_NAME");
-
-        if env::var_os(SERVICE_NAME_KEY).is_none() {
-            unsafe { env::set_var(SERVICE_NAME_KEY, SERVICE_NAME_VALUE) }
+        if env::var_os(consts::SERVICE_NAME_KEY).is_none() {
+            unsafe { env::set_var(consts::SERVICE_NAME_KEY, consts::SERVICE_NAME_VALUE) }
         }
     }
 
@@ -92,7 +94,7 @@ fn init_once_opentelemetry(export: bool) {
     where
         S: Subscriber + for<'span> LookupSpan<'span>,
     {
-        let exporter = opentelemetry_otlp::MetricExporter::builder()
+        let exporter = otlp::MetricExporter::builder()
             .with_tonic()
             .build()
             .expect("failed to init a metric exporter");
@@ -117,9 +119,10 @@ fn init_once_opentelemetry(export: bool) {
     {
         use opentelemetry::trace::TracerProvider;
 
-        let name = env::var("OTEL_SERVICE_NAME").unwrap_or_else(|_| "ark-core".into());
+        let name = env::var(consts::SERVICE_NAME_KEY)
+            .unwrap_or_else(|_| consts::SERVICE_NAME_VALUE.into());
 
-        let exporter = opentelemetry_otlp::SpanExporter::builder()
+        let exporter = otlp::SpanExporter::builder()
             .with_tonic()
             .build()
             .expect("failed to init a span exporter");
