@@ -1,6 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
 
+use opentelemetry::global;
 #[cfg(feature = "opentelemetry-otlp")]
 use opentelemetry_otlp as otlp;
 #[cfg(feature = "opentelemetry-otlp")]
@@ -105,11 +106,13 @@ fn init_once_opentelemetry(export: bool) {
         // .build();
         let reader = sdk::metrics::PeriodicReader::builder(exporter).build();
 
-        let meter_provider = sdk::metrics::MeterProviderBuilder::default()
+        let provider = sdk::metrics::MeterProviderBuilder::default()
             .with_reader(reader)
             .build();
 
-        ::tracing_opentelemetry::MetricsLayer::new(meter_provider)
+        let layer = ::tracing_opentelemetry::MetricsLayer::new(provider.clone());
+        global::set_meter_provider(provider);
+        layer
     }
 
     #[cfg(all(feature = "opentelemetry-otlp", feature = "opentelemetry-trace"))]
@@ -136,7 +139,9 @@ fn init_once_opentelemetry(export: bool) {
             .with_span_processor(processor)
             .build();
 
-        ::tracing_opentelemetry::OpenTelemetryLayer::new(provider.tracer(name))
+        let layer = ::tracing_opentelemetry::OpenTelemetryLayer::new(provider.tracer(name));
+        global::set_tracer_provider(provider);
+        layer
     }
 
     let layer = Registry::default()
