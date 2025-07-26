@@ -241,7 +241,7 @@ resources:
   limits:
 {{- range $key, $value := $.Values.session.resources.limits | default dict }}
 {{- if or
-  ( and ( eq $.Values.session.qos "Burstable"  ) ( not ( has $key ( list "cpu" ) ) ) )
+  ( and ( eq $.Values.session.qos "Burstable"  ) ( not ( has $key ( list "cpu" "memory" ) ) ) )
   ( and ( eq $.Values.session.qos "Guaranteed" ) )
 }}
     {{ $key | quote }}: {{ $value | quote }}
