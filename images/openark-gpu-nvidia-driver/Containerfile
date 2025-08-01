@@ -67,6 +67,7 @@ RUN true \
         build-essential \
         file \
         kmod \
+        libdw1 \
         libelf-dev \
         "libelf-dev:${SUBARCH}" \
         libglvnd-dev \
