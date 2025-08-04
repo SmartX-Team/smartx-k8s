@@ -117,16 +117,18 @@ if [ "x${primary_dev}" != 'x' ]; then
     fi
 fi
 
-# Load all Audio drivers
-# TODO: Add support for other vendors
-if ! lsmod | grep -Posq '^snd_hda_intel '; then
-    updated='1'
-    modprobe 'snd_hda_intel' || true
-    sleep 0.01
-fi
-
 # Apply updates
 if [ "x${updated}" == 'x1' ]; then
     modprobe 'xhci_pci'
+    sleep 2
+fi
+
+# Reload all Audio drivers
+# TODO: Add support for other vendors
+driver='snd_hda_intel'
+if ! lsmod | grep -Posq "^${driver} "; then
+    rmmod "${driver}" || true
+    sleep 2
+    modprobe "${driver}" || true
     sleep 2
 fi
