@@ -94,11 +94,11 @@ set -x
 # Create local volumes
 {{- range $_ := $.Volumes.root }}
 mkdir -p {{ . | quote }}
-chown -R "0:0" {{ . | quote }}
+chown "0:0" {{ . | quote }}
 {{- end }}
 {{- range $_ := $.Volumes.user }}
 mkdir -p {{ . | quote }}
-chown -R "${TARGET_UID}:${TARGET_GID}" {{ . | quote }}
+chown "${TARGET_UID}:${TARGET_GID}" {{ . | quote }}
 {{- end }}
 
 exec true

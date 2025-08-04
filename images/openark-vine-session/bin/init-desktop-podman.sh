@@ -33,7 +33,7 @@ if which podman; then
     rm -rf \
         "${HOME}/.config/containers/containers.conf" \
         "${HOME}/.config/containers/storage.conf" \
-        ${HOME}/.local/share/containers
+        "${HOME}/.local/share/containers"
 
     # Patch rootless containers
     cp /etc/containers/podman-containers.conf "${HOME}/.config/containers/containers.conf"
