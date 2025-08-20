@@ -19,7 +19,7 @@ drivers:
       repository: quay.io/ulagbulag
       version: ""
     image: openark-gpu-nvidia-driver
-    version: 535.183.01
+    version: 535.261.03
 
 externalServices:
   notebook:
