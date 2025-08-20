@@ -2,6 +2,9 @@
 {{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
 {{- if eq .kind "Kueue" -}}
 
+{{- $defaultFeatures := dict
+}}
+
 ---
 apiVersion: org.ulagbulag.io/v1alpha1
 kind: SessionProfile
@@ -13,7 +16,8 @@ metadata:
 spec:
   drivers:
 {{- .drivers | default dict | toYaml | nindent 4 }}
-  features: {}
+  features:
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
   mode: Manual
   persistence:
     enabled: true

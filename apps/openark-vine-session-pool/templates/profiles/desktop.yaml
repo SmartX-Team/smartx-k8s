@@ -1,6 +1,20 @@
 {{- range $_ := .Values.profiles | concat .Values.extraProfiles }}
 {{- if eq .kind "Desktop" }}
 
+{{- $defaultFeatures := dict
+  "audio" true
+  "containers" true
+  "dbus" true
+  "devicePassthrough" true
+  "hostAudio" true
+  "hostBluetooth" true
+  "hostDBus" true
+  "hostDisplay" true
+  "hostUdev" true
+  "ipcPassthrough" true
+  "service" true
+}}
+
 ---
 apiVersion: org.ulagbulag.io/v1alpha1
 kind: SessionProfile
@@ -13,17 +27,7 @@ spec:
   drivers:
 {{- .drivers | default dict | toYaml | nindent 4 }}
   features:
-    audio: true
-    containers: true
-    dbus: true
-    devicePassthrough: true
-    hostAudio: true
-    hostBluetooth: true
-    hostDBus: true
-    hostDisplay: true
-    hostUdev: true
-    ipcPassthrough: true
-    service: true
+{{- .features | default dict  | mergeOverwrite $defaultFeatures | toYaml | nindent 4 }}
   mode: Desktop
   persistence:
     enabled: true
