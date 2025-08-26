@@ -1,0 +1,5 @@
+---
+ingress:
+  # Note: Only one of ingress class annotation or the `ingressClassName:` can be used at a time
+  # to set the ingress class
+  domainName: {{ .Values.ingress.domainName | quote }}

@@ -1,0 +1,25 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.static-ingress
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoPrune: true
+    autoSync: true
+    namespace: static
+    patched: true
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/static/ingress
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

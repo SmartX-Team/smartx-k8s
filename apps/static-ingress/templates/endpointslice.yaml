@@ -1,0 +1,25 @@
+{{- range $_ := .Values.domains | default list }}
+{{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-name: {{ $name | quote }}
+    org.ulagbulag.io/host: {{ .host | quote }}
+addressType: {{ .addressType | default "IPv4" | quote }}
+endpoints:
+  - addresses:
+{{- .endpoints.addresses | default list | toYaml | nindent 6 }}
+    conditions:
+      ready: true
+ports:
+  - name: http
+    port: {{ .port | default 80 }}
+    protocol: TCP
+
+{{- end }}

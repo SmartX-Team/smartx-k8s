@@ -1,0 +1,8 @@
+---
+domains:
+  # - host: example.com
+  #   addressType: IPv4
+  #   endpoints:
+  #     addresses:
+  #       - 127.0.0.1
+  #   port: 80

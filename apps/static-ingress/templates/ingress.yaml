@@ -1,0 +1,37 @@
+{{- range $_ := .Values.domains | default list }}
+{{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $.Values.ingress.domainName | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: "0" # disable
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-name: {{ $name | quote }}
+    org.ulagbulag.io/host: {{ .host | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingress.domainName | quote }}
+  rules:
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ $name | quote }}
+                port:
+                  number: {{ .port | default 80 }}
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - {{ .host | quote }}
+      secretName: {{ printf "%s-tls" $name | trunc 63 | trimSuffix "-" | quote }}
+
+{{- end }}

@@ -1,0 +1,22 @@
+{{- range $_ := .Values.domains | default list }}
+{{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+    kubernetes.io/service-name: {{ $name | quote }}
+    org.ulagbulag.io/host: {{ .host | quote }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .port | default 80 }}
+      protocol: TCP
+      targetPort: {{ .port | default 80 }}
+
+{{- end }}
