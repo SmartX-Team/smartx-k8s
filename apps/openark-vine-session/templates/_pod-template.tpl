@@ -406,6 +406,14 @@ containers:
 {{- $containers | toYaml | nindent 2 }}
 
 {{- /********************************
+    DNS Context
+*************************************/}}
+dnsConfig:
+  nameservers:
+{{- .Values.dnsConfig.nameservers | default list | toYaml | nindent 6 }}
+dnsPolicy: {{ .Values.dnsPolicy | default "Default" | quote }}
+
+{{- /********************************
     Pod Context
 *************************************/}}
 hostIPC: {{ or .Values.session.context.hostIPC }}
