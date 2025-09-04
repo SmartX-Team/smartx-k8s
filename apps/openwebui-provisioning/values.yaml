@@ -16,6 +16,7 @@ models:
     - name: llama4:scout
     - name: openthinker:32b
     - name: r1-1776:70b
+    - name: deepseek-r1:8b-0528-qwen3-fp16
 
 # -- Affinity for pod assignment
 affinity:
