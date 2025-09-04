@@ -6,6 +6,7 @@ models:
   # - Library: https://ollama.com/library
   pull:
     - name: deepseek-r1:70b
+    - name: deepseek-r1:8b-0528-qwen3-fp16
     - name: exaone3.5:32b
     - name: exaone-deep:32b
     - name: exaone-deep:32b-fp16
@@ -16,7 +17,6 @@ models:
     - name: llama4:scout
     - name: openthinker:32b
     - name: r1-1776:70b
-    - name: deepseek-r1:8b-0528-qwen3-fp16
 
 # -- Affinity for pod assignment
 affinity:
