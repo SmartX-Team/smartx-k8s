@@ -6,11 +6,13 @@ models:
   # - Library: https://ollama.com/library
   pull:
     - name: deepseek-r1:70b
+    - name: deepseek-r1:8b-0528-qwen3-fp16
     - name: exaone3.5:32b
     - name: exaone-deep:32b
     - name: exaone-deep:32b-fp16
     - name: gemma3:27b
     - name: gemma3:27b-it-fp16
+    - name: ingu627/exaone4.0:32b
     - name: llama3.2-vision:90b
     - name: llama3.3:70b
     - name: llama4:scout
