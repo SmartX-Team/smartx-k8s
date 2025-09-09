@@ -12,11 +12,14 @@ models:
     - name: exaone-deep:32b-fp16
     - name: gemma3:27b
     - name: gemma3:27b-it-fp16
-    - name: ingu627/exaone4.0:32b
+    - name: gpt-oss:120b
     - name: llama3.2-vision:90b
     - name: llama3.3:70b
     - name: llama4:scout
     - name: openthinker:32b
+    - name: qwen3:8b
+    - name: qwen3:14b
+    - name: qwen3:30b
     - name: r1-1776:70b
 
 # -- Affinity for pod assignment
