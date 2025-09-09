@@ -175,6 +175,10 @@ tika:
   # -- Automatically install Apache Tika to extend Open WebUI
   enabled: false
 
+websocket:
+  # -- Enables websocket support in Open WebUI with env `ENABLE_WEBSOCKET_SUPPORT`
+  enabled: false
+
 # -- A list of Ollama API endpoints. These can be added in lieu of automatically installing the Ollama Helm chart, or in addition to it.
 ollamaUrls: []
 
@@ -233,37 +237,22 @@ affinity:
 extraEnvVars:
   - name: ENABLE_LOGIN_FORM
     value: "false"
-  - name: ENABLE_OAUTH_GROUP_MANAGEMENT
-    value: "true"
-  - name: ENABLE_OAUTH_SIGNUP
-    value: "true"
   - name: ENABLE_SIGNUP
     value: "false"
   # - name: HOST
   #   value: 127.0.0.1
-  - name: OAUTH_CLIENT_ID
-    valueFrom:
-      secretKeyRef:
-        name: oidc
-        key: OAUTH_CLIENT_ID
-  - name: OAUTH_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: oidc
-        key: OAUTH_CLIENT_SECRET
-  - name: OAUTH_GROUP_CLAIM
-    value: groups
-  - name: OAUTH_SCOPES
-    value: openid email profile groups
-  - name: OPENID_PROVIDER_URL
-    valueFrom:
-      secretKeyRef:
-        name: oidc
-        key: OPENID_PROVIDER_URL
   # -- Default API key value for Pipelines. Should be updated in a production deployment, or be changed to the required API key if not using Pipelines
   - name: OPENAI_API_KEY
     value: " "
-  # - name: WEBUI_AUTH_TRUSTED_EMAIL_HEADER
-  #   value: X-Auth-Request-Email
-  # - name: WEBUI_AUTH_TRUSTED_NAME_HEADER
-  #   value: X-Auth-Request-Preferred-Username
+
+sso:
+  oidc:
+    # -- OICD client secret from existing secret
+    # @section -- OIDC configuration
+    clientExistingSecret: oidc
+    # -- OIDC client secret key from existing secret
+    # @section -- OIDC configuration
+    clientExistingSecretKey: OAUTH_CLIENT_SECRET
+    # -- Scopes to request (space-separated).
+    # @section -- OIDC configuration
+    scopes: openid email profile groups

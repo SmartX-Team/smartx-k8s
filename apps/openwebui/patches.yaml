@@ -38,3 +38,36 @@ ingress:
     # nginx.ingress.kubernetes.io/auth-url: "https://{{ .Values.auth.domainName }}/oauth2/auth"
     # nginx.ingress.kubernetes.io/auth-signin: "https://{{ .Values.auth.domainName }}/oauth2/start?rd=https://$host$escaped_request_uri"
   host: "ask.{{ .Values.ingress.domainName }}"
+
+{{- if has "org.ulagbulag.io/auth" .Values.features }}
+sso:
+  # -- **Enable SSO authentication globally** must enable to use SSO authentication
+  # @section -- SSO Configuration
+  enabled: true
+  # -- Enable account creation when logging in with OAuth (distinct from regular signup)
+  # @section -- SSO Configuration
+  enableSignup: true
+  # -- Allow logging into accounts that match email from OAuth provider (considered insecure)
+  # @section -- SSO Configuration
+  mergeAccountsByEmail: false
+  # -- Enable OAuth role management through access token roles claim
+  # @section -- SSO Configuration
+  enableRoleManagement: false
+  # -- Enable OAuth group management through access token groups claim
+  # @section -- SSO Configuration
+  enableGroupManagement: true
+
+  oidc:
+    # -- Enable OIDC authentication
+    # @section -- OIDC configuration
+    enabled: true
+    # -- OIDC client ID
+    # @section -- OIDC configuration
+    clientId: {{ .Values.auth.realms.clientId | quote }}
+    # -- OIDC provider well known URL
+    # @section -- OIDC configuration
+    providerUrl: {{ printf "https://%s/realms/%s/.well-known/openid-configuration" .Values.auth.domainName .Values.auth.realms.name | quote }}
+    # -- Name of the provider to show on the UI
+    # @section -- OIDC configuration
+    providerName: {{ .Values.auth.realms.name | quote }}
+{{- end }}
