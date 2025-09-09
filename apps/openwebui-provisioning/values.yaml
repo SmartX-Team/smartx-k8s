@@ -18,7 +18,7 @@ models:
     - name: llama4:scout
     - name: openthinker:32b
     - name: qwen3:14b
-    - name: qwen3:30b
+    - name: qwen3:30b-a3b-instruct-2507-q4_K_M
     - name: qwen3:8b
     - name: r1-1776:70b
 
