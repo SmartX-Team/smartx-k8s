@@ -34,7 +34,9 @@ RUN git clone --depth=1 \
         -b {{ .Values.ipxe.repo.revision | quote }} \
         "{{ .Values.ipxe.repo.baseUrl }}/{{ .Values.ipxe.repo.owner }}/{{ .Values.ipxe.repo.name }}.git" \
     && cd {{ printf "./%s/src" .Values.ipxe.repo.name | quote }} \
-    && git submodule update --init --depth=1
+    && git submodule update --init --depth=1 \
+    # Do not use git version
+    && rm -rf "../.git"
 
 # Build it!
 WORKDIR {{ printf "/src/%s/src" .Values.ipxe.repo.name | quote }}
