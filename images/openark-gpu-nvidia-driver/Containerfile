@@ -75,7 +75,24 @@ RUN true \
         nvidia-container-toolkit \
         pkg-config \
         # x86_64
-{{- if ge ( $driverBranch | int ) 550 }}
+{{- if ge ( $driverBranch | int ) 580 }}
+        $( \
+            if [ "$(uname -m)" == 'x86_64' ]; then echo \
+                {{ printf "libnvidia-nscq=%s-1"
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-fabricmanager=%s-1"
+                        .Values.driver.version
+                    | quote
+                }} \
+                {{ printf "nvidia-imex=%s-1"
+                        .Values.driver.version
+                    | quote
+                }} \
+            ; fi \
+        ) \
+{{- else if ge ( $driverBranch | int ) 550 }}
         $( \
             if [ "$(uname -m)" == 'x86_64' ]; then echo \
                 {{ printf "libnvidia-nscq-%s=%s-1"
