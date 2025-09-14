@@ -230,7 +230,9 @@ Pod resources
   $.Values.volumes.static.enabled
 }}
 {{- $_ := set $.Values.session.resources "limits" ( $.Values.session.resources.limits | default dict ) }}
+{{- if not .Values.session.context.privileged }}
 {{- $_ := set $.Values.session.resources.limits "squat.ai/fuse" "1" }}
+{{- end }}
 {{- end }}
 {{- if not ( empty $.Values.session.resources ) }}
 resources:
