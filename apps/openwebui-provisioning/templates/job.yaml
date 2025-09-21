@@ -33,8 +33,10 @@ spec:
                   name: open-webui-admin
                   key: API_KEY
           resources:
-            limits:
+            requests:
               cpu: "1"
+            limits:
+              cpu: "2"
               memory: 2Gi
           volumeMounts:
             - name: script
