@@ -146,7 +146,7 @@ driver:
   nvidia:
     gpu:
       eula: false
-      version: 570.133.20
+      version: 580.82.07
 
 # Enable SmartX features
 # TODO(user): Configure it!
@@ -159,8 +159,10 @@ features:
   - org.ulagbulag.io/acceleration/networking
   - org.ulagbulag.io/acceleration/storage
   - org.ulagbulag.io/ai
+  - org.ulagbulag.io/ai/gateway
   - org.ulagbulag.io/ai/llm
   - org.ulagbulag.io/ai/llm/openwebui
+  - org.ulagbulag.io/ai/llm/vllm
   - org.ulagbulag.io/auth
   - org.ulagbulag.io/auth/keycloak
   - org.ulagbulag.io/auth/kubernetes

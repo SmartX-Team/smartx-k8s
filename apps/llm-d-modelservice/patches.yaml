@@ -1,0 +1,55 @@
+---
+# schedulerName -- Name of the scheduler to use for scheduling model pods
+# schedulerName: default-scheduler
+
+# When true, a LeaderWorkerSet is used instead of a Deployment
+multinode: {{ not $.Values.cluster.standalone }}
+
+# Global accelerator configuration
+# Supported types: nvidia, intel, amd, google
+accelerator:
+  # Type of accelerator to use
+{{- if has "nvidia.com/gpu" .Values.features }}
+  type: nvidia
+{{- else }}
+  {{- fail "None of the accelerators are configured" }}
+{{- end }}
+  # Environment variables specific to accelerator types
+  env:
+    intel:
+      - name: TORCH_LLM_ALLREDUCE
+        value: "1"
+      - name: VLLM_USE_V1
+        value: "1"
+      - name: VLLM_WORKER_MULTIPROC_METHOD
+        value: spawn
+
+# @schema
+# additionalProperties: true
+# @schema
+# -- Decode pod configuration
+decode:
+  # @schema
+  # additionalProperties: true
+  # @schema
+  # Monitoring configuration for decode pods
+  monitoring:
+    # PodMonitor configuration for Prometheus Operator
+    podmonitor:
+      # enabled -- Create PodMonitor resource for decode deployment
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}
+
+# @schema
+# additionalProperties: true
+# @schema
+# Prefill pod configuation
+prefill:
+  # @schema
+  # additionalProperties: true
+  # @schema
+  # Monitoring configuration for prefill pods
+  monitoring:
+    # PodMonitor configuration for Prometheus Operator
+    podmonitor:
+      # enabled -- Create PodMonitor resource for prefill deployment
+      enabled: {{ has "org.ulagbulag.io/monitoring" .Values.features }}

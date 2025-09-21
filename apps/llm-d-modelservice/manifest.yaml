@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.llm-d-modelservice
+spec:
+  group: ops
+  phase: beta
+  scale: medium
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    namespace: api
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/ai/gateway
+      - org.ulagbulag.io/ai/llm/vllm
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: llm-d-modelservice
+    repoUrl: "https://open-webui.github.io/helm-charts"
+    version: v0.2.9

@@ -48,11 +48,20 @@ org.ulagbulag.io/ai:
     - org.ulagbulag.io/csi/object
     - org.ulagbulag.io/monitoring
 
+org.ulagbulag.io/ai/gateway:
+  requires:
+    - org.ulagbulag.io/ai
+    - org.ulagbulag.io/gateway
+
 org.ulagbulag.io/ai/llm:
   requires:
     - org.ulagbulag.io/ai
 
 org.ulagbulag.io/ai/llm/openwebui:
+  requires:
+    - org.ulagbulag.io/ai/llm
+
+org.ulagbulag.io/ai/llm/vllm:
   requires:
     - org.ulagbulag.io/ai/llm
 
