@@ -13,10 +13,12 @@ models:
     - name: gemma3:27b
     - name: gemma3:27b-it-fp16
     - name: gpt-oss:120b
+    - name: gpt-oss:20b
     - name: llama3.2-vision:90b
     - name: llama3.3:70b
     - name: llama4:scout
     - name: openthinker:32b
+    - name: qwen2.5vl:7b-fp16
     - name: qwen3:14b
     - name: qwen3:30b-a3b-instruct-2507-q4_K_M
     - name: qwen3:8b
