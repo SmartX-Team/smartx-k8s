@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.llm-d-modelservice
 spec:
+  enabled: false
   group: ops
   phase: beta
   scale: medium
