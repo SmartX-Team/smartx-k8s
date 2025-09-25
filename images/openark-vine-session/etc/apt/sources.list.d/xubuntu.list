@@ -1,0 +1,1 @@
+deb [signed-by=/etc/apt/keyrings/xubuntu.gpg] https://ppa.launchpadcontent.net/xubuntu-dev/staging/ubuntu/ noble main
