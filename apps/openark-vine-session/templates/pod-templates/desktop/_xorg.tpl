@@ -26,13 +26,13 @@ livenessProbe:
       - /tmp/.X11-unix/X0
   initialDelaySeconds: 1
   periodSeconds: 5
-readinessProbe:
-  exec:
-    command:
-      - xrandr
-      - --listactivemonitors
-  initialDelaySeconds: 1
-  periodSeconds: 15
+# readinessProbe:
+#   exec:
+#     command:
+#       - xrandr
+#       - --listactivemonitors
+#   initialDelaySeconds: 1
+#   periodSeconds: 15
 {{- /* Resources */}}
 {{- if $.Values.session.resources.limits }}
 resources:
