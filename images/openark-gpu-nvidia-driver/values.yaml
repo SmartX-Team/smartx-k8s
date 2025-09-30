@@ -6,7 +6,7 @@ build:
 cuda:
   image:
     repo: nvcr.io/nvidia/cuda
-    tag: 12.8.0
+    tag: ""
   keyring:
     baseUrl: https://developer.download.nvidia.com/compute/cuda
 

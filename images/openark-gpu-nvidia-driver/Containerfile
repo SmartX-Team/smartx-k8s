@@ -8,7 +8,7 @@
 # Be ready for serving
 FROM {{ printf "%s:%s-base-%s%s"
         .Values.cuda.image.repo
-        .Values.cuda.image.tag
+        .Values.cuda.image.version
         .Values.kiss.os.dist
         .Values.kiss.os.version
     | quote

@@ -125,6 +125,9 @@ function _build_driver() {
     fi
 
     # Select driver kernel module type
+    if [[ "${KERNEL_MODULE_TYPE}" == "auto" ]]; then
+        KERNEL_MODULE_TYPE="open"
+    fi
     if [[ "${KERNEL_MODULE_TYPE}" == "open" || "${KERNEL_MODULE_TYPE}" == "proprietary" ]]; then
         [[ "${KERNEL_MODULE_TYPE}" == "open" ]] && kernel_type=kernel-open || kernel_type=kernel
         echo "Proceeding with user-specified kernel module type ${KERNEL_MODULE_TYPE}"

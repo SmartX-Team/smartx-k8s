@@ -144,6 +144,10 @@ cluster:
 # TODO(user): Configure it!
 driver:
   nvidia:
+    cuda:
+      image:
+        repo: nvcr.io/nvidia/cuda
+        version: 13.0.1
     gpu:
       eula: false
       version: 580.82.07
