@@ -4,7 +4,7 @@
 apiVersion: org.ulagbulag.io/v1alpha1
 kind: SessionBinding
 metadata:
-  name: {{ printf "%s-%s" .profileName ( . | toYaml | b64enc | lower | substr 0 7 ) | quote }}
+  name: {{ printf "%s-%s" .profileName ( . | toYaml | b64enc | sha256sum | lower | substr 0 7 ) | quote }}
   namespace: {{ $.Release.Namespace | quote }}
   labels:
 {{- include "helm.labels" $ | nindent 4 }}

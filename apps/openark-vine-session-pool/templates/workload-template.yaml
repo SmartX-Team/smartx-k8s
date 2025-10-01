@@ -41,7 +41,7 @@ spec:
       - name: name
         enum:
 {{- range $_ := .Values.bindings | default list }}
-          - {{ printf "%s-%s" .profileName ( . | toYaml | b64enc | lower | substr 0 7 ) | quote }}
+          - {{ printf "%s-%s" .profileName ( . | toYaml | b64enc | sha256sum | lower | substr 0 7 ) | quote }}
 {{- end }}
       - name: enabled
         enum:
