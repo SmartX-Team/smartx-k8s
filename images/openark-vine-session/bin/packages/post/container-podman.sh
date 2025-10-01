@@ -14,63 +14,6 @@ set -x
 chmod u+s /usr/bin/newuidmap /usr/bin/newgidmap
 systemctl enable podman
 
-mkdir -p /etc/containers/
-touch /etc/containers/nodocker
-
-# Configure containers.conf
-cat <<EOF >/etc/containers/containers.conf
-[containers]
-keyring=false
-netns="host"
-userns="host"
-ipcns="host"
-utsns="host"
-cgroupns="host"
-cgroups="disabled"
-log_driver = "k8s-file"
-
-[engine]
-no_pivot_root=true
-cgroup_manager = "cgroupfs"
-events_logger="file"
-runtime="crun"
-EOF
-chmod 644 /etc/containers/containers.conf
-
-# Configure podman-containers.conf
-cat <<EOF >/etc/containers/podman-containers.conf
-[containers]
-volumes = [
-    "/proc:/proc",
-]
-default_sysctls = []
-EOF
-chmod 644 /etc/containers/podman-containers.conf
-
-# Configure storage.conf
-cat <<EOF >/etc/containers/storage.conf
-[storage]
-driver = "overlay"
-graphroot = "/var/lib/containers/storage"
-runroot = "/run/containers/storage"
-
-[storage.options]
-additionalimagestores = [
-    "/var/lib/shared",
-]
-
-[storage.options.pull_options]
-enable_partial_images = "false"
-ostree_repos = ""
-use_hard_links = "false"
-
-[storage.options.overlay]
-mount_program = "/usr/bin/fuse-overlayfs"
-mountopt = "nodev,fsync=0"
-
-[storage.options.thinpool]
-EOF
-
 # Enable Fuse storage
 mkdir -p \
     /var/lib/shared/overlay-images \
