@@ -62,6 +62,7 @@ unset CONFIGMAP_PATH
 
 set +e +o pipefail
 "${CONTAINER_RUNTIME}" build \
+    --security-opt='seccomp=unconfined' \
     --tag "${IMAGE_TAG}" \
     ${CONTAINER_RUNTIME_EXTRA_ARGS} \
     ${EXTRA_ARGS} \
