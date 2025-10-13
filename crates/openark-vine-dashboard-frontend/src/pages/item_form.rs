@@ -1,7 +1,7 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use openark_vine_dashboard_api::{
-    item::{Item, ItemField, ItemFieldKind, ItemMetadata},
+    item::{AnyValue, Item, ItemField, ItemFieldKind, ItemMetadata},
     page::PageRef,
 };
 use serde_json::Value;
@@ -112,12 +112,12 @@ fn build_field(context: &Context, field: &ItemField) -> Option<Html> {
         optional,
         title,
         description,
-        default,
+        default: AnyValue(default),
         placeholder,
         max_length,
         min_length,
-        max_value,
-        min_value,
+        max_value: AnyValue(max_value),
+        min_value: AnyValue(min_value),
     } = field.clone();
 
     let body_optional = if optional {

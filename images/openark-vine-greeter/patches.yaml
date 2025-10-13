@@ -1,4 +1,6 @@
 ---
+debian: {{- .Values.build.ubuntu | toYaml | nindent 2 }}
+
 driver:
   nvidia:
     # enabled: {{ has "nvidia.com/gpu" .Values.features }}

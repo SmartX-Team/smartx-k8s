@@ -1,3 +1,6 @@
 ---
-rust:
-  channel: {{ .Values.rust.channel | quote }}
+debian: {{- .Values.build.debian | toYaml | nindent 2 }}
+
+kube: {{- .Values.build.kube | toYaml | nindent 2 }}
+
+rust: {{- .Values.build.rust | toYaml | nindent 2 }}

@@ -8,7 +8,7 @@
 {{- $installDir := "/usr/local" }}
 
 # Download base image
-FROM "{{ .Values.image.repo }}:{{ .Values.image.tag }}" AS base
+FROM "{{ .Values.python.image.repo }}:{{ .Values.python.version }}-{{ .Values.debian.image.tag }}" AS base
 
 # Be ready for building
 FROM base AS builder

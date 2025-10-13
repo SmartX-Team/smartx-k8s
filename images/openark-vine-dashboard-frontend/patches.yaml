@@ -1,7 +1,14 @@
 ---
+debian: {{- .Values.build.debian | toYaml | nindent 2 }}
+
+nginx: {{- .Values.build.nginx | toYaml | nindent 2 }}
+
+node: {{- .Values.build.node | toYaml | nindent 2 }}
+
+nvm: {{- .Values.build.nvm | toYaml | nindent 2 }}
+
 openark:
   labels:
     org.ulagbulag.io/alias: {{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
 
-rust:
-  channel: ""
+rust: {{- .Values.build.rust | toYaml | nindent 2 }}

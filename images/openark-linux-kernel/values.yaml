@@ -1,8 +1,8 @@
 ---
 debian:
   image:
-    repo: docker.io/library/debian
-    tag: bookworm
+    repo: ""
+    tag: ""
 
 linux:
   repo:

@@ -6,7 +6,7 @@
 {{- $version := .Release.Version }}
 
 # Be ready for building
-FROM "{{ .Values.builder.image.repo }}:{{ .Values.builder.image.tag }}-{{ .Values.debian.image.tag }}" AS builder
+FROM "{{ .Values.rust.image.repo }}:{{ .Values.rust.version }}-{{ .Values.debian.image.tag }}" AS builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,6 +33,7 @@ ENV CSI_PROTO_URL={{ printf "%s/%s/%s/refs/heads/%s/csi.proto"
 }}
 RUN \
     # Cache build outputs
+    --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     # Create an output directory

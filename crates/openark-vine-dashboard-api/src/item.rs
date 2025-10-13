@@ -37,12 +37,11 @@ pub struct ItemField {
     )]
     pub description: Option<String>,
 
-    #[cfg_attr(feature = "schemars", schemars(schema_with = "preserve_arbitrary"))]
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Value::is_null")
+        serde(default, skip_serializing_if = "AnyValue::is_null")
     )]
-    pub default: Value,
+    pub default: AnyValue,
 
     #[cfg_attr(
         feature = "serde",
@@ -59,19 +58,17 @@ pub struct ItemField {
     #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "is_zero"))]
     pub min_length: usize,
 
-    #[cfg_attr(feature = "schemars", schemars(schema_with = "preserve_arbitrary"))]
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Value::is_null")
+        serde(default, skip_serializing_if = "AnyValue::is_null")
     )]
-    pub max_value: Value,
+    pub max_value: AnyValue,
 
-    #[cfg_attr(feature = "schemars", schemars(schema_with = "preserve_arbitrary"))]
     #[cfg_attr(
         feature = "serde",
-        serde(default, skip_serializing_if = "Value::is_null")
+        serde(default, skip_serializing_if = "AnyValue::is_null")
     )]
-    pub min_value: Value,
+    pub min_value: AnyValue,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -106,12 +103,18 @@ pub struct Item {
     pub spec: Option<Map<String, Value>>,
 }
 
-#[cfg(feature = "schemars")]
-fn preserve_arbitrary(_gen: &mut ::schemars::SchemaGenerator) -> ::schemars::schema::Schema {
-    let mut obj = ::schemars::schema::SchemaObject::default();
-    obj.extensions
-        .insert("x-kubernetes-preserve-unknown-fields".into(), true.into());
-    ::schemars::schema::Schema::Object(obj)
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "schemars", schemars(transparent, extend("x-kubernetes-preserve-unknown-fields" = true)))]
+#[cfg_attr(feature = "serde", serde(transparent))]
+pub struct AnyValue(pub Value);
+
+impl AnyValue {
+    #[inline]
+    fn is_null(&self) -> bool {
+        self.0.is_null()
+    }
 }
 
 const fn is_zero(value: &usize) -> bool {

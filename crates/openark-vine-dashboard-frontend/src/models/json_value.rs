@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::{Result, anyhow, bail};
 use itertools::Itertools;
-use openark_vine_dashboard_api::item::{ItemField, ItemFieldKind, ItemMetadata};
+use openark_vine_dashboard_api::item::{AnyValue, ItemField, ItemFieldKind, ItemMetadata};
 use serde_json::{Map, Value};
 use tracing::Level;
 use yew::prelude::*;
@@ -43,7 +43,7 @@ impl JsonValue {
     }
 
     #[inline]
-    pub fn borrow(&self) -> Ref<Map<String, Value>> {
+    pub fn borrow(&self) -> Ref<'_, Map<String, Value>> {
         self.0.borrow()
     }
 
@@ -108,12 +108,12 @@ fn validate_field(field: &ItemField, value: &Map<String, Value>) -> Result<()> {
         optional,
         title: _,
         description: _,
-        default,
+        default: AnyValue(default),
         placeholder: _,
         max_length,
         min_length,
-        max_value,
-        min_value,
+        max_value: AnyValue(max_value),
+        min_value: AnyValue(min_value),
     } = field;
 
     let value = match value.get(name) {

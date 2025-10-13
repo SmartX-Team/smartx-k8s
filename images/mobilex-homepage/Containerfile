@@ -5,7 +5,7 @@
 {{- $package := .Release.Name }}
 
 # Be ready for building
-FROM {{ printf "%s:%s" .Values.ruby.image.repo .Values.ruby.image.tag | quote }} AS builder
+FROM {{ printf "%s:%s-%s" .Values.ruby.image.repo .Values.ruby.version .Values.debian.image.tag | quote }} AS builder
 
 # Install dependencies
 RUN gem install bundler jekyll

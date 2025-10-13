@@ -1,13 +1,14 @@
 ---
-builder:
-  image:
-    repo: docker.io/library/rust
-    tag: "1"
-
 debian:
   image:
-    repo: docker.io/library/debian
-    tag: bookworm
+    repo: ""
+    tag: ""
+
+kube:
+  version: ""
 
 rust:
   channel: ""
+  image:
+    repo: ""
+  version: ""

@@ -40,20 +40,14 @@ std = [
     "url/std",
 ]
 
-actix-web = [
-    "dep:actix-web",
-    "dep:jsonwebtoken",
-    "reqwest",
-    "send",
-    "serde",
-    "std",
-]
+actix-web = ["dep:actix-web", "reqwest", "send", "serde", "std"]
 clap = ["dep:clap", "std"]
 client = [
     "dep:anyhow",
     "dep:async-trait",
     "dep:cookie",
     "dep:http",
+    "dep:jsonwebtoken",
     "dep:openark-core",
     "dep:web-sys",
     "openark-core?/client",
@@ -66,6 +60,12 @@ rand = ["dep:getrandom"]
 reqwest = ["client", "dep:reqwest", "openark-core?/reqwest"]
 schemars = ["dep:schemars", "serde"]
 serde = ["dep:anyhow", "dep:base64", "dep:serde", "dep:serde-json", "url/serde"]
+
+# TLS
+# tls-aws-lc-rs = ["jsonwebtoken?/aws_lc_rs"]
+tls-aws-lc-rs = []
+tls-openssl = []
+tls-ring = []
 
 # Async trait bounds
 send = ["openark-core?/send"]
@@ -86,9 +86,9 @@ http = { workspace = true, optional = true }
 jsonwebtoken = { workspace = true, optional = true }
 k8s-openapi = { workspace = true, optional = true, features = ["schemars"] }
 kube = { workspace = true, optional = true, features = ["derive"] }
-regex = { workspace = true, optional = true }
+regex = { workspace = true, optional = true, features = ["unicode"] }
 reqwest = { workspace = true, optional = true, features = ["json"] }
-schemars = { workspace = true, optional = true, features = ["derive", "url"] }
+schemars = { workspace = true, optional = true, features = ["derive", "url2"] }
 serde = { workspace = true, optional = true, features = ["derive"] }
 serde-json = { workspace = true, optional = true, features = ["alloc"] }
 strum = { workspace = true, features = ["derive"] }
@@ -99,7 +99,10 @@ url = { workspace = true }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 cookie = { workspace = true, optional = true, features = ["secure"] }
 getrandom = { workspace = true, optional = true, features = ["wasm_js"] }
+# jsonwebtoken = { workspace = true, optional = true, features = ["rust_crypto"] }
+jsonwebtoken = { workspace = true, optional = true }
 web-sys = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 getrandom = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true, optional = true }

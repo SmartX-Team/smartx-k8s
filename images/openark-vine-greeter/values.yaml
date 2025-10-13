@@ -4,8 +4,8 @@ bastion:
 
 debian:
   image:
-    repo: docker.io/library/ubuntu
-    tag: "24.04"
+    repo: ""
+    tag: ""
 
 driver:
   nvidia:

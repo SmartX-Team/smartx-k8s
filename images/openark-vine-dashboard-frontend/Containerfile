@@ -3,15 +3,16 @@
 # found in the LICENSE file.
 
 {{- $package := .Release.Name }}
+{{- $version := .Release.Version }}
 
 # Install node dependencies
 RUN npm install --package-lock-only && ./node_modules/npm/bin/npm clean-install
 
 # Be ready for building
-FROM "{{ .Values.openark.builder.image.repo }}:{{ .Values.openark.builder.image.tag }}-{{ .Values.openark.base.image.tag }}" AS builder
+FROM "{{ .Values.rust.image.repo }}:{{ .Values.rust.version }}-{{ .Values.debian.image.tag }}" AS builder
 
 # Install node dependencies
-RUN curl -o- 'https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh' | bash \
+RUN curl -o- 'https://raw.githubusercontent.com/nvm-sh/nvm/v{{ .Values.nvm.version }}/install.sh' | bash \
     && . "${HOME}/.nvm/nvm.sh" \
     && nvm install {{ .Values.node.version | quote }}
 
@@ -27,7 +28,7 @@ RUN apt-get update && apt-get install -y \
     # Switch channel
     && rustup default {{ .Values.rust.channel | quote }} \
     # Enable wasm32 target
-    && rustup target add wasm32-unknown-unknown \
+    && rustup target add 'wasm32-unknown-unknown' \
     # Build
     && cargo install --root /usr/local \
         trunk \
@@ -49,6 +50,7 @@ RUN . "${HOME}/.nvm/nvm.sh" \
 ENV OPENARK_LABEL_ALIAS={{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
 RUN \
     # Cache build outputs
+    --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     # Load Node.js

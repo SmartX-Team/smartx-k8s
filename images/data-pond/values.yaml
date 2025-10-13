@@ -1,9 +1,4 @@
 ---
-builder:
-  image:
-    repo: docker.io/library/rust
-    tag: "1"
-
 csi:
   baseUrl: https://raw.githubusercontent.com
   owner: container-storage-interface
@@ -12,8 +7,11 @@ csi:
 
 debian:
   image:
-    repo: docker.io/library/debian
-    tag: bookworm
+    repo: ""
+    tag: ""
 
 rust:
   channel: ""
+  image:
+    repo: ""
+  version: ""

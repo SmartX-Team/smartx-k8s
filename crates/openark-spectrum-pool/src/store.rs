@@ -8,7 +8,7 @@ use openark_spectrum_api::{
     schema::{CommitState, PoolResource},
 };
 use redb::{
-    Database, Error, ReadOnlyTable, Table, TableDefinition,
+    Database, Error, ReadOnlyTable, ReadableDatabase, Table, TableDefinition,
     backends::{FileBackend, InMemoryBackend},
 };
 

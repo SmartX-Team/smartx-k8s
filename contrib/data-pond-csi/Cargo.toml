@@ -25,7 +25,7 @@ default = []
 # gRPC
 client = ["transport"]
 server = ["transport"]
-transport = ["tonic/transport", "tonic-build/transport"]
+transport = ["tonic/transport", "tonic-prost-build/transport"]
 
 # TLS
 tls-aws-lc-rs = ["reqwest/rustls-tls"]
@@ -34,7 +34,7 @@ tls-ring = ["reqwest/rustls-tls"]
 
 [build-dependencies]
 anyhow = { workspace = true, features = ["std"] }
-tonic-build = { workspace = true }
+tonic-prost-build = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true, features = [
     "fs",
@@ -48,4 +48,5 @@ prost = { workspace = true, features = ["derive", "std"] }
 prost-types = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["derive", "std"] }
 strum = { workspace = true, features = ["derive"] }
-tonic = { workspace = true }
+tonic = { workspace = true, features = ["codegen"] }
+tonic-prost = { workspace = true }

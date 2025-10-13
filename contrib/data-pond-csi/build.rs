@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     const STRUM_RENAME: &str = "#[strum(serialize_all = \"snake_case\")]";
 
     // Parse spec
-    let config = ::tonic_build::configure()
+    let config = ::tonic_prost_build::configure()
         .build_client(cfg!(feature = "client"))
         .build_server(cfg!(feature = "server"))
         .emit_rerun_if_changed(false)

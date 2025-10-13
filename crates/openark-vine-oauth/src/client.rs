@@ -2,7 +2,6 @@ use anyhow::Result;
 use async_trait::async_trait;
 use http::Method;
 use openark_core::client::{Client, RequestCredentials};
-use serde::Serialize;
 
 #[cfg_attr(feature = "send", async_trait)]
 #[cfg_attr(not(feature = "send"), async_trait(?Send))]
@@ -46,7 +45,7 @@ where
         configs: &super::OpenIDConfiguration,
         code: &str,
     ) -> Result<super::OpenIDClientToken> {
-        #[derive(Debug, Serialize)]
+        #[derive(Debug, ::serde::Serialize)]
         struct Request<'a> {
             client_id: &'a str,
             client_secret: &'a str,

@@ -62,9 +62,9 @@ kube = { workspace = true }
 kube-quantity = { workspace = true }
 regex = { workspace = true }
 schemars = { workspace = true, optional = true, features = [
-    "chrono",
+    "chrono04",
     "derive",
-    "url",
+    "url2",
 ] }
 serde = { workspace = true, optional = true, features = ["alloc", "derive"] }
 serde-json = { workspace = true, optional = true }

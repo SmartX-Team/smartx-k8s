@@ -409,6 +409,7 @@ fn build_app(
             sync_policy: Some(ApplicationSyncPolicy {
                 automated: Some(ApplicationSyncPolicyAutomated {
                     allow_empty: None,
+                    enabled: Some(true),
                     prune: Some(true),
                     self_heal: Some(true),
                 }),

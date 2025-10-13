@@ -1,22 +1,25 @@
 ---
+debian:
+  image:
+    tag: ""
+
 nginx:
   image:
-    repo: docker.io/library/nginx
-    tag: stable
-    otel: true
+    repo: ""
+    tag: ""
+    otel: false
 
 node:
-  version: 22
+  version: ""
+
+nvm:
+  version: ""
 
 openark:
-  base:
-    image:
-      tag: bookworm
-  builder:
-    image:
-      repo: docker.io/library/rust
-      tag: "1"
   labels: {}
 
 rust:
-  channel: {{ .Values.rust.channel | quote }}
+  channel: ""
+  image:
+    repo: ""
+  version: ""

@@ -1,11 +1,15 @@
 ---
+debian:
+  image:
+    tag: ""
+
 nginx:
   image:
-    repo: docker.io/library/nginx
-    tag: stable
-    otel: true
+    repo: ""
+    tag: ""
+    otel: false
 
 ruby:
   image:
-    repo: docker.io/library/ruby
-    tag: bullseye
+    repo: ""
+  version: ""

@@ -11,7 +11,7 @@ set -x
 # Drain all pods using NVIDIA GPUs
 kubectl get pods \
     --all-namespaces \
-    --field-selector spec.nodeName=e4020aba-4b62-55fa-1362-1c697ad99df2 \
+    --field-selector spec.nodeName="${NODE_NAME}" \
     --output json |
     jq -r '.items[]
         | select(any(.spec.containers[].resources.requests; .["nvidia.com/gpu"]))

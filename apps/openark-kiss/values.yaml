@@ -4,9 +4,6 @@ apiserver:
 
 assets:
   image:
-    repo: docker.io/library/nginx
-    tag: stable
-    otel: true
     pullPolicy: Always
 
 dnsmasq:

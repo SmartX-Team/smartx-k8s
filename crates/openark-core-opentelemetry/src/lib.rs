@@ -1,7 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::env;
 
-use opentelemetry::global;
 #[cfg(feature = "opentelemetry-otlp")]
 use opentelemetry_otlp as otlp;
 #[cfg(feature = "opentelemetry-otlp")]
@@ -29,6 +28,7 @@ fn init_once_opentelemetry(export: bool) {
     }
 
     // Set default service name
+    #[cfg(not(target_arch = "wasm32"))]
     {
         if env::var_os(consts::SERVICE_NAME_KEY).is_none() {
             unsafe { env::set_var(consts::SERVICE_NAME_KEY, consts::SERVICE_NAME_VALUE) }
@@ -111,7 +111,7 @@ fn init_once_opentelemetry(export: bool) {
             .build();
 
         let layer = ::tracing_opentelemetry::MetricsLayer::new(provider.clone());
-        global::set_meter_provider(provider);
+        ::opentelemetry::global::set_meter_provider(provider);
         layer
     }
 
@@ -140,7 +140,7 @@ fn init_once_opentelemetry(export: bool) {
             .build();
 
         let layer = ::tracing_opentelemetry::OpenTelemetryLayer::new(provider.tracer(name));
-        global::set_tracer_provider(provider);
+        ::opentelemetry::global::set_tracer_provider(provider);
         layer
     }
 

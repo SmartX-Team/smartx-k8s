@@ -6,7 +6,7 @@
 {{- $version := .Release.Version }}
 
 # Be ready for building
-FROM "{{ .Values.builder.image.repo }}:{{ .Values.builder.image.tag }}-{{ .Values.debian.image.tag }}" AS builder
+FROM "{{ .Values.rust.image.repo }}:{{ .Values.rust.version }}-{{ .Values.debian.image.tag }}" AS builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,6 +27,7 @@ WORKDIR /src
 # Build it!
 RUN \
     # Cache build outputs
+    --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     # Create an output directory
@@ -36,9 +37,10 @@ RUN \
     # Build
     && cargo build \
         --package 'openark-*-backend' \
+        --package 'openark-*-controller' \
         --package 'openark-*-handler' \
         --package 'openark-*-operator' \
-        --package 'openark-admission-controller' \
+        --package 'openark-*-pool' \
         --package 'openark-cli' \
         --package 'openark-kiss-dns' \
         --profile 'release' \
@@ -53,7 +55,7 @@ RUN apt-get update && apt-get install -y \
         curl \
         git \
         jq \
-        policykit-1 \
+        polkitd \
         systemd \
     # Cleanup
     && apt-get clean all \
@@ -63,9 +65,8 @@ RUN apt-get update && apt-get install -y \
 RUN curl "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3" | bash
 
 # Install dependencies / kubectl
-RUN K8S_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" \
-    && ARCH="$(dpkg --print-architecture)" \
-    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl" \
+RUN ARCH="$(dpkg --print-architecture)" \
+    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/v{{ .Values.kube.version }}/bin/linux/${ARCH}/kubectl" \
     && chmod 0555 '/usr/local/bin/kubectl'
 
 # Create an user

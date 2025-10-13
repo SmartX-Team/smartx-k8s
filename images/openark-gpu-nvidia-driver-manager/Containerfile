@@ -16,9 +16,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies / kubectl
-RUN K8S_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)" \
-    && ARCH="$(dpkg --print-architecture)" \
-    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl" \
+RUN ARCH="$(dpkg --print-architecture)" \
+    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/v{{ .Values.kube.version }}/bin/linux/${ARCH}/kubectl" \
     && chmod 0555 '/usr/local/bin/kubectl'
 
 # Copy executable files

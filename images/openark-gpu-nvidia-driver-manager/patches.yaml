@@ -1,0 +1,4 @@
+---
+debian: {{- .Values.build.ubuntu | toYaml | nindent 2 }}
+
+kube: {{- .Values.build.kube | toYaml | nindent 2 }}

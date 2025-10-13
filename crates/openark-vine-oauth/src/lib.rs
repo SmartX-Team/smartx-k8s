@@ -135,7 +135,9 @@ mod impl_convert_for_state {
                 redirect_url: Url,
             }
 
-            let value = super::State::ENGINE.decode(s)?;
+            let value = super::State::ENGINE
+                .decode(s)
+                .map_err(|e| ::anyhow::anyhow!(e))?;
             ::serde_json::from_slice(&value)
                 .map(
                     |State {
@@ -188,7 +190,7 @@ mod impl_serde_for_state {
     use std::borrow::Cow;
 
     #[cfg(feature = "schemars")]
-    use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+    use schemars::{JsonSchema, Schema, SchemaGenerator};
     use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser};
 
     #[cfg_attr(feature = "schemars", derive(::schemars::JsonSchema))]
@@ -220,12 +222,12 @@ mod impl_serde_for_state {
     #[cfg(feature = "schemars")]
     impl JsonSchema for super::State {
         #[inline]
-        fn is_referenceable() -> bool {
-            <State as JsonSchema>::is_referenceable()
+        fn inline_schema() -> bool {
+            <State as JsonSchema>::inline_schema()
         }
 
         #[inline]
-        fn schema_name() -> String {
+        fn schema_name() -> Cow<'static, str> {
             <State as JsonSchema>::schema_name()
         }
 

@@ -4,9 +4,10 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use gloo_net::http::{Method, RequestBuilder};
 use http::header;
+use openark_core::client::{Payload, RequestCredentials};
 use openark_vine_oauth::{
     State, UserClaims,
-    client::{ClientExt, Payload, RequestCredentials},
+    client::ClientExt,
     error::{Error as AuthenticationError, ErrorInvalidRequest, ErrorInvalidToken, ErrorKind},
 };
 use serde::{Serialize, de::DeserializeOwned};
@@ -36,14 +37,14 @@ impl ::openark_core::client::Client for Client {
         payload: Payload<'_, I>,
     ) -> Result<O>
     where
-        I: Sync + Serialize,
+        I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
         // Mockup the api
         #[cfg(debug_assertions)]
         let url = if option_env!("API_BASE_URL").is_none()
             && url.port().unwrap_or(443)
-                == ::openark_vine_oauth::client::Client::base_url(self)
+                == ::openark_core::client::Client::base_url(self)
                     .port()
                     .unwrap()
         {

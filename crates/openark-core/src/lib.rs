@@ -12,7 +12,7 @@ mod tls;
 #[cfg_attr(feature = "clap", derive(::clap::Parser))]
 #[cfg_attr(feature = "clap", group(skip))]
 pub struct OpenArkArgs {
-    #[cfg(feature = "opentelemetry")]
+    #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
     #[cfg_attr(feature = "clap", arg(
         long,
         env = "RUST_LOG",
@@ -20,21 +20,23 @@ pub struct OpenArkArgs {
     ))]
     pub log_level: ::tracing::Level,
 
-    #[cfg(feature = "opentelemetry")]
-    #[cfg_attr(feature = "clap", arg(long, env = "OPENTELEMETRY_EXPORT",))]
+    #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENTELEMETRY_EXPORT"))]
     pub opentelemetry_export: bool,
 }
 
 impl Default for OpenArkArgs {
     fn default() -> Self {
         Self {
+            #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
             log_level: Self::default_log_level(),
+            #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
             opentelemetry_export: false,
         }
     }
 }
 
-#[cfg(feature = "opentelemetry")]
+#[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
 impl OpenArkArgs {
     #[inline]
     const fn default_log_level() -> ::tracing::Level {
@@ -54,14 +56,21 @@ pub fn init_once() {
 ///
 pub fn init_once_with(args: OpenArkArgs) {
     let OpenArkArgs {
-        #[cfg(feature = "opentelemetry")]
+        #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
             log_level: level,
-        #[cfg(feature = "opentelemetry")]
+        #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
             opentelemetry_export: export,
     } = args;
 
     #[cfg(feature = "tls")]
     crate::tls::init_once();
+
     #[cfg(feature = "opentelemetry")]
-    crate::opentelemetry::init_once_with(level, export);
+    {
+        #[cfg(target_arch = "wasm32")]
+        crate::opentelemetry::init_once();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::opentelemetry::init_once_with(level, export);
+    }
 }

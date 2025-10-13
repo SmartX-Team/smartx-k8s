@@ -58,7 +58,7 @@ spec:
                       - Gateway
       containers:
         - name: nginx
-          image: "{{ .Values.assets.image.repo }}:{{ .Values.assets.image.tag }}{{ .Values.assets.image.otel | ternary "-otel" "" }}"
+          image: "{{ .Values.build.nginx.image.repo }}:{{ .Values.build.nginx.image.tag }}{{ .Values.build.nginx.image.otel | ternary "-otel" "" }}"
           imagePullPolicy: {{ .Values.assets.image.pullPolicy | quote }}
           ports:
             - name: http

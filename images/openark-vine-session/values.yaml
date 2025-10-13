@@ -1,17 +1,12 @@
 ---
-debian:
-  image:
-    repo: docker.io/library/ubuntu
-    tag: "24.04"
-
 dist:
   name: ubuntu
 
   archlinux:
     kind: archlinux
     image:
-      repo: docker.io/library/archlinux
-      tag: base
+      repo: ""
+      tag: ""
     ldconfig:
       path: /sbin/ldconfig
     packageManager:
@@ -22,8 +17,8 @@ dist:
   ubuntu:
     kind: debian
     image:
-      repo: docker.io/library/ubuntu
-      tag: "24.04"
+      repo: ""
+      tag: ""
     ldconfig:
       path: /sbin/ldconfig.real
     packageManager:
@@ -384,6 +379,7 @@ packages:
     dependencies:
       - kind: Group
         name: devel
+      - name: ccache
       - name: clang
       - name: gcc
       - name: g++

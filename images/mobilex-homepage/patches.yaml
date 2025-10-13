@@ -1,0 +1,6 @@
+---
+debian: {{- .Values.build.debian | toYaml | nindent 2 }}
+
+nginx: {{- .Values.build.nginx | toYaml | nindent 2 }}
+
+ruby: {{- .Values.build.ruby | toYaml | nindent 2 }}

@@ -48,7 +48,7 @@ chrono = { workspace = true }
 k8s-openapi = { workspace = true, optional = true }
 kube = { workspace = true, optional = true, features = ["derive"] }
 schemars = { workspace = true, optional = true, features = [
-    "chrono",
+    "chrono04",
     "derive",
     "uuid1",
 ] }

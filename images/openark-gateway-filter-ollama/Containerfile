@@ -6,13 +6,15 @@
 {{- $version := .Release.Version }}
 
 # Be ready for building
-FROM "{{ .Values.builder.image.repo }}:{{ .Values.builder.image.tag }}-{{ .Values.debian.image.tag }}" AS builder
+FROM "{{ .Values.rust.image.repo }}:{{ .Values.rust.version }}-{{ .Values.debian.image.tag }}" AS builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
         build-essential \
         clang \
         cmake \
+    # Switch channel
+    && rustup default {{ .Values.rust.channel | quote }} \
     # Enable wasm32 target
     && rustup target add 'wasm32-unknown-unknown' \
     # Cleanup
@@ -26,12 +28,15 @@ WORKDIR /src
 # Build it!
 RUN \
     # Cache build outputs
+    --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/src/target \
     --mount=type=cache,target=/usr/local/cargo/registry \
     # Create an output directory
     mkdir /out \
     # Disable binary
     && sed -i 's/^default-members *= */# \0/g' ./Cargo.toml \
+    # Disable contribs
+    && sed -i 's/^members *= *.\[.\+\]$/members = \["crates\/\*"\]/g' ./Cargo.toml \
     # Fix version
     && sed -i 's/^\(version *= *\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build

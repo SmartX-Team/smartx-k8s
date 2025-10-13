@@ -217,13 +217,6 @@ impl<'a> ClusterState<'a> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-struct ClusterLockState {
-    box_name: String,
-    role: BoxGroupRole,
-}
-
 struct ClusterBoxGroup {
     nodes: BTreeMap<ClusterBoxState, BoxCrd>,
 }

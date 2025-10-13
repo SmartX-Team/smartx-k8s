@@ -1,4 +1,9 @@
 ---
-image:
-  repo: docker.io/library/python
-  tag: 3.13-bookworm
+debian:
+  image:
+    tag: ""
+
+python:
+  image:
+    repo: ""
+  version: ""

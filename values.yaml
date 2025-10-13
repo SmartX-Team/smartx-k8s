@@ -35,12 +35,6 @@ auth:
 baseImage:
   repo: quay.io/ulagbulag
 
-# Development Environment Configuration
-build:
-  golang:
-    baseUrl: https://storage.googleapis.com/golang
-    version: 1.23.6
-
 # Bootstrapper Node Configuration
 bootstrapper:
   auth:
@@ -69,6 +63,69 @@ bootstrapper:
     reuse:
       container: true
       kubernetes: false
+
+# Development Environment Configuration
+build:
+  # ArchLinux Image Configuration
+  archlinux:
+    image:
+      repo: docker.io/library/archlinux
+      tag: base
+
+  # Debian Image Configuration
+  debian:
+    image:
+      repo: docker.io/library/debian
+      tag: trixie
+
+  # Golang Toolchain Configuration
+  golang:
+    baseUrl: https://storage.googleapis.com/golang
+    version: 1.23.6
+
+  # Kubernetes Configuration
+  kube:
+    version: 1.34.1
+
+  # Nginx Image Configuration
+  nginx:
+    image:
+      repo: docker.io/library/nginx
+      tag: stable
+      otel: true
+
+  # NodeJS Toolchain Configuration
+  node:
+    version: "22"
+
+  # Node Version Manager Toolchain Configuration
+  nvm:
+    version: "0.40.2"
+
+  # Python Toolchain Configuration
+  python:
+    image:
+      repo: docker.io/library/python
+    version: "3.13"
+
+  # Ruby Toolchain Configuration
+  ruby:
+    image:
+      repo: docker.io/library/ruby
+    version: "3.4"
+
+  # Rust Toolchain Configuration
+  rust:
+    channel: nightly
+    image:
+      repo: docker.io/library/rust
+    version: "1"
+
+  # Ubuntu Image Configuration
+  ubuntu:
+    image:
+      repo: docker.io/library/ubuntu
+      tag: "24.04"
 
 # Kubernetes Cluster Configuration
 # TODO(user): Configure it!
@@ -414,10 +471,6 @@ repo:
   owner: SmartX-Team
   name: smartx-k8s
   revision: main
-
-# Rust Toolchain Configuration
-rust:
-  channel: nightly
 
 # SmartX Tower cluster
 # TODO(user): Configure it!

@@ -22,7 +22,6 @@ workspace = true
 [features]
 default = ["production"]
 production = [
-    "tls-default",
     "opentelemetry-all",
     # "opentelemetry-otlp",
     "ttl",
@@ -45,17 +44,6 @@ opentelemetry-otlp = ["openark-core/opentelemetry-otlp", "opentelemetry"]
 opentelemetry-logs = ["openark-core/opentelemetry-logs", "opentelemetry"]
 opentelemetry-metrics = ["openark-core/opentelemetry-metrics", "opentelemetry"]
 opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
-
-# TLS
-tls-default = ["tls-aws-lc-rs"]
-tls-aws-lc-rs = [
-    "openark-core/tls-aws-lc-rs",
-    "openark-vine-dashboard-api/tls-aws-lc-rs",
-]
-tls-openssl = [
-    "openark-core/tls-openssl",
-    "openark-vine-dashboard-api/tls-openssl",
-]
 
 # Tracing
 tracing = [
@@ -93,7 +81,7 @@ jaq-std = { workspace = true, features = [
     "std",
     "time",
 ] }
-regex = { workspace = true, features = ["std"] }
+regex = { workspace = true, features = ["std", "unicode"] }
 serde = { workspace = true, features = ["std"] }
 serde-json = { workspace = true, features = ["std"] }
 serde-urlencoded = { workspace = true }
