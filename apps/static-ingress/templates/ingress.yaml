@@ -1,5 +1,31 @@
 {{- range $_ := .Values.domains | default list }}
 {{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+{{- $recursive := .recursive | default false }}
+{{- $tls := .tls | default "true" }}
+
+{{- if and $recursive ( eq $tls "true" ) }}
+{{- fail "Recursive TLS is not supported" }}
+{{- end }}
+
+{{- $backgroundProtocol := "HTTP" }}
+{{- $forceSslRedirect := false }}
+{{- $port := 0 }}
+{{- $sslPassthrough := false }}
+{{- $sslRedirect := false }}
+{{- if eq $tls "false" }}
+{{- $port = .port | default 80 }}
+{{- else if eq $tls "true" }}
+{{- $port = .port | default 80 }}
+{{- $sslRedirect := true }}
+{{- else if eq $tls "passthrough" }}
+{{- $backgroundProtocol = "HTTPS" }}
+{{- $forceSslRedirect = true }}
+{{- $port = .tlsPort | default 443 }}
+{{- $sslPassthrough = true }}
+{{- $sslRedirect = true }}
+{{- else }}
+{{- fail ( printf "Invalid TLS option: %s" $tls ) }}
+{{- end }}
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -9,9 +35,13 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   annotations:
     cert-manager.io/cluster-issuer: {{ $.Values.ingress.domainName | quote }}
+    nginx.ingress.kubernetes.io/backend-protocol: {{ $backgroundProtocol | quote }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: {{ $forceSslRedirect | quote }}
     nginx.ingress.kubernetes.io/proxy-body-size: "0" # disable
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-passthrough: {{ $sslPassthrough | quote }}
+    nginx.ingress.kubernetes.io/ssl-redirect: {{ $sslRedirect | quote }}
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
     kubernetes.io/service-name: {{ $name | quote }}
@@ -26,12 +56,25 @@ spec:
               service:
                 name: {{ $name | quote }}
                 port:
-                  number: {{ .port | default 80 }}
+                  number: {{ $port }}
             path: /
-            pathType: Prefix
+            pathType: ImplementationSpecific
+{{- if $recursive }}
+    - host: {{ printf "*.%s" .host | quote }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: {{ $name | quote }}
+                port:
+                  number: {{ $port }}
+            path: /
+            pathType: ImplementationSpecific
+{{- end }}
+{{- if eq $tls "true" }}
   tls:
     - hosts:
         - {{ .host | quote }}
       secretName: {{ printf "%s-tls" $name | trunc 63 | trimSuffix "-" | quote }}
-
+{{- end }}
 {{- end }}

@@ -5,4 +5,7 @@ domains:
   #   endpoints:
   #     addresses:
   #       - 127.0.0.1
+  #   recursive: false
   #   port: 80
+  #   tls: "true" # Options: [false, true, passthrough]
+  #   tlsPort: 443

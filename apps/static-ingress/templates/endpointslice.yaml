@@ -1,5 +1,6 @@
 {{- range $_ := .Values.domains | default list }}
 {{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+{{- $tls := .tls | default "true" }}
 
 ---
 apiVersion: discovery.k8s.io/v1
@@ -21,5 +22,10 @@ ports:
   - name: http
     port: {{ .port | default 80 }}
     protocol: TCP
+{{- if eq $tls "passthrough" }}
+  - name: https
+    port: {{ .tlsPort | default 443 }}
+    protocol: TCP
+{{- end }}
 
 {{- end }}
