@@ -1,5 +1,6 @@
 {{- range $_ := .Values.domains | default list }}
 {{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
+{{- $tls := .tls | default "true" }}
 
 ---
 apiVersion: v1
@@ -18,5 +19,11 @@ spec:
       port: {{ .port | default 80 }}
       protocol: TCP
       targetPort: {{ .port | default 80 }}
+{{- if eq $tls "passthrough" }}
+    - name: https
+      port: {{ .tlsPort | default 443 }}
+      protocol: TCP
+      targetPort: {{ .tlsPort | default 443 }}
+{{- end }}
 
 {{- end }}

@@ -62,6 +62,11 @@ controller:
     # -- Enable 'scope' or not
     enabled: false
 
+  # -- Additional command line arguments to pass to Ingress-Nginx Controller
+  # E.g. to specify the default SSL certificate you can use
+  extraArgs:
+    enable-ssl-passthrough: "true"
+
   podAnnotations:
     prometheus.io/port: "10254"
     prometheus.io/scrape: "true"
