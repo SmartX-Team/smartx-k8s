@@ -1120,6 +1120,11 @@ packages:
       - name: libreoffice
         dist:
           - debian
+      - name: libreoffice-extension-h2orestart
+        dist:
+          - archlinux
+        locales:
+          - ko_KR.UTF-8
       - name: libreoffice-extension-texmaths
         dist:
           - archlinux
@@ -1137,6 +1142,11 @@ packages:
       - name: libreoffice-gtk3
         dist:
           - debian
+      - name: libreoffice-h2orestart
+        dist:
+          - debian
+        locales:
+          - ko_KR.UTF-8
       - name: unoconv
         dist:
           - archlinux
