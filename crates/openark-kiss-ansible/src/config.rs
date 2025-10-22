@@ -4,6 +4,7 @@ use anyhow::{Error, Result, anyhow};
 use ipnet::Ipv4Net;
 use k8s_openapi::api::core::v1::ConfigMap;
 use kube::{Api, Client};
+use openark_kiss_api::r#box::BoxGroupRole;
 #[cfg(feature = "tracing")]
 use tracing::{Level, instrument};
 
@@ -14,6 +15,7 @@ pub struct KissConfig {
     pub bootstrapper_network_dns_server_ns1: Ipv4Addr,
     pub bootstrapper_network_dns_server_ns2: Ipv4Addr,
     pub etcd_nodes_max: usize,
+    pub group_default_role: BoxGroupRole,
     pub group_enable_default_cluster: bool,
     pub group_enforce_ansible_control_planes: bool,
     pub group_force_reset: bool,
@@ -51,6 +53,7 @@ impl KissConfig {
                 "bootstrapper_network_dns_server_ns2",
             )?,
             etcd_nodes_max: infer(&config, "etcd_nodes_max")?,
+            group_default_role: infer(&config, "group_default_role")?,
             group_enable_default_cluster: infer(&config, "group_enable_default_cluster")?,
             group_enforce_ansible_control_planes: infer(
                 &config,

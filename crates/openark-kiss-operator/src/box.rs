@@ -36,7 +36,8 @@ struct Context {
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Error> {
-    let reference = ObjectRef::from_obj(&*r#box).into();
+    let mut r#box = (*r#box).clone();
+    let reference = ObjectRef::from_obj(&r#box).into();
     let name = r#box.name_any();
     let status = r#box.status.as_ref();
 
@@ -50,6 +51,11 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
         .unwrap_or(BoxState::New);
     let mut new_state = old_state.next();
     let mut new_group = None;
+
+    // apply the default role
+    if matches!(r#box.spec.group.role, BoxGroupRole::GenericWorker) {
+        r#box.spec.group.role = ctx.ansible.kiss.group_default_role;
+    }
 
     // detect the box's group is changed
     let is_bind_group_updated = status

@@ -25,6 +25,7 @@ data:
   ###########################################################################
   # Bare-metal Box Grouping Configuration
   ###########################################################################
+  group_default_role: {{ .Values.kiss.group.defaultRole | quote }}
   group_enable_default_cluster: {{ .Values.kiss.group.enableDefaultCluster | quote }}
   group_enforce_ansible_control_planes: {{ .Values.kiss.group.enforceAnsibleControlPlanes | quote }}
   group_force_reset: {{ .Values.kiss.group.forceReset | quote }}

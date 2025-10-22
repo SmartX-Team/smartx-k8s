@@ -326,6 +326,7 @@ kiss:
 
   # Bare-metal Box Grouping Configuration
   group:
+    defaultRole: GenericWorker
     enableDefaultCluster: false
     enforceAnsibleControlPlanes: false
     forceReset: false

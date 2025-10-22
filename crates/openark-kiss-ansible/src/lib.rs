@@ -315,6 +315,11 @@ impl AnsibleClient {
                                 ..Default::default()
                             },
                             EnvVar {
+                                name: "kiss_group_default_role".into(),
+                                value: Some(self.kiss.group_default_role.to_string()),
+                                ..Default::default()
+                            },
+                            EnvVar {
                                 name: "kiss_group_enable_default_cluster".into(),
                                 value: Some(self.kiss.group_enable_default_cluster.to_string()),
                                 ..Default::default()

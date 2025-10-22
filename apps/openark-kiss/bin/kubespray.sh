@@ -130,6 +130,7 @@ kiss_cluster_domain={{ .Values.cluster.domainBase | snakecase }}
 kiss_cluster_is_default={{ eq "default" .Values.cluster.group }}
 kiss_cluster_is_new=true
 kiss_cluster_worker_nodes={{ printf "kube_node:%s:%s" $nodeName $nodeIP }}
+kiss_group_default_role={{ .Values.kiss.group.defaultRole }}
 kiss_group_enable_default_cluster={{ .Values.kiss.group.enableDefaultCluster }}
 kiss_group_force_reset={{ .Values.kiss.group.forceReset }}
 kiss_group_force_reset_os={{ .Values.kiss.group.forceResetOS }}

@@ -239,10 +239,15 @@ spec:
             value: {{ "{{ inputs.parameters.new_cluster }}" | quote }}
           - name: kiss_cluster_worker_nodes
             value: {{ "{{ inputs.parameters.worker_nodes }}" | quote }}
-          - name: kiss_group_enable_default_cluster
+          - name: kiss_os_kernel
             valueFrom:
               configMapKeyRef:
-                key: group_enable_default_cluster
+                key: os_kernel
+                name: kiss-config
+          - name: kiss_group_default_role
+            valueFrom:
+              configMapKeyRef:
+                key: group_default_role
                 name: kiss-config
           - name: kiss_group_force_reset
             valueFrom:
