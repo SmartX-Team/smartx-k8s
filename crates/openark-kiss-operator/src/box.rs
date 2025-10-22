@@ -17,7 +17,7 @@ use kube::{
 };
 use openark_core::operator::RecorderExt;
 use openark_kiss_ansible::{AnsibleClient, AnsibleJob, AnsibleResourceType};
-use openark_kiss_api::r#box::{BoxCrd, BoxGroupRole, BoxState, BoxStatus};
+use openark_kiss_api::r#box::{BoxCrd, BoxGroupRole, BoxGroupSpec, BoxSpec, BoxState, BoxStatus};
 use serde_json::json;
 #[cfg(feature = "tracing")]
 use tracing::{Level, info, instrument};
@@ -36,8 +36,7 @@ struct Context {
 
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip_all))]
 async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Error> {
-    let mut r#box = (*r#box).clone();
-    let reference = ObjectRef::from_obj(&r#box).into();
+    let reference = ObjectRef::from_obj(&*r#box).into();
     let name = r#box.name_any();
     let status = r#box.status.as_ref();
 
@@ -53,8 +52,26 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     let mut new_group = None;
 
     // apply the default role
-    if matches!(r#box.spec.group.role, BoxGroupRole::GenericWorker) {
-        r#box.spec.group.role = ctx.ansible.kiss.group_default_role;
+    let default_role = ctx.ansible.kiss.group_default_role;
+    if matches!(r#box.spec.group.role, BoxGroupRole::GenericWorker)
+        && r#box.spec.group.role != default_role
+    {
+        let patch = Patch::Merge(json!({
+            "apiVersion": &ctx.crd.api_version,
+            "kind": &ctx.crd.kind,
+            "spec": BoxSpec {
+                group: BoxGroupSpec {
+                    role: default_role,
+                    ..r#box.spec.group.clone()
+                },
+                ..r#box.spec.clone()
+            },
+        }));
+        ctx.api.patch(&name, &ctx.patch_params, &patch).await?;
+
+        let message = format!("Changed the default role to {default_role}");
+        report_update(&ctx.recorder, &reference, message).await?;
+        return Ok(Action::requeue(ctx.interval));
     }
 
     // detect the box's group is changed
