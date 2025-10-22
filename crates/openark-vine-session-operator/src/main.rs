@@ -251,6 +251,15 @@ fn build_owned_session_profile(
             capacity.entry(key).or_insert(value);
         }
 
+        // Cancel provisioning if the local storage is not configured
+        if capacity.is_empty() {
+            {
+                #[cfg(feature = "tracing")]
+                warn!("Local storage is not provisioned yet: {}", node.name_any());
+            }
+            return Err(AppState::NodeNotReady);
+        }
+
         fn attach_shared_volume(volume: &mut VolumeSharingSpec, default_pvc_name: Option<&str>) {
             if let Some(name) = default_pvc_name {
                 if volume.enabled.unwrap_or(false)
