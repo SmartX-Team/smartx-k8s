@@ -18,6 +18,7 @@ use std::{
     vec::Vec,
 };
 
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Duration, Utc};
 #[cfg(feature = "clap")]
 use clap::Parser;
@@ -861,12 +862,24 @@ impl<'a> NodeSession<'a> {
     /// Convert to a computing resource limits.
     ///
     #[must_use]
-    pub fn to_resources_compute(&self) -> BTreeMap<String, Quantity> {
+    pub fn to_resources_compute(&self) -> Result<BTreeMap<String, Quantity>> {
         let mut map = BTreeMap::default();
-        if let Some(value) = self.metadata.bind_cpu.clone() {
+
+        // Attach computing resources
+        {
+            let value = self
+                .metadata
+                .bind_cpu
+                .clone()
+                .ok_or_else(|| anyhow!("CPU is not provisioned yet"))?;
             map.insert("cpu".into(), value);
         }
-        if let Some(value) = self.metadata.bind_memory.clone() {
+        {
+            let value = self
+                .metadata
+                .bind_memory
+                .clone()
+                .ok_or_else(|| anyhow!("Memory is not provisioned yet"))?;
             map.insert("memory".into(), value);
         }
 
@@ -876,66 +889,60 @@ impl<'a> NodeSession<'a> {
             .args
             .force_gpu
             .or(self.metadata.gpu)
-            .or_else(|| {
-                let labels = self.node.labels();
-                if labels
-                    .get("nvidia.com/gpu.present")
-                    .and_then(|value| value.parse().ok())
-                    .unwrap_or(false)
-                {
-                    Some(VineSessionGPU::Nvidia)
-                } else {
-                    None
-                }
-            });
+            .ok_or_else(|| anyhow!("GPU is not detected or not provisioned yet"))?;
 
         // Attach GPU
-        if let Some(gpu) = gpu {
-            match gpu {
-                VineSessionGPU::Intel => match self.metadata.compute_mode {
-                    Some(ComputeMode::Container | ComputeMode::Kueue) | None => (),
-                    Some(ComputeMode::VM) => {
-                        // TODO: To be implemented!
-                        ()
-                    }
-                },
-                VineSessionGPU::Nvidia => match self.metadata.compute_mode {
-                    Some(ComputeMode::Container | ComputeMode::Kueue) => {
-                        map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
-                    }
-                    Some(ComputeMode::VM) => {
-                        if let Some(allocatable) = self
-                            .node
-                            .status
-                            .as_ref()
-                            .and_then(|status| status.allocatable.as_ref())
-                        {
-                            let re = Regex::new(r"^nvidia\.com/[A-Z0-9_]+$").unwrap();
-                            let devices = allocatable
-                                .iter()
-                                .filter(|(key, _)| re.is_match(key) && !key.ends_with("_Audio"));
+        match gpu {
+            VineSessionGPU::Intel => match self.metadata.compute_mode {
+                Some(ComputeMode::Container | ComputeMode::Kueue) | None => (),
+                Some(ComputeMode::VM) => {
+                    // TODO: To be implemented!
+                    ()
+                }
+            },
+            VineSessionGPU::Nvidia => match self.metadata.compute_mode {
+                Some(ComputeMode::Container | ComputeMode::Kueue) => {
+                    map.insert("nvidia.com/gpu".into(), Quantity("1".into()));
+                }
+                Some(ComputeMode::VM) => {
+                    if let Some(allocatable) = self
+                        .node
+                        .status
+                        .as_ref()
+                        .and_then(|status| status.allocatable.as_ref())
+                    {
+                        let re = Regex::new(r"^nvidia\.com/[A-Z0-9_]+$").unwrap();
+                        let devices = allocatable
+                            .iter()
+                            .filter(|(key, _)| re.is_match(key) && !key.ends_with("_Audio"));
 
-                            for (key, _value) in devices {
-                                map.insert(key.clone(), Quantity("1".into()));
-                            }
+                        for (key, _value) in devices {
+                            map.insert(key.clone(), Quantity("1".into()));
                         }
                     }
-                    None => (),
-                },
-            }
+                }
+                None => (),
+            },
         }
-        map
+        Ok(map)
     }
 
     /// Convert to a local storage resource capacity.
     ///
     #[must_use]
-    pub fn to_resources_local_storage(&self) -> BTreeMap<String, Quantity> {
+    pub fn to_resources_local_storage(&self) -> Result<BTreeMap<String, Quantity>> {
         let mut map = BTreeMap::default();
-        if let Some(value) = self.metadata.bind_storage.clone() {
+
+        // Attach local storage
+        {
+            let value = self
+                .metadata
+                .bind_storage
+                .clone()
+                .ok_or_else(|| anyhow!("Local storage is not provisioned yet"))?;
             map.insert("storage".into(), value);
         }
-        map
+        Ok(map)
     }
 }
 

@@ -34,14 +34,7 @@ std = [
 ]
 
 clap = ["dep:clap", "std"]
-client = [
-    "dep:anyhow",
-    "dep:async-trait",
-    "dep:http",
-    "openark-core/client",
-    "serde",
-    "std",
-]
+client = ["dep:async-trait", "dep:http", "openark-core/client", "serde", "std"]
 kube = ["kube/client", "kube/derive", "schemars", "std"]
 schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
 serde = ["chrono/serde", "dep:serde", "dep:serde-json", "url/serde"]
@@ -52,7 +45,7 @@ send = ["openark-core?/send"]
 [dependencies]
 openark-core = { workspace = true, optional = true, features = ["alloc"] }
 
-anyhow = { workspace = true, optional = true }
+anyhow = { workspace = true }
 async-trait = { workspace = true, optional = true }
 chrono = { workspace = true, features = ["alloc"] }
 clap = { workspace = true, optional = true, features = ["derive"] }

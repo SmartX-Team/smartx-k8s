@@ -217,7 +217,19 @@ fn build_owned_session_profile(
             .get_or_insert_default()
             .limits
             .get_or_insert_default();
-        for (key, value) in session.to_resources_compute() {
+
+        let resources = match session.to_resources_compute() {
+            Ok(resources) => resources,
+            Err(error) => {
+                {
+                    #[cfg(feature = "tracing")]
+                    warn!("{error}: {}", node.name_any());
+                }
+                let _ = error;
+                return Err(AppState::NodeNotReady);
+            }
+        };
+        for (key, value) in resources {
             limits.entry(key).or_insert(value);
         }
     }
@@ -247,17 +259,20 @@ fn build_owned_session_profile(
             .get_or_insert_default()
             .capacity
             .get_or_insert_default();
-        for (key, value) in session.to_resources_local_storage() {
-            capacity.entry(key).or_insert(value);
-        }
 
-        // Cancel provisioning if the local storage is not configured
-        if capacity.is_empty() {
-            {
-                #[cfg(feature = "tracing")]
-                warn!("Local storage is not provisioned yet: {}", node.name_any());
+        let resources = match session.to_resources_local_storage() {
+            Ok(resources) => resources,
+            Err(error) => {
+                {
+                    #[cfg(feature = "tracing")]
+                    warn!("{error}: {}", node.name_any());
+                }
+                let _ = error;
+                return Err(AppState::NodeNotReady);
             }
-            return Err(AppState::NodeNotReady);
+        };
+        for (key, value) in resources {
+            capacity.entry(key).or_insert(value);
         }
 
         fn attach_shared_volume(volume: &mut VolumeSharingSpec, default_pvc_name: Option<&str>) {

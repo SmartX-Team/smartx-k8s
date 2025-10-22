@@ -161,8 +161,10 @@ impl Service<'_> {
     }
 
     async fn get_primary_gpu(&self) -> Result<Option<VineSessionGPU>> {
-        let command = r#"set -e -x -o pipefail
+        let command = r#"#!/bin/bash
+set -e -x -o pipefail
 
+# Detect a GPU by boot VGA
 primary_dev=''
 for dev in $(
     find -L /sys/bus/pci/devices \
