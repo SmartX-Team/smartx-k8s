@@ -1,7 +1,22 @@
 ---
-## Enable diagnostic mode in the deployment
-##
-diagnosticMode:
-  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
-  ##
-  enabled: false
+image:
+  repo: ghcr.io/k8snetworkplumbingwg/multus-cni
+  tag: snapshot
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 50Mi
+    ephemeral-storage: 200Mi
+  requests:
+    cpu: 100m
+    memory: 50Mi
+    ephemeral-storage: 50Mi
+
+securityContext:
+  privileged: true
+  seccompProfile:
+    type: RuntimeDefault
+
+tolerations: []

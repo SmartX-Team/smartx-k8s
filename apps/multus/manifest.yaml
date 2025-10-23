@@ -6,7 +6,7 @@ metadata:
 spec:
   group: ops
   phase: stable
-  scale: small
+  scale: medium
   users:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
@@ -23,7 +23,3 @@ spec:
       createNamespace: true
       respectIgnoreDifferences: true
       serverSideApply: true
-  source:
-    chart: multus-cni
-    repoUrl: registry-1.docker.io/bitnamicharts
-    version: 2.2.9
