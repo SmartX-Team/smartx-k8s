@@ -29,7 +29,7 @@ ENV GOLANG_VERSION={{ .Values.build.golang.version | quote }}
 # Configure editable environment variables
 ENV ACCEPT_LICENSE="false"
 ENV GPU_DIRECT_RDMA_ENABLED="false"
-ENV KERNEL_MODULE_DEPS={{ .Files.Get "modules-load.d/10-gpu-nvidia-driver.conf" | trim | replace "\n" " " | quote }}
+ENV KERNEL_MODULE_DEPS={{ .Files.Get "modules-load.d/nvidia.conf" | trim | replace "\n" " " | quote }}
 ENV KERNEL_MODULE_TYPE="auto"
 ENV MAX_THREADS="2"
 ENV NVIDIA_VISIBLE_DEVICES="void"
@@ -131,6 +131,9 @@ RUN curl -sL -o {{ .Values.driver.installer.path | quote }} {{ printf "%s/%s/NVI
 
 # Copy executable files
 ADD ./bin/entrypoint.sh ./nvidia-driver
+
+# Patch kernel module parameters
+ADD ./modprobe.d/*.conf /etc/modprobe.d/
 
 # Mark as executable
 CMD [ "./nvidia-driver" ]

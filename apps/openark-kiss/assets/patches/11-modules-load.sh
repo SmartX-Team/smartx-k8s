@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Kernel Modules configuration
-# Enable NVIDIA associated drivers
+# Patch kernel module dependencies
 
 # Prehibit errors
 set -e -o pipefail
@@ -13,6 +13,9 @@ set -x
 
 mkdir -p /etc/modules-load.d/
 
-cat <<EOF >/etc/modules-load.d/10-gpu-nvidia-driver.conf
-{{ .Files.Get "assets/modules-load.d/10-gpu-nvidia-driver.conf" | trim }}
+{{- range $path, $_ := $.Files.Glob "assets/modules-load.d/*.conf" }}
+{{- $filename := base $path }}
+cat <<EOF >{{ printf "/etc/modules-load.d/%s" $filename | quote }}
+{{ tpl ( $.Files.Get $path ) $ | replace "\\" "\\\\" | replace "$" "\\$" | trim }}
 EOF
+{{- end }}

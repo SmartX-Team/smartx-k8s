@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Advanced Network configuration
-# Disable Kernel Module: rndis_host
+# Disable rndis_host
 
 # Prehibit errors
 set -e -o pipefail
@@ -14,8 +14,4 @@ set -x
 mkdir -p /etc/default/grub.d/
 cat <<EOF >/etc/default/grub.d/10-blacklist-rndis_host.cfg
 GRUB_CMDLINE_LINUX="\${GRUB_CMDLINE_LINUX} modprobe.blacklist=rndis_host"
-EOF
-
-cat <<EOF >/etc/modprobe.d/blacklist-rndis_host.conf
-blacklist rndis_host
 EOF
