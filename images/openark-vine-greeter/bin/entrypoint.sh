@@ -13,9 +13,9 @@ set -x
 # Try detecting Primary GPU
 declare -g primary_dev="$($(dirname "$0")/gpu-primary.sh)"
 
-is_cleaned_up='false'
 function load_primary_gpu() {
     driver="$1"
+    is_cleaned_up="$2"
     if [ "x${driver}" == 'x' ]; then
         echo '* Usage: cleanup [driver]' >&2
         exec false
@@ -38,7 +38,9 @@ function load_primary_gpu() {
         sleep 1 # Some GPU drivers (e.g. nouveau) need some time to finish init
 
         # Unload all USB devices
-        "$(dirname "$0")/usb-load-all.sh" 'vfio-pci' >&2
+        if [ "x${is_cleaned_up}" == 'xfalse' ]; then
+            "$(dirname "$0")/usb-load-all.sh" 'vfio-pci' >&2
+        fi
     fi
 }
 
@@ -56,7 +58,7 @@ function terminate() {
     fi
 
     # Unload GPU driver from the Primary GPU
-    load_primary_gpu 'vfio-pci'
+    load_primary_gpu 'vfio-pci' 'true'
     exec true
 }
 
@@ -64,7 +66,7 @@ trap -- 'terminate' SIGINT
 trap -- 'terminate' SIGTERM
 
 # Load GPU driver in the Primary GPU
-load_primary_gpu 'gpu'
+load_primary_gpu 'gpu' 'false'
 
 # Check GPU drivers
 if ! find /dev/dri -mindepth 1 -maxdepth 1 -name "card*" -type c >/dev/null; then

@@ -39,6 +39,18 @@ elif [ "x${driver}" == 'xgpu' ]; then
     esac
 fi
 
+# Skip if another driver is running
+if [ "x${driver}" == 'xvfio-pci' ] && [ -e "/sys/bus/pci/devices/${pci_id}/driver" ]; then
+    last_driver="$(basename "$(realpath "/sys/bus/pci/devices/${pci_id}/driver")")"
+    case "${last_driver}" in
+    #'i915' | 'nvidia')
+    'nvidia')
+        echo "WARN: Using the current driver: ${pci_id} -> ${last_driver}"
+	exec true
+        ;;
+    esac
+fi
+
 # Build driver
 # if [ -d "/lib/modules/$(uname -r)" ]; then
 #     if ! dkms autoinstall; then

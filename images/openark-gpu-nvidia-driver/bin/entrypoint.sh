@@ -248,6 +248,23 @@ function _unload_driver() {
             echo "- device/${pci_id}/load: Skipped"
             continue
         fi
+        # Wait for the driver to be terminated (by openark-vine-greeter)
+        echo "- device/${pci_id}/load: Terminating (Pending)"
+        while :; do
+            case "$(basename "$(realpath "${dev}/driver")")" in
+            'nvidia')
+                echo "- device/${pci_id}/load: Terminating (Ready: reinstall nvidia driver)"
+                break
+                ;;
+            'vfio-pci')
+                echo "- device/${pci_id}/load: Terminating (Ready: unload vfio-pci driver)"
+                break
+                ;;
+            *)
+                sleep 1
+                ;;
+            esac
+        done
         # Unload driver
         echo "- device/${pci_id}/load: Terminating"
         echo >"${dev}/driver_override"
