@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.openmetadata-opensearch
 spec:
+  enabled: false
   group: ops
   phase: beta
   scale: small
