@@ -1,9 +1,9 @@
 ---
-{{- $noReplicas := ( .Values.cluster.singleNode | ne false ) }}
+{{- $useReplicas := not ( .Values.cluster.singleNode | default false ) }}
 
 # All values below are taken from the CephCluster CRD
 # More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
-{{- if $noReplicas }}
+{{- if not $useReplicas }}
 cephClusterSpec:
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.
@@ -52,10 +52,10 @@ cephBlockPools:
     spec:
       failureDomain: host
       replicated:
-{{- if $noReplicas }}
-        size: 1
-{{- else }}
+{{- if $useReplicas }}
         size: 3
+{{- else }}
+        size: 1
 {{- end }}
       # Enables collecting RBD per-image IO statistics by enabling dynamic OSD performance counters. Defaults to false.
       # For reference: https://docs.ceph.com/docs/master/mgr/prometheus/#rbd-io-statistics
@@ -66,7 +66,66 @@ cephBlockPools:
       isDefault: false
       reclaimPolicy: Delete
       allowVolumeExpansion: true
-      volumeBindingMode: "Immediate"
+      volumeBindingMode: Immediate
+      mountOptions: []
+      # see https://kubernetes.io/docs/concepts/storage/storage-classes/#allowed-topologies
+      allowedTopologies: []
+      #        - matchLabelExpressions:
+      #            - key: rook-ceph-role
+      #              values:
+      #                - storage-node
+      # see https://github.com/rook/rook/blob/master/Documentation/ceph-block.md#provision-storage for available configuration
+      parameters:
+        # (optional) mapOptions is a comma-separated list of map options.
+        # For krbd options refer
+        # https://docs.ceph.com/docs/master/man/8/rbd/#kernel-rbd-krbd-options
+        # For nbd options refer
+        # https://docs.ceph.com/docs/master/man/8/rbd-nbd/#options
+        # mapOptions: lock_on_read,queue_depth=1024
+
+        # (optional) unmapOptions is a comma-separated list of unmap options.
+        # For krbd options refer
+        # https://docs.ceph.com/docs/master/man/8/rbd/#kernel-rbd-krbd-options
+        # For nbd options refer
+        # https://docs.ceph.com/docs/master/man/8/rbd-nbd/#options
+        # unmapOptions: force
+
+        # RBD image format. Defaults to "2".
+        imageFormat: "2"
+
+        # RBD image features, equivalent to OR'd bitfield value: 63
+        # Available for imageFormat: "2". Older releases of CSI RBD
+        # support only the `layering` feature. The Linux kernel (KRBD) supports the
+        # full feature complement as of 5.4
+        imageFeatures: layering
+
+        # These secrets contain Ceph admin credentials.
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
+        csi.storage.k8s.io/provisioner-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
+        csi.storage.k8s.io/controller-expand-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
+        csi.storage.k8s.io/node-stage-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        # Specify the filesystem type of the volume. If not specified, csi-provisioner
+        # will set default as `ext4`. Note that `xfs` is not recommended due to potential deadlock
+        # in hyperconverged settings where the volume is mounted on the same node as the osds.
+        csi.storage.k8s.io/fstype: ext4
+  - name: ceph-blockpool-noreplicas
+    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Block-Storage/ceph-block-pool-crd.md#spec for available configuration
+    spec:
+      failureDomain: host
+      replicated:
+        size: 1
+      # Enables collecting RBD per-image IO statistics by enabling dynamic OSD performance counters. Defaults to false.
+      # For reference: https://docs.ceph.com/docs/master/mgr/prometheus/#rbd-io-statistics
+      # enableRBDStats: true
+    storageClass:
+      enabled: true
+      name: ceph-block-noreplicas
+      isDefault: false
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+      volumeBindingMode: Immediate
       mountOptions: []
       # see https://kubernetes.io/docs/concepts/storage/storage-classes/#allowed-topologies
       allowedTopologies: []
@@ -119,18 +178,18 @@ cephFileSystems:
     spec:
       metadataPool:
         replicated:
-{{- if $noReplicas }}
-          size: 1
-{{- else }}
+{{- if $useReplicas }}
           size: 3
+{{- else }}
+          size: 1
 {{- end }}
       dataPools:
         - failureDomain: host
           replicated:
-{{- if $noReplicas }}
-            size: 1
-{{- else }}
+{{- if $useReplicas }}
             size: 3
+{{- else }}
+            size: 1
 {{- end }}
           # Optional and highly recommended, 'data0' by default, see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#pools
           name: data0
@@ -179,7 +238,79 @@ cephFileSystems:
       pool: data0
       reclaimPolicy: Delete
       allowVolumeExpansion: true
-      volumeBindingMode: "Immediate"
+      volumeBindingMode: Immediate
+      mountOptions: []
+      # see https://github.com/rook/rook/blob/master/Documentation/ceph-filesystem.md#provision-storage for available configuration
+      parameters:
+        # The secrets contain Ceph admin credentials.
+        csi.storage.k8s.io/provisioner-secret-name: rook-csi-cephfs-provisioner
+        csi.storage.k8s.io/provisioner-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        csi.storage.k8s.io/controller-expand-secret-name: rook-csi-cephfs-provisioner
+        csi.storage.k8s.io/controller-expand-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        csi.storage.k8s.io/node-stage-secret-name: rook-csi-cephfs-node
+        csi.storage.k8s.io/node-stage-secret-namespace: {{ "{{ .Release.Namespace }}" | quote }}
+        # Specify the filesystem type of the volume. If not specified, csi-provisioner
+        # will set default as `ext4`. Note that `xfs` is not recommended due to potential deadlock
+        # in hyperconverged settings where the volume is mounted on the same node as the osds.
+        csi.storage.k8s.io/fstype: ext4
+  - name: ceph-filesystem-noreplicas
+    # see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#filesystem-settings for available configuration
+    spec:
+      metadataPool:
+        replicated:
+          size: 1
+      dataPools:
+        - failureDomain: host
+          replicated:
+            size: 1
+          # Optional and highly recommended, 'data0' by default, see https://github.com/rook/rook/blob/master/Documentation/CRDs/Shared-Filesystem/ceph-filesystem-crd.md#pools
+          name: data0
+      metadataServer:
+        activeCount: 1
+        activeStandby: true
+        resources:
+          limits:
+            cpu: "4"
+            memory: "8Gi" # MDS Cache size + free space (2Gi) + burstable space (~2Gi)
+          requests:
+            cpu: "4"
+            memory: "8Gi"
+        priorityClassName: system-cluster-critical
+        placement:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - preference:
+                  matchExpressions:
+                    - key: node-role.kubernetes.io/kiss
+                      operator: In
+                      values:
+                        - Storage
+                weight: 1
+              - preference:
+                  matchExpressions:
+                    - key: node-role.kubernetes.io/kiss
+                      operator: In
+                      values:
+                        - Gateway
+                weight: 2
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/kiss
+                      operator: In
+                      values:
+                        - Compute
+                        - Gateway
+                        - Storage
+    storageClass:
+      enabled: true
+      isDefault: false
+      name: ceph-filesystem-noreplicas
+      # (Optional) specify a data pool to use, must be the name of one of the data pools above, 'data0' by default
+      pool: data0
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+      volumeBindingMode: Immediate
       mountOptions: []
       # see https://github.com/rook/rook/blob/master/Documentation/ceph-filesystem.md#provision-storage for available configuration
       parameters:
