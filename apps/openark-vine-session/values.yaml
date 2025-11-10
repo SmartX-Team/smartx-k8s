@@ -181,6 +181,7 @@ session:
 user:
   kind: Guest # Options: [Guest, User]
   name: ""
+  privileged: false
   role: "" # Options: [Ops, Viewer]
   shell: zsh
 

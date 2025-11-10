@@ -172,7 +172,7 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- if .Values.volumes.static.enabled }}
 - name: home-static
   mountPath: /mnt/static
-  readOnly: true
+  readOnly: {{ not .Values.user.privileged }}
 {{- end }}
 
 {{- /********************************/}}

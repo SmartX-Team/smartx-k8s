@@ -42,6 +42,7 @@ openark:
     org.ulagbulag.io/bind.namespace: org.ulagbulag.io/bind.namespace
     org.ulagbulag.io/bind.node: org.ulagbulag.io/bind.node
     org.ulagbulag.io/bind.persistent: org.ulagbulag.io/bind.persistent
+    org.ulagbulag.io/bind.privileged: org.ulagbulag.io/bind.privileged
     org.ulagbulag.io/bind.profile: org.ulagbulag.io/bind.profile
     org.ulagbulag.io/bind.revision: org.ulagbulag.io/bind.revision
     org.ulagbulag.io/bind.storage: org.ulagbulag.io/bind.storage

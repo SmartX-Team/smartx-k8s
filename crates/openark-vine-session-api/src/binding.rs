@@ -72,6 +72,9 @@ pub struct SessionBindingUserSpec {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub name: Option<String>,
+
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub privileged: Option<bool>,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]

@@ -125,6 +125,9 @@ pub struct VineSessionArgs {
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_PERSISTENT"))]
     label_bind_persistent: String,
 
+    #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_PRIVILEGED"))]
+    label_bind_privileged: String,
+
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_LABEL_BIND_PROFILE"))]
     label_bind_profile: String,
 
@@ -351,6 +354,7 @@ pub struct Metadata<'a> {
     bind_namespace: Option<String>,
     bind_node: Option<String>,
     bind_persistent: Option<bool>,
+    bind_privileged: Option<bool>,
     bind_profile: Option<String>,
     bind_revision: Option<String>,
     bind_storage: Option<Quantity>,
@@ -396,6 +400,9 @@ impl<'a> Metadata<'a> {
                 .cloned(),
             bind_persistent: labels
                 .and_then(|map| map.get(&args.label_bind_persistent))
+                .and_then(|value| value.parse().ok()),
+            bind_privileged: labels
+                .and_then(|map| map.get(&args.label_bind_privileged))
                 .and_then(|value| value.parse().ok()),
             bind_profile: labels
                 .and_then(|map| map.get(&args.label_bind_profile))
@@ -725,6 +732,7 @@ impl<'a> NodeSession<'a> {
                         .and_then(|p| p.enabled)
                         .unwrap_or(false),
                 );
+                self.metadata.bind_privileged = binding.spec.user.privileged;
                 self.metadata.bind_profile = Some(binding.spec.profile.clone());
                 self.metadata.bind_revision = next_revision.clone();
                 self.metadata.bind_timestamp.get_or_insert(Time(timestamp));

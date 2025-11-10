@@ -103,6 +103,7 @@ run-openark-vine-session-operator:
         --label-bind-namespace "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.namespace"')" \
         --label-bind-node "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.node"')" \
         --label-bind-persistent "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.persistent"')" \
+        --label-bind-privileged "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.privileged"')" \
         --label-bind-profile "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.profile"')" \
         --label-bind-revision "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.revision"')" \
         --label-bind-storage "$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/bind.storage"')" \
