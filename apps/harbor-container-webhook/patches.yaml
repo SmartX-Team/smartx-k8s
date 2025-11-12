@@ -10,26 +10,23 @@ webhook:
       - key: kubernetes.io/metadata.name
         operator: NotIn
         values:
-{{- if has "org.ulagbulag.io/gitops" .Values.features }}
           - argo
-{{- end }}
-{{- if has "org.ulagbulag.io/distributed-storage-cluster/ceph" .Values.features }}
+          - cert-manager
+          - csi-s3
           - csi-rook-ceph
-{{- end }}
-{{- if has "org.ulagbulag.io/distributed-storage-cluster/data-pond" .Values.features }}
           - data-pond
-{{- end }}
+          - envoy-gateway-system
           - harbor
 {{- if has "org.ulagbulag.io/ingress" .Values.features }}
           - {{ .Values.ingress.namespace | quote }}
 {{- end }}
-{{- if has "org.ulagbulag.io/cni/istio" .Values.features }}
           - istio-system
-{{- end }}
           - kube-system
-{{- if has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features }}
           - kueue-system
-{{- end }}
+          - multus
+          - network-nvidia
+          - static
+          - vine
   failurePolicy: Ignore
 
 ## configures the webhook rules, which are evaluated for each image in a pod
