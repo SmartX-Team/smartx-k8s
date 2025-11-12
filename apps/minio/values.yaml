@@ -40,7 +40,7 @@ idp:
 ## @param global.storageClass DEPRECATED: use global.defaultStorageClass instead
 ##
 global:
-  defaultStorageClass: ceph-block-noreplicas
+  defaultStorageClass: ceph-filesystem-noreplicas
 
 ## @section MinIO&reg; parameters
 
@@ -115,7 +115,7 @@ provisioning:
       memory: 2Gi
     limits:
       cpu: 2
-      memory: 4Gi
+      memory: 2Gi
       ephemeral-storage: 8Gi
   ## Automatic Cleanup for Finished Jobs
   ## @param provisioning.cleanupAfterFinished.enabled Enables Cleanup for Finished Jobs
@@ -156,6 +156,13 @@ affinity:
               operator: In
               values:
                 - Gateway
+      - weight: 8
+        preference:
+          matchExpressions:
+            - key: org.ulagbulag.io/object-store_minio
+              operator: In
+              values:
+                - "true"
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
         - matchExpressions:
@@ -177,9 +184,10 @@ affinity:
 ##     memory: 1024Mi
 ##
 resources:
+  requests:
+    memory: 8Gi
   limits:
     cpu: 8
-    memory: 8.5Gi
     ephemeral-storage: 8Gi
 
 ## @section Traffic exposure parameters
@@ -254,6 +262,14 @@ apiIngress:
   ##
   selfSigned: false
 
+## Network Policy configuration
+## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+##
+networkPolicy:
+  ## @param networkPolicy.enabled Enable creation of NetworkPolicy resources
+  ##
+  enabled: false
+
 ## @section Persistence parameters
 
 ## Enable persistence using Persistent Volume Claims
@@ -270,7 +286,7 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: ceph-block-noreplicas
+  storageClass: ceph-filesystem-noreplicas
   ## @param persistence.accessModes PVC Access Modes for MinIO&reg; data volume
   ##
   accessModes:

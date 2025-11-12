@@ -8,6 +8,10 @@
 # Prehibit errors
 set -e -o pipefail
 
+# Read variables
+MINIO_ROOT_USER="$(cat '/opt/bitnami/minio/secrets/root-user')"
+MINIO_ROOT_PASSWORD="$(cat '/opt/bitnami/minio/secrets/root-password')"
+
 # Register alias
 mc alias set provisioning "${MINIO_SCHEME}://minio:9000" "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
 
