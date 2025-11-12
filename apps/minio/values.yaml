@@ -40,7 +40,7 @@ idp:
 ## @param global.storageClass DEPRECATED: use global.defaultStorageClass instead
 ##
 global:
-  defaultStorageClass: ceph-filesystem-noreplicas
+  defaultStorageClass: ceph-filesystem
 
 ## @section MinIO&reg; parameters
 
@@ -286,7 +286,7 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: ceph-filesystem-noreplicas
+  storageClass: ceph-filesystem
   ## @param persistence.accessModes PVC Access Modes for MinIO&reg; data volume
   ##
   accessModes:
