@@ -212,7 +212,7 @@ cephFileSystems:
                     - key: node-role.kubernetes.io/kiss
                       operator: In
                       values:
-                        - Storage
+                        - Compute
                 weight: 1
               - preference:
                   matchExpressions:
@@ -284,7 +284,7 @@ cephFileSystems:
                     - key: node-role.kubernetes.io/kiss
                       operator: In
                       values:
-                        - Storage
+                        - Compute
                 weight: 1
               - preference:
                   matchExpressions:
