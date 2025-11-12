@@ -42,6 +42,14 @@ dashboards:
   enabled: false
   namespace: monitoring
 
+resources:
+  requests:
+    cpu: 200m
+    memory: 384Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
 createGlobalResources: true
 # Create clusterroles that extend existing clusterroles to interact with strimzi crds
 # Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles
