@@ -179,7 +179,7 @@ runAsUser: {{ include "helm.userId" $ }}
 - name: host-sys
   mountPath: /sys/bus
   subPath: bus
-  readOnly: true
+  readOnly: {{ not .Values.session.context.privileged }}
 
 {{- /********************************/}}
 - name: machine-id
@@ -195,7 +195,7 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- if .Values.features.dbus }}
 - name: runtime-dbus
   mountPath: /run/dbus
-  readOnly: true
+  readOnly: {{ not .Values.session.context.privileged }}
 {{- end }}
 
 {{- /********************************/}}
@@ -210,14 +210,14 @@ runAsUser: {{ include "helm.userId" $ }}
 {{- if eq "Desktop" .Values.mode }}
 - name: tmp-ice
   mountPath: /tmp/.ICE-unix
-  readOnly: true
+  readOnly: {{ not .Values.session.context.privileged }}
 {{- end }}
 
 {{- /********************************/}}
 {{- if eq "Desktop" .Values.mode }}
 - name: tmp-x11
   mountPath: /tmp/.X11-unix
-  readOnly: true
+  readOnly: {{ not .Values.session.context.privileged }}
 {{- end }}
 
 {{- end }}
