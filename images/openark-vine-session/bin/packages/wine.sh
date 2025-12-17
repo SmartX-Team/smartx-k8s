@@ -30,7 +30,7 @@ esac
 
 WINE_VERSION="$(
     curl -s "${WINE_VERSION_API}" |
-        grep -Po '"tag_name": +"\K[0-9.]+'
+        grep -Po '"tag_name": +"\K[0-9.]+(-rc[1-9][0-9]*)?'
 )"
 
 # Download
