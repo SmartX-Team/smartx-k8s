@@ -27,15 +27,17 @@ trap -- 'terminate' SIGTERM
 #   Auto-detect Container Runtime                         #
 ###########################################################
 
-if nerdctl ps >/dev/null 2>/dev/null; then
-    CONTAINER_RUNTIME="nerdctl"
-elif podman ps >/dev/null 2>/dev/null; then
-    CONTAINER_RUNTIME="podman"
-elif docker ps >/dev/null 2>/dev/null; then
-    CONTAINER_RUNTIME="docker"
-else
-    echo "Container runtime not found: nerdctl, docker, podman" >&2
-    exit 1
+if [ "x${CONTAINER_RUNTIME}" == 'x' ]; then
+    if nerdctl ps >/dev/null 2>/dev/null; then
+        CONTAINER_RUNTIME="nerdctl"
+    elif podman ps >/dev/null 2>/dev/null; then
+        CONTAINER_RUNTIME="podman"
+    elif docker ps >/dev/null 2>/dev/null; then
+        CONTAINER_RUNTIME="docker"
+    else
+        echo "Container runtime not found: nerdctl, docker, podman" >&2
+        exit 1
+    fi
 fi
 
 ###########################################################
@@ -188,7 +190,7 @@ __EOF
 
     # Deploy a k8s cluster
     local container_id="$(
-        "${CONTAINER_RUNTIME}" run -d \
+        ${CONTAINER_RUNTIME} run -d \
             ${EXTRA_ENVS[@]} \
             --init \
             --mount type=bind,source="${WORKDIR}/inventory/",dst=/inventory \
@@ -209,16 +211,16 @@ __EOF
     )"
 
     # Wait until the container has been completed
-    until [ "$("${CONTAINER_RUNTIME}" inspect "${container_id}" 2>/dev/null | yq '.0.State.Running')" == 'false' ]; do
-        "${CONTAINER_RUNTIME}" logs -f "${container_id}" || true
-        until "${CONTAINER_RUNTIME}" inspect "${container_id}" >/dev/null 2>/dev/null; do
+    until [ "$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq '.0.State.Running')" == 'false' ]; do
+        ${CONTAINER_RUNTIME} logs -f "${container_id}" || true
+        until ${CONTAINER_RUNTIME} inspect "${container_id}" >/dev/null 2>/dev/null; do
             sleep 1
         done
     done
 
     # Terminate the container
-    local exit_code="$("${CONTAINER_RUNTIME}" inspect "${container_id}" 2>/dev/null | yq '.0.State.ExitCode')"
-    "${CONTAINER_RUNTIME}" rm -f "${container_id}" >/dev/null 2>/dev/null || true
+    local exit_code="$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq '.0.State.ExitCode')"
+    ${CONTAINER_RUNTIME} rm -f "${container_id}" >/dev/null 2>/dev/null || true
 
     # Cleanup
     cleanup

@@ -18,15 +18,17 @@ IMAGE_HOME="$($(dirname "$0")/image-prepare.sh ${@:1})"
 #   Auto-detect Container Runtime                         #
 ###########################################################
 
-if podman ps >/dev/null 2>/dev/null; then
-    CONTAINER_RUNTIME="podman"
-    CONTAINER_RUNTIME_EXTRA_ARGS="--format docker"
-elif docker ps >/dev/null 2>/dev/null; then
-    CONTAINER_RUNTIME="docker"
-    CONTAINER_RUNTIME_EXTRA_ARGS=""
-else
-    echo "Container runtime not found: docker, podman" >&2
-    exit 1
+if [ "x${CONTAINER_RUNTIME}" == 'x' ]; then
+    if podman ps >/dev/null 2>/dev/null; then
+        CONTAINER_RUNTIME="podman"
+        CONTAINER_RUNTIME_EXTRA_ARGS="--format docker"
+    elif docker ps >/dev/null 2>/dev/null; then
+        CONTAINER_RUNTIME="docker"
+        CONTAINER_RUNTIME_EXTRA_ARGS=""
+    else
+        echo "Container runtime not found: docker, podman" >&2
+        exit 1
+    fi
 fi
 
 ###########################################################
@@ -61,7 +63,7 @@ unset CONFIGMAP_PATH
 ###########################################################
 
 set +e +o pipefail
-"${CONTAINER_RUNTIME}" build \
+${CONTAINER_RUNTIME} build \
     --security-opt='seccomp=unconfined' \
     --tag "${IMAGE_TAG}" \
     ${CONTAINER_RUNTIME_EXTRA_ARGS} \
@@ -74,7 +76,7 @@ exit_code="$?"
 ###########################################################
 
 if [ "x${exit_code}" == 'x0' ]; then
-    "${CONTAINER_RUNTIME}" push "${IMAGE_TAG}"
+    ${CONTAINER_RUNTIME} push "${IMAGE_TAG}"
     exit_code="$?"
 fi
 

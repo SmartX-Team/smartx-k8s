@@ -1,7 +1,7 @@
 ---
 dist:
   archlinux:
-    image: {{- .Values.build.ubuntu.image | toYaml | nindent 6 }}
+    image: {{- .Values.build.archlinux.image | toYaml | nindent 6 }}
 
   ubuntu:
     image: {{- .Values.build.ubuntu.image | toYaml | nindent 6 }}
