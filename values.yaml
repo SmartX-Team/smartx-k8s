@@ -81,7 +81,9 @@ build:
   # Golang Toolchain Configuration
   golang:
     baseUrl: https://storage.googleapis.com/golang
-    version: 1.23.6
+    image:
+      repo: docker.io/library/golang
+    version: 1.25.5
 
   # Kubernetes Configuration
   kube:

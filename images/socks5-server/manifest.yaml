@@ -1,0 +1,16 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.images.socks5-server
+spec:
+  group: ops
+  phase: stable
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  containerImage:
+    namespace: vine-session
+    period: "0 0 * * *"
+    version: ""

@@ -1,0 +1,32 @@
+# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+{{- $package := .Release.Name }}
+
+# Be ready for building
+FROM "{{ .Values.golang.image.repo }}:{{ .Values.golang.version }}-{{ .Values.debian.image.tag }}" AS builder
+
+# Download source code
+WORKDIR /src
+RUN git clone --depth=1 \
+        -b {{ .Values.socks5.repo.revision | quote }} \
+        "{{ .Values.socks5.repo.baseUrl }}/{{ .Values.socks5.repo.owner }}/{{ .Values.socks5.repo.name }}.git" \
+    && cd {{ .Values.socks5.repo.name | quote }} \
+    && git submodule update --init --depth=1
+
+# Build it!
+WORKDIR /src/socks5-server
+RUN go build
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Copy executable files
+COPY --from=builder /src/socks5-server/LICENSE "/usr/share/licenses/{{ $package }}/LICENSE"
+COPY --from=builder /src/socks5-server/socks5-server /usr/local/bin/socks5-server
+
+# Mark as executable
+CMD [ "./socks5-server" ]
+ENTRYPOINT [ "/usr/bin/env" ]
+WORKDIR /usr/local/bin/

@@ -1,0 +1,16 @@
+---
+debian:
+  image:
+    tag: ""
+
+golang:
+  image:
+    repo: ""
+  version: ""
+
+socks5:
+  repo:
+    baseUrl: https://github.com
+    owner: ulagbulag
+    name: socks5-server
+    revision: master

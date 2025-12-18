@@ -1,0 +1,4 @@
+---
+debian: {{- .Values.build.debian | toYaml | nindent 2 }}
+
+golang: {{- .Values.build.golang | toYaml | nindent 2 }}
