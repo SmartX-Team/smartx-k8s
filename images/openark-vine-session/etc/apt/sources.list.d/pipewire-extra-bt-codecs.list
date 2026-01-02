@@ -1,0 +1,1 @@
+deb [signed-by=/etc/apt/keyrings/pipewire-extra-bt-codecs.gpg] https://ppa.launchpadcontent.net/aglasgall/pipewire-extra-bt-codecs/ubuntu/ ${VERSION_CODENAME} main

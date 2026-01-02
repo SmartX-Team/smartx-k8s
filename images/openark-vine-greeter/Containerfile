@@ -21,7 +21,9 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     # Install dependencies
     && apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
         software-properties-common \
-    # Import Mozilla APT repository
+    # Import APT repository: Pipewire/extra non-free bluetooth codecs
+    && add-apt-repository ppa:aglasgall/pipewire-extra-bt-codecs -y \
+    # Import APT repository: Mozilla
     && add-apt-repository ppa:mozillateam/ppa -y \
     # Prioritize Mozilla APT repository
     && echo 'Package: *' >/etc/apt/preferences.d/mozilla \
@@ -43,6 +45,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
         libldacbt-abr2 libldacbt-enc2 \
         libpipewire-0.3-common \
         libspa-0.2-bluetooth \
+        libspa-0.2-jack \
         pipewire \
         pipewire-audio-client-libraries \
         pipewire-media-session- \
