@@ -1,5 +1,3 @@
-use std::{fmt, rc::Rc};
-
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use gloo_net::http::{Method, RequestBuilder};
@@ -12,15 +10,20 @@ use openark_vine_oauth::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use tracing::Level;
 use url::Url;
 use web_sys::{RequestMode, RequestRedirect};
-use yew::{platform::spawn_local, prelude::*};
-use yew_router::prelude::*;
-use yewdux::prelude::*;
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub(super) struct Client;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Client {
+    _private: (),
+}
+
+impl Client {
+    #[inline]
+    pub(super) fn new() -> Self {
+        Self { _private: () }
+    }
+}
 
 #[async_trait(?Send)]
 impl ::openark_core::client::Client for Client {
@@ -40,14 +43,8 @@ impl ::openark_core::client::Client for Client {
         I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
-        // Mockup the api
-        #[cfg(debug_assertions)]
-        let url = if option_env!("API_BASE_URL").is_none()
-            && url.port().unwrap_or(443)
-                == ::openark_core::client::Client::base_url(self)
-                    .port()
-                    .unwrap()
-        {
+        let url = if cfg!(debug_assertions) {
+            // Mockup the api
             match method {
                 Method::DELETE => format!("{url}/delete.json").parse()?,
                 Method::GET => format!("{url}/get.json").parse()?,
@@ -178,196 +175,5 @@ impl Client {
         // TODO: Refresh the token without re-signing-in
         let _ = refresh_token;
         self.sign_in().await
-    }
-}
-
-pub(super) struct Request<Fetch, Update> {
-    pub(super) fetch: Fetch,
-    pub(super) ready: bool,
-    pub(super) update: Update,
-}
-
-#[derive(Clone, Debug)]
-pub enum Response<T> {
-    Fetching,
-    Ok(T),
-    NotFound,
-}
-
-/// Unwrap the value or go to the 404 page
-#[macro_export]
-macro_rules! unwrap_response {
-    ( $api:expr, $value:expr ) => {{
-        match $value {
-            $crate::stores::client::Response::Fetching => {
-                return Default::default();
-            }
-            $crate::stores::client::Response::Ok(value) => value,
-            $crate::stores::client::Response::NotFound => {
-                ::tracing::debug!("Not Found: {:#?}", &$value);
-                $api.register_alert(crate::stores::client::Alert {
-                    back: false,
-                    level: ::tracing::Level::WARN,
-                    message: "Not Found".into(),
-                });
-                return Default::default();
-            }
-        }
-    }};
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Alert {
-    pub back: bool,
-    pub level: Level,
-    pub message: String,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Store)]
-pub struct ClientStore {
-    alerts: Vec<Rc<Alert>>,
-    client: Client,
-    is_fetching: bool,
-}
-
-impl ClientStore {
-    /// Returns the remaining alerts.
-    #[inline]
-    pub fn alerts(&self) -> &[Rc<Alert>] {
-        &self.alerts
-    }
-
-    /// Dismiss an alert.
-    pub fn dismiss_alert(&mut self, index: usize, alert: &Rc<Alert>) {
-        if let Some(target) = self.alerts.get(index) {
-            if Rc::ptr_eq(target, alert) {
-                self.alerts.remove(index);
-            }
-        }
-    }
-
-    /// Register an alert.
-    pub fn register_alert(&mut self, alert: Alert) {
-        match alert.level {
-            Level::TRACE => ::tracing::trace!("{}", &alert.message),
-            Level::DEBUG => ::tracing::debug!("{}", &alert.message),
-            Level::INFO => ::tracing::info!("{}", &alert.message),
-            Level::WARN => ::tracing::warn!("{}", &alert.message),
-            Level::ERROR => ::tracing::error!("{}", &alert.message),
-        }
-        self.alerts.push(Rc::new(alert))
-    }
-}
-
-#[derive(Clone)]
-pub struct ApiStore<Store>
-where
-    Store: ::yewdux::Store,
-{
-    pub client: Rc<ClientStore>,
-    pub store: Rc<Store>,
-    pub dispatch: Dispatch<Store>,
-    pub dispatch_client: Dispatch<ClientStore>,
-    pub navigator: Navigator,
-}
-
-impl<Store> ApiStore<Store>
-where
-    Store: ::yewdux::Store,
-{
-    pub(super) fn call<T, Fetch, Fut, Update>(self, request: Request<Fetch, Update>)
-    where
-        T: fmt::Debug,
-        Fetch: 'static + FnOnce(Client) -> Fut,
-        Fut: Future<Output = Result<T>>,
-        Store: Clone,
-        Update: 'static + FnOnce(&mut Store, Option<T>),
-    {
-        let Self {
-            client: client_store,
-            store: _,
-            dispatch,
-            dispatch_client,
-            navigator: _,
-        } = self;
-        let Request {
-            fetch,
-            ready,
-            update,
-        } = request;
-
-        // Do nothing if the store is locked
-        if !ready || client_store.is_fetching {
-            return;
-        }
-
-        // Lock the store
-        dispatch_client.reduce_mut(|client| {
-            client.is_fetching = true;
-        });
-
-        // Begin fetching
-        spawn_local(async move {
-            // Update the store
-            let error = match fetch(client_store.client.clone()).await {
-                Ok(data) => {
-                    dispatch.reduce_mut(|store| update(store, Some(data)));
-                    None
-                }
-                Err(error) => {
-                    dispatch.reduce_mut(|store| update(store, None));
-                    Some(error)
-                }
-            };
-            dispatch_client.reduce_mut(|client| {
-                // Alert an error
-                if let Some(error) = error {
-                    client.register_alert(Alert {
-                        back: true,
-                        level: Level::ERROR,
-                        message: format!("Failed to request: {error}"),
-                    });
-                }
-                // Release the store
-                client.is_fetching = false;
-            })
-        })
-    }
-
-    /// Raise an alert and go back to the previous page.
-    pub fn register_alert(&self, alert: Alert) {
-        let Alert {
-            back,
-            level,
-            message,
-        } = alert;
-        match level {
-            Level::TRACE => ::tracing::trace!("{message}"),
-            Level::DEBUG => ::tracing::debug!("{message}"),
-            Level::INFO => ::tracing::info!("{message}"),
-            Level::WARN => ::tracing::warn!("{message}"),
-            Level::ERROR => ::tracing::error!("{message}"),
-        }
-        if back {
-            self.navigator.back();
-        }
-    }
-}
-
-#[hook]
-pub fn use_api<Store>() -> ApiStore<Store>
-where
-    Store: ::yewdux::Store,
-{
-    let (client, dispatch_client) = use_store::<ClientStore>();
-    let (store, dispatch) = use_store::<Store>();
-    let navigator = use_navigator().unwrap();
-
-    ApiStore {
-        client,
-        store,
-        dispatch,
-        dispatch_client,
-        navigator,
     }
 }

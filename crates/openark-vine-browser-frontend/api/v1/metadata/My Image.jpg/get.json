@@ -1,0 +1,11 @@
+{
+  "name": "My Image.jpg",
+  "path": "/My Image.jpg",
+  "size": 165378,
+  "owner": {
+    "id": "42",
+    "name": "Anonymous",
+    "initial": "A"
+  },
+  "ty": "image/jpeg"
+}

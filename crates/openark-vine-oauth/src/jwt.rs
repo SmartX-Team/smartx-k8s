@@ -18,6 +18,10 @@ pub(crate) struct JsonWebTokenClaims {
     pub iat: usize,
     // pub sub: String,
     pub name: String,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Vec::is_empty")
+    )]
     pub groups: Vec<String>,
     pub preferred_username: String,
     pub email: String,

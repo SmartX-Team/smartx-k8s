@@ -5,6 +5,7 @@
 
 # Prehibit errors
 set -e -o pipefail
+set -x
 
 ###########################################################
 #   Main Function                                         #
@@ -19,6 +20,14 @@ printf '# AUTO-GENERATED; DO NOT EDIT\n\n' >"${DST_FILE}"
 for path in $(find . -name manifest.yaml | sort -u); do
     # Skip template file
     if [ "${path}" == './apps/templates/manifest.yaml' ]; then
+        continue
+    fi
+
+    # Skip templates
+    if [ "${path}" == './apps/h2pc/manifest.yaml' ]; then
+        continue
+    fi
+    if [ "${path}" == './images/openark-vine-session/manifest.yaml' ]; then
         continue
     fi
 

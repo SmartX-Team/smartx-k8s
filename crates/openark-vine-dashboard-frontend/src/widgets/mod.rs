@@ -1,4 +1,3 @@
-pub mod buttons;
 mod dialog;
 mod table;
 

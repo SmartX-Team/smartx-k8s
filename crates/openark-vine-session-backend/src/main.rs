@@ -127,6 +127,7 @@ async fn try_main(args: Args) -> Result<()> {
             let mut cors = ::actix_cors::Cors::default()
                 .allow_any_header()
                 .allow_any_method()
+                .block_on_origin_mismatch(true)
                 .supports_credentials();
 
             if let Some(origin) = openid.oauth_client_origin.as_deref() {

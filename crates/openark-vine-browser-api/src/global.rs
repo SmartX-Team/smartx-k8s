@@ -1,0 +1,24 @@
+#[cfg(feature = "schemars")]
+use schemars::JsonSchema;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+use crate::user::UserConfiguration;
+
+/// A browser's global configuration.
+///
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct GlobalConfiguration {
+    /// The browser's name.
+    pub title: String,
+
+    /// The current user's configuration.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub user: Option<UserConfiguration>,
+}

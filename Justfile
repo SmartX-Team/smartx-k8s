@@ -68,6 +68,12 @@ run-openark-spectrum-pool:
         --base-url '' \
         --max-pool '64' \
 
+# Run development package: openark-vine-browser-frontend
+run-openark-vine-browser-frontend:
+    @cd ./crates/openark-vine-browser-frontend && \
+        env OPENARK_LABEL_ALIAS="$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/alias"')" \
+        trunk serve \
+
 # Run development package: openark-vine-session-backend
 run-openark-vine-dashboard-backend:
     @cargo run --package openark-vine-dashboard-backend -- \

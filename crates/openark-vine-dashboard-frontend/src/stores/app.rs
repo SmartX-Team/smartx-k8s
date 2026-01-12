@@ -32,24 +32,17 @@ impl<T> PartialEq for Cached<T> {
 }
 
 impl<T> Cached<T> {
-    fn try_hit<R, F>(&self, now: DateTime<Utc>, f: F) -> Option<Response<R>>
-    where
-        F: FnOnce(&T) -> Response<R>,
-    {
-        match &self.data {
-            Some(data) => {
-                if now
-                    <= self
-                        .created_at
-                        .checked_add_signed(AppStore::TTL)
-                        .unwrap_or(DateTime::<Utc>::MAX_UTC)
-                {
-                    Some(f(data))
-                } else {
-                    None
-                }
-            }
-            None => Some(Response::NotFound),
+    fn try_hit(&self, now: DateTime<Utc>) -> Option<&T> {
+        let Self { created_at, data } = self;
+        let data = data.as_ref()?;
+        if now
+            <= created_at
+                .checked_add_signed(AppStore::TTL)
+                .unwrap_or(DateTime::<Utc>::MAX_UTC)
+        {
+            Some(data)
+        } else {
+            None
         }
     }
 }
@@ -167,8 +160,8 @@ pub fn use_app(api: ApiStore<AppStore>) -> Response<Rc<App>> {
     let now = Utc::now();
     let mut result = None;
     if let Some(cache) = api.store.app.as_ref() {
-        if let Some(cached) = cache.try_hit(now, |data| Response::Ok(data.clone())) {
-            result.replace(cached);
+        if let Some(cached) = cache.try_hit(now) {
+            result.replace(Response::Ok(cached.clone()));
         }
     }
 
@@ -194,8 +187,8 @@ pub fn use_page(api: ApiStore<AppStore>, page: PageRef) -> Response<PageSpec> {
     let now = Utc::now();
     let mut result = None;
     if let Some(cache) = api.store.pages.get(&page) {
-        if let Some(cached) = cache.try_hit(now, |data| Response::Ok(data.clone())) {
-            result.replace(cached);
+        if let Some(cached) = cache.try_hit(now) {
+            result.replace(Response::Ok(cached.clone()));
         }
     }
 
@@ -232,14 +225,10 @@ pub fn use_table_rows(
     let now = Utc::now();
     let mut result = None;
     if let Some(cache) = api.store.table_rows.as_ref() {
-        if let Some(cached) = cache.try_hit(now, |rows| {
-            if rows.page_ref == page_ref {
-                Response::Ok(cache.clone())
-            } else {
-                Response::NotFound
-            }
-        }) {
-            result.replace(cached);
+        if let Some(cached) = cache.try_hit(now)
+            && cached.page_ref == page_ref
+        {
+            result.replace(Response::Ok(cache.clone()));
         }
     }
 

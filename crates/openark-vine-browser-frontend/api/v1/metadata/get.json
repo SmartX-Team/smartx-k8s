@@ -1,0 +1,38 @@
+{
+  "name": "All files",
+  "path": "/",
+  "files": [
+    {
+      "name": "My Project",
+      "path": "/My Project/",
+      "size": 12,
+      "owner": {
+        "id": "42",
+        "name": "Anonymous",
+        "initial": "A"
+      }
+    },
+    {
+      "name": "My Image.jpg",
+      "path": "/My Image.jpg",
+      "size": 165378,
+      "owner": {
+        "id": "42",
+        "name": "Anonymous",
+        "initial": "A"
+      },
+      "ty": "image/jpeg"
+    },
+    {
+      "name": "My Document.pdf",
+      "path": "/My Document.pdf",
+      "size": 18810,
+      "owner": {
+        "id": "24",
+        "name": "Darth Vader",
+        "initial": "DV"
+      },
+      "ty": "application/pdf"
+    }
+  ]
+}

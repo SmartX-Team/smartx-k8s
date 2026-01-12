@@ -1,0 +1,11 @@
+{
+  "name": "My Document.pdf",
+  "path": "/My Document.pdf",
+  "size": 18810,
+  "owner": {
+    "id": "24",
+    "name": "Darth Vader",
+    "initial": "DV"
+  },
+  "ty": "application/pdf"
+}

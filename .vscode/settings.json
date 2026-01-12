@@ -31,6 +31,7 @@
     "**/apps/template/features.yaml": "yaml",
     "**/crates/**/*.rs": "rust",
     "**/crates/openark-vine-dashboard-frontend/api/**/*.json": "json",
+    "**/crates/openark-vine-browser-frontend/api/**/*.json": "json",
     "**/hack/deps/*.sh": "jinja-shell",
     "**/images/*/**/*.containerfile": "jinja-dockerfile",
     "**/images/*/Containerfile": "jinja-dockerfile",

@@ -64,6 +64,7 @@ impl JsonValue {
         } else {
             dispatch.reduce_mut(|client| {
                 client.register_alert(Alert {
+                    back: true,
                     level: Level::ERROR,
                     message: error_message,
                 })
