@@ -48,8 +48,10 @@ fn render_item(props: &ItemProps) -> Html {
             <div class="bg-white rounded-lg group p-4 w-full sm:w-60 pointer-events-none">
                 <div class="mb-3">{{
                     let ty = file.metadata.ty.as_ref();
+                    let color = None;
+                    let fill = true;
                     let size = 10;
-                    super::mime::render(ty, is_dir, size)
+                    super::mime::render_file_entry(ty, is_dir, color, fill, size)
                 }}</div>
                 <p class="text-sm font-semibold text-gray-700 truncate">{ file.name.clone() }</p>
                 <p class="text-xs text-gray-400 mt-1">{{

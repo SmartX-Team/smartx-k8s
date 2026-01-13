@@ -17,6 +17,8 @@ fn parse_conf(state: HttpState<GlobalConfiguration>) -> Rc<GlobalConfiguration> 
     fn build_offline() -> GlobalConfiguration {
         GlobalConfiguration {
             title: Default::default(),
+            logo_url: None,
+            redirect_url: None,
             user: None,
         }
     }
@@ -51,8 +53,8 @@ pub fn component() -> Html {
             <>
                 // Navigation bar (top)
                 <header class="navbar bg-white border-b border-gray-200 px-4 h-16 shrink-0 z-10">
-                    // Title
-                    <div class="flex-none lg:hidden text-blue-600">
+                    // Sidebar logo
+                    <div class="flex-none lg:hidden pr-2 text-blue-600">
                         <label for={ drawer_id } class="btn btn-ghost btn-circle drawer-button">
                             <svg
                                 class="h-6 w-6"
@@ -65,12 +67,21 @@ pub fn component() -> Html {
                             </svg>
                         </label>
                     </div>
-                    <div class="flex-1 lg:flex-none select-none truncate px-2 mx-2">
-                        <span class="text-xl font-bold text-blue-600">{ conf.title.clone() }</span>
-                    </div>
+
+                    // Title
+                    <a
+                        class="flex-1 sm:flex-0 flex lg:flex-none items-center select-none truncate"
+                        href={ conf.redirect_url.as_ref().map(|url| url.to_string()).unwrap_or_else(|| "/".into()) }
+                    >
+                        { for conf.logo_url.as_ref().map(|url| html! { <img
+                            class="h-12 lg:mr-2"
+                            src={ url.to_string() }
+                        /> }) }
+                        <span class="hidden lg:flex text-xl font-bold text-blue-600">{ conf.title.clone() }</span>
+                    </a>
 
                     // Search bar
-                    <div class="flex-1 w-full hidden md:flex justify-center px-10">
+                    <div class="flex-1 w-full hidden sm:flex justify-center px-10">
                         <div class="flex relative w-full">
                             <div
                                 class="flex items-center pointer-events-none pr-4"

@@ -2,6 +2,7 @@
 use schemars::JsonSchema;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::user::UserConfiguration;
 
@@ -14,6 +15,20 @@ use crate::user::UserConfiguration;
 pub struct GlobalConfiguration {
     /// The browser's name.
     pub title: String,
+
+    /// The browser's logo image `[Url]`.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub logo_url: Option<Url>,
+
+    /// The browser's redirect `[Url]`.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub redirect_url: Option<Url>,
 
     /// The current user's configuration.
     #[cfg_attr(

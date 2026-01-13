@@ -6,65 +6,124 @@ use crate::router::Route;
 pub(super) fn render(ctx: &super::Context) -> Html {
     // properties
     let super::RouteProps { conf, drawer_id } = ctx.props.route.clone();
+    let shortcuts = conf
+        .user
+        .as_ref()
+        .map(|user| user.shortcuts.as_slice())
+        .unwrap_or_default();
 
     html! {
         <aside class="drawer-side z-20 h-full">
             <label for={ drawer_id } aria-label="close sidebar" class="drawer-overlay"></label>
             <div class="flex flex-col pt-4 w-64 h-full bg-white border-r border-gray-200">
+                // Title
                 <div class="p-6 lg:hidden select-none">
                     <h1 class="text-xl font-bold text-blue-600">{ conf.title.clone() }</h1>
                 </div>
 
-                <nav class="flex-1 px-4 select-none space-y-1 overflow-y-auto">
-                    <Link<Route>
-                        classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white"
-                        to={ Route::FileEntry {
-                            path: Default::default(),
-                        } }
+                // Add new entry
+                <div class="dropdown pl-4 mb-4">
+                    <div
+                        tabindex="0"
+                        role="button"
+                        class="btn btn-ghost bg-slate-100 hover:bg-slate-50 shadow-md hover:shadow-lg rounded-full px-6 py-2 normal-case border border-slate-200 transition-all duration-200 gap-2 text-blue-500"
                     >
                         <svg
-                            class="w-5 h-5 mr-3"
+                            class="w-6 h-6"
                             fill="none"
                             stroke="currentColor"
+                            stroke-width="1.5"
                             viewBox="0 0 24 24"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                            />
+                            // heroicons:plus:outline
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        { "모든 파일" }
-                    </Link<Route>>
-                    <Link<Route>
-                        classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::FileEntry {
-                            path: Default::default(),
-                        } }
-                    >
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        { "최근 항목" }
-                    </Link<Route>>
-                    <Link<Route>
-                        classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::FileEntry {
-                            path: Default::default(),
-                        } }
-                    >
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.175 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                        { "즐겨찾기" }
-                    </Link<Route>>
-                    <Link<Route>
-                        classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::FileEntry {
-                            path: Default::default(),
-                        } }
-                    >
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        { "휴지통" }
-                    </Link<Route>>
-                </nav>
+                        <h2 class="text-gray-700 font-medium">{ "신규" }</h2>
+                    </div>
+
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-slate-200 text-gray-700 rounded-lg w-56 mt-2">
+                        <li class="hover:bg-slate-100 rounded-md">
+                            <a class="p-2">
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                >
+                                    // heroicons:folder-plus:outline
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                                </svg>
+                                <span class="ml-1">{ "New folder" }</span>
+                            </a>
+                        </li>
+                        <hr class="my-1 border-gray-500" />
+                        <li class="hover:bg-slate-100 rounded-md">
+                            <a class="p-2">
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                >
+                                    // heroicons:document:outline
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                </svg>
+                                <span class="ml-1">{ "File upload" }</span>
+                            </a>
+                        </li>
+                        <li class="hover:bg-slate-100 rounded-md">
+                            <a class="p-2">
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                >
+                                    // heroicons:folder-open:outline
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+                                </svg>
+                                <span class="ml-1">{ "Folder upload" }</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                // Shortcuts
+                <nav class="flex-1 px-4 select-none space-y-1 overflow-y-auto">{
+                    for shortcuts.iter().map(|file| {
+                        let is_current = file.r.path.trim_matches('/') == ctx.props.path.trim_matches('/');
+                        let is_dir = file.r.is_dir();
+                        html! {
+                            <div
+                                class={ format!(
+                                    "px-4 py-2 text-sm font-medium rounded-lg {}",
+                                    if is_current { "bg-blue-600 text-white cursor-default" } else { "hover:bg-gray-50 text-gray-600 transition" }
+                                ) }
+                            >
+                                <Link<Route>
+                                    classes="flex items-center"
+                                    disabled={ is_current }
+                                    to={ Route::FileEntry {
+                                        path: file.r.path.trim_matches('/').to_string(),
+                                    } }
+                                >
+                                    {{
+                                        let kind = file.kind;
+                                        let ty = file.r.metadata.ty.as_ref();
+                                        let color = "";
+                                        let fill = false;
+                                        let size = 5;
+                                        super::mime::render_file_shortcut(kind, ty, is_dir, color, fill, size)
+                                    }}
+                                    <span class="ml-3">{ file.r.name.clone() }</span>
+                                </Link<Route>>
+                            </div>
+                        }
+                    })
+                }</nav>
 
                 // Subscriptions
                 <div class="p-4 border-t border-gray-200 select-none">
@@ -80,7 +139,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                 // Usage / Capacity
                 <div class="p-4 border-t border-gray-200">
                     <div class="bg-blue-50 p-4 rounded-xl">
-                        <p class="text-xs font-semibold text-blue-600 uppercase">{ "용량 사용량" }</p>
+                        <p class="text-xs font-semibold text-blue-600 select-none uppercase">{ "용량 사용량" }</p>
                         <div class="mt-2 w-full bg-blue-200 rounded-full h-1.5">
                             <div class="bg-blue-600 h-1.5 rounded-full" style="width: 75%"></div>
                         </div>

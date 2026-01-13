@@ -1,5 +1,7 @@
 {
   "title": "OpenARK VINE Browser",
+  "logoUrl": "https://avatars.githubusercontent.com/u/12946302?s=200&v=4",
+  "redirectUrl": "https://scalex.dreamai.kr",
   "user": {
     "exp": 0,
     "iat": 0,
@@ -9,7 +11,23 @@
     "shortcuts": [
       {
         "name": "All files",
+        "kind": "Home",
         "path": "/"
+      },
+      {
+        "name": "Recent items",
+        "kind": "TimeTravel",
+        "path": "/.recents/"
+      },
+      {
+        "name": "Favorites",
+        "kind": "Favorites",
+        "path": "/.favorites/"
+      },
+      {
+        "name": "Trash",
+        "kind": "Trash",
+        "path": "/.trash/"
       }
     ]
   }

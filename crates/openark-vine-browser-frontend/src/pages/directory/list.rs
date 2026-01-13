@@ -131,8 +131,10 @@ fn render_item(props: &ItemProps) -> Html {
                 <div class={ format!("flex items-center space-x-3 {td_class}") }>
                     {{
                         let ty = file.metadata.ty.as_ref();
+                        let color = None;
+                        let fill = true;
                         let size = 5;
-                        super::mime::render(ty, is_dir, size)
+                        super::mime::render_file_entry(ty, is_dir, color, fill, size)
                     }}
                     <span class="text-sm font-normal text-gray-700">{ file.name.clone() }</span>
                 </div>

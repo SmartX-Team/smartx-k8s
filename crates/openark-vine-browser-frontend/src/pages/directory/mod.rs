@@ -14,6 +14,7 @@ use openark_vine_browser_api::{
     file::{FileEntry, FileMetadata, FileRef},
     file_type::{DocumentType, FileType, ImageType},
 };
+use web_sys::window;
 use yew::{Html, Properties, UseStateHandle, function_component, html, use_state_eq};
 
 use crate::{
@@ -102,9 +103,8 @@ pub struct Props {
     pub route: RouteProps,
 }
 
-#[derive(Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 enum ViewMode {
-    #[default]
     Grid,
     List,
 }
@@ -166,7 +166,22 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
 pub fn component(props: &Props) -> Html {
     // states
     let file_entry = use_state_eq(Default::default);
-    let view_mode = use_state_eq(Default::default);
+    let view_mode = use_state_eq(|| {
+        if window()
+            .and_then(|window| {
+                Some((
+                    window.inner_width().ok()?.as_f64()?,
+                    window.inner_height().ok()?.as_f64()?,
+                ))
+            })
+            // screen ratio
+            .is_some_and(|(width, height)| width / height >= 0.8)
+        {
+            ViewMode::List
+        } else {
+            ViewMode::Grid
+        }
+    });
 
     // context
     let ctx = Context {

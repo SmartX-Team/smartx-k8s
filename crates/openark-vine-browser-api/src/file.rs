@@ -100,6 +100,36 @@ impl FileRef {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "PascalCase"))]
+pub enum FileShortcutKind {
+    Favorites,
+    Home,
+    TimeTravel,
+    Trash,
+}
+
+/// A file entry shortcut.
+///
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct FileShortcut {
+    /// The referral information.
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub r: FileRef,
+
+    /// An optional [`FileShortcutKind`].
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    pub kind: Option<FileShortcutKind>,
+}
+
 /// A directory.
 ///
 #[derive(Clone, Debug)]

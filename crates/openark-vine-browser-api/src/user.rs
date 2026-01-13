@@ -5,7 +5,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::file::FileRef;
+use crate::file::FileShortcut;
 
 /// A file's metadata.
 ///
@@ -63,7 +63,7 @@ pub struct UserConfiguration {
         feature = "serde",
         serde(default, skip_serializing_if = "Vec::is_empty")
     )]
-    pub shortcuts: Vec<FileRef>,
+    pub shortcuts: Vec<FileShortcut>,
 
     /// A `JWT`.
     #[cfg_attr(feature = "serde", serde(flatten))]
