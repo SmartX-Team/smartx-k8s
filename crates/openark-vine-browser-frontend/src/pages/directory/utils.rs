@@ -3,6 +3,7 @@ use openark_vine_browser_api::{
     file::{FileRef, FileTimestamp},
     user::UserRef,
 };
+use web_sys::DataTransfer;
 use yew::{MouseEvent, html::IntoEventCallback};
 use yew_router::prelude::Navigator;
 
@@ -57,15 +58,23 @@ pub(super) fn format_size(is_dir: bool, size: Option<u64>) -> String {
     )
 }
 
-pub(super) fn push_dir(
-    nav: Option<&Navigator>,
+/// Resolve to the `file`.
+///
+pub(super) fn push_entry(
+    nav: Option<Navigator>,
     file: &FileRef,
 ) -> impl IntoEventCallback<MouseEvent> {
-    let nav = nav.cloned();
     let path = file.path.trim_matches('/').to_string();
     move |_| {
         if let Some(nav) = nav.clone() {
-            nav.push(&Route::Directory { path: path.clone() })
+            nav.push(&Route::FileEntry { path: path.clone() })
         }
     }
+}
+
+/// Upload a file into the `dst` directory.
+///
+pub(super) fn upload(src: DataTransfer, dst: FileRef) {
+    // TODO: To be implemented!
+    tracing::info!("src: {src:#?}, dst: {}", &dst.path)
 }

@@ -18,7 +18,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                 <nav class="flex-1 px-4 select-none space-y-1 overflow-y-auto">
                     <Link<Route>
                         classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white"
-                        to={ Route::Directory {
+                        to={ Route::FileEntry {
                             path: Default::default(),
                         } }
                     >
@@ -39,7 +39,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                     </Link<Route>>
                     <Link<Route>
                         classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::Directory {
+                        to={ Route::FileEntry {
                             path: Default::default(),
                         } }
                     >
@@ -48,7 +48,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                     </Link<Route>>
                     <Link<Route>
                         classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::Directory {
+                        to={ Route::FileEntry {
                             path: Default::default(),
                         } }
                     >
@@ -57,7 +57,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                     </Link<Route>>
                     <Link<Route>
                         classes="flex items-center px-4 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                        to={ Route::Directory {
+                        to={ Route::FileEntry {
                             path: Default::default(),
                         } }
                     >

@@ -23,7 +23,7 @@ fn draw_breadcrumb(name: &str, path: &str, active: bool) -> Html {
                 html! {
                     <Link<Route>
                         disabled={ !active }
-                        to={ Route::Directory {
+                        to={ Route::FileEntry {
                             path: path.trim_matches('/').to_string(),
                         } }
                     >
@@ -140,8 +140,8 @@ pub(super) fn render(ctx: &super::Context) -> Html {
     }
 
     html! {
-        <div class="items-center mb-6">
-            <div class="flex items-center justify-between h-12">
+        <div class="flex flex-col items-start mb-6">
+            <div class="flex items-center justify-between w-full h-12">
                 <h2 class="text-xl font-bold select-none text-gray-800">
                     { "내 파일" }
                 </h2>

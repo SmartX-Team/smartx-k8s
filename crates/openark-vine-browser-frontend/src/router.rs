@@ -12,7 +12,7 @@ pub enum Route {
     #[at("/")]
     Home,
     #[at("/*path")]
-    Directory { path: String },
+    FileEntry { path: String },
     #[at("/e/404")]
     #[not_found]
     NotFound,
@@ -38,7 +38,7 @@ pub fn switch(routes: Route, props: RouteProps) -> Html {
 
     match routes {
         Route::NotFound => html! {
-            <Redirect<Route> to={ Route::Directory {
+            <Redirect<Route> to={ Route::FileEntry {
                 path: Default::default(),
             } } />
         },
@@ -48,7 +48,7 @@ pub fn switch(routes: Route, props: RouteProps) -> Html {
                 <DirectoryPage { path } route={ props } />
             }
         }
-        Route::Directory { path } => html! {
+        Route::FileEntry { path } => html! {
             <DirectoryPage { path } route={ props } />
         },
     }

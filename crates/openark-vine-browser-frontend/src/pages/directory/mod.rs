@@ -132,7 +132,7 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
                 let render = move |state| {
                     let file_entry = parse_file_entry(state);
                     let is_dir = file_entry.r.is_dir();
-                    html! { <div class="p-8">
+                    html! { <div class="flex flex-col w-full min-h-full p-8">
                         // Navigation bar
                         { self::navbar::render(&ctx) }
 

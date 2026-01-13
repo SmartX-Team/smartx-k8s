@@ -88,6 +88,10 @@ tracing = { workspace = true, optional = true, features = [
 ] }
 url = { workspace = true, features = ["std"] }
 web-sys = { workspace = true, features = [
+    "DragEvent",
+    "DataTransfer",
+    "DataTransferItem",
+    "DataTransferItemList",
     "HtmlInputElement",
     "Location",
     "RequestMode",
