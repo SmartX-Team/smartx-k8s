@@ -2,6 +2,12 @@
   "name": "My Image.jpg",
   "path": "/My Image.jpg",
   "size": 165378,
+  "created": {
+    "at": "2026-01-12T15:56:50Z"
+  },
+  "modified": {
+    "at": "2026-01-12T15:56:50Z"
+  },
   "owner": {
     "id": "42",
     "name": "Anonymous",

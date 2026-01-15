@@ -1,0 +1,18 @@
+{
+  "name": "My Video.mp4",
+  "path": "/My Video.mp4",
+  "source": "https://file-examples.com/index.php/sample-audio-files/sample-mp3-download/",
+  "size": 3114374,
+  "created": {
+    "at": "2026-01-15T23:15:12Z"
+  },
+  "modified": {
+    "at": "2026-01-15T23:15:12Z"
+  },
+  "owner": {
+    "id": "24",
+    "name": "Darth Vader",
+    "initial": "DV"
+  },
+  "ty": "video/mp4"
+}

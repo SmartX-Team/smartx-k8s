@@ -2,6 +2,9 @@
   "title": "OpenARK VINE Browser",
   "logoUrl": "https://avatars.githubusercontent.com/u/12946302?s=200&v=4",
   "redirectUrl": "https://scalex.dreamai.kr",
+  "features": {
+    "search": false
+  },
   "user": {
     "exp": 0,
     "iat": 0,

@@ -137,7 +137,7 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
 
     html! {
         <div class="drawer-content flex flex-col overflow-hidden min-h-full">
-            <div class="flex-1 overflow-auto h-full">{{
+            <div class="flex-1 overflow-y-scroll h-full">{{
                 let key = &ctx.props.path;
                 let path = ctx.props.path.clone();
                 let fetch = |client: Client| async move {
@@ -152,7 +152,9 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
                         <div
                             class={ format!(
                                 "flex flex-col w-full p-8 {}",
-                                if matches!(dir_state, FileEntryState::Failed) {
+                                if !is_dir {
+                                    "h-full"
+                                } else if matches!(dir_state, FileEntryState::Failed) {
                                     ""
                                 } else {
                                     "min-h-full"

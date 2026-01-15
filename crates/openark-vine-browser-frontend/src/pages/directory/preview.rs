@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use openark_vine_browser_api::{file::FileEntry, file_type::FileType};
+use openark_vine_browser_api::{
+    file::FileEntry,
+    file_type::{AppType, FileType},
+};
 use yew::{Html, Properties, function_component, html};
 
 use crate::{
@@ -28,7 +31,7 @@ pub(super) fn render(props: &Props) -> Html {
     let i18n = &props.i18n;
 
     html! {
-        <div class="flex-1">{{
+        <div class="flex-1 overflow-y-auto">{{
             let url = match get_file_content_url(file) {
                 Ok(url) => url.to_string(),
                 Err(error) => return html! {
@@ -39,14 +42,43 @@ pub(super) fn render(props: &Props) -> Html {
                 },
             };
 
-            match file.metadata.ty {
-                Some(FileType::Image(_)) => html! {
-                    <img
-                        class="object-cover"
-                        src={ url }
+            match &file.metadata.ty {
+                Some(FileType::Audio(ty)) => html! {
+                    <audio class="w-full" controls=true>
+                        <source
+                            src={ url }
+                            type={ ty.mime_type().to_string() }
+                        />
+                        { i18n.alert_unsupported_file_preview_audio() }
+                    </audio>
+                },
+                Some(FileType::Document(ty)) => html! {
+                    <object
+                        class="w-full h-full"
+                        data={ url }
+                        type={ ty.mime_type().to_string() }
+                        width="100%"
                     />
                 },
-                _ => html! {
+                Some(FileType::Image(_)) => html! {
+                    <picture>
+                        <img
+                            class="max-w-full max-h-full object-contain"
+                            src={ url }
+                        />
+                    </picture>
+                },
+                Some(FileType::Video(ty)) => html! {
+                    <object
+                        class="w-full h-full"
+                        data={ url }
+                        type={ ty.mime_type().to_string() }
+                        width="100%"
+                    />
+                },
+                Some(FileType::App(AppType::OctetStream))
+                | Some(FileType::App(AppType::Other(_)))
+                | None => html! {
                     <div class="select-none">
                         <Warn message={ i18n.alert_unsupported_file_preview() } />
                     </div>

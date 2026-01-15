@@ -2,6 +2,12 @@
   "name": "My Document.pdf",
   "path": "/My Document.pdf",
   "size": 18810,
+  "created": {
+    "at": "2026-01-12T15:56:50Z"
+  },
+  "modified": {
+    "at": "2026-01-12T15:56:50Z"
+  },
   "owner": {
     "id": "24",
     "name": "Darth Vader",

@@ -28,6 +28,11 @@ impl super::I18n for English {
     }
 
     #[inline]
+    fn alert_unsupported_file_preview_audio(&self) -> &'static str {
+        "Your browser does not support the audio element."
+    }
+
+    #[inline]
     fn date_modified(&self) -> &'static str {
         "Date modified"
     }

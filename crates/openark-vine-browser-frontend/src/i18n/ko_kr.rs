@@ -28,6 +28,11 @@ impl super::I18n for Korean {
     }
 
     #[inline]
+    fn alert_unsupported_file_preview_audio(&self) -> &'static str {
+        "사용하시는 브라우저가 해당 오디오 요소를 지원하지 않습니다."
+    }
+
+    #[inline]
     fn date_modified(&self) -> &'static str {
         "최근 수정"
     }

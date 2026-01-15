@@ -80,6 +80,9 @@ impl_i18n! {
         /// Returns the "Unsupported file preview" alert message.
         fn alert_unsupported_file_preview(&self) -> &'static str;
 
+        /// Returns the "Unsupported audio preview" alert message.
+        fn alert_unsupported_file_preview_audio(&self) -> &'static str;
+
         /// Returns the "Date modified".
         fn date_modified(&self) -> &'static str;
 
