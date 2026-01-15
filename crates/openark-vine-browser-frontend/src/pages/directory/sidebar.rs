@@ -99,12 +99,12 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                         html! {
                             <div
                                 class={ format!(
-                                    "px-4 py-2 text-sm font-medium rounded-lg {}",
-                                    if is_current { "bg-blue-600 text-white cursor-default" } else { "hover:bg-gray-50 text-gray-600 transition" }
+                                    "text-sm font-medium rounded-lg transition-colors {}",
+                                    if is_current { "bg-blue-600 text-white cursor-default" } else { "hover:bg-gray-50 text-gray-600" }
                                 ) }
                             >
                                 <Link<Route>
-                                    classes="flex items-center"
+                                    classes="flex items-center px-4 py-2"
                                     disabled={ is_current }
                                     to={ Route::FileEntry {
                                         path: file.r.path.trim_matches('/').to_string(),

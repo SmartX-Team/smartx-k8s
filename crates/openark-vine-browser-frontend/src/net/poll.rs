@@ -6,7 +6,7 @@ use yew::{Html, UseStateHandle, html, platform::spawn_local};
 
 use crate::{
     net::Client,
-    widgets::{Error, Warn},
+    widgets::{Error, NotFound},
 };
 
 #[derive(Clone, Debug)]
@@ -282,9 +282,9 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
     {
         html! { <>
             { render(HttpStateRaw::NotFound) }
-            <Warn
-                message={ "비어있음" }
-            />
+            <div class="px-5">
+                <NotFound />
+            </div>
         </> }
     }
 
@@ -294,10 +294,12 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
     {
         html! { <>
             { render(HttpStateRaw::Failed) }
-            <Error
-                message={ "문제가 발생했습니다. 잠시 후 다시 시도해 주세요." }
-                details={ error }
-            />
+            <div class="px-5">
+                <Error
+                    message={ "문제가 발생했습니다. 잠시 후 다시 시도해 주세요." }
+                    details={ error }
+                />
+            </div>
         </> }
     }
 
@@ -308,6 +310,8 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
 }
 
 pub type HttpState<T> = HttpStateRaw<Rc<T>>;
+
+pub type HttpStateRef<'a, T> = HttpStateRaw<&'a Rc<T>>;
 
 // pub type UseHttpHandle<K, V> = UseStateHandle<K, HttpContext<Rc<V>>>;
 
@@ -337,6 +341,18 @@ pub trait UseHttpHandleOptionRender<K, V>: UseHttpHandleRenderRaw<K, Option<Rc<V
         match self._poll() {
             HttpPoll::Ready(cached) => cached.value.as_ref(),
             _ => None,
+        }
+    }
+
+    #[inline]
+    fn try_get_state(&self) -> HttpStateRef<'_, V> {
+        match self._poll() {
+            HttpPoll::Pending | HttpPoll::Fetching => HttpStateRef::Pending,
+            HttpPoll::Ready(cached) => match cached.value.as_ref() {
+                Some(value) => HttpStateRef::Ready(value),
+                None => HttpStateRef::NotFound,
+            },
+            HttpPoll::Failed(_) => HttpStateRef::Failed,
         }
     }
 

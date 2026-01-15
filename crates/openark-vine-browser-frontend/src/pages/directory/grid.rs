@@ -1,11 +1,10 @@
 use std::rc::Rc;
 
 use openark_vine_browser_api::file::{FileEntry, FileRef};
-use web_sys::DataTransfer;
 use yew::{Html, Properties, function_component, html, html::IntoEventCallback, use_state_eq};
 use yew_router::hooks::use_navigator;
 
-use crate::widgets::{
+use super::upload::{
     UploadFile, UploadFileItem, UploadFileItemLayout, UploadFileItemPtr, UseUploadFileStateHandle,
 };
 
@@ -13,6 +12,7 @@ use crate::widgets::{
 struct ItemProps {
     // checkboxes: UseReducerHandle<CheckBoxGroup>,
     // current: DateTime<Utc>,
+    dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
     ptr: UploadFileItemPtr,
@@ -22,6 +22,7 @@ struct ItemProps {
 fn render_item(props: &ItemProps) -> Html {
     // properties
     let &ItemProps {
+        dir_state,
         ref drag_state,
         ref file,
         ptr,
@@ -35,15 +36,16 @@ fn render_item(props: &ItemProps) -> Html {
     html! {
         <UploadFileItem
             id="directory-dropzone-grid"
-            { ptr }
+            { dir_state }
             drag_disabled={ !is_dir }
             drag_state={ drag_state.clone() }
             layout={ UploadFileItemLayout::Grid }
             onclick={ super::utils::push_entry(nav, file).into_event_callback() }
             ondrop={{
                 let dst = file.clone();
-                move |dt: DataTransfer| super::utils::upload(dt, dst.clone())
+                move |event| super::utils::upload(event, dst.clone())
             }}
+            { ptr }
         >
             <div class="bg-white rounded-lg group p-4 w-full sm:w-60 pointer-events-none">
                 <div class="mb-3">{{
@@ -66,19 +68,23 @@ fn render_item(props: &ItemProps) -> Html {
 #[derive(Clone, Debug, Properties)]
 pub(super) struct Props {
     pub(super) directory: Rc<FileEntry>,
+    pub(super) state: super::FileEntryState,
 }
 
 impl PartialEq for Props {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.directory, &other.directory)
+        Rc::ptr_eq(&self.directory, &other.directory) && self.state == other.state
     }
 }
 
 #[function_component(FileList)]
 pub(super) fn render(props: &Props) -> Html {
     // properties
-    let Props { directory } = props.clone();
+    let &Props {
+        ref directory,
+        state,
+    } = props;
     let global_index = 0;
     let local_size = directory.files.len();
 
@@ -88,11 +94,12 @@ pub(super) fn render(props: &Props) -> Html {
     html! {
         <UploadFile
             id="directory-dropzone"
+            dir_state={ state }
             drag_state={ drag_state.clone() }
             layout={ UploadFileItemLayout::Grid }
             ondrop={{
                 let dst = directory.r.clone();
-                move |dt: DataTransfer| super::utils::upload(dt, dst.clone())
+                move |event| super::utils::upload(event, dst.clone())
             }}
         >
             // Files
@@ -101,6 +108,7 @@ pub(super) fn render(props: &Props) -> Html {
                     html! { <FileItem
                         // checkboxes={ checkboxes.clone() }
                         // { current }
+                        dir_state={ state }
                         drag_state={ drag_state.clone() }
                         file={ file.clone() }
                         ptr={ UploadFileItemPtr {

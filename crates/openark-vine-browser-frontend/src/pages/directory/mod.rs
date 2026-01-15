@@ -4,6 +4,7 @@ mod mime;
 mod navbar;
 mod preview;
 mod sidebar;
+mod upload;
 mod utils;
 
 use std::rc::Rc;
@@ -18,7 +19,7 @@ use web_sys::window;
 use yew::{Html, Properties, UseStateHandle, function_component, html, use_state_eq};
 
 use crate::{
-    net::{Client, HttpState, UseHttpHandleOption, UseHttpHandleOptionRender},
+    net::{Client, HttpState, HttpStateRef, UseHttpHandleOption, UseHttpHandleOptionRender},
     router::RouteProps,
 };
 
@@ -97,6 +98,14 @@ fn parse_file_entry(state: HttpState<FileEntry>) -> Rc<FileEntry> {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+enum FileEntryState {
+    Directory,
+    Empty,
+    NotFound,
+    Failed,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Properties)]
 pub struct Props {
     pub path: String,
@@ -113,6 +122,7 @@ struct Context<'a> {
     props: &'a Props,
     current_timestamp: DateTime<Utc>,
     file_entry: UseHttpHandleOption<String, FileEntry>,
+    state: FileEntryState,
     view_mode: UseStateHandle<ViewMode>,
 }
 
@@ -130,31 +140,45 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
                     client.get_file_entry(&path).await
                 };
                 let render = move |state| {
+                    let dir_state = ctx.state;
                     let file_entry = parse_file_entry(state);
                     let is_dir = file_entry.r.is_dir();
-                    html! { <div class="flex flex-col w-full min-h-full p-8">
-                        // Navigation bar
-                        { self::navbar::render(&ctx) }
-
-                        // File contents
-                        {
-                            if is_dir {
-                                match *ctx.view_mode {
-                                    ViewMode::Grid => html! { <self::grid::FileList
-                                        directory={ file_entry }
-                                    /> },
-                                    ViewMode::List => html! { <self::list::FileList
-                                        { current }
-                                        directory={ file_entry }
-                                    /> },
+                    html! {
+                        <div
+                            class={ format!(
+                                "flex flex-col w-full p-8 {}",
+                                if matches!(dir_state, FileEntryState::Failed) {
+                                    ""
+                                } else {
+                                    "min-h-full"
                                 }
-                            } else {
-                                html! { <self::preview::Preview
-                                    { file_entry }
-                                /> }
+                            ) }
+                        >
+                            // Navigation bar
+                            { self::navbar::render(&ctx) }
+
+                            // File contents
+                            {
+                                if is_dir {
+                                    match *ctx.view_mode {
+                                        ViewMode::Grid => html! { <self::grid::FileList
+                                            directory={ file_entry }
+                                            state={ dir_state }
+                                        /> },
+                                        ViewMode::List => html! { <self::list::FileList
+                                            { current }
+                                            directory={ file_entry }
+                                            state={ dir_state }
+                                        /> },
+                                    }
+                                } else {
+                                    html! { <self::preview::Preview
+                                        { file_entry }
+                                    /> }
+                                }
                             }
-                        }
-                    </div> }
+                        </div>
+                    }
                 };
                 file_entry.try_fetch_and_render(key, fetch, render)
             }}</div>
@@ -165,7 +189,19 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
 #[function_component(DirectoryPage)]
 pub fn component(props: &Props) -> Html {
     // states
-    let file_entry = use_state_eq(Default::default);
+    let file_entry: UseHttpHandleOption<String, FileEntry> = use_state_eq(Default::default);
+    let state = match file_entry.try_get_state() {
+        HttpStateRef::Pending => FileEntryState::Directory, // for building skeletons
+        HttpStateRef::Ready(entry) => {
+            if entry.files.is_empty() {
+                FileEntryState::Empty
+            } else {
+                FileEntryState::Directory
+            }
+        }
+        HttpStateRef::NotFound => FileEntryState::NotFound,
+        HttpStateRef::Failed => FileEntryState::Failed,
+    };
     let view_mode = use_state_eq(|| {
         if window()
             .and_then(|window| {
@@ -188,6 +224,7 @@ pub fn component(props: &Props) -> Html {
         props,
         current_timestamp: Utc::now(),
         file_entry,
+        state,
         view_mode,
     };
 

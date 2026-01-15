@@ -44,9 +44,11 @@ pub(super) fn render(props: &Props) -> Html {
                     />
                 },
                 _ => html! {
-                    <Warn
-                        message={ "미리보기를 지원하지 않는 파일입니다." }
-                    />
+                    <div class="select-none">
+                        <Warn
+                            message={ "미리보기를 지원하지 않는 파일입니다." }
+                        />
+                    </div>
                 },
             }
         }}</div>

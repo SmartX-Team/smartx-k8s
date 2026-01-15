@@ -2,14 +2,13 @@ use std::rc::Rc;
 
 use chrono::{DateTime, Utc};
 use openark_vine_browser_api::file::{FileEntry, FileRef};
-use web_sys::DataTransfer;
 use yew::{
     Html, MouseEvent, Properties, Reducible, UseReducerHandle, function_component, html,
     html::IntoEventCallback, use_reducer_eq, use_state_eq,
 };
 use yew_router::hooks::use_navigator;
 
-use crate::widgets::{
+use super::upload::{
     UploadFile, UploadFileItem, UploadFileItemLayout, UploadFileItemPtr, UseUploadFileStateHandle,
 };
 
@@ -68,6 +67,7 @@ impl Reducible for CheckBoxGroup {
 struct ItemProps {
     checkboxes: UseReducerHandle<CheckBoxGroup>,
     current: DateTime<Utc>,
+    dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
     ptr: UploadFileItemPtr,
@@ -79,6 +79,7 @@ fn render_item(props: &ItemProps) -> Html {
     let &ItemProps {
         ref checkboxes,
         current,
+        dir_state,
         ref drag_state,
         ref file,
         ptr,
@@ -97,21 +98,22 @@ fn render_item(props: &ItemProps) -> Html {
     html! {
         <UploadFileItem
             id="directory-dropzone-list"
-            { ptr }
+            { dir_state }
             drag_disabled={ !is_dir }
             drag_state={ drag_state.clone() }
             layout={ UploadFileItemLayout::List }
             onclick={ super::utils::push_entry(nav, file).into_event_callback() }
             ondrop={{
                 let dst = file.clone();
-                move |dt: DataTransfer| super::utils::upload(dt, dst.clone())
+                move |event| super::utils::upload(event, dst.clone())
             }}
+            { ptr }
         >
             // Checkbox
             <td class={ format!("text-sm text-gray-500 {td_class}") }>
                 <input
                     id={ format!("directory-checkbox-item-{}", &file.path) }
-                    class="checkbox"
+                    class="checkbox border-gray-200 text-blue-800"
                     type="checkbox"
                     checked={ checkboxes.get_item(ptr.global_index) }
                     onclick={{
@@ -176,19 +178,26 @@ fn render_item(props: &ItemProps) -> Html {
 pub(super) struct Props {
     pub(super) current: DateTime<Utc>,
     pub(super) directory: Rc<FileEntry>,
+    pub(super) state: super::FileEntryState,
 }
 
 impl PartialEq for Props {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.current == other.current && Rc::ptr_eq(&self.directory, &other.directory)
+        self.current == other.current
+            && Rc::ptr_eq(&self.directory, &other.directory)
+            && self.state == other.state
     }
 }
 
 #[function_component(FileList)]
 pub(super) fn render(props: &Props) -> Html {
     // properties
-    let Props { current, directory } = props.clone();
+    let &Props {
+        current,
+        ref directory,
+        state,
+    } = props;
     let global_index = 0;
     let local_size = directory.files.len();
 
@@ -199,19 +208,21 @@ pub(super) fn render(props: &Props) -> Html {
     html! {
         <UploadFile
             id="directory-dropzone"
+            dir_state={ state }
             drag_state={ drag_state.clone() }
             layout={ UploadFileItemLayout::List }
             ondrop={{
                 let dst = directory.r.clone();
-                move |dt: DataTransfer| super::utils::upload(dt, dst.clone())
+                move |event| super::utils::upload(event, dst.clone())
             }}
         >
             <table class="table w-full border-collapse">
                 // Header
                 <thead class="select-none">
                     <tr
-                        class={ format!("text-gray-500 border-t-2 border-l-2 border-r-2 border-gray-200 {}",
-                            if local_size > 0 { "" } else { "border-b-2" },
+                        class={ format!(
+                            "text-gray-500 border-t-2 border-l-2 border-r-2 border-gray-200 {}",
+                            if local_size == 0 { "border-b-2" } else { "" },
                         ) }
                     >
                         // Checkbox
@@ -224,7 +235,7 @@ pub(super) fn render(props: &Props) -> Html {
                                     <th class="bg-transparent font-medium pointer-events-auto">
                                         <input
                                             id="directory-grid-checkbox-all"
-                                            class="checkbox"
+                                            class="checkbox border-gray-200 text-blue-800"
                                             type="checkbox"
                                             checked={ checkboxes.get_many(global_index, local_size) }
                                             onclick={{
@@ -257,6 +268,7 @@ pub(super) fn render(props: &Props) -> Html {
                         html! { <FileItem
                             checkboxes={ checkboxes.clone() }
                             { current }
+                            dir_state={ state }
                             drag_state={ drag_state.clone() }
                             file={ file.clone() }
                             ptr={ UploadFileItemPtr {

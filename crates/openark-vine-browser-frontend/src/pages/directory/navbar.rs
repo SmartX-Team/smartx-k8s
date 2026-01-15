@@ -1,6 +1,3 @@
-use std::rc::Rc;
-
-use openark_vine_browser_api::file::FileEntry;
 use yew::{Html, html};
 use yew_router::prelude::Link;
 
@@ -40,12 +37,9 @@ fn draw_breadcrumb(name: &str, path: &str, active: bool) -> Html {
 
 /// Directory links.
 ///
-fn draw_breadcrumbs(file: Option<&Rc<FileEntry>>) -> Html {
+fn draw_breadcrumbs(path: &str) -> Html {
     // properties
-    let path = file
-        .map(|e| e.r.path.as_str())
-        .unwrap_or_default()
-        .trim_matches('/');
+    let path = path.trim_matches('/');
 
     let mut paths = vec![
         draw_breadcrumb("/", "", !path.is_empty()), // root directory
@@ -150,7 +144,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                 }</div>
             </div>
             <div class="flex breadcrumbs max-w-full">{
-                draw_breadcrumbs(file_entry)
+                draw_breadcrumbs(&ctx.props.path)
             }</div>
         </div>
     }

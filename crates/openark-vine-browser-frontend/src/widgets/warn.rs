@@ -19,3 +19,17 @@ pub fn render(props: &Props) -> Html {
         </div>
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Properties)]
+pub struct EmptyProps {}
+
+#[function_component(Empty)]
+pub fn render_empty(props: &EmptyProps) -> Html {
+    let EmptyProps {} = props;
+
+    html! {
+        <Warn
+            message={ "비어있음" }
+        />
+    }
+}

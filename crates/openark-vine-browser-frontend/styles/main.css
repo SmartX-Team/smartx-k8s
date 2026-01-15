@@ -4,3 +4,8 @@
 }
 
 /* Add your custom styles here */
+
+.no-drag-highlight *::selection {
+  background-color: transparent;
+  color: inherit;
+}
