@@ -141,6 +141,9 @@ serde-json = { package = "serde_json", version = "=1.0", default-features = fals
 serde-urlencoded = { package = "serde_urlencoded", version = "=0.7", default-features = false }
 strum = { version = "=0.27", default-features = false }
 thiserror = { version = "=2.0", default-features = false }
+timeago = { version = "=0.6", default-features = false, features = [
+    "translations",
+] }
 tonic = { version = "=0.14", default-features = false }
 tonic-prost = { version = "=0.14", default-features = false } # should be synced with tonic and prost
 tonic-prost-build = { version = "=0.14", default-features = false } # should be synced with tonic and prost
@@ -163,6 +166,8 @@ yewdux = { version = "=0.11", default-features = false, features = [
 ] } # should be synced with yew
 
 [patch.crates-io]
-# FIXME: Wait a PR to be merged
+# FIXME: Wait for a PR to be merged
 good_lp = { git = "https://github.com/ulagbulag/good_lp.git", branch = "feat/impl-clone-for-constraint-and-problem-variables" }
 # io-uring = { path = "../io-uring" }
+# FIXME: Wait for a next version to be released
+timeago = { git = "https://github.com/vi/timeago.git", branch = "master" }

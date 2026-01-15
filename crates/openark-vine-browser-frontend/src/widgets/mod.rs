@@ -2,6 +2,6 @@ mod error;
 mod warn;
 
 pub use self::{
-    error::{Error, NotFound},
+    error::{Error, FileNotFound},
     warn::{Empty, Warn},
 };

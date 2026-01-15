@@ -1,6 +1,7 @@
 #![feature(int_lowest_highest_one)]
 
 mod app;
+mod i18n;
 mod net;
 mod pages;
 mod router;

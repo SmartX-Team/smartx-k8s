@@ -1,48 +1,72 @@
+use openark_vine_browser_api::file::FileRef;
 use web_sys::DataTransfer;
 use yew::{
-    Callback, DragEvent, Html, MouseEvent, Properties, UseStateHandle, function_component, html,
+    DragEvent, Html, MouseEvent, Properties, UseStateHandle, function_component, html,
     html::IntoEventCallback,
 };
+use yew_router::{hooks::use_navigator, prelude::Navigator};
 
-use crate::widgets::{Empty, NotFound};
+use crate::{
+    i18n::DynI18n,
+    router::Route,
+    widgets::{Empty, FileNotFound},
+};
 
 const DATA_TRANSFER_KIND_CONTAINER: &str = "string";
 const DATA_TRANSFER_TYPE_CONTAINER: &str = concat!(env!("CARGO_CRATE_NAME"), "/file-entry");
 
 const DATA_TRANSFER_KIND_FILE: &str = "file";
 
+/// Resolve to the `file`.
+///
+fn handle_onclick(nav: Option<Navigator>, file: &FileRef) -> impl IntoEventCallback<MouseEvent> {
+    let path = file.path.trim_matches('/').to_string();
+    move |_| {
+        if let Some(nav) = nav.clone() {
+            nav.push(&Route::FileEntry { path: path.clone() })
+        }
+    }
+}
+
+fn handle_ondragstart(global_index: usize) -> impl IntoEventCallback<DragEvent> {
+    move |event: DragEvent| {
+        if let Some(dt) = event.data_transfer() {
+            let items = dt.items();
+            let _ = items
+                .add_with_str_and_type(&global_index.to_string(), DATA_TRANSFER_TYPE_CONTAINER);
+        }
+    }
+}
+
 fn handle_ondragenter(
-    dst: UploadDragDestination,
     global_index: Option<usize>,
+    is_dir: bool,
     is_ready: bool,
-    drag_disabled: bool,
     last_state: &UseUploadFileStateHandle,
 ) -> impl IntoEventCallback<DragEvent> {
     let last_state = last_state.clone();
     move |event: DragEvent| {
-        if !is_ready || drag_disabled {
+        if !is_dir || !is_ready {
             return;
         }
-        if let Some((new_state, _)) = UploadDragState::parse(&event, global_index, dst) {
+        if let Some((new_state, _)) = UploadDragState::parse(&event, global_index) {
             last_state.set(Some(new_state))
         }
     }
 }
 
 fn handle_ondragover(
-    dst: UploadDragDestination,
     global_index: Option<usize>,
+    is_dir: bool,
     is_ready: bool,
-    drag_disabled: bool,
     last_state: &UseUploadFileStateHandle,
 ) -> impl IntoEventCallback<DragEvent> {
     let last_state = last_state.clone();
     move |event: DragEvent| {
-        if !is_ready || drag_disabled {
+        if !is_dir || !is_ready {
             return;
         }
-        if is_ready && let Some((new_state, _)) = UploadDragState::parse(&event, global_index, dst)
-        {
+        if is_ready && let Some((new_state, _)) = UploadDragState::parse(&event, global_index) {
             event.prevent_default(); // Consume the event
             event.stop_propagation(); // Do not propagate the event
             last_state.set(Some(new_state))
@@ -54,14 +78,15 @@ fn handle_ondragover(
 }
 
 fn handle_ondragleave(
-    dst: UploadDragDestination,
+    global_index: Option<usize>,
+    is_dir: bool,
     is_ready: bool,
-    drag_disabled: bool,
     last_state: &UseUploadFileStateHandle,
 ) -> impl IntoEventCallback<DragEvent> {
+    let dst = UploadDragDestination::from_global_index(global_index);
     let last_state = last_state.clone();
     move |event: DragEvent| {
-        if !is_ready || drag_disabled {
+        if !is_dir || !is_ready {
             return;
         }
         if matches!(dst, UploadDragDestination::Container) && last_state.is_some() {
@@ -72,28 +97,28 @@ fn handle_ondragleave(
     }
 }
 
+/// Upload a file into the `dst` directory.
+///
 fn handle_ondrop(
-    dst: UploadDragDestination,
+    dst: &FileRef,
     global_index: Option<usize>,
+    is_dir: bool,
     is_ready: bool,
-    drag_disabled: bool,
     last_state: &UseUploadFileStateHandle,
-    ondrop: &Callback<UploadDragEvent, ()>,
 ) -> impl IntoEventCallback<DragEvent> {
+    let dst = dst.clone();
     let last_state = last_state.clone();
-    let ondrop = ondrop.clone();
     move |event: DragEvent| {
-        if !is_ready || drag_disabled {
+        if !is_dir || !is_ready {
             return;
         }
-        if let Some((new_state, dt)) = UploadDragState::parse(&event, global_index, dst) {
+        if let Some((new_state, dt)) = UploadDragState::parse(&event, global_index) {
             event.prevent_default(); // Consume the event
             event.stop_propagation(); // Do not propagate the event
             last_state.set(None);
-            ondrop.emit(UploadDragEvent {
-                dt,
-                state: new_state,
-            })
+
+            // TODO: To be implemented!
+            tracing::info!("src: {dt:#?}, dst: {}", &dst.path);
         }
     }
 }
@@ -123,6 +148,15 @@ pub(super) enum UploadDragDestination {
     Item(usize),
 }
 
+impl UploadDragDestination {
+    const fn from_global_index(global_index: Option<usize>) -> Self {
+        match global_index {
+            None => Self::Container,
+            Some(index) => Self::Item(index),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(super) struct UploadDragState {
     src: UploadDragSource,
@@ -130,11 +164,7 @@ pub(super) struct UploadDragState {
 }
 
 impl UploadDragState {
-    fn parse(
-        event: &DragEvent,
-        global_index: Option<usize>,
-        dst: UploadDragDestination,
-    ) -> Option<(Self, DataTransfer)> {
+    fn parse(event: &DragEvent, global_index: Option<usize>) -> Option<(Self, DataTransfer)> {
         let dt = event.data_transfer()?;
         let items = dt.items();
 
@@ -159,126 +189,15 @@ impl UploadDragState {
             }
         }
 
-        let this = Self { src: src?, dst };
+        let this = Self {
+            src: src?,
+            dst: UploadDragDestination::from_global_index(global_index),
+        };
         Some((this, dt))
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) struct UploadDragEvent {
-    pub(super) dt: DataTransfer,
-    pub(super) state: UploadDragState,
-}
-
 pub(super) type UseUploadFileStateHandle = UseStateHandle<Option<UploadDragState>>;
-
-#[derive(Clone, Debug, PartialEq, Properties)]
-pub(super) struct UploadFileProps {
-    pub(super) id: String,
-    pub(super) dir_state: super::FileEntryState,
-    pub(super) drag_state: UseUploadFileStateHandle,
-    pub(super) layout: UploadFileItemLayout,
-    pub(super) ondrop: Callback<UploadDragEvent, ()>,
-    #[prop_or_default]
-    pub(super) children: Html,
-}
-
-#[function_component(UploadFile)]
-pub(super) fn render(props: &UploadFileProps) -> Html {
-    // properties
-    let &UploadFileProps {
-        ref id,
-        dir_state,
-        ref drag_state,
-        layout,
-        ref ondrop,
-        ref children,
-    } = props;
-
-    let dst = UploadDragDestination::Container;
-    let drag_disabled = false;
-    let global_index = None;
-    let is_ready = matches!(
-        dir_state,
-        super::FileEntryState::Directory | super::FileEntryState::Empty
-    );
-
-    html! {
-        <div class="flex-1 stack w-full min-h-full select-none">
-            // Overlay
-            <div
-                class={ format!(
-                    "flex w-full h-full pointer-events-none items-end justify-center {}",
-                    if drag_state.is_some() { "" } else { "hidden" },
-                ) }
-            >
-                <div
-                    class={ format!(
-                        "flex flex-col items-center justify-center p-2 pl-8 pr-8 group backdrop-blur-sm transition-all {} {}",
-                        if matches!(layout, UploadFileItemLayout::Grid) { "rounded-lg" } else { "" },
-                        if drag_state.is_some() { "" } else { "hidden" },
-                    ) }
-                >
-                    <svg
-                        class="w-10 h-10 text-blue-400 group-hover:text-primary animate-bounce"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        // https://flowbite-svelte.com/docs/forms/file-input#dropzone
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-base-content">
-                        <span class="font-semibold text-blue-600">{ "Drop to upload" }</span>
-                    </p>
-                </div>
-            </div>
-
-            // Contents
-            <div
-                id={ format!("{id}-container") }
-                class={ format!(
-                    "pointer-events-none border-2 border-dashed overflow-x-auto pb-4 {} {} {}",
-                    if matches!(dir_state, super::FileEntryState::Directory | super::FileEntryState::Failed) {
-                        "w-fit h-fit self-start"
-                    } else {
-                        ""
-                    },
-                    if matches!(layout, UploadFileItemLayout::Grid) { "rounded-lg" } else { "" },
-                    match **drag_state {
-                        Some(s) if s.dst == dst => "border-blue-300",
-                        Some(_) | None => "border-transparent",
-                    },
-                ) }
-            >
-                { children.clone() }
-                { match dir_state {
-                    super::FileEntryState::Directory | super::FileEntryState::Failed => html! {},
-                    super::FileEntryState::Empty => html! { <Empty /> },
-                    super::FileEntryState::NotFound => html! { <NotFound /> },
-                } }
-            </div>
-
-            // Underlay
-            <label
-                id={ format!("{id}-upload") }
-                class="w-full h-full"
-                ondragenter={ handle_ondragenter(dst, global_index, is_ready, drag_disabled, drag_state) }
-                ondragover={ handle_ondragover(dst, global_index, is_ready, drag_disabled, drag_state) }
-                ondragleave={ handle_ondragleave(dst, is_ready, drag_disabled, drag_state) }
-                ondrop={ handle_ondrop(dst, global_index, is_ready, drag_disabled, drag_state, ondrop) }
-            >
-                // Placeholder
-                <input
-                    id={ format!("{id}-upload") }
-                    type="file"
-                    class="hidden pointer-events-none"
-                    disabled=true
-                />
-            </label>
-        </div>
-    }
-}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(super) enum UploadFileItemLayout {
@@ -296,16 +215,11 @@ pub(super) struct UploadFileItemPtr {
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub(super) struct UploadFileItemProps {
     pub(super) id: String,
-    pub(super) ptr: UploadFileItemPtr,
     pub(super) dir_state: super::FileEntryState,
-    #[prop_or_default]
-    pub(super) drag_disabled: bool,
     pub(super) drag_state: UseUploadFileStateHandle,
+    pub(super) file: FileRef,
     pub(super) layout: UploadFileItemLayout,
-    #[prop_or_default]
-    pub(super) onclick: Option<Callback<MouseEvent, ()>>,
-    pub(super) ondrop: Callback<UploadDragEvent, ()>,
-    #[prop_or_default]
+    pub(super) ptr: UploadFileItemPtr,
     pub(super) children: Html,
 }
 
@@ -315,11 +229,9 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
     let &UploadFileItemProps {
         ref id,
         dir_state,
-        drag_disabled,
         ref drag_state,
+        ref file,
         layout,
-        ref onclick,
-        ref ondrop,
         ptr:
             UploadFileItemPtr {
                 global_index,
@@ -329,7 +241,7 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
         ref children,
     } = props;
 
-    let dst = UploadDragDestination::Item(global_index);
+    let is_dir = file.is_dir();
     let is_ready = matches!(
         dir_state,
         super::FileEntryState::Directory | super::FileEntryState::Empty
@@ -366,10 +278,10 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
                 }
             }
             UploadDragDestination::Item(i) => {
-                default_class.push_str(if drag_disabled {
-                    " pointer-events-none"
-                } else {
+                default_class.push_str(if is_dir {
                     " pointer-events-auto"
+                } else {
+                    " pointer-events-none"
                 });
                 if matches!(layout, UploadFileItemLayout::List) && i + 1 != global_index {
                     default_class.push_str(" border-t-2")
@@ -377,10 +289,10 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
                 default_class.push_str(" border-gray-200")
             }
             UploadDragDestination::Container => {
-                default_class.push_str(if drag_disabled {
-                    " pointer-events-none"
-                } else {
+                default_class.push_str(if is_dir {
                     " pointer-events-auto"
+                } else {
+                    " pointer-events-none"
                 });
                 if matches!(layout, UploadFileItemLayout::List) {
                     default_class.push_str(" border-t-2")
@@ -397,33 +309,20 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
         }
     }
 
+    // states
+    let nav = use_navigator();
+
     html! { <>
         <tr
             id={ format!("{id}-upload-{global_index}") }
             class={ default_class }
-            onclick={{
-                let onclick = onclick.clone();
-                move |event: MouseEvent| {
-                    if let Some(onclick) = onclick.as_ref() {
-                        onclick.emit(event)
-                    }
-                }
-            }}
-            ondragstart={
-                move |event: DragEvent| {
-                    if let Some(dt) = event.data_transfer() {
-                        let items = dt.items();
-                        let _ = items.add_with_str_and_type(
-                            &global_index.to_string(),
-                            DATA_TRANSFER_TYPE_CONTAINER,
-                        );
-                    }
-                }
-            }
-            ondragenter={ handle_ondragenter(dst, Some(global_index), is_ready, drag_disabled, drag_state) }
-            ondragover={ handle_ondragover(dst, Some(global_index), is_ready, drag_disabled, drag_state) }
-            ondragleave={ handle_ondragleave(dst, is_ready, drag_disabled, drag_state) }
-            ondrop={ handle_ondrop(dst, Some(global_index), is_ready, drag_disabled, drag_state, ondrop) }
+            draggable="true"
+            onclick={ handle_onclick(nav, file) }
+            ondragstart={ handle_ondragstart(global_index) }
+            ondragenter={ handle_ondragenter(Some(global_index), is_dir, is_ready, drag_state) }
+            ondragover={ handle_ondragover(Some(global_index), is_dir, is_ready, drag_state) }
+            ondragleave={ handle_ondragleave(Some(global_index), is_dir, is_ready, drag_state) }
+            ondrop={ handle_ondrop(file, Some(global_index), is_dir, is_ready, drag_state) }
         >
             // Placeholder
             <input
@@ -437,4 +336,113 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
             { children.clone() }
         </tr>
     </> }
+}
+
+#[derive(Clone, Debug, PartialEq, Properties)]
+pub(super) struct UploadFileProps {
+    pub(super) id: String,
+    pub(super) dir_state: super::FileEntryState,
+    pub(super) drag_state: UseUploadFileStateHandle,
+    pub(super) file: FileRef,
+    pub(super) i18n: DynI18n,
+    pub(super) layout: UploadFileItemLayout,
+    #[prop_or_default]
+    pub(super) children: Html,
+}
+
+#[function_component(UploadFile)]
+pub(super) fn render(props: &UploadFileProps) -> Html {
+    // properties
+    let &UploadFileProps {
+        ref id,
+        dir_state,
+        ref drag_state,
+        ref file,
+        ref i18n,
+        layout,
+        ref children,
+    } = props;
+
+    let global_index = None;
+    let is_ready = matches!(
+        dir_state,
+        super::FileEntryState::Directory | super::FileEntryState::Empty
+    );
+    let is_dir = true;
+
+    html! {
+        <div class="flex-1 stack w-full min-h-full select-none">
+            // Overlay
+            <div
+                class={ format!(
+                    "flex w-full h-full pointer-events-none items-end justify-center {}",
+                    if drag_state.is_some() { "" } else { "hidden" },
+                ) }
+            >
+                <div
+                    class={ format!(
+                        "flex flex-col items-center justify-center p-2 pl-8 pr-8 group backdrop-blur-sm transition-all {} {}",
+                        if matches!(layout, UploadFileItemLayout::Grid) { "rounded-lg" } else { "" },
+                        if drag_state.is_some() { "" } else { "hidden" },
+                    ) }
+                >
+                    <svg
+                        class="w-10 h-10 text-blue-400 group-hover:text-primary animate-bounce"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        // https://flowbite-svelte.com/docs/forms/file-input#dropzone
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-base-content">
+                        <span class="font-semibold text-blue-600">{ i18n.indicator_drop_to_upload() }</span>
+                    </p>
+                </div>
+            </div>
+
+            // Contents
+            <div
+                id={ format!("{id}-container") }
+                class={ format!(
+                    "pointer-events-none border-2 border-dashed overflow-x-auto pb-4 {} {} {}",
+                    if matches!(dir_state, super::FileEntryState::Directory | super::FileEntryState::Failed) {
+                        "w-full h-fit self-start"
+                    } else {
+                        ""
+                    },
+                    if matches!(layout, UploadFileItemLayout::Grid) { "rounded-lg" } else { "" },
+                    match **drag_state {
+                        Some(s) if matches!(s.dst, UploadDragDestination::Container) => "border-blue-300",
+                        Some(_) | None => "border-transparent",
+                    },
+                ) }
+            >
+                { children.clone() }
+                { match dir_state {
+                    super::FileEntryState::Directory | super::FileEntryState::Failed => html! {},
+                    super::FileEntryState::Empty => html! { <Empty i18n={ i18n.clone() } /> },
+                    super::FileEntryState::NotFound => html! { <FileNotFound i18n={ i18n.clone() } /> },
+                } }
+            </div>
+
+            // Underlay
+            <label
+                id={ format!("{id}-upload") }
+                class="w-full h-full"
+                ondragenter={ handle_ondragenter(global_index, is_dir, is_ready, drag_state) }
+                ondragover={ handle_ondragover(global_index, is_dir, is_ready, drag_state) }
+                ondragleave={ handle_ondragleave(global_index, is_dir, is_ready, drag_state) }
+                ondrop={ handle_ondrop(file, global_index, is_dir, is_ready, drag_state) }
+            >
+                // Placeholder
+                <input
+                    id={ format!("{id}-upload") }
+                    type="file"
+                    class="hidden pointer-events-none"
+                    disabled=true
+                />
+            </label>
+        </div>
+    }
 }

@@ -4,9 +4,10 @@ use chrono::{DateTime, Utc};
 use openark_vine_browser_api::file::{FileEntry, FileRef};
 use yew::{
     Html, MouseEvent, Properties, Reducible, UseReducerHandle, function_component, html,
-    html::IntoEventCallback, use_reducer_eq, use_state_eq,
+    use_reducer_eq, use_state_eq,
 };
-use yew_router::hooks::use_navigator;
+
+use crate::i18n::DynI18n;
 
 use super::upload::{
     UploadFile, UploadFileItem, UploadFileItemLayout, UploadFileItemPtr, UseUploadFileStateHandle,
@@ -70,6 +71,7 @@ struct ItemProps {
     dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
+    i18n: DynI18n,
     ptr: UploadFileItemPtr,
 }
 
@@ -82,6 +84,7 @@ fn render_item(props: &ItemProps) -> Html {
         dir_state,
         ref drag_state,
         ref file,
+        ref i18n,
         ptr,
     } = props;
 
@@ -92,21 +95,13 @@ fn render_item(props: &ItemProps) -> Html {
         "pointer-events-auto"
     };
 
-    // states
-    let nav = use_navigator();
-
     html! {
         <UploadFileItem
             id="directory-dropzone-list"
             { dir_state }
-            drag_disabled={ !is_dir }
             drag_state={ drag_state.clone() }
+            file={ file.clone() }
             layout={ UploadFileItemLayout::List }
-            onclick={ super::utils::push_entry(nav, file).into_event_callback() }
-            ondrop={{
-                let dst = file.clone();
-                move |event| super::utils::upload(event, dst.clone())
-            }}
             { ptr }
         >
             // Checkbox
@@ -148,7 +143,7 @@ fn render_item(props: &ItemProps) -> Html {
                         <div class="avatar placeholder">
                             <div class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center overflow-hidden">
                                 <span class="text-[10px] font-bold leading-none select-none flex items-center justify-center w-full h-full">
-                                    { super::utils::format_initial(user) }
+                                    { i18n.format_initial(user) }
                                 </span>
                             </div>
                         </div>
@@ -159,15 +154,15 @@ fn render_item(props: &ItemProps) -> Html {
             // Last modified
             <td class={ format!("text-sm text-gray-500 {td_class}") }>
                 <span class={ td_class }>{{
-                    let timestamp = file.metadata.accessed.as_ref();
-                    super::utils::format_date(current, timestamp)
+                    let timestamp = file.metadata.modified.as_ref().map(|ts| ts.timestamp);
+                    i18n.format_date(timestamp, current)
                 }}</span>
             </td>
             // File size
             <td class={ format!("text-sm text-gray-500 {td_class}") }>
                 <span class={ td_class }>{{
                     let size = file.metadata.size;
-                    super::utils::format_size(is_dir, size)
+                    i18n.format_size(is_dir, size)
                 }}</span>
             </td>
         </UploadFileItem>
@@ -178,6 +173,7 @@ fn render_item(props: &ItemProps) -> Html {
 pub(super) struct Props {
     pub(super) current: DateTime<Utc>,
     pub(super) directory: Rc<FileEntry>,
+    pub(super) i18n: DynI18n,
     pub(super) state: super::FileEntryState,
 }
 
@@ -186,6 +182,7 @@ impl PartialEq for Props {
     fn eq(&self, other: &Self) -> bool {
         self.current == other.current
             && Rc::ptr_eq(&self.directory, &other.directory)
+            && self.i18n == other.i18n
             && self.state == other.state
     }
 }
@@ -196,6 +193,7 @@ pub(super) fn render(props: &Props) -> Html {
     let &Props {
         current,
         ref directory,
+        ref i18n,
         state,
     } = props;
     let global_index = 0;
@@ -210,11 +208,9 @@ pub(super) fn render(props: &Props) -> Html {
             id="directory-dropzone"
             dir_state={ state }
             drag_state={ drag_state.clone() }
+            file={ directory.r.clone() }
+            i18n={ i18n.clone() }
             layout={ UploadFileItemLayout::List }
-            ondrop={{
-                let dst = directory.r.clone();
-                move |event| super::utils::upload(event, dst.clone())
-            }}
         >
             <table class="table w-full border-collapse">
                 // Header
@@ -255,10 +251,10 @@ pub(super) fn render(props: &Props) -> Html {
                             }
                         }
                         // Metadata
-                        <th class="bg-transparent font-medium">{ "이름" }</th>
-                        <th class="bg-transparent font-medium">{ "소유자" }</th>
-                        <th class="bg-transparent font-medium">{ "마지막 수정" }</th>
-                        <th class="bg-transparent font-medium">{ "파일 크기" }</th>
+                        <th class="bg-transparent font-medium">{ i18n.file_name() }</th>
+                        <th class="bg-transparent font-medium">{ i18n.file_owner() }</th>
+                        <th class="bg-transparent font-medium">{ i18n.date_modified() }</th>
+                        <th class="bg-transparent font-medium">{ i18n.file_size() }</th>
                     </tr>
                 </thead>
 
@@ -271,6 +267,7 @@ pub(super) fn render(props: &Props) -> Html {
                             dir_state={ state }
                             drag_state={ drag_state.clone() }
                             file={ file.clone() }
+                            i18n={ i18n.clone() }
                             ptr={ UploadFileItemPtr {
                                 global_index: global_index + local_index,
                                 local_index,

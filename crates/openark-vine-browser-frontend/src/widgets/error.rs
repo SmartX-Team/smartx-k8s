@@ -1,5 +1,7 @@
 use yew::{Html, Properties, function_component, html, html::ChildrenRenderer, virtual_dom::VNode};
 
+use crate::i18n::DynI18n;
+
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct Props {
     pub message: ChildrenRenderer<VNode>,
@@ -27,15 +29,15 @@ pub fn render(props: &Props) -> Html {
 }
 
 #[derive(Clone, Debug, PartialEq, Properties)]
-pub struct NotFoundProps {}
+pub struct NotFoundProps {
+    pub i18n: DynI18n,
+}
 
-#[function_component(NotFound)]
-pub fn render_not_found(props: &NotFoundProps) -> Html {
-    let NotFoundProps {} = props;
+#[function_component(FileNotFound)]
+pub fn render_file_not_found(props: &NotFoundProps) -> Html {
+    let &NotFoundProps { ref i18n } = props;
 
     html! {
-        <Error
-            message={ "존재하지 않는 파일입니다." }
-        />
+        <Error message={ i18n.alert_file_not_found() } />
     }
 }

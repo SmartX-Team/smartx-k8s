@@ -1,8 +1,9 @@
 use std::rc::Rc;
 
 use openark_vine_browser_api::file::{FileEntry, FileRef};
-use yew::{Html, Properties, function_component, html, html::IntoEventCallback, use_state_eq};
-use yew_router::hooks::use_navigator;
+use yew::{Html, Properties, function_component, html, use_state_eq};
+
+use crate::i18n::DynI18n;
 
 use super::upload::{
     UploadFile, UploadFileItem, UploadFileItemLayout, UploadFileItemPtr, UseUploadFileStateHandle,
@@ -15,6 +16,7 @@ struct ItemProps {
     dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
+    i18n: DynI18n,
     ptr: UploadFileItemPtr,
 }
 
@@ -25,26 +27,19 @@ fn render_item(props: &ItemProps) -> Html {
         dir_state,
         ref drag_state,
         ref file,
+        ref i18n,
         ptr,
     } = props;
 
     let is_dir = file.is_dir();
 
-    // states
-    let nav = use_navigator();
-
     html! {
         <UploadFileItem
             id="directory-dropzone-grid"
             { dir_state }
-            drag_disabled={ !is_dir }
             drag_state={ drag_state.clone() }
+            file={ file.clone() }
             layout={ UploadFileItemLayout::Grid }
-            onclick={ super::utils::push_entry(nav, file).into_event_callback() }
-            ondrop={{
-                let dst = file.clone();
-                move |event| super::utils::upload(event, dst.clone())
-            }}
             { ptr }
         >
             <div class="bg-white rounded-lg group p-4 w-full sm:w-60 pointer-events-none">
@@ -58,7 +53,7 @@ fn render_item(props: &ItemProps) -> Html {
                 <p class="text-sm font-semibold text-gray-700 truncate">{ file.name.clone() }</p>
                 <p class="text-xs text-gray-400 mt-1">{{
                     let size = file.metadata.size;
-                    super::utils::format_size(is_dir, size)
+                    i18n.format_size(is_dir, size)
                 }}</p>
             </div>
         </UploadFileItem>
@@ -68,13 +63,16 @@ fn render_item(props: &ItemProps) -> Html {
 #[derive(Clone, Debug, Properties)]
 pub(super) struct Props {
     pub(super) directory: Rc<FileEntry>,
+    pub(super) i18n: DynI18n,
     pub(super) state: super::FileEntryState,
 }
 
 impl PartialEq for Props {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.directory, &other.directory) && self.state == other.state
+        Rc::ptr_eq(&self.directory, &other.directory)
+            && self.i18n == other.i18n
+            && self.state == other.state
     }
 }
 
@@ -83,6 +81,7 @@ pub(super) fn render(props: &Props) -> Html {
     // properties
     let &Props {
         ref directory,
+        ref i18n,
         state,
     } = props;
     let global_index = 0;
@@ -96,11 +95,9 @@ pub(super) fn render(props: &Props) -> Html {
             id="directory-dropzone"
             dir_state={ state }
             drag_state={ drag_state.clone() }
+            file={ directory.r.clone() }
+            i18n={ i18n.clone() }
             layout={ UploadFileItemLayout::Grid }
-            ondrop={{
-                let dst = directory.r.clone();
-                move |event| super::utils::upload(event, dst.clone())
-            }}
         >
             // Files
             <div class="flex flex-wrap gap-4">{
@@ -111,6 +108,7 @@ pub(super) fn render(props: &Props) -> Html {
                         dir_state={ state }
                         drag_state={ drag_state.clone() }
                         file={ file.clone() }
+                        i18n={ i18n.clone() }
                         ptr={ UploadFileItemPtr {
                             global_index: global_index + local_index,
                             local_index,

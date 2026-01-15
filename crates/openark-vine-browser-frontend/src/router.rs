@@ -2,10 +2,10 @@ use std::rc::Rc;
 
 use openark_vine_browser_api::global::GlobalConfiguration;
 use url::Url;
-use yew::{Html, html};
+use yew::{Html, UseStateHandle, html};
 use yew_router::{Routable, prelude::Redirect};
 
-use crate::pages::DirectoryPage;
+use crate::{i18n::DynI18n, pages::DirectoryPage};
 
 #[derive(Clone, Debug, Routable, PartialEq, Eq)]
 pub enum Route {
@@ -22,11 +22,14 @@ pub enum Route {
 pub struct RouteProps {
     pub conf: Rc<GlobalConfiguration>,
     pub drawer_id: String,
+    pub i18n: UseStateHandle<DynI18n>,
 }
 
 impl PartialEq for RouteProps {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.conf, &other.conf) && self.drawer_id == other.drawer_id
+        Rc::ptr_eq(&self.conf, &other.conf)
+            && self.drawer_id == other.drawer_id
+            && self.i18n == other.i18n
     }
 }
 

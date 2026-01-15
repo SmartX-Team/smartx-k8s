@@ -1,5 +1,7 @@
 use yew::{Html, Properties, function_component, html, html::ChildrenRenderer, virtual_dom::VNode};
 
+use crate::i18n::DynI18n;
+
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct Props {
     pub message: ChildrenRenderer<VNode>,
@@ -21,15 +23,15 @@ pub fn render(props: &Props) -> Html {
 }
 
 #[derive(Clone, Debug, PartialEq, Properties)]
-pub struct EmptyProps {}
+pub struct EmptyProps {
+    pub i18n: DynI18n,
+}
 
 #[function_component(Empty)]
 pub fn render_empty(props: &EmptyProps) -> Html {
-    let EmptyProps {} = props;
+    let &EmptyProps { ref i18n } = props;
 
     html! {
-        <Warn
-            message={ "비어있음" }
-        />
+        <Warn message={ i18n.alert_file_entry_empty() } />
     }
 }

@@ -47,6 +47,50 @@ pub struct UserRef {
     pub metadata: UserMetadata,
 }
 
+/// A user's subscription information.
+///
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct UserSubscription {
+    /// Whether the user's subscription is activated.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub is_active: Option<bool>,
+
+    /// The user's tier name.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default = "UserSubscription::default_tier_name")
+    )]
+    pub tier_name: String,
+
+    /// The total available size of storage.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub total_capacity: u64,
+
+    /// The total used size of storage.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub total_used: u64,
+}
+
+impl UserSubscription {
+    fn default_tier_name() -> String {
+        "Free".into()
+    }
+
+    /// Returns the total usage per capacity as percent `%`.
+    pub fn total_usage_percent(&self) -> f32 {
+        if self.total_capacity > 0 {
+            let used = self.total_used as f32;
+            let capacity = self.total_capacity as f32;
+            100.0 * (used / capacity).min(1.0)
+        } else {
+            0.0
+        }
+    }
+}
+
 /// A browser's global configuration.
 ///
 #[derive(Clone, Debug, PartialEq)]
@@ -64,6 +108,9 @@ pub struct UserConfiguration {
         serde(default, skip_serializing_if = "Vec::is_empty")
     )]
     pub shortcuts: Vec<FileShortcut>,
+
+    /// User subscription informantion.
+    pub subscription: UserSubscription,
 
     /// A `JWT`.
     #[cfg_attr(feature = "serde", serde(flatten))]

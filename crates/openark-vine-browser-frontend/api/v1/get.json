@@ -8,6 +8,12 @@
     "name": "anonymous",
     "preferred_username": "Anonymous",
     "email": "anonymous@example.com",
+    "subscription": {
+      "isActive": true,
+      "tierName": "Premium",
+      "totalCapacity": 1048576,
+      "totalUsed": 786432
+    },
     "shortcuts": [
       {
         "name": "All files",

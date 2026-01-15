@@ -21,6 +21,7 @@ pub struct FileTimestamp {
     pub by: Option<UserRef>,
 
     /// The observed timestamp.
+    #[cfg_attr(feature = "serde", serde(rename = "at"))]
     pub timestamp: DateTime<Utc>,
 }
 

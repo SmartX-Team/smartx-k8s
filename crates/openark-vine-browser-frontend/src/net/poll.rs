@@ -5,8 +5,9 @@ use chrono::{DateTime, Utc};
 use yew::{Html, UseStateHandle, html, platform::spawn_local};
 
 use crate::{
+    i18n::DynI18n,
     net::Client,
-    widgets::{Error, NotFound},
+    widgets::{Error, FileNotFound},
 };
 
 #[derive(Clone, Debug)]
@@ -120,6 +121,7 @@ pub trait UseHttpHandleRenderRaw<K, T> {
     #[doc(hidden)]
     fn _fetch_and_render<F, Fut, V, VT, R>(
         &self,
+        i18n: &DynI18n,
         key: &K,
         fetch: F,
         validate: V,
@@ -151,12 +153,12 @@ pub trait UseHttpHandleRenderRaw<K, T> {
         R: FnOnce(HttpStateRaw<VT>) -> Html;
 
     #[doc(hidden)]
-    fn _render_not_found<VT, R>(&self, render: R) -> Html
+    fn _render_not_found<VT, R>(&self, i18n: &DynI18n, render: R) -> Html
     where
         R: FnOnce(HttpStateRaw<VT>) -> Html;
 
     #[doc(hidden)]
-    fn _render_error<VT, R>(&self, error: Rc<String>, render: R) -> Html
+    fn _render_error<VT, R>(&self, i18n: &DynI18n, error: Rc<String>, render: R) -> Html
     where
         R: FnOnce(HttpStateRaw<VT>) -> Html;
 
@@ -165,7 +167,14 @@ pub trait UseHttpHandleRenderRaw<K, T> {
 }
 
 impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
-    fn _fetch_and_render<F, Fut, V, VT, R>(&self, key: &K, fetch: F, validate: V, render: R) -> Html
+    fn _fetch_and_render<F, Fut, V, VT, R>(
+        &self,
+        i18n: &DynI18n,
+        key: &K,
+        fetch: F,
+        validate: V,
+        render: R,
+    ) -> Html
     where
         Cached<T>: PartialEq,
         K: Clone + PartialEq + 'static,
@@ -190,7 +199,7 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
                 if now < cached.expires_at {
                     match validate(cached.value.clone()) {
                         Some(value) => render(HttpStateRaw::Ready(value)),
-                        None => self._render_not_found(render),
+                        None => self._render_not_found(i18n, render),
                     }
                 } else {
                     // Invalidate the cache if expired
@@ -201,7 +210,7 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
                 // Try hitting the cache
                 let now = Utc::now();
                 if now < cached.expires_at {
-                    self._render_error(cached.value.clone(), render)
+                    self._render_error(i18n, cached.value.clone(), render)
                 } else {
                     // Invalidate the cache if expired
                     self._force_fetch_and_render(key, fetch, render)
@@ -276,19 +285,19 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
         }
     }
 
-    fn _render_not_found<VT, R>(&self, render: R) -> Html
+    fn _render_not_found<VT, R>(&self, i18n: &DynI18n, render: R) -> Html
     where
         R: FnOnce(HttpStateRaw<VT>) -> Html,
     {
         html! { <>
             { render(HttpStateRaw::NotFound) }
             <div class="px-5">
-                <NotFound />
+                <FileNotFound i18n={ i18n.clone() } />
             </div>
         </> }
     }
 
-    fn _render_error<VT, R>(&self, error: Rc<String>, render: R) -> Html
+    fn _render_error<VT, R>(&self, i18n: &DynI18n, error: Rc<String>, render: R) -> Html
     where
         R: FnOnce(HttpStateRaw<VT>) -> Html,
     {
@@ -296,7 +305,7 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
             { render(HttpStateRaw::Failed) }
             <div class="px-5">
                 <Error
-                    message={ "문제가 발생했습니다. 잠시 후 다시 시도해 주세요." }
+                    message={ i18n.alert_unknown() }
                     details={ error }
                 />
             </div>
@@ -357,7 +366,7 @@ pub trait UseHttpHandleOptionRender<K, V>: UseHttpHandleRenderRaw<K, Option<Rc<V
     }
 
     #[inline]
-    fn try_fetch_and_render<F, Fut, R>(&self, key: &K, fetch: F, render: R) -> Html
+    fn try_fetch_and_render<F, Fut, R>(&self, i18n: &DynI18n, key: &K, fetch: F, render: R) -> Html
     where
         K: Clone + PartialEq + 'static,
         F: FnOnce(Client) -> Fut + 'static,
@@ -367,7 +376,7 @@ pub trait UseHttpHandleOptionRender<K, V>: UseHttpHandleRenderRaw<K, Option<Rc<V
     {
         let fetch = |client| async move { fetch(client).await.map(|option| option.map(Rc::new)) };
         let validate = move |value| value;
-        self._fetch_and_render(key, fetch, validate, render)
+        self._fetch_and_render(i18n, key, fetch, validate, render)
     }
 }
 

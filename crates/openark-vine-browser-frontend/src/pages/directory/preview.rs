@@ -4,6 +4,7 @@ use openark_vine_browser_api::{file::FileEntry, file_type::FileType};
 use yew::{Html, Properties, function_component, html};
 
 use crate::{
+    i18n::DynI18n,
     net::get_file_content_url,
     widgets::{Error, Warn},
 };
@@ -11,6 +12,7 @@ use crate::{
 #[derive(Clone, Debug, Properties)]
 pub(super) struct Props {
     pub(super) file_entry: Rc<FileEntry>,
+    pub(super) i18n: DynI18n,
 }
 
 impl PartialEq for Props {
@@ -23,6 +25,7 @@ impl PartialEq for Props {
 #[function_component(Preview)]
 pub(super) fn render(props: &Props) -> Html {
     let file = &props.file_entry.r;
+    let i18n = &props.i18n;
 
     html! {
         <div class="flex-1">{{
@@ -30,7 +33,7 @@ pub(super) fn render(props: &Props) -> Html {
                 Ok(url) => url.to_string(),
                 Err(error) => return html! {
                     <Error
-                        message={ "문제가 발생했습니다. 파일 경로가 올바르지 않습니다." }
+                        message={ i18n.alert_invalid_file_path() }
                         details={ error.to_string() }
                     />
                 },
@@ -45,9 +48,7 @@ pub(super) fn render(props: &Props) -> Html {
                 },
                 _ => html! {
                     <div class="select-none">
-                        <Warn
-                            message={ "미리보기를 지원하지 않는 파일입니다." }
-                        />
+                        <Warn message={ i18n.alert_unsupported_file_preview() } />
                     </div>
                 },
             }

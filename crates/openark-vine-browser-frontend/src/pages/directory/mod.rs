@@ -1,11 +1,11 @@
 mod grid;
+mod io;
 mod list;
 mod mime;
 mod navbar;
 mod preview;
 mod sidebar;
 mod upload;
-mod utils;
 
 use std::rc::Rc;
 
@@ -16,7 +16,9 @@ use openark_vine_browser_api::{
     file_type::{DocumentType, FileType, ImageType},
 };
 use web_sys::window;
-use yew::{Html, Properties, UseStateHandle, function_component, html, use_state_eq};
+use yew::{
+    Html, Properties, UseStateHandle, function_component, html, use_reducer_eq, use_state_eq,
+};
 
 use crate::{
     net::{Client, HttpState, HttpStateRef, UseHttpHandleOption, UseHttpHandleOptionRender},
@@ -122,14 +124,16 @@ struct Context<'a> {
     props: &'a Props,
     current_timestamp: DateTime<Utc>,
     file_entry: UseHttpHandleOption<String, FileEntry>,
+    io: self::io::UseIOReducerHandle,
     state: FileEntryState,
     view_mode: UseStateHandle<ViewMode>,
 }
 
-fn draw_file_entry_lookup(ctx: Context) -> Html {
+fn render_file_entry_lookup(ctx: Context) -> Html {
     // properties
     let current = ctx.current_timestamp;
     let file_entry = ctx.file_entry.clone();
+    let i18n = &*ctx.props.route.i18n;
 
     html! {
         <div class="drawer-content flex flex-col overflow-hidden min-h-full">
@@ -142,6 +146,7 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
                 let render = move |state| {
                     let dir_state = ctx.state;
                     let file_entry = parse_file_entry(state);
+                    let i18n = &ctx.props.route.i18n;
                     let is_dir = file_entry.r.is_dir();
                     html! {
                         <div
@@ -163,24 +168,27 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
                                     match *ctx.view_mode {
                                         ViewMode::Grid => html! { <self::grid::FileList
                                             directory={ file_entry }
+                                            i18n={ (**i18n).clone() }
                                             state={ dir_state }
                                         /> },
                                         ViewMode::List => html! { <self::list::FileList
                                             { current }
                                             directory={ file_entry }
+                                            i18n={ (**i18n).clone() }
                                             state={ dir_state }
                                         /> },
                                     }
                                 } else {
                                     html! { <self::preview::Preview
                                         { file_entry }
+                                        i18n={ (**i18n).clone() }
                                     /> }
                                 }
                             }
                         </div>
                     }
                 };
-                file_entry.try_fetch_and_render(key, fetch, render)
+                file_entry.try_fetch_and_render(i18n, key, fetch, render)
             }}</div>
         </div>
     }
@@ -190,6 +198,7 @@ fn draw_file_entry_lookup(ctx: Context) -> Html {
 pub fn component(props: &Props) -> Html {
     // states
     let file_entry: UseHttpHandleOption<String, FileEntry> = use_state_eq(Default::default);
+    let io: self::io::UseIOReducerHandle = use_reducer_eq(Default::default);
     let state = match file_entry.try_get_state() {
         HttpStateRef::Pending => FileEntryState::Directory, // for building skeletons
         HttpStateRef::Ready(entry) => {
@@ -224,6 +233,7 @@ pub fn component(props: &Props) -> Html {
         props,
         current_timestamp: Utc::now(),
         file_entry,
+        io,
         state,
         view_mode,
     };
@@ -234,7 +244,7 @@ pub fn component(props: &Props) -> Html {
             { self::sidebar::render(&ctx) }
 
             // Directory lookup
-            { draw_file_entry_lookup(ctx) }
+            { render_file_entry_lookup(ctx) }
         </>
     }
 }

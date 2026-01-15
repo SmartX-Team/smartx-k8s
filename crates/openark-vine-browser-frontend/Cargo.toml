@@ -82,6 +82,7 @@ regex = { workspace = true, features = ["std", "unicode"] }
 serde = { workspace = true, features = ["std"] }
 serde-json = { workspace = true, features = ["std"] }
 serde-urlencoded = { workspace = true }
+timeago = { workspace = true, features = ["chrono"] }
 tracing = { workspace = true, optional = true, features = [
     "attributes",
     "std",
@@ -94,6 +95,7 @@ web-sys = { workspace = true, features = [
     "DataTransferItemList",
     "HtmlInputElement",
     "Location",
+    "Navigator",
     "RequestMode",
     "RequestRedirect",
     "Window",
