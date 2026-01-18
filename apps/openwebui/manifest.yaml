@@ -26,4 +26,4 @@ spec:
   source:
     chart: open-webui
     repoUrl: "https://open-webui.github.io/helm-charts"
-    version: 8.12.2
+    version: 10.2.0

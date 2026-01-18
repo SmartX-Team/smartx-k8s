@@ -13,7 +13,7 @@ ollama:
   # Docker image
   image:
     # -- Docker image tag, overrides the image tag whose default is the chart appVersion.
-    tag: "0.12.6"
+    tag: "0.14.2"
 
   # Ollama parameters
   ollama:
