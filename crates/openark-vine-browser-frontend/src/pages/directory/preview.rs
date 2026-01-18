@@ -32,7 +32,7 @@ pub(super) fn render(props: &Props) -> Html {
 
     html! {
         <div class="flex-1 overflow-y-auto">{{
-            let url = match get_file_content_url(file) {
+            let url = match get_file_content_url(&file.path) {
                 Ok(url) => url.to_string(),
                 Err(error) => return html! {
                     <Error
@@ -42,7 +42,7 @@ pub(super) fn render(props: &Props) -> Html {
                 },
             };
 
-            match &file.metadata.ty {
+            match file.ty() {
                 Some(FileType::Audio(ty)) => html! {
                     <audio class="w-full" controls=true>
                         <source
@@ -77,7 +77,7 @@ pub(super) fn render(props: &Props) -> Html {
                     />
                 },
                 Some(FileType::App(AppType::OctetStream))
-                | Some(FileType::App(AppType::Other(_)))
+                | Some(FileType::App(AppType::Other))
                 | None => html! {
                     <div class="select-none">
                         <Warn message={ i18n.alert_unsupported_file_preview() } />

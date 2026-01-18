@@ -4,23 +4,24 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A file's available MIME-compatible audio types.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 pub enum AppType {
     #[cfg_attr(feature = "serde", serde(rename = "application/octet-stream"))]
     OctetStream,
-    Other(String),
+    #[cfg_attr(feature = "serde", serde(rename = "application"))]
+    Other,
 }
 
 impl AppType {
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
             Self::OctetStream => "application/octet-stream",
-            Self::Other(ty) => ty.as_str(),
+            Self::Other => "application",
         }
     }
 }
@@ -42,7 +43,7 @@ pub enum AudioType {
 impl AudioType {
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
             Self::Mp3 => "audio/mpeg",
             Self::Ogg => "audio/ogg",
@@ -66,7 +67,7 @@ pub enum DocumentType {
 impl DocumentType {
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
             Self::Pdf => "application/pdf",
             Self::Other => "text",
@@ -79,8 +80,12 @@ impl DocumentType {
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ImageType {
+    #[cfg_attr(feature = "serde", serde(rename = "image/gif"))]
+    Gif,
     #[cfg_attr(feature = "serde", serde(rename = "image/jpeg"))]
     Jpeg,
+    #[cfg_attr(feature = "serde", serde(rename = "image/png"))]
+    Png,
     #[cfg_attr(feature = "serde", serde(rename = "image"))]
     #[default]
     Other,
@@ -89,9 +94,11 @@ pub enum ImageType {
 impl ImageType {
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
+            Self::Gif => "image/gif",
             Self::Jpeg => "image/jpeg",
+            Self::Png => "image/png",
             Self::Other => "image",
         }
     }
@@ -115,7 +122,7 @@ pub enum VideoType {
 impl VideoType {
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
             Self::Mp4 => "video/mp4",
             Self::Other => "video",
@@ -124,7 +131,7 @@ impl VideoType {
 }
 
 /// A file's available MIME-compatible types.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
@@ -137,9 +144,27 @@ pub enum FileType {
 }
 
 impl FileType {
+    /// Parses the given extension.
+    ///
+    pub fn from_known_extensions(ext: &str) -> Option<Self> {
+        match ext {
+            "bin" => Some(Self::App(AppType::OctetStream)),
+            "gif" => Some(Self::Image(ImageType::Gif)),
+            "jpeg" | "jpg" => Some(Self::Image(ImageType::Jpeg)),
+            "mp3" => Some(Self::Audio(AudioType::Mp3)),
+            "mp4" => Some(Self::Video(VideoType::Mp4)),
+            "ogg" => Some(Self::Audio(AudioType::Ogg)),
+            "pdf" => Some(Self::Document(DocumentType::Pdf)),
+            "png" => Some(Self::Image(ImageType::Png)),
+            "bash" | "css" | "html" | "js" | "json" | "log" | "md" | "py" | "rs" | "sh" | "ts"
+            | "txt" | "toml" | "yaml" | "zsh" => Some(Self::Document(DocumentType::Other)),
+            _ => None,
+        }
+    }
+
     /// Returns the `MIME` type.
     ///
-    pub const fn mime_type(&self) -> &str {
+    pub const fn mime_type(&self) -> &'static str {
         match self {
             Self::Audio(ty) => ty.mime_type(),
             Self::Document(ty) => ty.mime_type(),

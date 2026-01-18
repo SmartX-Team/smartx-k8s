@@ -1,10 +1,9 @@
-use yew::{Html, html};
+use yew::{Html, MouseEvent, html};
 use yew_router::prelude::Link;
 
-use crate::{
-    net::{UseHttpHandleOptionRender, get_file_content_url},
-    router::Route,
-};
+use crate::{net::UseHttpHandleOptionRender, router::Route};
+
+use super::io::UseIOReducerHandleExt;
 
 /// Directory link item.
 ///
@@ -49,11 +48,12 @@ fn render_breadcrumbs(path: &str) -> Html {
     ];
 
     let mut last_index = 0;
-    for (index, name) in path.match_indices('/') {
-        last_index = index;
+    for (index, _) in path.match_indices('/') {
+        let name = &path[last_index..index];
         let path = &path[..index];
         let active = true;
-        paths.push(render_breadcrumb(name, path, active))
+        paths.push(render_breadcrumb(name, path, active));
+        last_index = index + 1
     }
     if !path.is_empty() && last_index < path.len() {
         let name = &path[last_index..];
@@ -147,12 +147,19 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                 <a
                     class="p-2 cursor-pointer transition-colors bg-purple-100 hover:bg-purple-200 active:bg-purple-300 text-purple-400 hover:text-purple-600 rounded-lg shrink tooltip"
                     data-tip={ i18n.indicator_download() }
-                    download=""
-                    href={ file_entry
-                        .and_then(|entry| get_file_content_url(&entry.r).ok())
-                        .map(|url| url.to_string())
-                        .unwrap_or_else(|| "#".into())
-                    }
+                    onclick={{
+                        let io = ctx.io.clone();
+                        let src = file_entry.as_ref().map(|entry| entry.r.clone());
+                        move |_: MouseEvent| {
+                            if let Some(src) = src.as_ref() {
+                                if is_dir {
+                                    io.download_directory(src)
+                                } else {
+                                    io.download_file(src)
+                                }
+                            }
+                        }
+                    }}
                 >
                     <svg
                         class="h-5 w-5"

@@ -13,11 +13,11 @@ use chrono::{DateTime, Utc};
 use openark_vine_browser_api::{
     client::ClientExt,
     file::{FileEntry, FileMetadata, FileRef},
-    file_type::{DocumentType, FileType, ImageType},
 };
 use web_sys::window;
 use yew::{
-    Html, Properties, UseStateHandle, function_component, html, use_reducer_eq, use_state_eq,
+    Callback, Html, Properties, UseStateHandle, function_component, html, use_reducer_eq,
+    use_state_eq,
 };
 
 use crate::{
@@ -66,7 +66,6 @@ fn parse_file_entry(state: HttpState<FileEntry>) -> Rc<FileEntry> {
                     path: "/My Image.jpg".into(),
                     metadata: FileMetadata {
                         size: Some(165378),
-                        ty: Some(FileType::Image(ImageType::Jpeg)),
                         ..Default::default()
                     },
                 },
@@ -75,7 +74,6 @@ fn parse_file_entry(state: HttpState<FileEntry>) -> Rc<FileEntry> {
                     path: "/My Document.pdf".into(),
                     metadata: FileMetadata {
                         size: Some(18810),
-                        ty: Some(FileType::Document(DocumentType::Pdf)),
                         ..Default::default()
                     },
                 },
@@ -125,6 +123,7 @@ struct Context<'a> {
     current_timestamp: DateTime<Utc>,
     file_entry: UseHttpHandleOption<String, FileEntry>,
     io: self::io::UseIOReducerHandle,
+    reload: Callback<()>,
     state: FileEntryState,
     view_mode: UseStateHandle<ViewMode>,
 }
@@ -147,7 +146,9 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
                     let dir_state = ctx.state;
                     let file_entry = parse_file_entry(state);
                     let i18n = &ctx.props.route.i18n;
+                    let io = &ctx.io;
                     let is_dir = file_entry.r.is_dir();
+                    let onreload = &ctx.reload;
                     html! {
                         <div
                             class={ format!(
@@ -171,12 +172,16 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
                                         ViewMode::Grid => html! { <self::grid::FileList
                                             directory={ file_entry }
                                             i18n={ (**i18n).clone() }
+                                            io={ io.clone() }
+                                            onreload={ onreload.clone() }
                                             state={ dir_state }
                                         /> },
                                         ViewMode::List => html! { <self::list::FileList
                                             { current }
                                             directory={ file_entry }
                                             i18n={ (**i18n).clone() }
+                                            io={ io.clone() }
+                                            onreload={ onreload.clone() }
                                             state={ dir_state }
                                         /> },
                                     }
@@ -230,12 +235,19 @@ pub fn component(props: &Props) -> Html {
         }
     });
 
+    // callbacks
+    let reload = {
+        let file_entry = file_entry.clone();
+        Callback::from(move |()| file_entry.invalidate())
+    };
+
     // context
     let ctx = Context {
         props,
         current_timestamp: Utc::now(),
         file_entry,
         io,
+        reload,
         state,
         view_mode,
     };

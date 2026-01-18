@@ -27,7 +27,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
             <div class="flex flex-col pt-4 w-64 h-full bg-white border-r border-gray-200">
                 // Title
                 <div class="p-6 lg:hidden select-none">
-                    <h1 class="text-xl font-bold text-blue-600">{ conf.title.clone() }</h1>
+                    <h1 class="text-xl font-bold text-blue-600">{ conf.spec.title.clone() }</h1>
                 </div>
 
                 // Add new entry
@@ -121,7 +121,7 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                                 >
                                     {{
                                         let kind = file.kind;
-                                        let ty = file.r.metadata.ty.as_ref();
+                                        let ty = file.r.ty();
                                         let color = "";
                                         let fill = false;
                                         let size = 5;
@@ -142,7 +142,9 @@ pub(super) fn render(ctx: &super::Context) -> Html {
                                 i18n.subscription_current_tier()
                             }</h2>
                             <p class="text-2xl font-bold text-blue-700 mt-1">{
-                                if subscription.tier_name.trim().is_empty() {
+                                if user.is_none() {
+                                    i18n.status_anonymous().into()
+                                } else if subscription.tier_name.trim().is_empty() {
                                     i18n.status_unknown().into()
                                 } else {
                                     subscription.tier_name

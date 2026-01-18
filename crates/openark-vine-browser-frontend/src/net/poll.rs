@@ -345,6 +345,8 @@ pub type HttpStateRef<'a, T> = HttpStateRaw<&'a Rc<T>>;
 pub type UseHttpHandleOption<K, V> = UseStateHandle<HttpContext<K, Option<Rc<V>>>>;
 
 pub trait UseHttpHandleOptionRender<K, V>: UseHttpHandleRenderRaw<K, Option<Rc<V>>> {
+    fn invalidate(&self);
+
     #[inline]
     fn ok(&self) -> Option<&Rc<V>> {
         match self._poll() {
@@ -380,5 +382,9 @@ pub trait UseHttpHandleOptionRender<K, V>: UseHttpHandleRenderRaw<K, Option<Rc<V
     }
 }
 
-impl<K, V, U> UseHttpHandleOptionRender<K, V> for U where U: UseHttpHandleRenderRaw<K, Option<Rc<V>>>
-{}
+impl<K, V> UseHttpHandleOptionRender<K, V> for UseHttpHandleOption<K, V> {
+    #[inline]
+    fn invalidate(&self) {
+        self.set(Default::default())
+    }
+}

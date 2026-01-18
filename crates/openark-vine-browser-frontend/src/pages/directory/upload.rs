@@ -1,7 +1,10 @@
 use openark_vine_browser_api::file::FileRef;
-use web_sys::DataTransfer;
+use web_sys::{
+    DataTransfer,
+    wasm_bindgen::{JsCast, prelude::Closure},
+};
 use yew::{
-    DragEvent, Html, MouseEvent, Properties, UseStateHandle, function_component, html,
+    Callback, DragEvent, Html, MouseEvent, Properties, UseStateHandle, function_component, html,
     html::IntoEventCallback,
 };
 use yew_router::{hooks::use_navigator, prelude::Navigator};
@@ -11,6 +14,8 @@ use crate::{
     router::Route,
     widgets::{Empty, FileNotFound},
 };
+
+use super::io::UseIOReducerHandleExt;
 
 const DATA_TRANSFER_KIND_CONTAINER: &str = "string";
 const DATA_TRANSFER_TYPE_CONTAINER: &str = concat!(env!("CARGO_CRATE_NAME"), "/file-entry");
@@ -28,12 +33,16 @@ fn handle_onclick(nav: Option<Navigator>, file: &FileRef) -> impl IntoEventCallb
     }
 }
 
-fn handle_ondragstart(global_index: usize) -> impl IntoEventCallback<DragEvent> {
+fn handle_ondragstart(file: &FileRef) -> impl IntoEventCallback<DragEvent> {
+    let file = file.clone();
     move |event: DragEvent| {
         if let Some(dt) = event.data_transfer() {
             let items = dt.items();
-            let _ = items
-                .add_with_str_and_type(&global_index.to_string(), DATA_TRANSFER_TYPE_CONTAINER);
+            if let Ok(file) = ::serde_json::to_string(&file) {
+                items
+                    .add_with_str_and_type(&file, DATA_TRANSFER_TYPE_CONTAINER)
+                    .unwrap();
+            }
         }
     }
 }
@@ -104,21 +113,50 @@ fn handle_ondrop(
     global_index: Option<usize>,
     is_dir: bool,
     is_ready: bool,
+    io: &super::io::UseIOReducerHandle,
     last_state: &UseUploadFileStateHandle,
+    oncomplete: &Callback<()>,
 ) -> impl IntoEventCallback<DragEvent> {
     let dst = dst.clone();
+    let io = io.clone();
     let last_state = last_state.clone();
+    let oncomplete = oncomplete.clone();
     move |event: DragEvent| {
         if !is_dir || !is_ready {
             return;
         }
-        if let Some((new_state, dt)) = UploadDragState::parse(&event, global_index) {
+        if let Some((_, dt)) = UploadDragState::parse(&event, global_index) {
             event.prevent_default(); // Consume the event
             event.stop_propagation(); // Do not propagate the event
             last_state.set(None);
 
-            // TODO: To be implemented!
-            tracing::info!("src: {dt:#?}, dst: {}", &dst.path);
+            let items = dt.items();
+            for item in (0..items.length()).filter_map(|index| items.get(index)) {
+                let kind = item.kind();
+                let ty = item.type_();
+                // Is it a container item?
+                if kind == DATA_TRANSFER_KIND_CONTAINER && ty == DATA_TRANSFER_TYPE_CONTAINER {
+                    let dst = dst.clone();
+                    let io = io.clone();
+                    let oncomplete = oncomplete.clone();
+                    let closure = move |file: String| {
+                        if let Ok(src) = ::serde_json::from_str(&file) {
+                            io.r#move(src, &dst, oncomplete.clone())
+                        }
+                    };
+                    // AddEventListener
+                    let callback = Closure::once(Box::new(closure) as Box<dyn FnOnce(String)>);
+                    item.get_as_string(Some(callback.as_ref().unchecked_ref()))
+                        .unwrap();
+                    callback.forget()
+                }
+                // Is it an external item?
+                else if kind == DATA_TRANSFER_KIND_FILE
+                    && let Ok(Some(src)) = item.get_as_file()
+                {
+                    io.upload_file(src, &dst, oncomplete.clone())
+                }
+            }
         }
     }
 }
@@ -132,8 +170,6 @@ pub(super) enum UploadDragSourceOrigin {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub(super) enum UploadDragSourceType {
     SingleFile,
-    SingleDirectory,
-    MultiFiles,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -218,7 +254,9 @@ pub(super) struct UploadFileItemProps {
     pub(super) dir_state: super::FileEntryState,
     pub(super) drag_state: UseUploadFileStateHandle,
     pub(super) file: FileRef,
+    pub(super) io: super::io::UseIOReducerHandle,
     pub(super) layout: UploadFileItemLayout,
+    pub(super) onreload: Callback<()>,
     pub(super) ptr: UploadFileItemPtr,
     pub(super) children: Html,
 }
@@ -231,7 +269,9 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
         dir_state,
         ref drag_state,
         ref file,
+        ref io,
         layout,
+        ref onreload,
         ptr:
             UploadFileItemPtr {
                 global_index,
@@ -318,11 +358,11 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
             class={ default_class }
             draggable="true"
             onclick={ handle_onclick(nav, file) }
-            ondragstart={ handle_ondragstart(global_index) }
+            ondragstart={ handle_ondragstart(file) }
             ondragenter={ handle_ondragenter(Some(global_index), is_dir, is_ready, drag_state) }
             ondragover={ handle_ondragover(Some(global_index), is_dir, is_ready, drag_state) }
             ondragleave={ handle_ondragleave(Some(global_index), is_dir, is_ready, drag_state) }
-            ondrop={ handle_ondrop(file, Some(global_index), is_dir, is_ready, drag_state) }
+            ondrop={ handle_ondrop(file, Some(global_index), is_dir, is_ready, io, drag_state, onreload) }
         >
             // Placeholder
             <input
@@ -345,7 +385,9 @@ pub(super) struct UploadFileProps {
     pub(super) drag_state: UseUploadFileStateHandle,
     pub(super) file: FileRef,
     pub(super) i18n: DynI18n,
+    pub(super) io: super::io::UseIOReducerHandle,
     pub(super) layout: UploadFileItemLayout,
+    pub(super) onreload: Callback<()>,
     #[prop_or_default]
     pub(super) children: Html,
 }
@@ -359,7 +401,9 @@ pub(super) fn render(props: &UploadFileProps) -> Html {
         ref drag_state,
         ref file,
         ref i18n,
+        ref io,
         layout,
+        ref onreload,
         ref children,
     } = props;
 
@@ -433,7 +477,7 @@ pub(super) fn render(props: &UploadFileProps) -> Html {
                 ondragenter={ handle_ondragenter(global_index, is_dir, is_ready, drag_state) }
                 ondragover={ handle_ondragover(global_index, is_dir, is_ready, drag_state) }
                 ondragleave={ handle_ondragleave(global_index, is_dir, is_ready, drag_state) }
-                ondrop={ handle_ondrop(file, global_index, is_dir, is_ready, drag_state) }
+                ondrop={ handle_ondrop(file, global_index, is_dir, is_ready, io, drag_state, onreload) }
             >
                 // Placeholder
                 <input

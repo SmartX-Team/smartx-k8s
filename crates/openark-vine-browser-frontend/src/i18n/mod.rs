@@ -140,6 +140,9 @@ impl_i18n! {
         /// Returns the "Deactivated" status.
         fn status_deactivated(&self) -> &'static str;
 
+        /// Returns the "Anonymous" status.
+        fn status_anonymous(&self) -> &'static str;
+
         /// Returns the "Unknown" status.
         fn status_unknown(&self) -> &'static str;
 

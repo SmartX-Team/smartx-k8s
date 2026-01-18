@@ -120,6 +120,7 @@ opentelemetry-otlp = { version = "=0.31", default-features = false }
 opentelemetry-sdk = { package = "opentelemetry_sdk", version = "=0.31", default-features = false }
 ordered-float = { version = "=5.1", default-features = false }
 pastey = { version = "=0.2", default-features = false }
+percent-encoding = { version = "=2.3", default-features = false }
 prometheus-http-query = { version = "=0.8", default-features = false }
 prost = { version = "=0.14", default-features = false }
 prost-types = { version = "=0.14", default-features = false }
@@ -153,6 +154,7 @@ tracing-subscriber = { version = "=0.3", default-features = false }
 tracing-web = { version = "=0.1", default-features = false }
 tokio = { version = "=1", default-features = false }
 tokio-stream = { version = "=0.1", default-features = false }
+tokio-util = { version = "=0.7", default-features = false }
 unicode-width = { version = "=0.2", default-features = false, features = [
     "cjk",
 ] }

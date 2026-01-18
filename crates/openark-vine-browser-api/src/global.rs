@@ -12,7 +12,7 @@ use crate::user::UserConfiguration;
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct GlobalConfiguration {
+pub struct GlobalConfigurationSpec {
     /// The browser's name.
     pub title: String,
 
@@ -29,6 +29,18 @@ pub struct GlobalConfiguration {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub redirect_url: Option<Url>,
+}
+
+/// A browser's global configuration.
+///
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(JsonSchema))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct GlobalConfiguration {
+    /// The browser's specification.
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub spec: GlobalConfigurationSpec,
 
     /// The current user's configuration.
     #[cfg_attr(

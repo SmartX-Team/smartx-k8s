@@ -130,6 +130,11 @@ impl super::I18n for English {
     }
 
     #[inline]
+    fn status_anonymous(&self) -> &'static str {
+        "Anonymous"
+    }
+
+    #[inline]
     fn status_unknown(&self) -> &'static str {
         "Unknown"
     }

@@ -43,8 +43,8 @@ impl ::openark_core::client::Client for Client {
         I: ?Sized + Sync + Serialize,
         O: DeserializeOwned,
     {
-        let url = if cfg!(debug_assertions) {
-            // Mockup the api
+        // Mockup the api
+        let url = if cfg!(debug_assertions) && option_env!("API_BASE_URL").is_none() {
             match method {
                 Method::DELETE => format!("{url}/delete.json").parse()?,
                 Method::GET => format!("{url}/get.json").parse()?,

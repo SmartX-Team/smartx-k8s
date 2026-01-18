@@ -85,7 +85,7 @@ clap = { workspace = true, optional = true, features = ["derive"] }
 http = { workspace = true, optional = true }
 jsonwebtoken = { workspace = true, optional = true }
 k8s-openapi = { workspace = true, optional = true, features = ["schemars"] }
-kube = { workspace = true, optional = true, features = ["derive"] }
+kube = { workspace = true, optional = true, features = ["client", "derive"] }
 regex = { workspace = true, optional = true, features = ["unicode"] }
 reqwest = { workspace = true, optional = true, features = ["json"] }
 schemars = { workspace = true, optional = true, features = ["derive", "url2"] }

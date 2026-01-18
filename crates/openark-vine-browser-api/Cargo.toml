@@ -45,7 +45,6 @@ client = [
     "serde",
     "std",
 ]
-kube = ["dep:k8s-openapi", "dep:kube", "schemars", "std"]
 schemars = ["dep:schemars", "openark-vine-oauth/schemars", "serde"]
 serde = ["chrono/serde", "dep:serde", "openark-vine-oauth/serde", "url/serde"]
 
@@ -53,9 +52,9 @@ serde = ["chrono/serde", "dep:serde", "openark-vine-oauth/serde", "url/serde"]
 send = ["openark-vine-oauth/send"]
 
 # TLS
-tls-aws-lc-rs = ["kube?/rustls-tls", "openark-vine-oauth/tls-aws-lc-rs"]
-tls-openssl = ["kube?/openssl-tls", "openark-vine-oauth/tls-openssl"]
-tls-ring = ["kube?/rustls-tls", "openark-vine-oauth/tls-ring"]
+tls-aws-lc-rs = ["openark-vine-oauth/tls-aws-lc-rs"]
+tls-openssl = ["openark-vine-oauth/tls-openssl"]
+tls-ring = ["openark-vine-oauth/tls-ring"]
 
 # Tracing
 tracing = ["dep:tracing", "openark-vine-oauth/tracing"]
@@ -69,8 +68,6 @@ async-trait = { workspace = true, optional = true }
 chrono = { workspace = true, features = ["alloc"] }
 clap = { workspace = true, optional = true, features = ["derive"] }
 http = { workspace = true, optional = true }
-k8s-openapi = { workspace = true, optional = true, features = ["schemars"] }
-kube = { workspace = true, optional = true, features = ["derive"] }
 schemars = { workspace = true, optional = true, features = [
     "chrono04",
     "derive",

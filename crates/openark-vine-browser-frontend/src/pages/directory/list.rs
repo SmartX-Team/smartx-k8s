@@ -3,7 +3,7 @@ use std::rc::Rc;
 use chrono::{DateTime, Utc};
 use openark_vine_browser_api::file::{FileEntry, FileRef};
 use yew::{
-    Html, MouseEvent, Properties, Reducible, UseReducerHandle, function_component, html,
+    Callback, Html, MouseEvent, Properties, Reducible, UseReducerHandle, function_component, html,
     use_reducer_eq, use_state_eq,
 };
 
@@ -72,6 +72,8 @@ struct ItemProps {
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
     i18n: DynI18n,
+    io: super::io::UseIOReducerHandle,
+    onreload: Callback<()>,
     ptr: UploadFileItemPtr,
 }
 
@@ -85,6 +87,8 @@ fn render_item(props: &ItemProps) -> Html {
         ref drag_state,
         ref file,
         ref i18n,
+        ref io,
+        ref onreload,
         ptr,
     } = props;
 
@@ -101,7 +105,9 @@ fn render_item(props: &ItemProps) -> Html {
             { dir_state }
             drag_state={ drag_state.clone() }
             file={ file.clone() }
+            io={ io.clone() }
             layout={ UploadFileItemLayout::List }
+            onreload={ onreload.clone() }
             { ptr }
         >
             // Checkbox
@@ -127,7 +133,7 @@ fn render_item(props: &ItemProps) -> Html {
             <td class={ td_class }>
                 <div class={ format!("flex items-center space-x-3 {td_class}") }>
                     {{
-                        let ty = file.metadata.ty.as_ref();
+                        let ty = file.ty();
                         let color = None;
                         let fill = true;
                         let size = 5;
@@ -174,6 +180,8 @@ pub(super) struct Props {
     pub(super) current: DateTime<Utc>,
     pub(super) directory: Rc<FileEntry>,
     pub(super) i18n: DynI18n,
+    pub(super) io: super::io::UseIOReducerHandle,
+    pub(super) onreload: Callback<()>,
     pub(super) state: super::FileEntryState,
 }
 
@@ -183,6 +191,7 @@ impl PartialEq for Props {
         self.current == other.current
             && Rc::ptr_eq(&self.directory, &other.directory)
             && self.i18n == other.i18n
+            && self.onreload == other.onreload
             && self.state == other.state
     }
 }
@@ -194,6 +203,8 @@ pub(super) fn render(props: &Props) -> Html {
         current,
         ref directory,
         ref i18n,
+        ref io,
+        ref onreload,
         state,
     } = props;
     let global_index = 0;
@@ -210,7 +221,9 @@ pub(super) fn render(props: &Props) -> Html {
             drag_state={ drag_state.clone() }
             file={ directory.r.clone() }
             i18n={ i18n.clone() }
+            io={ io.clone() }
             layout={ UploadFileItemLayout::List }
+            onreload={ onreload.clone() }
         >
             <table class="table w-full border-collapse">
                 // Header
@@ -268,6 +281,8 @@ pub(super) fn render(props: &Props) -> Html {
                             drag_state={ drag_state.clone() }
                             file={ file.clone() }
                             i18n={ i18n.clone() }
+                            io={ io.clone() }
+                            onreload={ onreload.clone() }
                             ptr={ UploadFileItemPtr {
                                 global_index: global_index + local_index,
                                 local_index,

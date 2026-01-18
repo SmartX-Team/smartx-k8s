@@ -93,12 +93,15 @@ web-sys = { workspace = true, features = [
     "DataTransfer",
     "DataTransferItem",
     "DataTransferItemList",
+    "HtmlAnchorElement",
     "HtmlInputElement",
     "Location",
     "Navigator",
     "RequestMode",
     "RequestRedirect",
     "Window",
+    "XmlHttpRequest",
+    "XmlHttpRequestUpload",
 ] }
 yew = { workspace = true, features = ["csr"] }
 yew-router = { workspace = true }

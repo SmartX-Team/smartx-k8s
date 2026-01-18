@@ -68,10 +68,16 @@ run-openark-spectrum-pool:
         --base-url '' \
         --max-pool '64' \
 
+# Run development package: openark-vine-browser-backend
+run-openark-vine-browser-backend:
+    @cargo run --package openark-vine-browser-backend -- \
+        --base-url '/api/v1' \
+        --oauth-client-origin="http://localhost:8080"
+
 # Run development package: openark-vine-browser-frontend
 run-openark-vine-browser-frontend:
     @cd ./crates/openark-vine-browser-frontend && \
-        env OPENARK_LABEL_ALIAS="$(cat ./values.yaml | yq '.openark.labels."org.ulagbulag.io/alias"')" \
+        env API_BASE_URL="http://localhost:8888/api/v1/" \
         trunk serve \
 
 # Run development package: openark-vine-session-backend

@@ -130,6 +130,11 @@ impl super::I18n for Korean {
     }
 
     #[inline]
+    fn status_anonymous(&self) -> &'static str {
+        "익명"
+    }
+
+    #[inline]
     fn status_unknown(&self) -> &'static str {
         "알 수 없음"
     }

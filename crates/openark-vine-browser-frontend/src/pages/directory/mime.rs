@@ -2,7 +2,7 @@ use openark_vine_browser_api::{file::FileShortcutKind, file_type::FileType};
 use yew::{Html, html};
 
 pub(super) fn render_file_entry(
-    ty: Option<&FileType>,
+    ty: Option<FileType>,
     is_dir: bool,
     color: Option<&'static str>,
     fill: bool,
@@ -87,7 +87,7 @@ pub(super) fn render_file_entry(
 
 pub(super) fn render_file_shortcut(
     kind: Option<FileShortcutKind>,
-    ty: Option<&FileType>,
+    ty: Option<FileType>,
     is_dir: bool,
     color: &'static str,
     fill: bool,

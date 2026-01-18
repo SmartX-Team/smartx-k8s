@@ -66,13 +66,14 @@ pub struct FileMetadata {
         serde(default, skip_serializing_if = "Option::is_none")
     )]
     pub owner: Option<UserRef>,
+}
 
-    /// The file's MIME-compatible type.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "Option::is_none")
-    )]
-    pub ty: Option<FileType>,
+impl FileRef {
+    /// Returns the file's MIME-compatible type.
+    pub fn ty(&self) -> Option<FileType> {
+        let ext = self.name.split('.').skip(1).last()?;
+        FileType::from_known_extensions(ext)
+    }
 }
 
 /// A file's referral information without `namespace`.

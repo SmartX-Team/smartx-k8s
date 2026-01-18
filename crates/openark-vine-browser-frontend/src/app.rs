@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use openark_vine_browser_api::{client::ClientExt, global::GlobalConfiguration};
+use openark_vine_browser_api::{
+    client::ClientExt,
+    global::{GlobalConfiguration, GlobalConfigurationSpec},
+};
 use yew::{Html, function_component, html, use_state_eq};
 use yew_router::{BrowserRouter, Switch};
 
@@ -17,9 +20,11 @@ fn parse_conf(state: HttpState<GlobalConfiguration>) -> Rc<GlobalConfiguration> 
     ///
     fn build_offline() -> GlobalConfiguration {
         GlobalConfiguration {
-            title: Default::default(),
-            logo_url: None,
-            redirect_url: None,
+            spec: GlobalConfigurationSpec {
+                title: Default::default(),
+                logo_url: None,
+                redirect_url: None,
+            },
             user: None,
         }
     }
@@ -44,6 +49,7 @@ pub fn component() -> Html {
     // states
     let global: UseHttpHandleOption<(), GlobalConfiguration> = use_state_eq(Default::default);
     let i18n = use_state_eq(DynI18n::detect_language);
+    let user = global.ok().and_then(|conf| conf.user.as_ref());
 
     // fetch
     let key = &();
@@ -75,13 +81,13 @@ pub fn component() -> Html {
                         // Title
                         <a
                             class="flex-1 sm:flex-0 flex lg:flex-none items-center select-none truncate"
-                            href={ conf.redirect_url.as_ref().map(|url| url.to_string()).unwrap_or_else(|| "/".into()) }
+                            href={ conf.spec.redirect_url.as_ref().map(|url| url.to_string()).unwrap_or_else(|| "/".into()) }
                         >
-                            { for conf.logo_url.as_ref().map(|url| html! { <img
+                            { for conf.spec.logo_url.as_ref().map(|url| html! { <img
                                 class="h-12 lg:mr-2"
                                 src={ url.to_string() }
                             /> }) }
-                            <span class="hidden lg:flex text-xl font-bold text-blue-600">{ conf.title.clone() }</span>
+                            <span class="hidden lg:flex text-xl font-bold text-blue-600">{ conf.spec.title.clone() }</span>
                         </a>
 
                         // Search bar
@@ -159,14 +165,16 @@ pub fn component() -> Html {
                                 </svg>
                             </button>
                             // Profile
-                            <div class="avatar ml-2 w-10">
-                                <div class="mask mask-squircle">
-                                    <img
-                                        class="object-cover"
-                                        src="https://lh3.googleusercontent.com/sitesv/AAzXCkcLyI8xj1WXxMVh3GiH8PrfJOTo5-_APKA5L4Wj39_17K_3_mATK1chdVhhLGuxeRm6kLRThLzKTILsfHQY5nqWFHHyBGmrALcDrc_mNC0Nt81U30is3gdOHIbHlxHiX0LNECEOeNQIDX7wa8s69hoAtCqXTdRP0DqgrnwAfUVoYfXgARP312Js=w64"
-                                    />
+                            { for user.and_then(|user| user.metadata.thumbnail_url.as_ref()).map(|url| html! {
+                                <div class="avatar ml-2 w-10">
+                                    <div class="mask mask-squircle">
+                                        <img
+                                            class="object-cover"
+                                            src={ url.to_string() }
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            }) }
                         </div>
                     </header>
 
