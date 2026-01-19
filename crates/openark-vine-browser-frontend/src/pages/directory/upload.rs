@@ -22,13 +22,27 @@ const DATA_TRANSFER_TYPE_CONTAINER: &str = concat!(env!("CARGO_CRATE_NAME"), "/f
 
 const DATA_TRANSFER_KIND_FILE: &str = "file";
 
+fn handle_onclick(
+    selected: &UseStateHandle<Option<usize>>,
+    global_index: usize,
+) -> impl IntoEventCallback<MouseEvent> {
+    let selected = selected.clone();
+    move |_| selected.set(Some(global_index))
+}
+
 /// Resolve to the `file`.
 ///
-fn handle_onclick(nav: Option<Navigator>, file: &FileRef) -> impl IntoEventCallback<MouseEvent> {
+fn handle_ondblclick(
+    nav: Option<Navigator>,
+    selected: &UseStateHandle<Option<usize>>,
+    file: &FileRef,
+) -> impl IntoEventCallback<MouseEvent> {
     let path = file.path.trim_matches('/').to_string();
+    let selected = selected.clone();
     move |_| {
         if let Some(nav) = nav.clone() {
-            nav.push(&Route::FileEntry { path: path.clone() })
+            nav.push(&Route::FileEntry { path: path.clone() });
+            selected.set(None)
         }
     }
 }
@@ -258,6 +272,7 @@ pub(super) struct UploadFileItemProps {
     pub(super) layout: UploadFileItemLayout,
     pub(super) onreload: Callback<()>,
     pub(super) ptr: UploadFileItemPtr,
+    pub(super) selected: UseStateHandle<Option<usize>>,
     pub(super) children: Html,
 }
 
@@ -278,6 +293,7 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
                 local_index,
                 local_size,
             },
+        ref selected,
         ref children,
     } = props;
 
@@ -291,6 +307,9 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
         "group border-l-2 border-r-2 cursor-pointer hover:shadow-lg transition-colors transition-shadow",
         " sm:select-all active:bg-blue-50 no-drag-highlight",
     ));
+    if selected.is_some_and(|index| index == global_index) {
+        default_class.push_str(" bg-blue-50")
+    }
     match layout {
         UploadFileItemLayout::Grid => {
             default_class.push_str(" border-t-2 border-b-2 w-full sm:w-auto rounded-lg")
@@ -357,7 +376,8 @@ pub(super) fn render(props: &UploadFileItemProps) -> Html {
             id={ format!("{id}-upload-{global_index}") }
             class={ default_class }
             draggable="true"
-            onclick={ handle_onclick(nav, file) }
+            onclick={ handle_onclick(selected, global_index) }
+            ondblclick={ handle_ondblclick(nav, selected, file) }
             ondragstart={ handle_ondragstart(file) }
             ondragenter={ handle_ondragenter(Some(global_index), is_dir, is_ready, drag_state) }
             ondragover={ handle_ondragover(Some(global_index), is_dir, is_ready, drag_state) }

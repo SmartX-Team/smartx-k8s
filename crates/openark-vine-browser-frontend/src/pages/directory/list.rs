@@ -3,8 +3,8 @@ use std::rc::Rc;
 use chrono::{DateTime, Utc};
 use openark_vine_browser_api::file::{FileEntry, FileRef};
 use yew::{
-    Callback, Html, MouseEvent, Properties, Reducible, UseReducerHandle, function_component, html,
-    use_reducer_eq, use_state_eq,
+    Callback, Html, MouseEvent, Properties, Reducible, UseReducerHandle, UseStateHandle,
+    function_component, html, use_reducer_eq, use_state_eq,
 };
 
 use crate::i18n::DynI18n;
@@ -75,6 +75,7 @@ struct ItemProps {
     io: super::io::UseIOReducerHandle,
     onreload: Callback<()>,
     ptr: UploadFileItemPtr,
+    selected: UseStateHandle<Option<usize>>,
 }
 
 #[function_component(FileItem)]
@@ -90,6 +91,7 @@ fn render_item(props: &ItemProps) -> Html {
         ref io,
         ref onreload,
         ptr,
+        ref selected,
     } = props;
 
     let is_dir = file.is_dir();
@@ -109,6 +111,7 @@ fn render_item(props: &ItemProps) -> Html {
             layout={ UploadFileItemLayout::List }
             onreload={ onreload.clone() }
             { ptr }
+            selected={ selected.clone() }
         >
             // Checkbox
             <td class={ format!("text-sm text-gray-500 {td_class}") }>
@@ -180,8 +183,10 @@ pub(super) struct Props {
     pub(super) current: DateTime<Utc>,
     pub(super) directory: Rc<FileEntry>,
     pub(super) i18n: DynI18n,
+    pub(super) indices: UseReducerHandle<super::FileIndices>,
     pub(super) io: super::io::UseIOReducerHandle,
     pub(super) onreload: Callback<()>,
+    pub(super) selected: UseStateHandle<Option<usize>>,
     pub(super) state: super::FileEntryState,
 }
 
@@ -191,7 +196,9 @@ impl PartialEq for Props {
         self.current == other.current
             && Rc::ptr_eq(&self.directory, &other.directory)
             && self.i18n == other.i18n
+            && self.indices == other.indices
             && self.onreload == other.onreload
+            && self.selected == other.selected
             && self.state == other.state
     }
 }
@@ -203,10 +210,14 @@ pub(super) fn render(props: &Props) -> Html {
         current,
         ref directory,
         ref i18n,
+        ref indices,
         ref io,
         ref onreload,
+        ref selected,
         state,
     } = props;
+
+    let has_indices = indices.len() == directory.files.len();
     let global_index = 0;
     let local_size = directory.files.len();
 
@@ -264,7 +275,19 @@ pub(super) fn render(props: &Props) -> Html {
                             }
                         }
                         // Metadata
-                        <th class="bg-transparent font-medium">{ i18n.file_name() }</th>
+                        <th class="pointer-events-auto cursor-pointer hover:bg-base-200 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold">{ i18n.file_name() }</span>
+                                <span class="flex flex-col -space-y-1">
+                                    <svg class="h-3 w-3 fill-current opacity-30 hover:opacity-100" viewBox="0 0 20 20">
+                                        <path d="M10 3l-7 7h14l-7-7z" />
+                                    </svg>
+                                    <svg class="h-3 w-3 fill-current opacity-100" viewBox="0 0 20 20">
+                                        <path d="M10 17l7-7H3l7 7z" />
+                                    </svg>
+                                </span>
+                            </div>
+                        </th>
                         <th class="bg-transparent font-medium">{ i18n.file_owner() }</th>
                         <th class="bg-transparent font-medium">{ i18n.date_modified() }</th>
                         <th class="bg-transparent font-medium">{ i18n.file_size() }</th>
@@ -273,23 +296,32 @@ pub(super) fn render(props: &Props) -> Html {
 
                 // Body
                 <tbody>{
-                    for directory.files.iter().enumerate().map(|(local_index, file)| {
-                        html! { <FileItem
-                            checkboxes={ checkboxes.clone() }
-                            { current }
-                            dir_state={ state }
-                            drag_state={ drag_state.clone() }
-                            file={ file.clone() }
-                            i18n={ i18n.clone() }
-                            io={ io.clone() }
-                            onreload={ onreload.clone() }
-                            ptr={ UploadFileItemPtr {
-                                global_index: global_index + local_index,
-                                local_index,
-                                local_size,
-                            } }
-                        /> }
-                    })
+                    for (0..directory.files.len())
+                        .map(|mut local_index| {
+                            if has_indices {
+                                local_index = indices[local_index];
+                            }
+                            let file = &directory.files[local_index];
+                            (local_index, file)
+                        })
+                        .map(|(local_index, file)| {
+                            html! { <FileItem
+                                checkboxes={ checkboxes.clone() }
+                                { current }
+                                dir_state={ state }
+                                drag_state={ drag_state.clone() }
+                                file={ file.clone() }
+                                i18n={ i18n.clone() }
+                                io={ io.clone() }
+                                onreload={ onreload.clone() }
+                                ptr={ UploadFileItemPtr {
+                                    global_index: global_index + local_index,
+                                    local_index,
+                                    local_size,
+                                } }
+                                selected={ selected.clone() }
+                            /> }
+                        })
                 }</tbody>
             </table>
         </UploadFile>

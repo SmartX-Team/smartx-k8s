@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use openark_vine_browser_api::file::{FileEntry, FileRef};
-use yew::{Callback, Html, Properties, function_component, html, use_state_eq};
+use yew::{Callback, Html, Properties, UseStateHandle, function_component, html, use_state_eq};
 
 use crate::i18n::DynI18n;
 
@@ -20,6 +20,7 @@ struct ItemProps {
     io: super::io::UseIOReducerHandle,
     onreload: Callback<()>,
     ptr: UploadFileItemPtr,
+    selected: UseStateHandle<Option<usize>>,
 }
 
 #[function_component(FileItem)]
@@ -33,6 +34,7 @@ fn render_item(props: &ItemProps) -> Html {
         ref io,
         ref onreload,
         ptr,
+        ref selected,
     } = props;
 
     let is_dir = file.is_dir();
@@ -47,6 +49,7 @@ fn render_item(props: &ItemProps) -> Html {
             layout={ UploadFileItemLayout::Grid }
             onreload={ onreload.clone() }
             { ptr }
+            selected={ selected.clone() }
         >
             <div class="bg-white rounded-lg group p-4 w-full sm:w-60 pointer-events-none">
                 <div class="mb-3">{{
@@ -72,6 +75,7 @@ pub(super) struct Props {
     pub(super) i18n: DynI18n,
     pub(super) io: super::io::UseIOReducerHandle,
     pub(super) onreload: Callback<()>,
+    pub(super) selected: UseStateHandle<Option<usize>>,
     pub(super) state: super::FileEntryState,
 }
 
@@ -81,6 +85,7 @@ impl PartialEq for Props {
         Rc::ptr_eq(&self.directory, &other.directory)
             && self.i18n == other.i18n
             && self.onreload == other.onreload
+            && self.selected == other.selected
             && self.state == other.state
     }
 }
@@ -93,8 +98,10 @@ pub(super) fn render(props: &Props) -> Html {
         ref i18n,
         ref io,
         ref onreload,
+        ref selected,
         state,
     } = props;
+
     let global_index = 0;
     let local_size = directory.files.len();
 
@@ -129,6 +136,7 @@ pub(super) fn render(props: &Props) -> Html {
                             local_index,
                             local_size,
                         } }
+                        selected={ selected.clone() }
                     /> }
                 })
             }</div>

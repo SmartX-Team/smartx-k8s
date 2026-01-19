@@ -1,13 +1,14 @@
 mod grid;
 mod io;
+mod left_sidebar;
 mod list;
 mod mime;
 mod navbar;
 mod preview;
-mod sidebar;
+mod right_sidebar;
 mod upload;
 
-use std::rc::Rc;
+use std::{ops, rc::Rc};
 
 use chrono::{DateTime, Utc};
 use openark_vine_browser_api::{
@@ -16,8 +17,8 @@ use openark_vine_browser_api::{
 };
 use web_sys::window;
 use yew::{
-    Callback, Html, Properties, UseStateHandle, function_component, html, use_reducer_eq,
-    use_state_eq,
+    Callback, Html, Properties, Reducible, UseReducerHandle, UseStateHandle, function_component,
+    html, use_reducer_eq, use_state_eq,
 };
 
 use crate::{
@@ -112,6 +113,35 @@ pub struct Props {
     pub route: RouteProps,
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+struct FileIndices(Vec<usize>);
+
+impl ops::Deref for FileIndices {
+    type Target = [usize];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.0.as_slice()
+    }
+}
+
+#[derive(Clone, Debug)]
+enum FileIndicesAction {
+    Clear,
+    Sorted(Vec<usize>),
+}
+
+impl Reducible for FileIndices {
+    type Action = FileIndicesAction;
+
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        match action {
+            FileIndicesAction::Clear => Default::default(),
+            FileIndicesAction::Sorted(items) => Rc::new(Self(items)),
+        }
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum ViewMode {
     Grid,
@@ -122,20 +152,22 @@ struct Context<'a> {
     props: &'a Props,
     current_timestamp: DateTime<Utc>,
     file_entry: UseHttpHandleOption<String, FileEntry>,
+    indices: UseReducerHandle<FileIndices>,
     io: self::io::UseIOReducerHandle,
     reload: Callback<()>,
+    selected_entry: UseStateHandle<Option<usize>>,
     state: FileEntryState,
     view_mode: UseStateHandle<ViewMode>,
 }
 
-fn render_file_entry_lookup(ctx: Context) -> Html {
+fn render_file_entry_lookup(ctx: &Context) -> Html {
     // properties
     let current = ctx.current_timestamp;
     let file_entry = ctx.file_entry.clone();
     let i18n = &*ctx.props.route.i18n;
 
     html! {
-        <div class="drawer-content flex flex-col overflow-hidden min-h-full">
+        <div class="flex flex-1 flex-col overflow-hidden min-h-full">
             <div class="flex-1 overflow-y-scroll h-full">{{
                 let key = &ctx.props.path;
                 let path = ctx.props.path.clone();
@@ -146,9 +178,11 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
                     let dir_state = ctx.state;
                     let file_entry = parse_file_entry(state);
                     let i18n = &ctx.props.route.i18n;
+                    let indices = &ctx.indices;
                     let io = &ctx.io;
                     let is_dir = file_entry.r.is_dir();
                     let onreload = &ctx.reload;
+                    let selected = &ctx.selected_entry;
                     html! {
                         <div
                             class={ format!(
@@ -174,14 +208,17 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
                                             i18n={ (**i18n).clone() }
                                             io={ io.clone() }
                                             onreload={ onreload.clone() }
+                                            selected={ selected.clone() }
                                             state={ dir_state }
                                         /> },
                                         ViewMode::List => html! { <self::list::FileList
                                             { current }
                                             directory={ file_entry }
                                             i18n={ (**i18n).clone() }
+                                            indices={ indices.clone() }
                                             io={ io.clone() }
                                             onreload={ onreload.clone() }
+                                            selected={ selected.clone() }
                                             state={ dir_state }
                                         /> },
                                     }
@@ -205,7 +242,9 @@ fn render_file_entry_lookup(ctx: Context) -> Html {
 pub fn component(props: &Props) -> Html {
     // states
     let file_entry: UseHttpHandleOption<String, FileEntry> = use_state_eq(Default::default);
+    let indices = use_reducer_eq(Default::default);
     let io: self::io::UseIOReducerHandle = use_reducer_eq(Default::default);
+    let selected_entry = use_state_eq(Default::default);
     let state = match file_entry.try_get_state() {
         HttpStateRef::Pending => FileEntryState::Directory, // for building skeletons
         HttpStateRef::Ready(entry) => {
@@ -246,8 +285,10 @@ pub fn component(props: &Props) -> Html {
         props,
         current_timestamp: Utc::now(),
         file_entry,
+        indices,
         io,
         reload,
+        selected_entry,
         state,
         view_mode,
     };
@@ -255,10 +296,15 @@ pub fn component(props: &Props) -> Html {
     html! {
         <>
             // Sidebar contents (left)
-            { self::sidebar::render(&ctx) }
+            { self::left_sidebar::render(&ctx) }
 
             // Directory lookup
-            { render_file_entry_lookup(ctx) }
+            <div class="drawer-content flex overflow-hidden min-h-full">
+                { render_file_entry_lookup(&ctx) }
+
+                // Sidebar contents (right)
+                { self::right_sidebar::render(&ctx) }
+            </div>
         </>
     }
 }
