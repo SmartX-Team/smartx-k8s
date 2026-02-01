@@ -176,8 +176,8 @@ spec:
       retryStrategy:
         limit: "6"
       container:
-        image: "{{ .Values.kiss.image.repo }}:{{ .Values.kiss.image.tag }}"
-        imagePullPolicy: "{{ .Values.kiss.image.pullPolicy }}"
+        image: "{{ .Values.build.kubespray.image.repo }}:v{{ .Values.build.kubespray.version }}"
+        imagePullPolicy: "{{ .Values.build.kubespray.image.pullPolicy }}"
         command:
           - ansible-playbook
         args:

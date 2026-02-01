@@ -26,4 +26,4 @@ spec:
   source:
     chart: kuberay-operator
     repoUrl: "https://ray-project.github.io/kuberay-helm"
-    version: 1.3.1
+    version: 1.5.1

@@ -6,7 +6,7 @@
 # Prehibit errors
 set -e -o pipefail
 
-# Detech architecture
+# Detect architecture
 OS_ARCH="$(uname -m)"
 case "${OS_ARCH}" in
 'aarch64')

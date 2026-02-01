@@ -60,7 +60,7 @@ nodeAffinity:
           - key: node-role.kubernetes.io/kiss
             operator: In
             values:
-              - Storage
+              - Compute
   requiredDuringSchedulingIgnoredDuringExecution:
     nodeSelectorTerms:
       - matchExpressions:
@@ -68,7 +68,7 @@ nodeAffinity:
             operator: In
             values:
               - Compute
-              - Storage
+              - ControlPlane
 
 protocol: http
 fullnameOverride: opensearch

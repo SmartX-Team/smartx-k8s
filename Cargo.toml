@@ -28,7 +28,7 @@ include = ["src/**/*.rs", "Cargo.toml"]
 keywords = ["iac", "kubernetes", "openark"]
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 readme = "./README.md"
-rust-version = "1.90"
+rust-version = "1.93"
 homepage = "https://github.com/SmartX-Team/smartx-k8s"
 repository = "https://github.com/SmartX-Team/smartx-k8s"
 
@@ -73,7 +73,6 @@ async-trait = { version = "=0.1", default-features = false }
 base64 = { version = "=0.22", default-features = false }
 bitflags = { version = "=2.10", default-features = false }
 bytes = { version = "*", default-features = false }
-chrono = { version = "=0.4", default-features = false }
 clap = { version = "=4.5", default-features = false }
 cookie = { version = "=0.18", default-features = false }
 codesnake = { version = "=0.2", default-features = false }
@@ -100,18 +99,26 @@ itertools = { version = "=0.14", default-features = false }
 jaq-core = { version = "=2.2", default-features = false }
 jaq-json = { version = "=1.1", default-features = false }
 jaq-std = { version = "=2.1", default-features = false }
+jiff = { version = "=0.2", default-features = false, features = [
+    "tz-fat",
+    "tz-system",
+    "tzdb-bundle-platform",
+    "tzdb-concatenated",
+    "tzdb-zoneinfo",
+    "perf-inline",
+] }
 json-patch = { version = "=4.1", default-features = false } # should be synced with kube
 jsonwebtoken = { version = "=9.3", default-features = false, features = [
     "use_pem",
 ] }
-k8s-openapi = { version = "=0.26", default-features = false, features = [
-    "v1_32",
+k8s-openapi = { version = "=0.27", default-features = false, features = [
+    "v1_35",
 ] }
-kcr-argoproj-io = { package = "kcr_argoproj_io", version = "=2", default-features = false, features = [
+kcr-argoproj-io = { package = "kcr_argoproj_io", version = "=3", default-features = false, features = [
     "v1alpha1",
     "v1beta1",
 ] }
-kube = { version = "=2.0", default-features = false } # should be synced with k8s-openapi
+kube = { version = "=3.0", default-features = false } # should be synced with k8s-openapi
 kube-quantity = { package = "kube_quantity", version = "=0.9", default-features = false } # should be synced with kube
 libc = { version = "=0.2", default-features = false }
 opentelemetry = { version = "=0.31", default-features = false }
@@ -159,7 +166,7 @@ unicode-width = { version = "=0.2", default-features = false, features = [
     "cjk",
 ] }
 url = { version = "=2.5", default-features = false }
-uuid = { version = "=1.19", default-features = false }
+uuid = { version = "=1.20", default-features = false }
 web-sys = { version = "=0.3", default-features = false }
 yew = { version = "=0.21", default-features = false }
 yew-router = { version = "=0.18", default-features = false } # should be synced with yew

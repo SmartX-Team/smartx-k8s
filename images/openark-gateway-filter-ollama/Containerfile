@@ -19,19 +19,14 @@ RUN apt-get update && apt-get install -y \
     && rustup target add 'wasm32-unknown-unknown' \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Load source files
 ADD . /src
 WORKDIR /src
 
 # Build it!
-RUN \
-    # Cache build outputs
-    --mount=type=cache,target=/root/.cache \
-    --mount=type=cache,target=/src/target \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/usr/local/cargo/registry \
+{{ include "container.run.cached.rust" . }} \
     # Create an output directory
     mkdir /out \
     # Disable binary

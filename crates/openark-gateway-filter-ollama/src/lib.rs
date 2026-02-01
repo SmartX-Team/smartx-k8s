@@ -47,16 +47,16 @@ impl HttpContext for Body {
                             self.send_http_response_redirect(location.as_str())
                         }
                         None => {
-                            if self.config.passthrough {
-                                if let Some(mut path) = self.path.take() {
-                                    info!("Accepted model name (PT): {model}");
-                                    let location = {
-                                        path.push('/');
-                                        path.push_str(&model);
-                                        path
-                                    };
-                                    return self.send_http_response_redirect(location.as_str());
-                                }
+                            if self.config.passthrough
+                                && let Some(mut path) = self.path.take()
+                            {
+                                info!("Accepted model name (PT): {model}");
+                                let location = {
+                                    path.push('/');
+                                    path.push_str(&model);
+                                    path
+                                };
+                                return self.send_http_response_redirect(location.as_str());
                             }
 
                             info!("Rejected model name: {model}");

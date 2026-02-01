@@ -24,7 +24,7 @@ volumeMounts:
     readOnly: true
 
 {{- /********************************/}}
-{{- if .Values.features.devicePassthrough }}
+{{- if .Values.session.context.privileged }}
   - name: dev
     mountPath: /dev
 {{- end }}

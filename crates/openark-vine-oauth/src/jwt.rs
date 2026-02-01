@@ -1,5 +1,5 @@
 #[cfg(feature = "client")]
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 #[cfg(feature = "client")]
 use jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation, decode};
 #[cfg(feature = "schemars")]
@@ -14,8 +14,8 @@ use crate::error::{ErrorInvalidToken, ErrorKind};
 #[cfg_attr(feature = "schemars", derive(JsonSchema))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct JsonWebTokenClaims {
-    pub exp: usize,
-    pub iat: usize,
+    pub exp: i64,
+    pub iat: i64,
     // pub sub: String,
     pub name: String,
     #[cfg_attr(
@@ -57,11 +57,11 @@ impl JsonWebTokenClaims {
     }
 
     #[inline]
-    const fn expired_at(&self) -> Option<DateTime<Utc>> {
-        DateTime::from_timestamp(self.exp as _, 0)
+    fn expired_at(&self) -> Option<Timestamp> {
+        Timestamp::from_second(self.exp as _).ok()
     }
 
     pub(crate) fn is_expired(&self) -> bool {
-        self.expired_at().is_none_or(|exp| exp >= Utc::now())
+        self.expired_at().is_none_or(|exp| exp >= Timestamp::now())
     }
 }

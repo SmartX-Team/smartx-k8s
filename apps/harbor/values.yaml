@@ -172,13 +172,6 @@ registry:
                 values:
                   - Compute
           weight: 1
-        - preference:
-            matchExpressions:
-              - key: node-role.kubernetes.io/kiss
-                operator: In
-                values:
-                  - Storage
-          weight: 2
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
@@ -187,7 +180,6 @@ registry:
                 values:
                   - Compute
                   - ControlPlane
-                  - Storage
 
 trivy:
   # enabled the flag to enable Trivy scanner
@@ -226,13 +218,6 @@ database:
                   values:
                     - Compute
             weight: 1
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Storage
-            weight: 2
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
@@ -241,7 +226,6 @@ database:
                   values:
                     - Compute
                     - ControlPlane
-                    - Storage
 
 redis:
   # if external Redis is used, set "type" to "external"
@@ -258,13 +242,6 @@ redis:
                   values:
                     - Compute
             weight: 1
-          - preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/kiss
-                  operator: In
-                  values:
-                    - Storage
-            weight: 2
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
@@ -273,7 +250,6 @@ redis:
                   values:
                     - Compute
                     - ControlPlane
-                    - Storage
 
 exporter:
   affinity:

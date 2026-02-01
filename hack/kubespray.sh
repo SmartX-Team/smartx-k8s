@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2022-2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2022-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -123,7 +123,7 @@ function main() {
     # Patch ansible tasks
     for task in $(
         cat "${templates}" |
-            yq 'select(.metadata.name == "ansible-task-*") | .metadata.name' |
+            yq -r 'select(.metadata.name == "ansible-task-*") | .metadata.name' |
             grep -Po '^ansible-task-\K[a-z]+$'
     ); do
         for file in $(
@@ -149,7 +149,7 @@ function main() {
 
     # Get a kubespray script
     local kubespray_bin="${WORKDIR}/kubespray.sh"
-    cat "${templates}" | yq 'select(.metadata.name == "iso") | .data."kubespray.sh"' >"${kubespray_bin}"
+    cat "${templates}" | yq -r 'select(.metadata.name == "iso") | .data."kubespray.sh"' >"${kubespray_bin}"
     chmod 500 "${kubespray_bin}"
 
     # Execute kubespray

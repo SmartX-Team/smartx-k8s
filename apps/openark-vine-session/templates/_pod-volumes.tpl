@@ -21,14 +21,6 @@
 {{- end }}
 
 {{- /********************************/}}
-{{- if or .Values.features.devicePassthrough .Values.features.hostDisplay }}
-  - name: dev
-    hostPath:
-      path: /dev
-      type: Directory
-{{- end }}
-
-{{- /********************************/}}
   - name: dev-input
 {{- if .Values.features.hostDisplay }}
     emptyDir: null

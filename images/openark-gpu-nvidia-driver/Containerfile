@@ -48,7 +48,10 @@ RUN true \
         apt-utils \
         ca-certificates \
         curl \
-    && curl -sL -o '/tmp/cuda-keyring.deb' {{ printf "%s/repos/%s%s/$(uname -m)/cuda-keyring_1.1-1_all.deb"
+    && if [ "$(uname -m)" == 'aarch64' ]; then ARCH='arm64' \
+        ; else ARCH="$(uname -m)" \
+    ; fi \
+    && curl -sL -o '/tmp/cuda-keyring.deb' {{ printf "%s/repos/%s%s/${ARCH}/cuda-keyring_1.1-1_all.deb"
             .Values.cuda.keyring.baseUrl
             .Values.kiss.os.dist
             ( .Values.kiss.os.version | replace "." "" )
@@ -78,15 +81,15 @@ RUN true \
 {{- if ge ( $driverBranch | int ) 580 }}
         $( \
             if [ "$(uname -m)" == 'x86_64' ]; then echo \
-                {{ printf "libnvidia-nscq=%s-1"
+                {{ printf "libnvidia-nscq=%s-*"
                         .Values.driver.version
                     | quote
                 }} \
-                {{ printf "nvidia-fabricmanager=%s-1"
+                {{ printf "nvidia-fabricmanager=%s-*"
                         .Values.driver.version
                     | quote
                 }} \
-                {{ printf "nvidia-imex=%s-1"
+                {{ printf "nvidia-imex=%s-*"
                         .Values.driver.version
                     | quote
                 }} \
@@ -95,17 +98,17 @@ RUN true \
 {{- else if ge ( $driverBranch | int ) 550 }}
         $( \
             if [ "$(uname -m)" == 'x86_64' ]; then echo \
-                {{ printf "libnvidia-nscq-%s=%s-1"
+                {{ printf "libnvidia-nscq-%s=%s-*"
                         $driverBranch
                         .Values.driver.version
                     | quote
                 }} \
-                {{ printf "nvidia-fabricmanager-%s=%s-1"
+                {{ printf "nvidia-fabricmanager-%s=%s-*"
                         $driverBranch
                         .Values.driver.version
                     | quote
                 }} \
-                {{ printf "nvidia-imex-%s=%s-1"
+                {{ printf "nvidia-imex-%s=%s-*"
                         $driverBranch
                         .Values.driver.version
                     | quote
@@ -117,7 +120,7 @@ RUN true \
     && rm -f /etc/apt/sources.list.d/cuda* \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Download driver installer
 WORKDIR {{ .Values.driver.installer.path | dir | quote }}

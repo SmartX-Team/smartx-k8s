@@ -46,3 +46,58 @@ Selector labels
 app.kubernetes.io/name: {{ include "helm.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Mount the shared cache directory with given `key` and `target` pair.
+*/}}
+{{- define "container.run.cached" -}}
+{{ include "container.run.cached.arg" . }}
+RUN {{ printf "--mount=type=cache,sharing=locked,id=cache-%s-${TARGETOS}-${TARGETARCH}-${TARGETVARIANT}-%s,target=%s" .id .key ( .target | quote ) }}
+{{- end }}
+
+{{/*
+Import builtin build arguments.
+*/}}
+{{- define "container.run.cached.arg" -}}
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETVARIANT
+{{- end }}
+
+{{/*
+Mount the shared cache directory with given `key` and `target` pair on amd64 architecture.
+*/}}
+{{- define "container.run.cached.amd64" -}}
+ARG TARGETOS
+RUN {{ printf "--mount=type=cache,sharing=locked,id=cache-%s-${TARGETOS}-amd64--%s,target=%s" .id .key ( .target | quote ) }}
+{{- end }}
+
+{{/*
+Mount the shared cache directory with given `key` and `target` pair without RUN prefix.
+*/}}
+{{- define "container.run.cached.bulked" -}}
+{{- printf "--mount=type=cache,sharing=locked,id=cache-%s-${TARGETOS}-${TARGETARCH}-${TARGETVARIANT}-%s,target=%s" .id .key ( .target | quote ) }}
+{{- end }}
+
+{{/*
+Mount the shared Rust cache directory.
+*/}}
+{{- define "container.run.cached.rust" -}}
+{{- include "container.run.cached" ( dict
+  "id" .Release.Name
+  "key" "user"
+  "target" "/root/.cache"
+) }} {{ include "container.run.cached.bulked" ( dict
+  "id" .Release.Name
+  "key" "target"
+  "target" "/src/target"
+) }} {{ include "container.run.cached.bulked" ( dict
+  "id" .Release.Name
+  "key" "cargo-git"
+  "target" "/usr/local/cargo/git"
+) }} {{ include "container.run.cached.bulked" ( dict
+  "id" .Release.Name
+  "key" "cargo-registry"
+  "target" "/usr/local/cargo/registry"
+) }}
+{{- end }}

@@ -92,16 +92,16 @@ async fn handle_apply(
 
     origins
         .iter()
-        .cloned()
         .map(|origin| async move {
             let name = Name::from_str(name)
-                .and_then(|name| name.append_domain(&origin))
+                .and_then(|name| name.append_domain(origin))
                 .map_err(handle_error)?;
 
             let zone_type = ZoneType::Primary;
             let allow_axfr = false;
             let nx_proof_kind = None;
-            let authority = InMemoryAuthority::empty(origin, zone_type, allow_axfr, nx_proof_kind);
+            let authority =
+                InMemoryAuthority::empty(origin.clone(), zone_type, allow_axfr, nx_proof_kind);
 
             let ttl = 300;
             let rdata = match addr {
@@ -139,10 +139,9 @@ async fn handle_delete(
 
     origins
         .iter()
-        .cloned()
         .map(|origin| async move {
             let name = Name::from_str(name)
-                .and_then(|name| name.append_domain(&origin))
+                .and_then(|name| name.append_domain(origin))
                 .map_err(handle_error)?;
 
             handler.catalog.write().await.remove(&name.into());

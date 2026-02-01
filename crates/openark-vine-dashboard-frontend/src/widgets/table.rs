@@ -1,8 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use chrono::{DateTime, Utc};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
+use jiff::Timestamp;
 use openark_vine_dashboard_api::{
     item::{Item, ItemMetadata},
     page::PageRef,
@@ -52,12 +52,12 @@ impl ValueExt for Value {
 struct Selections {
     all: Option<bool>,
     items: RefCell<Vec<bool>>,
-    timestamp: Option<DateTime<Utc>>,
+    timestamp: Option<Timestamp>,
 }
 
 enum SelectionsAction {
     /// Clear the items and reset the timestamp.
-    Reset { timestamp: DateTime<Utc> },
+    Reset { timestamp: Timestamp },
     /// Toggle in item.
     Toggle(usize, bool),
     /// Toggle all items.

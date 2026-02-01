@@ -126,8 +126,8 @@ domain:
     hostDevices:
 {{- include "helm.vmGPUPassthroughDevices" $ | trim | nindent 6 }}
 {{- if .Values.features.hostDisplay }}
-{{- if not .Values.features.devicePassthrough }}
-{{- fail "host display cannot be enabled without device passthrough in VM" }}
+{{- if not .Values.session.context.privileged }}
+{{- fail "host display cannot be enabled without `privileged` permission in VM" }}
 {{- end }}
 
 {{- $_ := set $ "Counter" 0 }}

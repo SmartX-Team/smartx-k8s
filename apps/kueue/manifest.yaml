@@ -4,6 +4,7 @@ kind: Manifest
 metadata:
   name: smartx.apps.kueue
 spec:
+  enabled: false
   group: ops
   phase: stable
   scale: small
@@ -26,4 +27,4 @@ spec:
   source:
     chart: kueue
     repoUrl: "registry.k8s.io/kueue/charts"
-    version: 0.11.3
+    version: 0.16.0

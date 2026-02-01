@@ -42,7 +42,7 @@ decode:
 # @schema
 # additionalProperties: true
 # @schema
-# Prefill pod configuation
+# Prefill pod configuration
 prefill:
   # @schema
   # additionalProperties: true

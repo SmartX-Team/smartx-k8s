@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 #[cfg(feature = "kube")]
 use kube::CustomResource;
 #[cfg(feature = "schemars")]
@@ -57,13 +57,13 @@ pub struct CatalogItem {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub created_at: Option<DateTime<Utc>>,
+    pub created_at: Option<Timestamp>,
 
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub updated_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<Timestamp>,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub spec: CatalogItemSpec,

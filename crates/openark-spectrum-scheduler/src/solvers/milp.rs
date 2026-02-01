@@ -89,11 +89,9 @@ impl Solver {
         if use_min || use_max {
             for (col, &j) in targets.iter().enumerate() {
                 let load_j = filled[j] + load[col].clone();
-                if use_min {
-                    if let Some(min) = items[j].resource.min {
-                        let constraint = constraint!(load_j.clone() >= min);
-                        constraints.push(constraint)
-                    }
+                if use_min && let Some(min) = items[j].resource.min {
+                    let constraint = constraint!(load_j.clone() >= min);
+                    constraints.push(constraint)
                 }
                 if use_max {
                     match items[j].resource.max {

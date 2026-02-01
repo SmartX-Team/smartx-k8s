@@ -3,11 +3,13 @@
 {{- if eq .kind "Kueue" -}}
 
 ---
-apiVersion: kueue.x-k8s.io/v1beta1
+apiVersion: kueue.x-k8s.io/v1beta2
 kind: LocalQueue
 metadata:
   name: {{ printf "%s.%s" ( include "helm.fullname" $ ) .name | quote }}
   namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:

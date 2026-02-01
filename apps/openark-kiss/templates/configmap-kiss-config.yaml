@@ -63,7 +63,7 @@ data:
   ###########################################################################
   # Kubespray Configuration
   ###########################################################################
-  kubespray_image: {{ printf "%s:%s" .Values.kiss.image.repo .Values.kiss.image.tag | quote }}
+  kubespray_image: {{ printf "%s:v%s" .Values.build.kubespray.image.repo .Values.build.kubespray.version | quote }}
 
   ###########################################################################
   # Network Configuration

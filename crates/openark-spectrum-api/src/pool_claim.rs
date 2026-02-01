@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use chrono::DateTime;
+use jiff::Timestamp;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::{Condition, Time};
 #[cfg(feature = "kube")]
 use kube::CustomResource;
@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[cfg(feature = "opeartor")]
+#[cfg(feature = "operator")]
 impl ::openark_core::operator::Resource for PoolClaimCrd {
     type Status = PoolClaimStatus;
 
@@ -224,7 +224,7 @@ impl Default for PoolClaimStatus {
 impl PoolClaimStatus {
     fn default_conditions() -> Vec<Condition> {
         vec![Condition {
-            last_transition_time: Time(DateTime::default()),
+            last_transition_time: Time(Timestamp::default()),
             message: "Waiting for class".into(),
             observed_generation: None,
             reason: "Pending".into(),

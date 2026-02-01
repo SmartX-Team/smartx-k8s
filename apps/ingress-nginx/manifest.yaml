@@ -14,7 +14,7 @@ spec:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: {{ .Values.ingress.namespace | quote }}
+    namespace: "{{ .Values.ingress.namespace }}"
     patched: false
     unsafe: false
     useClusterValues: false
@@ -28,4 +28,4 @@ spec:
   source:
     chart: ingress-nginx
     repoUrl: "https://kubernetes.github.io/ingress-nginx"
-    version: 4.12.1
+    version: 4.14.2

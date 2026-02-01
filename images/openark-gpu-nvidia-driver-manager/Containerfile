@@ -13,11 +13,13 @@ RUN apt-get update && apt-get install -y \
         jq \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Install dependencies / kubectl
+{{- $kubectl_url := printf "https://dl.k8s.io/release/v%s/bin/linux/${ARCH}/kubectl" .Values.kube.version }}
 RUN ARCH="$(dpkg --print-architecture)" \
-    && curl -Lo '/usr/local/bin/kubectl' "https://dl.k8s.io/release/v{{ .Values.kube.version }}/bin/linux/${ARCH}/kubectl" \
+    && curl -Lo '/usr/local/bin/kubectl' {{ $kubectl_url | quote }} \
+    && echo "$(curl -L {{ printf "%s.sha256" $kubectl_url | quote }})" /usr/local/bin/kubectl | sha256sum --check \
     && chmod 0555 '/usr/local/bin/kubectl'
 
 # Copy executable files

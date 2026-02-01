@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -62,16 +62,16 @@ function main() {
         {{- $nodeName := .Values.bootstrapper.node.name }}
         {{- $nodeIP := .Values.bootstrapper.network.address.ipv4 }}
         echo '{}' |
-            yq '.all.hosts.{{ $nodeName }}.ansible_host = {{ $nodeIP | quote }}' |
-            yq '.all.hosts.{{ $nodeName }}.ansible_host_key_checking = false' |
-            yq '.all.hosts.{{ $nodeName }}.ansible_ssh_host = {{ $nodeIP | quote }}' |
-            yq '.all.hosts.{{ $nodeName }}.ansible_ssh_port = 22' |
-            yq '.all.hosts.{{ $nodeName }}.ansible_ssh_user = {{ .Values.kiss.auth.ssh.username | quote }}' |
-            yq '.all.hosts.{{ $nodeName }}.ip = {{ $nodeIP | quote }}' |
-            yq '.all.hosts.{{ $nodeName }}.name = {{ $nodeName | quote }}' |
-            yq '.etcd.hosts.{{ $nodeName }} = {}' |
-            yq '.kube_control_plane.hosts.{{ $nodeName }} = {}' |
-            yq '.kube_node.hosts.{{ $nodeName }} = {}' |
+            yq -r '.all.hosts.{{ $nodeName }}.ansible_host = {{ $nodeIP | quote }}' |
+            yq -r '.all.hosts.{{ $nodeName }}.ansible_host_key_checking = false' |
+            yq -r '.all.hosts.{{ $nodeName }}.ansible_ssh_host = {{ $nodeIP | quote }}' |
+            yq -r '.all.hosts.{{ $nodeName }}.ansible_ssh_port = 22' |
+            yq -r '.all.hosts.{{ $nodeName }}.ansible_ssh_user = {{ .Values.kiss.auth.ssh.username | quote }}' |
+            yq -r '.all.hosts.{{ $nodeName }}.ip = {{ $nodeIP | quote }}' |
+            yq -r '.all.hosts.{{ $nodeName }}.name = {{ $nodeName | quote }}' |
+            yq -r '.etcd.hosts.{{ $nodeName }} = {}' |
+            yq -r '.kube_control_plane.hosts.{{ $nodeName }} = {}' |
+            yq -r '.kube_node.hosts.{{ $nodeName }} = {}' |
             cat >./hosts.yaml
         unset node_name
 
@@ -200,7 +200,7 @@ __EOF
             --net host \
             --security-opt seccomp='unconfined' \
             ${EXTRA_ARGS[@]} \
-            {{ printf "%s:%s" .Values.kiss.image.repo .Values.kiss.image.tag | quote }} \
+            {{ printf "%s:v%s" .Values.build.kubespray.image.repo .Values.build.kubespray.version | quote }} \
             ansible-playbook \
             --become \
             --become-user 'root' \
@@ -211,7 +211,7 @@ __EOF
     )"
 
     # Wait until the container has been completed
-    until [ "$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq '.0.State.Running')" == 'false' ]; do
+    until [ "$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq -r '.0.State.Running')" == 'false' ]; do
         ${CONTAINER_RUNTIME} logs -f "${container_id}" || true
         until ${CONTAINER_RUNTIME} inspect "${container_id}" >/dev/null 2>/dev/null; do
             sleep 1
@@ -219,7 +219,7 @@ __EOF
     done
 
     # Terminate the container
-    local exit_code="$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq '.0.State.ExitCode')"
+    local exit_code="$(${CONTAINER_RUNTIME} inspect "${container_id}" 2>/dev/null | yq -r '.0.State.ExitCode')"
     ${CONTAINER_RUNTIME} rm -f "${container_id}" >/dev/null 2>/dev/null || true
 
     # Cleanup

@@ -1,7 +1,7 @@
 ---
 features:
   kueue:
-    enabled: {{ has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features }}
+    # enabled: {{ has "org.ulagbulag.io/batch/scheduling/kueue" .Values.features }}
     namespaceSelector:
       matchLabels:
         {{ index .Values.openark.labels "org.ulagbulag.io/bind" | quote }}: "true"

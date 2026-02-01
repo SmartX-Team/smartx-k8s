@@ -7,6 +7,9 @@
 {{- $_ := set .Values.dist "current" $dist }}
 FROM "{{ $dist.image.repo }}:{{ $dist.image.tag }}" AS server
 
+# Use bash shell
+SHELL ["/bin/bash", "-c"]
+
 # Configure user-specific environment variables
 ENV SHELL={{ .Values.user.shell | quote }}
 ENV USER_SHELL={{ .Values.user.shell | quote }}
@@ -36,8 +39,17 @@ CMD [ "/usr/bin/systemctl", "init", {{ printf "%s.service" .Release.Name | quote
 {{- $home := printf "/home/%s" .Values.user.name }}
 VOLUME [ {{ $home | quote }} ]
 
+# Builtin build arguments
+{{ include "container.run.cached.arg" . }}
+
 # Configure OS-specific settings
-RUN true \
+RUN {{ include "container.run.cached.bulked" ( dict
+        "id" $.Release.Name
+        "key" "var"
+        "target" "/var/cache"
+    ) }} true \
+    # Reload package list
+    && {{ $dist.packageManager.update }} \
 {{- if eq $dist.kind "archlinux" }}
     {{- $packageManagerName := index ( $dist.packageManager.install | split " " ) "_3" }}
     {{- if not ( eq "pacman" $packageManagerName ) }}
@@ -107,23 +119,43 @@ RUN true \
     && echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections \
 {{- end }}
     # Cleanup
-    && {{ $dist.packageManager.clean }}
+    {{- if $dist.packageManager.force.clean }}
+        && {{ $dist.packageManager.clean }}
+    {{- else }}
+        && true
+    {{- end }}
 
 # Configure 3rd-party repositories
 {{- if eq $dist.kind "debian" }}
 ADD ./etc/apt/apt.conf.d/* /etc/apt/apt.conf.d/
 ADD ./etc/apt/keyrings/* /etc/apt/keyrings/
 ADD ./etc/apt/preferences.d/* /etc/apt/preferences.d/
-ADD ./etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/
-RUN true \
-    # Get the latest kubernetes informations
+ADD ./etc/apt/sources.list.d/* /etc/apt/sources.list.d/
+RUN {{ include "container.run.cached.bulked" ( dict
+        "id" $.Release.Name
+        "key" "var"
+        "target" "/var/cache"
+    ) }} true \
+    # Reload package list
+    {{- if $dist.packageManager.force.update }}
+        && {{ $dist.packageManager.update }} \
+    {{- end }}
+    # Get the latest kubernetes information
     && export KUBERNETES_VERSION=$( \
         curl -s "https://api.github.com/repos/kubernetes/kubernetes/releases/latest" \
             | grep -Po '"tag_name": +"v\K[0-9]+\.[0-9]+' \
     ) \
-    # Get OS informations
+    # Get OS information
     && . /etc/os-release \
-    && export ARCH="$(uname -m)" \
+    && if [ "$(uname -m)" == 'aarch64' ]; then export ARCH='arm64' \
+        ; else export ARCH="$(uname -m)" \
+    ; fi \
+    && if [ "$(uname -m)" == 'x86_64' ]; then export UBUNTU_ARCHIVE_URL='http://archive.ubuntu.com/ubuntu/' \
+        ; else export UBUNTU_ARCHIVE_URL='http://ports.ubuntu.com/ubuntu-ports/' \
+    ; fi \
+    && if [ "$(uname -m)" == 'x86_64' ]; then export UBUNTU_SECURITY_URL='http://security.ubuntu.com/ubuntu/' \
+        ; else export UBUNTU_SECURITY_URL='http://ports.ubuntu.com/ubuntu-ports/' \
+    ; fi \
     && export VERSION_CODENAME="${VERSION_CODENAME}" \
     && export VERSION_ID="${VERSION_ID}" \
     && export VERSION_ID_MAJOR="${VERSION_ID%\.[0-9]*}" \
@@ -135,7 +167,11 @@ RUN true \
     && find /etc/apt/sources.list.d/ -type f -exec sh -c \
         'mv "{}" "{}.bak" && envsubst < "{}.bak" >"{}" && rm "{}".bak' \; \
     # Cleanup
-    && {{ $dist.packageManager.clean }}
+    {{- if $dist.packageManager.force.clean }}
+        && {{ $dist.packageManager.clean }}
+    {{- else }}
+        && {{ $dist.packageManager.update }}
+    {{- end }}
 {{- end }}
 
 {{- /* Collect Requirements */}}
@@ -184,14 +220,12 @@ RUN true \
 {{- $packages := list }}
 {{- range $name := $packageKeys }}
     {{- range $_ := $.Values.packages }}
-        {{- /* TODO: Validate arch, locales */}}
         {{- if and
             ( eq $name .name)
             ( or ( empty .dist ) ( has $dist.kind .dist ) )
         }}
             {{- $dependencies := list }}
             {{- range $_ := .dependencies }}
-                {{- /* TODO: Validate arch, locales */}}
                 {{- if and
                     ( or ( empty .dist ) ( has $dist.kind .dist ) )
                 }}
@@ -216,7 +250,11 @@ RUN true \
 
 {{- /* Execute install */}}
 {{- range $package := $packages }}
-RUN true \
+RUN {{ include "container.run.cached.bulked" ( dict
+        "id" $.Release.Name
+        "key" "var"
+        "target" "/var/cache"
+    ) }} true \
     # Pre-install
     {{- $filePath := printf "bin/packages/pre/%s.sh" .name }}
     {{- if not ( empty ( $.Files.Glob $filePath ) ) }}
@@ -242,10 +280,19 @@ RUN true \
                 {{- end }}
                 {{- $dependency = printf "%s=%s" .name .version }}
             {{- end }}
-            {{- $dependencies = append $dependencies ( $dependency | quote ) }}
+            {{- if not ( empty .arch ) }}
+                {{- $dependency = printf "$( if [[ \"$(uname -m)\" =~ ^(%s)$ ]]; then echo '%s'; fi )" ( .arch | join "|" ) $dependency }}
+            {{- end }}
+            {{- /* TODO: Validate locales */}}
+            {{- $dependencies = append $dependencies $dependency }}
         {{- end }}
     {{- end }}
     {{- if not ( empty $dependencies ) }}
+        # Reload package list
+        {{- if $dist.packageManager.force.update }}
+            && {{ $dist.packageManager.update }} \
+        {{- end }}
+        # Install packages
         && {{ $dist.packageManager.install }}
         {{- printf " %s" ( $dependencies | join " " ) }} \
     {{- end }}
@@ -260,7 +307,11 @@ RUN true \
                 SCRIPT_PATH='/tmp/script.sh' \
                     && printf {{ tpl ( $.Files.Get $filePath ) $ | replace "\\" "\\\\" | quote | replace "$" "\\$" }} >"${SCRIPT_PATH}" \
                     && chmod u+x "${SCRIPT_PATH}" \
+                    {{- if not ( empty .arch ) }}
+                    && ( if [[ "$(uname -m)" =~ ^({{ .arch }})$ ]]; then "${SCRIPT_PATH}"; fi ) \
+                    {{- else }}
                     && "${SCRIPT_PATH}" \
+                    {{- end }}
                     && rm "${SCRIPT_PATH}" \
             ) \
         {{- end }}
@@ -277,7 +328,10 @@ RUN true \
         ) \
     {{- end }}
     # Cleanup
-    && {{ $dist.packageManager.clean }} \
+    # Reload package list
+    {{- if $dist.packageManager.force.clean }}
+        && {{ $dist.packageManager.clean }} \
+    {{- end }}
     && echo {{ printf "Completed %s!" .name | quote }}
 {{- end }}
 

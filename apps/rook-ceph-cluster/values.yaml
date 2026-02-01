@@ -13,8 +13,6 @@ configOverride: |
 toolbox:
   # Enable Ceph debugging pod deployment
   enabled: true
-  # -- Toolbox image, defaults to the image used by the Ceph cluster
-  image: quay.io/ceph/ceph:v18.2.2
   # affinity:
   #   nodeAffinity:
   #     # KISS normal control plane nodes should be preferred
@@ -31,6 +29,22 @@ toolbox:
   #             - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
   #               operator: DoesNotExist
 
+# Specify these values to override the Ceph image in the cephClusterSpec below.
+# If specifying these values, do not include the cephVersion section in the cephClusterSpec.
+cephImage:
+  # The repository from which to pull the ceph image
+  # repository: quay.io/ceph/ceph
+  # In production, use a specific version tag instead of the general v19 flag, which pulls the latest release and could result in different
+  # versions running within the cluster. See tags available at https://hub.docker.com/r/ceph/ceph/tags/.
+  # To be more precise, you can always use a timestamp tag such as quay.io/ceph/ceph:v19.2.3-20250717
+  tag: v19.2.1
+  # Whether to allow unsupported versions of Ceph. Currently Squid and Tentacle are supported.
+  # Future versions such as Tentacle (v20) would require this to be set to `true`.
+  # Do not set to true in production.
+  allowUnsupported: false
+  # The image pull policy for pulling the ceph image in the ceph daemon pods, defaults to IfNotPresent
+  # imagePullPolicy: IfNotPresent
+
 # All values below are taken from the CephCluster CRD
 # More information can be found at [Ceph Cluster CRD](/Documentation/CRDs/ceph-cluster-crd.md)
 cephClusterSpec:
@@ -42,13 +56,6 @@ cephClusterSpec:
 
   # For more details, check https://rook.io/docs/rook/v1.10/CRDs/Cluster/ceph-cluster-crd/
   cephVersion:
-    # The container image used to launch the Ceph daemon pods (mon, mgr, osd, mds, rgw).
-    # v16 is Pacific, v17 is Quincy.
-    # RECOMMENDATION: In production, use a specific version tag instead of the general v16 flag, which pulls the latest release and could result in different
-    # versions running within the cluster. See tags available at https://hub.docker.com/r/ceph/ceph/tags/.
-    # If you want to be more precise, you can always use a timestamp tag such quay.io/ceph/ceph:v15.2.11-20200419
-    # This tag might not contain a new Ceph version, just security fixes from the underlying operating system, which will reduce vulnerabilities
-    # image: quay.io/ceph/ceph:v19.2.1
     # Whether to allow unsupported versions of Ceph. Currently `pacific` and `quincy` are supported.
     # Future versions such as `reef` (v18) would require this to be set to `true`.
     # Do not set to true in production.

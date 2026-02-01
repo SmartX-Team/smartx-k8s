@@ -303,6 +303,9 @@ initContainers:
 {{- if not .Values.features.dbus }}
 {{- fail "host display cannot be enabled without DBus" }}
 {{- end }}
+{{- if not .Values.session.context.privileged }}
+{{- fail "host display cannot be enabled without `privileged` permission" }}
+{{- end }}
 {{- if ne "Desktop" .Values.mode }}
 {{- fail "host display cannot be enabled without desktop environment" }}
 {{- end }}

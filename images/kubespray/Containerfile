@@ -1,0 +1,69 @@
+# Copyright (c) 2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+# Be ready for serving
+FROM "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS server
+
+# Use bash shell
+SHELL ["/bin/bash", "-c"]
+
+# LocAle Configuration
+ENV LANG='C.UTF-8'
+
+# Package Manager Configuration
+ENV DEBIAN_FRONTEND='noninteractive'
+
+# Python Configuration
+ENV PIP_BREAK_SYSTEM_PACKAGES='1'
+ENV PIP_NO_CACHE_DIR='1'
+ENV PIP_NO_COMPILE='1'
+ENV PIP_ROOT_USER_ACTION='ignore'
+ENV PYTHONDONTWRITEBYTECODE='1'
+
+# Install dependencies
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+        curl \
+        git \
+        iputils-ping \
+        openssh-client \
+        python3 \
+        python3-pip \
+        rsync \
+        sshpass \
+        vim \
+    # Cleanup
+    && apt-get clean all \
+    && rm -rf /var/lib/apt/lists/* /var/log/*
+
+# Install dependencies / kubectl
+{{- $kubectl_url := printf "https://dl.k8s.io/release/v%s/bin/linux/${ARCH}/kubectl" .Values.kube.version }}
+RUN ARCH="$(dpkg --print-architecture)" \
+    && curl -Lo '/usr/local/bin/kubectl' {{ $kubectl_url | quote }} \
+    && echo "$(curl -L {{ printf "%s.sha256" $kubectl_url | quote }})" /usr/local/bin/kubectl | sha256sum --check \
+    && chmod 0555 '/usr/local/bin/kubectl'
+
+# Download source code
+WORKDIR /
+RUN git clone --depth=1 \
+        -b {{ .Values.kubespray.repo.revision | quote }} \
+        "{{ .Values.kubespray.repo.baseUrl }}/{{ .Values.kubespray.repo.owner }}/{{ .Values.kubespray.repo.name }}.git" \
+        'kubespray' \
+    && cd '/kubespray' \
+    && git submodule update --init --depth=1 \
+    # Remove unneeded files
+    && rm -rf \
+        '.github' '.gitlab-ci' '.vscode' 'docs' 'logo' 'meta' 'scripts' 'test-infra' 'tests' \
+        '.ansible-lint' '.ansible-lint-ignore' '.editorconfig' \
+        '.gitattributes' '.gitignore' '.gitlab-ci.yml' '.gitmodules' \
+        '.md_style.rb' '.mdlrc' '.nojekyll' '.pre-commit-config.yaml' '.yamllint' \
+        'CHANGELOG.md' 'CNAME' 'code-of-conduct.md' 'CONTRIBUTING.md' \
+        'Dockerfile' 'index.html' 'OWNERS' 'OWNERS_ALIASES' 'pipeline.Dockerfile' \
+        'README.md' 'RELEASE.md' 'SECURITY_CONTACTS' 'Vagrantfile' \
+    # Do not use git version
+    && rm -rf "../.git"
+
+# Install python dependencies
+WORKDIR /kubespray
+RUN pip install -r 'requirements.txt' \
+    && find /usr -type d -name '*__pycache__' -prune -exec rm -rf {} \;

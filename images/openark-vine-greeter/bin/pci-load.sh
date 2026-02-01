@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -30,25 +30,39 @@ if [ "x${driver}" == 'x' ]; then
     exec true
 elif [ "x${driver}" == 'xgpu' ]; then
     case "$(cat "${dev}/vendor")" in
-    '0x10de') driver='nouveau' ;; # nvidia
+    '0x10de')
+        # Use host drivers if possible
+        if (
+            ls /lib/modules/$(uname -r)/kernel/nvidia-*/nvidia.ko >/dev/null 2>/dev/null || \
+            ls /lib/modules/$(uname -r)/updates/dkms/nvidia.ko.zst >/dev/null 2>/dev/null
+        ) && modprobe nvidia ; then
+            echo 'Use host drivers...'
+            modprobe nvidia_drm
+            modprobe nvidia_modeset
+            modprobe nvidia_uvm
+            driver='nvidia'
+        else
+            driver='nouveau'
+        fi
+        ;; # nvidia
     '0x8086') driver='i915' ;;    # intel
     *)
-        echo "WARN: Unsupported PCI device: ${pci_id}"
+        echo "WARN: Unsupported GPU device: ${pci_id}"
         exec true
         ;;
     esac
 fi
 
 # Skip if another driver is running
-if [ "x${driver}" == 'xvfio-pci' ] && [ -e "/sys/bus/pci/devices/${pci_id}/driver" ]; then
-    last_driver="$(basename "$(realpath "/sys/bus/pci/devices/${pci_id}/driver")")"
-    case "${last_driver}" in
-    #'i915' | 'nvidia')
-    'nvidia')
-        echo "WARN: Using the current driver: ${pci_id} -> ${last_driver}"
-	exec true
-        ;;
-    esac
+if [ "x${driver}" != 'xvfio-pci' ] && [ -e "/sys/bus/pci/devices/${pci_id}/driver" ]; then
+        last_driver="$(basename "$(realpath "/sys/bus/pci/devices/${pci_id}/driver")")"
+        case "${last_driver}" in
+        'i915' | 'nouveau' | 'nvidia')
+            echo "WARN: Using the current GPU driver: ${pci_id} -> ${last_driver}"
+            exec true
+            ;;
+        esac
+    fi
 fi
 
 # Build driver

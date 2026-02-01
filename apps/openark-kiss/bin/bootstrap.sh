@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -70,26 +70,26 @@ helm template smartx \
     "${BASEDIR}" >"${apps_file}"
 
 # Disable app-of-apps pattern
-cluster_name="$(cat "${values_file}" | yq '.cluster.name')"
+cluster_name="$(cat "${values_file}" | yq -r '.cluster.name')"
 yq -i "select(.metadata.name != \"${cluster_name}\")" "${apps_file}"
 
 # Enable digital twin
-kubectl create namespace "$(cat "${values_file}" | yq '.twin.namespace')" || true
+kubectl create namespace "$(cat "${values_file}" | yq -r '.twin.namespace')" || true
 
 # Install CNI
 cni_name='cilium'
-cni_namespace="$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.app.namespace')"
+cni_namespace="$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq -r '.spec.app.namespace')"
 (
     cni_file="${BASEDIR}/${cni_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${cni_name}\") | .spec.sources.0.helm.valuesObject" >"${cni_file}"
     kubectl create namespace "${cni_namespace}" || true
 
-    helm repo add "${cni_name}" "$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.source.repoUrl')"
+    helm repo add "${cni_name}" "$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq -r '.spec.source.repoUrl')"
     helm template "${cni_name}" "${cni_name}/${cni_name}" \
         --namespace "${cni_namespace}" \
         --values "${BASEDIR}/apps/${cni_name}/values.yaml" \
         --values "${cni_file}" \
-        --version "$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.source.version')" |
+        --version "$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq -r '.spec.source.version')" |
         kubectl apply -f - --server-side=true
 
     kubectl -n "${cni_namespace}" rollout status \
@@ -100,18 +100,18 @@ cni_namespace="$(cat "${BASEDIR}/apps/${cni_name}/manifest.yaml" | yq '.spec.app
 
 # Install CSR Approver
 csr_name='kubelet-csr-approver'
-csr_namespace="$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.app.namespace')"
+csr_namespace="$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq -r '.spec.app.namespace')"
 (
     csr_file="${BASEDIR}/${csr_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${csr_name}\") | .spec.sources.0.helm.valuesObject" >"${csr_file}"
     kubectl create namespace "${csr_namespace}" || true
 
-    helm repo add "${csr_name}" "$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.source.repoUrl')"
+    helm repo add "${csr_name}" "$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq -r '.spec.source.repoUrl')"
     helm template "${csr_name}" "${csr_name}/${csr_name}" \
         --namespace "${csr_namespace}" \
         --values "${BASEDIR}/apps/${csr_name}/values.yaml" \
         --values "${csr_file}" \
-        --version "$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.source.version')" |
+        --version "$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq -r '.spec.source.version')" |
         kubectl apply -f - --server-side=true
 
     kubectl -n "${csr_namespace}" rollout status \
@@ -137,18 +137,18 @@ csr_namespace="$(cat "${BASEDIR}/apps/${csr_name}/manifest.yaml" | yq '.spec.app
 
 # Install Argo CD
 argocd_name='argo-cd'
-argo_namespace="$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq '.spec.app.namespace')"
+argo_namespace="$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq -r '.spec.app.namespace')"
 (
     argocd_file="${BASEDIR}/${argocd_name}.yaml"
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${argocd_name}\") | .spec.sources.0.helm.valuesObject" >"${argocd_file}"
     kubectl create namespace "${argo_namespace}" || true
 
-    helm repo add "${argocd_name}" "$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq '.spec.source.repoUrl')"
+    helm repo add "${argocd_name}" "$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq -r '.spec.source.repoUrl')"
     helm template "${argocd_name}" "${argocd_name}/${argocd_name}" \
         --namespace "${argo_namespace}" \
         --values "${BASEDIR}/apps/${argocd_name}/values.yaml" \
         --values "${argocd_file}" \
-        --version "$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq '.spec.source.version')" |
+        --version "$(cat "${BASEDIR}/apps/${argocd_name}/manifest.yaml" | yq -r '.spec.source.version')" |
         kubectl apply -f - --server-side=true
 
     kubectl -n "${argo_namespace}" rollout status \
@@ -167,17 +167,17 @@ argowf_file="${BASEDIR}/${argowf_name}.yaml"
 (
     cat "${apps_file}" | yq "select(.metadata.name == \"*-${argowf_name}\") | .spec.sources.0.helm.valuesObject" >"${argowf_file}"
 
-    helm repo add "${argowf_name}" "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq '.spec.source.repoUrl')"
+    helm repo add "${argowf_name}" "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq -r '.spec.source.repoUrl')"
     helm template "${argowf_name}" "${argowf_name}/${argowf_name}" \
         --namespace "${argo_namespace}" \
         --values "${BASEDIR}/apps/${argowf_name}/values.yaml" \
         --values "${argowf_file}" \
-        --version "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq '.spec.source.version')" |
+        --version "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq -r '.spec.source.version')" |
         kubectl apply -f - --server-side=true
     helm template "${argowf_name}" "${BASEDIR}/apps/${argowf_name}" \
         --namespace "${argo_namespace}" \
         --values "${argowf_file}" \
-        --version "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq '.spec.source.version')" |
+        --version "$(cat "${BASEDIR}/apps/${argowf_name}/manifest.yaml" | yq -r '.spec.source.version')" |
         kubectl apply -f - --server-side=true
 
     kubectl -n "${argo_namespace}" rollout status \
@@ -195,7 +195,7 @@ argowf_file="${BASEDIR}/${argowf_name}.yaml"
 # Install Argo CD Profiles
 (
     # Update server IP
-    node_ip="$(cat "${values_file}" | yq '.bootstrapper.network.address.ipv4')"
+    node_ip="$(cat "${values_file}" | yq -r '.bootstrapper.network.address.ipv4')"
     yq -i ".clusters.0.cluster.server = \"https://${node_ip}:6443\"" ~/.kube/config
 
     # Connect to incluster Argo CD
@@ -210,10 +210,10 @@ argowf_file="${BASEDIR}/${argowf_name}.yaml"
     # Add appprojects
     kubectl -n argo get appprojects.argoproj.io default -o yaml |
         yq ".metadata.name = \"${cluster_name}-ops\"" |
-        yq 'del(.metadata.creationTimestamp)' |
-        yq 'del(.metadata.generation)' |
-        yq 'del(.metadata.resourceVersion)' |
-        yq 'del(.metadata.uid)' |
+        yq -r 'del(.metadata.creationTimestamp)' |
+        yq -r 'del(.metadata.generation)' |
+        yq -r 'del(.metadata.resourceVersion)' |
+        yq -r 'del(.metadata.uid)' |
         kubectl apply -f - --server-side=true
 )
 
@@ -230,7 +230,7 @@ kubectl -n "${argo_namespace}" apply -f "${apps_file}" --server-side=true
 
 # Mark the bootstrapped node as "standalone"
 (
-    node_id="$(cat "${values_file}" | yq '.bootstrapper.node.name')"
+    node_id="$(cat "${values_file}" | yq -r '.bootstrapper.node.name')"
     kubectl label nodes "${node_id}" --overwrite node-role.kubernetes.io/standalone='true'
 )
 

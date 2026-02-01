@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2018-2020, NVIDIA CORPORATION. All rights reserved.
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -197,6 +197,35 @@ function _load_driver() {
 
 # Stop daemons and unload the kernel modules if they are currently loaded.
 function _unload_driver() {
+    # Use host drivers if possible
+    if (
+        ls /host/lib/modules/${KERNEL_VERSION}/kernel/nvidia-*/nvidia.ko >/dev/null 2>/dev/null || \
+        ls /host/lib/modules/${KERNEL_VERSION}/updates/dkms/nvidia.ko.zst >/dev/null 2>/dev/null
+    ) && modprobe nvidia -d '/host' ; then
+        echo 'Use host drivers...'
+
+        # Reuse prebuilt binaries
+        for host_path in $(find '/host/usr/lib' -name 'libnvidia-*'); do
+            path="${host_path:5}"
+            if [[ "${path}" =~ ^/usr/lib/modules ]]; then
+                continue
+            fi
+            mkdir -p "$(dirname ${path})"
+            ln -sf "${host_path}" "${path}"
+        done
+        for host_path in $(find '/host/usr/bin' -name 'nvidia-*'); do
+            path="${host_path:5}"
+            mkdir -p "$(dirname ${path})"
+            ln -sf "${host_path}" "${path}"
+        done
+
+        sleep infinity &
+        trap "echo 'Caught signal'; _shutdown_host_driver && { kill $!; exit 0; }" HUP INT QUIT PIPE TERM
+        trap - EXIT
+        while true; do wait $! || continue; done
+        exit 0
+    fi
+
     # Stop daemons
     for name in ${DAEMON_LIST[@]}; do
         local pid_file="/var/run/${name}.pid"
@@ -251,9 +280,16 @@ function _unload_driver() {
         # Wait for the driver to be terminated (by openark-vine-greeter)
         echo "- device/${pci_id}/load: Terminating (Pending)"
         while :; do
+            if [ ! -L "${dev}/driver" ]; then
+                break
+            fi
             case "$(basename "$(realpath "${dev}/driver")")" in
             'nvidia')
                 echo "- device/${pci_id}/load: Terminating (Ready: reinstall nvidia driver)"
+                break
+                ;;
+            'snd_hda_intel')
+                echo "- device/${pci_id}/load: Terminating (Ready: unload snd_hda_intel driver)"
                 break
                 ;;
             'vfio-pci')
@@ -265,6 +301,10 @@ function _unload_driver() {
                 ;;
             esac
         done
+        if [ ! -L "${dev}/driver" ]; then
+            echo "- device/${pci_id}/load: Terminated (Unattended)"
+            continue
+        fi
         # Unload driver
         echo "- device/${pci_id}/load: Terminating"
         echo >"${dev}/driver_override"
@@ -310,6 +350,12 @@ function _shutdown_fail() {
         cat '/var/log/nvidia-installer.log'
     fi
     _shutdown
+}
+
+function _shutdown_host_driver() {
+    _unmount_rootfs
+    rm -f "${PID_FILE}"
+    return 0
 }
 
 function main() {

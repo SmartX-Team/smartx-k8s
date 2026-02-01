@@ -12,7 +12,11 @@ dist:
     packageManager:
       binary: true
       clean: sudo -u _pacman yay -Scc --noconfirm && rm -rf /var/cache/pacman/pkg/*
+      force:
+        clean: false
+        update: false
       install: sudo -u _pacman yay -Sy --needed --noconfirm
+      update: sudo -u _pacman yay -Sy
 
   ubuntu:
     kind: debian
@@ -22,8 +26,12 @@ dist:
     ldconfig:
       path: /sbin/ldconfig.real
     packageManager:
-      clean: apt-get clean all && rm -rf /var/lib/apt/lists/*
-      install: apt-get update && apt-get install --no-install-recommends --no-install-suggests -y
+      clean: apt-get clean all && rm -rf /var/lib/apt/lists/* /var/log/*
+      force:
+        clean: false
+        update: false
+      install: apt-get install --no-install-recommends --no-install-suggests -y
+      update: apt-get update
 
 packages:
   - name: core
@@ -122,10 +130,19 @@ packages:
     dependencies:
       - kind: Group
         name: browser
+      - name: chromium-browser
+        arch:
+          - aarch64
+        dist:
+          - debian
+      # Google Chrome is not supported on `aarch64` arch; https://issues.chromium.org/issues/374811603#comment10
       - name: google-chrome
         dist:
           - archlinux
+      # Google Chrome is not supported on `aarch64` arch; https://issues.chromium.org/issues/374811603#comment10
       - name: google-chrome-stable
+        arch:
+          - x86_64
         dist:
           - debian
   - name: browser-rdp
@@ -497,6 +514,19 @@ packages:
       - kind: Group
         name: devel
       - name: rustup
+  - name: devel-solver
+    dependencies:
+      - kind: Group
+        name: devel
+      - name: coin-or-cbc
+        dist:
+          - archlinux
+      - name: coinor-cbc
+        dist:
+          - debian
+      - name: coinor-libcbc-dev
+        dist:
+          - debian
   - name: devel-web
     dependencies:
       - kind: Group
@@ -581,7 +611,18 @@ packages:
         name: lutris
         dist:
           - debian
-      - name: steam
+      - kind: BuildScript
+        name: steam
+        dist:
+          - debian
+      - name: steam-libs-amd64
+        arch:
+          - x86_64
+        dist:
+          - debian
+      - name: steam-libs-i386
+        arch:
+          - x86_64
         dist:
           - debian
       # - name: umu-launcher
@@ -593,11 +634,8 @@ packages:
       - name: wine
       - kind: BuildScript
         name: wine
-      - name: wine32
         arch:
           - x86_64
-        dist:
-          - debian
       - name: wine64
         arch:
           - x86_64
@@ -945,6 +983,8 @@ packages:
       - kind: Group
         name: desktop-environment-gtk
       - name: android-studio
+        arch:
+          - x86_64
       - name: code
         dist:
           - debian
@@ -1267,6 +1307,8 @@ packages:
       - name: zsh
       - name: zsh-autosuggestions
       - name: zsh-completions
+        arch:
+          - x86_64
       - name: zsh-syntax-highlighting
   - name: systemd
     dependencies:
@@ -1286,6 +1328,7 @@ packages:
       - name: qemu-system
         dist:
           - debian
+      - name: qemu-user-static
       - name: virt-manager
       - name: virt-viewer
 

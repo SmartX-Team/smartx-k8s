@@ -26,4 +26,4 @@ spec:
   source:
     chart: argo-events
     repoUrl: "https://argoproj.github.io/argo-helm"
-    version: 2.4.14
+    version: 2.4.20

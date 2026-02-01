@@ -21,7 +21,7 @@ spec:
       {{ printf "%s-%s-%s"
           .Values.dist.name
           ( index .Values.dist .Values.dist.name "image" "tag" )
-          "20251230"
+          "20260131"
         | quote
       }}
     buildArgs:

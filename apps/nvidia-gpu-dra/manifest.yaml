@@ -25,4 +25,4 @@ spec:
   source:
     chart: nvidia-dra-driver-gpu
     repoUrl: "https://helm.ngc.nvidia.com/nvidia"
-    version: 25.3.0-rc.2
+    version: 25.8.1

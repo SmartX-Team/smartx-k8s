@@ -19,9 +19,9 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
-use chrono::{DateTime, Duration, Utc};
 #[cfg(feature = "clap")]
 use clap::Parser;
+use jiff::{SignedDuration, Timestamp};
 #[cfg(feature = "serde")]
 use k8s_openapi::Resource;
 use k8s_openapi::{
@@ -84,7 +84,7 @@ pub struct VineSessionArgs {
 
     /// Duration for signing out nodes as seconds.
     #[cfg_attr(feature = "clap", arg(long, env = "DURATION_SIGN_OUT_SECONDS"))]
-    duration_sign_out_seconds: u32,
+    duration_sign_out_seconds: i64,
 
     #[cfg_attr(feature = "clap", arg(long, env = "OPENARK_FEATURE_GATEWAY"))]
     feature_gateway: bool,
@@ -172,15 +172,8 @@ impl VineSessionArgs {
     /// Return a duration for signing out nodes as chrono duration.
     ///
     #[must_use]
-    pub const fn duration_sign_out_as_chrono(&self) -> Duration {
-        Duration::seconds(self.duration_sign_out_seconds as _)
-    }
-
-    /// Return a duration for signing out nodes as std duration.
-    ///
-    #[must_use]
-    pub const fn duration_sign_out_as_std(&self) -> ::core::time::Duration {
-        ::core::time::Duration::from_secs(self.duration_sign_out_seconds as _)
+    pub fn duration_sign_out(&self) -> SignedDuration {
+        SignedDuration::new(self.duration_sign_out_seconds, 0)
     }
 
     /// Return `true` if gateway feature is enabled.
@@ -420,7 +413,7 @@ impl<'a> Metadata<'a> {
             bind_timestamp: labels
                 .and_then(|map| map.get(&args.label_bind_timestamp))
                 .and_then(|value| value.parse::<i64>().ok())
-                .and_then(DateTime::from_timestamp_millis)
+                .and_then(|millisecond| Timestamp::from_millisecond(millisecond).ok())
                 .map(Time),
             bind_user: labels
                 .and_then(|map| map.get(&args.label_bind_user))
@@ -491,7 +484,7 @@ impl<'a> Metadata<'a> {
             self.args.label_bind_timestamp.clone(),
             self.bind_timestamp
                 .as_ref()
-                .map(|time| time.0.timestamp_millis().to_string())
+                .map(|time| time.0.as_millisecond().to_string())
                 .unwrap_or_default(),
         );
         map.insert(
@@ -598,7 +591,7 @@ impl<'a> NodeSession<'a> {
 
     /// Get remaining signing-out duration.
     #[must_use]
-    pub fn signing_out(&self, timestamp: DateTime<Utc>) -> Option<Duration> {
+    pub fn signing_out(&self, timestamp: Timestamp) -> Option<SignedDuration> {
         let time_added = self
             .taints
             .iter()
@@ -607,9 +600,9 @@ impl<'a> NodeSession<'a> {
             .as_ref()?
             .0;
 
-        let time_completed = time_added + self.metadata.args.duration_sign_out_as_chrono();
+        let time_completed = time_added + self.metadata.args.duration_sign_out();
         if time_completed > timestamp {
-            Some(time_completed - timestamp)
+            Some(time_completed.as_duration() - timestamp.as_duration())
         } else {
             None
         }
@@ -700,7 +693,7 @@ impl<'a> NodeSession<'a> {
     pub fn apply_profile<'p>(
         &mut self,
         profile: Option<&'p (SessionBindingCrd, SessionProfileCrd)>,
-        timestamp: DateTime<Utc>,
+        timestamp: Timestamp,
     ) -> ProfileState<'p> {
         match profile {
             Some((binding, profile)) => {
@@ -787,7 +780,7 @@ impl<'a> NodeSession<'a> {
     /// Set the session's signing state.
     ///
     #[must_use]
-    pub fn set_sign_out(&mut self, timestamp: DateTime<Utc>, sign_out: bool) -> Option<Duration> {
+    pub fn set_sign_out(&mut self, timestamp: Timestamp, sign_out: bool) -> Option<SignedDuration> {
         if sign_out {
             self.metadata.bind = Some(false);
             self.metadata.bind_revision = None;
@@ -810,9 +803,9 @@ impl<'a> NodeSession<'a> {
                     "true".into(),
                     timestamp,
                 );
-                let time_completed = time_added + self.metadata.args.duration_sign_out_as_chrono();
+                let time_completed = time_added + self.metadata.args.duration_sign_out();
                 if time_completed > timestamp {
-                    Some(time_completed - timestamp)
+                    Some(time_completed.as_duration() - timestamp.as_duration())
                 } else {
                     None
                 }
@@ -823,7 +816,7 @@ impl<'a> NodeSession<'a> {
         }
     }
 
-    fn set_taint(&mut self, key: &str, value: String, timestamp: DateTime<Utc>) -> DateTime<Utc> {
+    fn set_taint(&mut self, key: &str, value: String, timestamp: Timestamp) -> Timestamp {
         let last_taint = self
             .taints
             .iter_mut()
@@ -869,7 +862,6 @@ impl<'a> NodeSession<'a> {
 
     /// Convert to a computing resource limits.
     ///
-    #[must_use]
     pub fn to_resources_compute(&self) -> Result<BTreeMap<String, Quantity>> {
         let mut map = BTreeMap::default();
 
@@ -937,7 +929,6 @@ impl<'a> NodeSession<'a> {
 
     /// Convert to a local storage resource capacity.
     ///
-    #[must_use]
     pub fn to_resources_local_storage(&self) -> Result<BTreeMap<String, Quantity>> {
         let mut map = BTreeMap::default();
 

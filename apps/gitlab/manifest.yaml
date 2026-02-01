@@ -46,4 +46,4 @@ spec:
   source:
     chart: gitlab
     repoUrl: "https://charts.gitlab.io"
-    version: 8.8.1
+    version: 9.8.2

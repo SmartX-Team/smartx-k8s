@@ -1,6 +1,8 @@
 use std::{collections::BTreeMap, rc::Rc};
 
-use chrono::{DateTime, TimeDelta, Utc};
+#[cfg(feature = "ttl")]
+use jiff::SignedDuration;
+use jiff::Timestamp;
 use openark_vine_dashboard_api::{
     app::App,
     client::ClientExt as _,
@@ -20,7 +22,7 @@ use super::client::{ApiStore, Client, Request, Response};
 
 #[derive(Clone, Debug)]
 pub struct Cached<T> {
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
     pub data: Option<T>,
 }
 
@@ -32,13 +34,13 @@ impl<T> PartialEq for Cached<T> {
 }
 
 impl<T> Cached<T> {
-    fn try_hit(&self, now: DateTime<Utc>) -> Option<&T> {
+    fn try_hit(&self, now: Timestamp) -> Option<&T> {
         let Self { created_at, data } = self;
         let data = data.as_ref()?;
         if now
             <= created_at
-                .checked_add_signed(AppStore::TTL)
-                .unwrap_or(DateTime::<Utc>::MAX_UTC)
+                .checked_add(AppStore::TTL)
+                .unwrap_or(Timestamp::MAX)
         {
             Some(data)
         } else {
@@ -75,10 +77,10 @@ pub struct AppStore {
 
 impl AppStore {
     #[cfg(feature = "ttl")]
-    const TTL: TimeDelta = TimeDelta::minutes(5);
+    const TTL: SignedDuration = SignedDuration::from_secs(5 * 60); // 5 minutes
 
-    #[cfg(any(not(feature = "ttl")))]
-    const TTL: TimeDelta = TimeDelta::MAX;
+    #[cfg(not(feature = "ttl"))]
+    const TTL: SignedDuration = SignedDuration::MAX;
 
     /// Reset the states and invoke reloading.
     pub fn clear(&mut self) {
@@ -157,7 +159,7 @@ impl ApiStore<AppStore> {
 #[hook]
 pub fn use_app(api: ApiStore<AppStore>) -> Response<Rc<App>> {
     // Do nothing if the cache is alive.
-    let now = Utc::now();
+    let now = Timestamp::now();
     let mut result = None;
     if let Some(cache) = api.store.app.as_ref() {
         if let Some(cached) = cache.try_hit(now) {
@@ -184,7 +186,7 @@ pub fn use_app(api: ApiStore<AppStore>) -> Response<Rc<App>> {
 #[hook]
 pub fn use_page(api: ApiStore<AppStore>, page: PageRef) -> Response<PageSpec> {
     // Do nothing if the cache is alive.
-    let now = Utc::now();
+    let now = Timestamp::now();
     let mut result = None;
     if let Some(cache) = api.store.pages.get(&page) {
         if let Some(cached) = cache.try_hit(now) {
@@ -222,7 +224,7 @@ pub fn use_table_rows(
     base_url: Url,
 ) -> Response<Cached<Rc<TableRows>>> {
     // Do nothing if the cache is alive.
-    let now = Utc::now();
+    let now = Timestamp::now();
     let mut result = None;
     if let Some(cache) = api.store.table_rows.as_ref() {
         if let Some(cached) = cache.try_hit(now)

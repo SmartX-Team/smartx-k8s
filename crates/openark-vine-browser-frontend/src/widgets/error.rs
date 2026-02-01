@@ -35,7 +35,7 @@ pub struct NotFoundProps {
 
 #[function_component(FileNotFound)]
 pub fn render_file_not_found(props: &NotFoundProps) -> Html {
-    let &NotFoundProps { ref i18n } = props;
+    let NotFoundProps { i18n } = props;
 
     html! {
         <Error message={ i18n.alert_file_not_found() } />

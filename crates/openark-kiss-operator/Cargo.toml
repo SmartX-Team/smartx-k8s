@@ -73,9 +73,9 @@ openark-kiss-api = { workspace = true, features = ["kube", "std"] }
 
 anyhow = { workspace = true, features = ["std"] }
 async-trait = { workspace = true }
-chrono = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
 futures = { workspace = true, features = ["std"] }
+jiff = { workspace = true, features = ["std"] }
 k8s-openapi = { workspace = true, features = [
     # "std",
 ] }

@@ -106,12 +106,6 @@ runAsUser: {{ include "helm.userId" $ }}
 
 {{- /********************************/}}
 {{- define "podTemplate.desktop.volumeMounts" -}}
-{{- if .Values.features.devicePassthrough }}
-- name: dev
-  mountPath: /dev
-{{- end }}
-
-{{- /********************************/}}
 {{- if .Values.features.hostDisplay }}
 - name: dev-input
   mountPath: /dev/input

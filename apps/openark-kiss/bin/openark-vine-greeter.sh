@@ -36,7 +36,9 @@ function terminate() {
     nerdctl kill "${NAME}" || true
 
     # Cleanup module
-    rmmod nouveau || true
+    if [ -d '/sys/bus/pci/drivers/nouveau' ]; then
+        rmmod nouveau || true
+    fi
     exec true
 }
 

@@ -87,7 +87,16 @@ build:
 
   # Kubernetes Configuration
   kube:
-    version: 1.34.1
+    version: 1.34.3
+
+  # Kubespray Configuration
+  kubespray:
+    image:
+      repo: quay.io/ulagbulag/kubespray
+      pullPolicy: IfNotPresent
+    # NOTE: Before upgrading kubespray, please double-check the kubespray variables
+    # Especially: `kube_version`, `kubeadm_image_repo`
+    version: 2.30.0
 
   # Nginx Image Configuration
   nginx:
@@ -335,21 +344,13 @@ kiss:
     forceResetOS: false
     resetStorage: false
 
-  # Kubespray Image Configuration
-  image:
-    # FIXME: Wait for this PR to be merged: https://github.com/kubernetes-sigs/kubespray/pull/11994
-    repo: quay.io/ulagbulag/kubespray
-    # NOTE: Before upgrading kubespray, please double-check the kubespary variables
-    # Especially: `kube_version`, `kubeadm_image_repo`
-    tag: v2.27.1
-    pullPolicy: Always
-
   # OS Configuration
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
     version: "24.04"
     revision: "3"
-    kernel: edge # One of: edge (default), stable
+    channel: release # One of: release (default), preview-*
+    kernel: stable # One of: edge, stable (default)
 
   # Bare-metal Power Configuration
   power:

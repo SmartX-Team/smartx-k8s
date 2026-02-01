@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use k8s_openapi::apimachinery::pkg::api::resource::Quantity;
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
@@ -37,19 +37,19 @@ pub struct Session {
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub created_at: Option<DateTime<Utc>>,
+    pub created_at: Option<Timestamp>,
 
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub started_at: Option<DateTime<Utc>>,
+    pub started_at: Option<Timestamp>,
 
     #[cfg_attr(
         feature = "serde",
         serde(default, skip_serializing_if = "Option::is_none")
     )]
-    pub completed_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<Timestamp>,
 
     #[cfg_attr(feature = "serde", serde(default))]
     pub resource_annotations: SessionResourceAnnotations,

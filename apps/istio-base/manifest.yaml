@@ -32,4 +32,4 @@ spec:
   source:
     chart: base
     repoUrl: "https://istio-release.storage.googleapis.com/charts"
-    version: 1.25.1
+    version: 1.28.3

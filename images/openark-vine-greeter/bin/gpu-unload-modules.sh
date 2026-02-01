@@ -24,8 +24,12 @@ modules=(
     'nvidia_uvm'
     'nvidia'
 )
-for module in ${modules[@]}; do
-    while [ -d "/sys/module/${module}" ]; do
-        rmmod "${module}" || sleep 0.1
+completed='false'
+while [ "${completed}" == 'false' ]; do
+    completed='true'
+    for module in ${modules[@]}; do
+        if [ -d "/sys/module/${module}" ]; then
+            rmmod "${module}" || (completed='false' && sleep 0.1)
+        fi
     done
 done

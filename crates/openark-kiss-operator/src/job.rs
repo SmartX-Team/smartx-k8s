@@ -1,8 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
-use chrono::Utc;
 use futures::StreamExt;
+use jiff::Timestamp;
 use k8s_openapi::api::{batch::v1::Job, core::v1::ObjectReference};
 use kube::{
     Api, Client, CustomResourceExt, Error, ResourceExt,
@@ -56,7 +56,7 @@ async fn update_box_state(
             },
             "status": {
                 "state": state,
-                "lastUpdated": Utc::now(),
+                "lastUpdated": Timestamp::now(),
             },
         }));
         ctx.api_box

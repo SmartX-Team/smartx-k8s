@@ -368,7 +368,7 @@ postgresql:
                 - key: node-role.kubernetes.io/kiss
                   operator: In
                   values:
-                    - Storage
+                    - Compute
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
@@ -376,7 +376,7 @@ postgresql:
                   operator: In
                   values:
                     - Compute
-                    - Storage
+                    - ControlPlane
 
     ## PostgreSQL Primary persistence configuration
     ##

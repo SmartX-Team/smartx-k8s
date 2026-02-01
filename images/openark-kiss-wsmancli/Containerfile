@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
         pkg-config \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Build build dependency: sblim-sfcc
 WORKDIR /src
@@ -75,7 +75,7 @@ ADD ./wsmanhelper.sh /usr/local/bin/
 # Server Configuration
 ENTRYPOINT [ "/usr/local/bin/wsmanhelper.sh" ]
 
-# Configure enviroment variables
+# Configure environment variables
 ENV RESOURCES_HOME="/usr/local/share/wsmancli/resources"
 
 # Add templates

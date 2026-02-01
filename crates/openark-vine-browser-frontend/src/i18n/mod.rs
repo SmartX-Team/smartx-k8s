@@ -3,7 +3,7 @@ mod ko_kr;
 
 use std::{fmt, rc::Rc};
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use openark_vine_browser_api::user::UserRef;
 
 macro_rules! impl_i18n {
@@ -160,19 +160,20 @@ impl_i18n! {
         ;; // auto-derived
 
         /// Converts the given time interval into a human-readable [`String`].
-        fn format_date(&self, from: Option<DateTime<Utc>>, to: DateTime<Utc>) -> String {
+        fn format_date(&self, from: Option<Timestamp>, to: Timestamp) -> String {
             let from = match from {
                 Some(value) => value,
                 None => return "-".into(),
             };
 
-            if from <= to {
+            match to.as_duration().checked_sub(from.as_duration()) {
                 // before
-                let formatter = ::timeago::Formatter::with_language(self.timeago());
-                formatter.convert_chrono(from, to)
-            } else {
-                // after
-                "-".into()
+                Some(duration) => {
+                    let formatter = ::timeago::Formatter::with_language(self.timeago());
+                    formatter.convert(duration.unsigned_abs())
+                }
+                // after (invalid format!)
+                None => "-".into()
             }
         }
 
@@ -242,6 +243,7 @@ impl DynI18n {
         // Try getting a system language
         let language = ::web_sys::window().and_then(|w| w.navigator().language());
 
+        #[allow(clippy::wildcard_in_or_patterns)]
         match language.as_deref() {
             Some("ko-KR") => Self::new(self::ko_kr::Korean),
             // Fallback

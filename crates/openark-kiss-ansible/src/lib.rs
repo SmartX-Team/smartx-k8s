@@ -106,18 +106,16 @@ impl AnsibleClient {
             job.use_workers,
         )
         .await?;
-        if let Some(new_state) = job.new_state {
-            if matches!(new_state, BoxState::Joining) && !cluster_state.is_joinable() {
-                #[cfg(feature = "tracing")]
-                info!(
-                    "Cluster is not ready: {} {} {} -> {}",
-                    new_state,
-                    job.r#box.spec.group.role,
-                    &box_name,
-                    &job.r#box.spec.group.cluster_name,
-                );
-                return Ok(false);
-            }
+        if let Some(new_state) = job.new_state
+            && matches!(new_state, BoxState::Joining)
+            && !cluster_state.is_joinable()
+        {
+            #[cfg(feature = "tracing")]
+            info!(
+                "Cluster is not ready: {} {} {} -> {}",
+                new_state, job.r#box.spec.group.role, &box_name, &job.r#box.spec.group.cluster_name,
+            );
+            return Ok(false);
         }
 
         // define the object

@@ -3,10 +3,12 @@
 {{- if eq .kind "Kueue" -}}
 
 ---
-apiVersion: kueue.x-k8s.io/v1beta1
+apiVersion: kueue.x-k8s.io/v1beta2
 kind: ResourceFlavor
 metadata:
   name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:

@@ -1,0 +1,15 @@
+---
+debian:
+  image:
+    repo: ""
+    tag: ""
+
+kube:
+  version: ""
+
+kubespray:
+  repo:
+    baseUrl: https://github.com
+    owner: kubernetes-sigs
+    name: kubespray
+    revision: ""

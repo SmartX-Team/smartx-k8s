@@ -1,4 +1,0 @@
-deb http://archive.ubuntu.com/ubuntu jammy main universe
-deb http://archive.ubuntu.com/ubuntu jammy-backports main universe
-deb http://archive.ubuntu.com/ubuntu jammy-updates main universe
-deb http://security.ubuntu.com/ubuntu jammy-security main universe

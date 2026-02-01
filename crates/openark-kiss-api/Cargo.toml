@@ -21,9 +21,9 @@ workspace = true
 
 [features]
 default = []
-alloc = ["chrono/alloc", "serde/alloc"]
+alloc = ["jiff/alloc", "serde/alloc"]
 std = [
-    "chrono/std",
+    "jiff/std",
     # "k8s-openapi?/std",
     # "schemars?/std",
     "serde?/std",
@@ -41,15 +41,15 @@ kube = [
     "std",
 ]
 schemars = ["dep:schemars", "k8s-openapi?/schemars", "serde"]
-serde = ["alloc", "chrono/serde", "dep:serde", "uuid/serde"]
+serde = ["alloc", "dep:serde", "jiff/serde", "uuid/serde"]
 
 [dependencies]
-chrono = { workspace = true }
+jiff = { workspace = true }
 k8s-openapi = { workspace = true, optional = true }
 kube = { workspace = true, optional = true, features = ["derive"] }
 schemars = { workspace = true, optional = true, features = [
-    "chrono04",
     "derive",
+    "jiff02",
     "uuid1",
 ] }
 serde = { workspace = true, optional = true, features = ["derive"] }

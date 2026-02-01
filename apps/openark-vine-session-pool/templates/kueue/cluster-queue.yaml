@@ -3,15 +3,17 @@
 {{- if eq .kind "Kueue" -}}
 
 ---
-apiVersion: kueue.x-k8s.io/v1beta1
+apiVersion: kueue.x-k8s.io/v1beta2
 kind: ClusterQueue
 metadata:
   name: {{ printf "%s.%s" ( include "helm.kueueClusterNamePrefix" $ ) .name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 spec:
   flavorFungibility:
-    whenCanBorrow: Borrow
+    whenCanBorrow: MayStopSearch
     whenCanPreempt: TryNextFlavor
   namespaceSelector:
 {{- $.Values.features.kueue.namespaceSelector | toYaml | nindent 4 }}

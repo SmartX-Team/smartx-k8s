@@ -26,4 +26,4 @@ spec:
   source:
     chart: argo-workflows
     repoUrl: "https://argoproj.github.io/argo-helm"
-    version: 0.45.11
+    version: 0.47.2

@@ -23,8 +23,8 @@ workspace = true
 default = []
 std = [
     "anyhow?/std",
-    "chrono/std",
     "http?/std",
+    "jiff/std",
     # "k8s-openapi/std",
     "openark-core?/std",
     "ordered-float/std",
@@ -45,11 +45,11 @@ client = [
     "openark-core?/client",
 ]
 kube = ["schemars", "std"]
-opeartor = ["kube", "openark-core/operator"]
+operator = ["kube", "openark-core/operator"]
 schemars = ["dep:schemars", "k8s-openapi/schemars", "serde"]
 serde = [
-    "chrono/serde",
     "dep:serde",
+    "jiff/serde",
     "ordered-float/serde",
     "url?/serde",
     "uuid/serde",
@@ -66,14 +66,14 @@ openark-core = { workspace = true, optional = true }
 
 anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
-chrono = { workspace = true, features = ["alloc"] }
 http = { workspace = true, optional = true }
+jiff = { workspace = true, features = ["alloc"] }
 k8s-openapi = { workspace = true }
 kube = { workspace = true, features = ["client", "derive"] }
 ordered-float = { workspace = true }
 schemars = { workspace = true, optional = true, features = [
-    "chrono04",
     "derive",
+    "jiff02",
     "uuid1",
 ] }
 serde = { workspace = true, optional = true, features = ["alloc", "derive"] }

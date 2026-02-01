@@ -1,4 +1,4 @@
-use chrono::DateTime;
+use jiff::Timestamp;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::{Condition, Time};
 #[cfg(feature = "kube")]
 use kube::CustomResource;
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::ObjectReference;
 
-#[cfg(feature = "opeartor")]
+#[cfg(feature = "operator")]
 impl ::openark_core::operator::Resource for PoolCrd {
     type Status = PoolStatus;
 
@@ -110,7 +110,7 @@ impl Default for PoolStatus {
 impl PoolStatus {
     fn default_conditions() -> Vec<Condition> {
         vec![Condition {
-            last_transition_time: Time(DateTime::default()),
+            last_transition_time: Time(Timestamp::default()),
             message: "Waiting for class".into(),
             observed_generation: None,
             reason: "Pending".into(),

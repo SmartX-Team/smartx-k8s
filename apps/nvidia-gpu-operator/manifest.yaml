@@ -47,4 +47,4 @@ spec:
   source:
     chart: gpu-operator
     repoUrl: "https://helm.ngc.nvidia.com/nvidia"
-    version: v25.3.0
+    version: v25.10.1

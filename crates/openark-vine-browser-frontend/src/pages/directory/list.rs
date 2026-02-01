@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use openark_vine_browser_api::file::{FileEntry, FileRef};
 use yew::{
     Callback, Html, MouseEvent, Properties, Reducible, UseReducerHandle, UseStateHandle,
@@ -67,7 +67,7 @@ impl Reducible for CheckBoxGroup {
 #[derive(Clone, Debug, PartialEq, Properties)]
 struct ItemProps {
     checkboxes: UseReducerHandle<CheckBoxGroup>,
-    current: DateTime<Utc>,
+    current: Timestamp,
     dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,
@@ -180,7 +180,7 @@ fn render_item(props: &ItemProps) -> Html {
 
 #[derive(Clone, Debug, Properties)]
 pub(super) struct Props {
-    pub(super) current: DateTime<Utc>,
+    pub(super) current: Timestamp,
     pub(super) directory: Rc<FileEntry>,
     pub(super) i18n: DynI18n,
     pub(super) indices: UseReducerHandle<super::FileIndices>,
@@ -264,7 +264,7 @@ pub(super) fn render(props: &Props) -> Html {
                                                 move |event: MouseEvent| {
                                                     event.stop_propagation(); // Prevents the event from bubbling up
                                                     checkboxes.dispatch(CheckBoxAction::ToggleMany {
-                                                        global_index: global_index,
+                                                        global_index,
                                                         size: local_size,
                                                     })
                                                 }

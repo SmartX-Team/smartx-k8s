@@ -29,7 +29,7 @@ pub struct EmptyProps {
 
 #[function_component(Empty)]
 pub fn render_empty(props: &EmptyProps) -> Html {
-    let &EmptyProps { ref i18n } = props;
+    let EmptyProps { i18n } = props;
 
     html! {
         <Warn message={ i18n.alert_file_entry_empty() } />

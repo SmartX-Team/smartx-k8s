@@ -26,4 +26,4 @@ spec:
   source:
     chart: strimzi-kafka-operator
     repoUrl: "https://strimzi.io/charts"
-    version: 0.45.0
+    version: 0.50.0

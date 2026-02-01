@@ -77,8 +77,8 @@ actix-cors = { workspace = true, optional = true }
 actix-web = { workspace = true }
 actix-web-opentelemetry = { workspace = true, optional = true }
 anyhow = { workspace = true, features = ["std"] }
-chrono = { workspace = true, features = ["serde", "std"] }
 clap = { workspace = true, features = ["derive", "std"] }
+jiff = { workspace = true, features = ["serde", "std"] }
 kube = { workspace = true, features = ["runtime"] }
 serde-json = { workspace = true, features = ["std"] }
 tracing = { workspace = true, optional = true, features = [

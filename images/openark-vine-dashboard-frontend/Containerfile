@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y \
         wasm-bindgen-cli \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Load source files
 ADD . /src
@@ -48,12 +48,7 @@ RUN . "${HOME}/.nvm/nvm.sh" \
 
 # Build it!
 ENV OPENARK_LABEL_ALIAS={{ index .Values.openark.labels "org.ulagbulag.io/alias" | quote }}
-RUN \
-    # Cache build outputs
-    --mount=type=cache,target=/root/.cache \
-    --mount=type=cache,target=/src/target \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/usr/local/cargo/registry \
+{{ include "container.run.cached.rust" . }} \
     # Load Node.js
     . "${HOME}/.nvm/nvm.sh" \
     # Create an output directory

@@ -39,7 +39,7 @@ impl crate::handler::Handler for Handler<'_> {
         }
         self.capacity -= 1;
 
-        let pid = (u32::from(ctx.pid()) as u64) << (size_of::<u32>() * 8);
+        let pid = (u32::from(ctx.pid()) as u64) << (u32::BITS as usize);
         let flags = Flags::empty();
         let data = pid | flags.bits() as u64;
 
@@ -183,7 +183,7 @@ impl ::dark_lake_api::kernel::Kernel for Kernel {
             }
             for entry in &mut cq {
                 let data = entry.user_data();
-                let pid = ProcessID::new_unchecked((data >> (size_of::<u32>() * 8)) as _);
+                let pid = ProcessID::new_unchecked((data >> (u32::BITS as usize)) as _);
                 let flags = Flags::from_bits_truncate(data as _);
 
                 #[cfg(feature = "tracing")]

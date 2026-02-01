@@ -115,6 +115,9 @@
   fail:
     msg: The nodes should be rebooted!
 
+- name: Patch node
+  include_tasks: patches.yaml
+
 - name: Regard kiss OS as dirty
   when:
     - kiss_os_exists
