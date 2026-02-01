@@ -65,7 +65,7 @@ openark-core = { workspace = true, features = [
 openark-spectrum-api = { workspace = true, features = [
     "client",
     "kube",
-    "opeartor",
+    "operator",
     "send",
     "std",
 ] }

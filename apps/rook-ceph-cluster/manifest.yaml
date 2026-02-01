@@ -28,4 +28,4 @@ spec:
   source:
     chart: rook-ceph-cluster
     repoUrl: "https://charts.rook.io/release"
-    version: 1.16.6
+    version: v1.19.0

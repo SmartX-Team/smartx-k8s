@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -34,6 +34,12 @@ case "$(cat "${dev}/vendor")" in
     ;; # intel
 esac
 
+# Skip if another domain
+if ! echo "${pci_id}" | grep -Posq '^0000:'; then
+    echo "INFO: Integrated device; skipping resetting: ${pci_id}"
+    exec true
+fi
+
 # Remove the devices
 "$(dirname "$0")/pci-remove-group.sh" "${port}"
 
@@ -50,7 +56,10 @@ echo "INFO: Patched PCI device: ${pci_id}"
 
 # Remove the port
 echo "DEBUG: Reset port: ${port_id}"
-echo 1 >"${port}/reset"
+if ! echo 1 >"${port}/reset"; then
+    echo "ERROR: Failed to reset PCI device: ${pci_id}"
+    exec true
+fi
 
 # Rescan the PCI bus
 echo 'DEBUG: Rescan the PCI bus'

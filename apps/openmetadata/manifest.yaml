@@ -27,4 +27,4 @@ spec:
   source:
     chart: openmetadata
     repoUrl: "https://helm.open-metadata.org"
-    version: 1.7.2
+    version: 1.11.7

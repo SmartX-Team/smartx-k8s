@@ -2,10 +2,10 @@ mod status;
 
 use std::{collections::BTreeMap, iter, sync::Arc, time::Duration};
 
-use chrono::{DateTime, Utc};
 use clap::Parser;
 use convert_case::{Case, Casing};
 use futures::StreamExt;
+use jiff::Timestamp;
 use k8s_openapi::{
     api::core::v1::{Node, ObjectReference, Pod},
     apimachinery::pkg::apis::meta::v1::{OwnerReference, Time},
@@ -276,16 +276,15 @@ fn build_owned_session_profile(
         }
 
         fn attach_shared_volume(volume: &mut VolumeSharingSpec, default_pvc_name: Option<&str>) {
-            if let Some(name) = default_pvc_name {
-                if volume.enabled.unwrap_or(false)
-                    && volume
-                        .persistent_volume_claim
-                        .as_ref()
-                        .is_none_or(|claim| claim.claim_name.is_empty())
-                {
-                    let claim = volume.persistent_volume_claim.get_or_insert_default();
-                    claim.claim_name = name.into();
-                }
+            if let Some(name) = default_pvc_name
+                && volume.enabled.unwrap_or(false)
+                && volume
+                    .persistent_volume_claim
+                    .as_ref()
+                    .is_none_or(|claim| claim.claim_name.is_empty())
+            {
+                let claim = volume.persistent_volume_claim.get_or_insert_default();
+                claim.claim_name = name.into();
             }
         }
 
@@ -514,7 +513,7 @@ async fn delete_app(ctx: &Context, node: &Node) -> Result<AppState> {
 /// Return `true` if the app has been synced.
 ///
 #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, err(level = Level::ERROR), skip_all))]
-async fn sync_app(ctx: &Context, node: &Node, timestamp: DateTime<Utc>) -> Result<bool> {
+async fn sync_app(ctx: &Context, node: &Node, timestamp: Timestamp) -> Result<bool> {
     // TODO: use watcher+managedresources instead
     let name = build_app_name(node);
     match ctx.api_app.get_opt(&name).await? {
@@ -523,8 +522,11 @@ async fn sync_app(ctx: &Context, node: &Node, timestamp: DateTime<Utc>) -> Resul
                 Some(Time(since)) => match app.metadata.deletion_timestamp {
                     // Wait until the app is deleted
                     Some(Time(since)) => {
-                        let duration = timestamp - since;
-                        if duration >= ctx.args.api.duration_sign_out_as_chrono() {
+                        let duration = timestamp.duration_since(since);
+                        if duration
+                            .checked_sub(ctx.args.api.duration_sign_out())
+                            .is_some()
+                        {
                             #[cfg(feature = "tracing")]
                             warn!("still deleting application/{name} since {since:?} ({duration})");
                         } else {
@@ -550,8 +552,11 @@ async fn sync_app(ctx: &Context, node: &Node, timestamp: DateTime<Utc>) -> Resul
                         }
                         // Wait until the app is synced (pre-install jobs are completed)
                         _ => {
-                            let duration = timestamp - since;
-                            if duration >= ctx.args.api.duration_sign_out_as_chrono() {
+                            let duration = timestamp.duration_since(since);
+                            if duration
+                                .checked_sub(ctx.args.api.duration_sign_out())
+                                .is_some()
+                            {
                                 #[cfg(feature = "tracing")]
                                 warn!(
                                     "still syncing application/{name} since {since:?} ({duration})"
@@ -581,12 +586,12 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
 
     // Check the node's current session
     let current = NodeSession::load(&ctx.args.api, &node);
-    let timestamp = Utc::now();
+    let timestamp = Timestamp::now();
 
     // Do nothing while signing out
     if let Some(remaining) = current
         .signing_out(timestamp)
-        .and_then(|delta| delta.to_std().ok())
+        .map(|delta| delta.unsigned_abs())
     {
         {
             #[cfg(feature = "tracing")]
@@ -598,7 +603,9 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     // Do nothing while syncing the session application
     let is_synced = sync_app(&ctx, &node, timestamp).await?;
     if !is_synced {
-        return Ok(Action::requeue(ctx.args.api.duration_sign_out_as_std()));
+        return Ok(Action::requeue(
+            ctx.args.api.duration_sign_out().unsigned_abs(),
+        ));
     }
 
     // Collect allocated pods
@@ -740,15 +747,17 @@ async fn reconcile(node: Arc<Node>, ctx: Arc<Context>) -> Result<Action, Error> 
     }
 
     // Wait some seconds to apply signing out
-    match sign_out_remaining.and_then(|delta| delta.to_std().ok()) {
+    match sign_out_remaining {
         Some(remaining) => {
             {
                 #[cfg(feature = "tracing")]
                 info!("start waiting for signing out: {name} for {remaining:?}");
             }
-            Ok(Action::requeue(remaining))
+            Ok(Action::requeue(remaining.unsigned_abs()))
         }
-        None => Ok(Action::requeue(ctx.args.api.duration_sign_out_as_std())),
+        None => Ok(Action::requeue(
+            ctx.args.api.duration_sign_out().unsigned_abs(),
+        )),
     }
 }
 

@@ -1,7 +1,7 @@
 use std::{mem, rc::Rc, time::Duration};
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use yew::{Html, UseStateHandle, html, platform::spawn_local};
 
 use crate::{
@@ -12,14 +12,14 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct Cached<T> {
-    pub(super) expires_at: DateTime<Utc>,
+    pub(super) expires_at: Timestamp,
     pub(super) value: T,
 }
 
 impl<T> Cached<T> {
     #[inline]
     pub(super) fn new(value: T) -> Self {
-        let now = Utc::now();
+        let now = Timestamp::now();
         let expires_at = now + Duration::from_mins(5);
 
         Self { expires_at, value }
@@ -27,7 +27,7 @@ impl<T> Cached<T> {
 
     fn is_valid(&self) -> bool {
         // Invalidate the cache if expired
-        let now = Utc::now();
+        let now = Timestamp::now();
         now < self.expires_at
     }
 }
@@ -195,7 +195,7 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
             HttpPoll::Fetching => self._render_fetching(render),
             HttpPoll::Ready(cached) => {
                 // Try hitting the cache
-                let now = Utc::now();
+                let now = Timestamp::now();
                 if now < cached.expires_at {
                     match validate(cached.value.clone()) {
                         Some(value) => render(HttpStateRaw::Ready(value)),
@@ -208,7 +208,7 @@ impl<K, T> UseHttpHandleRenderRaw<K, T> for UseStateHandle<HttpContext<K, T>> {
             }
             HttpPoll::Failed(cached) => {
                 // Try hitting the cache
-                let now = Utc::now();
+                let now = Timestamp::now();
                 if now < cached.expires_at {
                     self._render_error(i18n, cached.value.clone(), render)
                 } else {

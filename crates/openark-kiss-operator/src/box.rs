@@ -1,8 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
-use chrono::Utc;
 use futures::StreamExt;
+use jiff::Timestamp;
 use k8s_openapi::api::core::v1::ObjectReference;
 use kube::{
     Api, Client, CustomResourceExt, Error, ResourceExt,
@@ -41,7 +41,7 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     let status = r#box.status.as_ref();
 
     // get the current time
-    let now = Utc::now();
+    let now = Timestamp::now();
 
     // load the box's state
     let old_state = status
@@ -95,21 +95,20 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
                 // update the status
                 new_state = BoxState::Disconnected;
             } else {
-                return Ok(Action::requeue(timeout.to_std().unwrap()));
+                return Ok(Action::requeue(timeout.unsigned_abs()));
             }
         } else {
-            return Ok(Action::requeue(timeout.to_std().unwrap()));
+            return Ok(Action::requeue(timeout.unsigned_abs()));
         }
     }
 
     // capture the timeout
-    if let Some(time_threshold) = old_state.timeout() {
-        if let Some(last_updated) = r#box.last_updated() {
-            if now > last_updated + time_threshold {
-                // update the status
-                new_state = BoxState::Failed;
-            }
-        }
+    if let Some(time_threshold) = old_state.timeout()
+        && let Some(last_updated) = r#box.last_updated()
+        && now > last_updated + time_threshold
+    {
+        // update the status
+        new_state = BoxState::Failed;
     }
 
     // capture the group info is changed
@@ -144,7 +143,7 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
                     access: status.map(|status| status.access.clone()).unwrap_or_default(),
                     state: BoxState::Running,
                     bind_group: status.and_then(|status| status.bind_group.clone()),
-                    last_updated: Utc::now(),
+                    last_updated: Timestamp::now(),
                 },
             }));
             ctx.api
@@ -220,7 +219,7 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
                 access: status.map(|status| status.access.clone()).unwrap_or_default(),
                 state: new_state,
                 bind_group: bind_group.cloned(),
-                last_updated: Utc::now(),
+                last_updated: Timestamp::now(),
             },
         }));
         ctx.api

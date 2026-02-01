@@ -60,10 +60,10 @@ openark-vine-session-api = { workspace = true, features = [
 ] }
 
 anyhow = { workspace = true, features = ["std"] }
-chrono = { workspace = true, features = ["std"] }
 clap = { workspace = true, features = ["derive", "std"] }
 convert-case = { workspace = true }
 futures = { workspace = true, features = ["std"] }
+jiff = { workspace = true, features = ["std"] }
 k8s-openapi = { workspace = true, features = [
     # "std",
 ] }

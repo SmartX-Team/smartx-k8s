@@ -11,7 +11,7 @@ ENTRYPOINT [ "/usr/bin/env", "bash" ]
 CMD [ "-c", "cp /ipxe/* /var/lib/tftpboot/" ]
 
 # Be ready for building
-FROM server AS builder
+FROM --platform=linux/amd64 "{{ .Values.debian.image.repo }}:{{ .Values.debian.image.tag }}" AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -22,11 +22,10 @@ RUN apt-get update && apt-get install -y \
         ## End cross-gcc
         git \
         liblzma-dev \
-        syslinux \
         xorriso \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Download source code
 WORKDIR /src
@@ -40,20 +39,25 @@ RUN git clone --depth=1 \
 
 # Build it!
 WORKDIR {{ printf "/src/%s/src" .Values.ipxe.repo.name | quote }}
-RUN --mount=type=cache,target={{ printf "/src/%s/src/bin" .Values.ipxe.repo.name | quote }} \
+{{ include "container.run.cached.amd64" ( dict
+        "id" $.Release.Name
+        "key" "build"
+        "target" ( printf "/src/%s/src/bin" .Values.ipxe.repo.name )
+    ) }} \
     # Patch DHCP settings
     sed -i 's/^\(#define DHCP_DISC_END_TIMEOUT_SEC \)[0-9]\+$/\132/g' './config/dhcp.h' \
     # Build each iPXE platforms
     # * usage: make [platform]/[driver].[extension]
     ### ARCH [0x00] - BIOS
     && make bin/undionly.kpxe \
-    && mv bin/undionly.kpxe /ipxe/undionly.kpxe \
+    && mkdir /ipxe \
+    && cp bin/undionly.kpxe /ipxe/undionly.kpxe \
 {{- range $_ := .Values.ipxe.drivers | default list }}
 {{- $ipxeArch := .ipxeArch | default .arch }}
 {{- $outputFile := printf "bin-%s-efi/%s.efi" $ipxeArch .driver }}
     ### ARCH [{{ .code }}] - EFI - {{ $ipxeArch }}
     && make {{ printf "CROSS=%s-linux-gnu-" .arch | quote }} {{ $outputFile | quote }} \
-    && mv {{ $outputFile | quote }} {{ printf "/ipxe/ipxe-%s.efi" $ipxeArch | quote }} \
+    && cp {{ $outputFile | quote }} {{ printf "/ipxe/ipxe-%s.efi" $ipxeArch | quote }} \
 {{- end }}
     && true
 

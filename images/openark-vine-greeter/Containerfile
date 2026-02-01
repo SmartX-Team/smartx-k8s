@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -31,7 +31,7 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     && echo 'Pin-Priority: 1000' >>/etc/apt/preferences.d/mozilla \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
@@ -142,7 +142,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
         xserver-xorg \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Install vendor-specific drivers
 {{- if not ( empty $.Drivers ) }}
@@ -156,7 +156,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
         # xserver-xorg-video-all \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 {{- end }}
 
 # Install nerdctl
@@ -224,5 +224,5 @@ WORKDIR "/opt/{{ .Release.Name }}"
 
 # Configure environment variables
 ENV DISPLAY=":0"
-ENV IMAGE="{{ .Values.baseImage.repo }}/{{ .Release.Name }}:latest"
+ENV IMAGE="{{ .Values.baseImage.repo }}/{{ .Release.Name }}:{{ .Release.Version }}"
 ENV URL="https://{{ .Values.ingress.domainName }}{{ .Values.bastion.baseUrl }}"

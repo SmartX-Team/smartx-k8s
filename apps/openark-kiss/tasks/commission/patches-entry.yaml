@@ -1,0 +1,17 @@
+---
+- name: "Patch node | {{ filename }} | Download"
+  get_url:
+    url: "{{ patch_base_url }}/{{ filename }}"
+    dest: "/tmp/{{ filename }}"
+    mode: "0555"
+  loop: "{{ patch_files }}"
+
+- name: "Patch node | {{ filename }} | Apply"
+  shell: "/tmp/{{ filename }}"
+  loop: "{{ patch_files }}"
+
+- name: "Patch node | {{ filename }} | Cleanup"
+  file:
+    path: "/tmp/{{ filename }}"
+    state: absent
+  loop: "{{ patch_files }}"

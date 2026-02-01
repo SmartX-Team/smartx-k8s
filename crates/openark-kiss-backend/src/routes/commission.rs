@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, Responder, post, web};
 use anyhow::{Result, bail};
-use chrono::Utc;
+use jiff::Timestamp;
 use kube::{
     Api, CustomResourceExt,
     api::{Patch, PatchParams},
@@ -57,7 +57,7 @@ async fn try_handle(
                             .and_then(|status| status.bind_group.as_ref())
                             .cloned()
                     },
-                    last_updated: Utc::now(),
+                    last_updated: Timestamp::now(),
                 },
             }));
             api.patch(&name, &patch_params, &patch).await?;

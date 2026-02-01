@@ -33,7 +33,7 @@ pub struct ExecArgs {
     )]
     pub namespace: Option<String>,
 
-    /// Whether to excute within a GUI terminal.
+    /// Whether to execute within a GUI terminal.
     #[cfg_attr(feature = "clap", arg(short, long))]
     #[cfg_attr(feature = "serde", serde(default))]
     pub terminal: bool,

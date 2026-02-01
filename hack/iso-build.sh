@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -16,10 +16,10 @@ IMAGE_HOME="$($(dirname "$0")/iso-prepare.sh)"
 cd "${IMAGE_HOME}/openark-kiss/templates"
 
 ARCH="${ARCH:-amd64}"
-OS_BASE_URL="$(cat 'configmap-iso.yaml' | yq '.data.os_base_url')"
-OS_DIST="$(cat 'configmap-kiss-config.yaml' | yq '.data.os_dist')"
-OS_REVISION="$(cat 'configmap-iso.yaml' | yq '.data.os_revision')"
-OS_VERSION="$(cat 'configmap-kiss-config.yaml' | yq '.data.os_version')"
+OS_BASE_URL="$(cat 'configmap-iso.yaml' | yq -r '.data.os_base_url')"
+OS_DIST="$(cat 'configmap-kiss-config.yaml' | yq -r '.data.os_dist')"
+OS_REVISION="$(cat 'configmap-iso.yaml' | yq -r '.data.os_revision')"
+OS_VERSION="$(cat 'configmap-kiss-config.yaml' | yq -r '.data.os_version')"
 
 OS_SRC="/tmp/${OS_DIST}-${OS_VERSION}.${OS_REVISION}-${ARCH}-base"
 OS_SRC_FILE="${ROOT}/iso/${OS_DIST}-${OS_VERSION}.${OS_REVISION}-${ARCH}-base.iso"
@@ -89,7 +89,7 @@ case "${INSTALL_KIND}" in
         sudo mkdir './patches'
         for name in $(
             cat "${IMAGE_HOME}/openark-kiss/templates/configmap-assets.yaml" |
-                yq 'select(.metadata.name == "assets-patches") | .data | keys | .[]'
+                yq -r 'select(.metadata.name == "assets-patches") | .data | keys | .[]'
         ); do
             cat "${IMAGE_HOME}/openark-kiss/templates/configmap-assets.yaml" |
                 yq "select(.metadata.name == \"assets-patches\") | .data.\"${name}\"" |

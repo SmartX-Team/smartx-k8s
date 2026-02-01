@@ -20,6 +20,9 @@ kube_oidc_url: "https://{{ .Values.auth.domainName | default ( printf "auth.%s" 
 # k8s-cluster / kubelet
 #####################################
 
+# Kubernetes cluster version
+kube_version: {{ .Values.build.kube.version | quote }}
+
 {{- if and
   ( has "org.ulagbulag.io/cni" .Values.features )
   ( not .Values.cluster.services.kubeProxy.enabled )

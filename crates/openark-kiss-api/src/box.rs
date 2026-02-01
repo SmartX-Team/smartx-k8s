@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-use chrono::{DateTime, Duration, Utc};
+use jiff::{SignedDuration, Span, Timestamp};
 #[cfg(feature = "kube")]
 use kube::CustomResource;
 #[cfg(feature = "schemars")]
@@ -107,7 +107,7 @@ pub struct BoxSpec {
 
 #[cfg(feature = "kube")]
 impl BoxCrd {
-    pub fn last_updated(&self) -> Option<DateTime<Utc>> {
+    pub fn last_updated(&self) -> Option<Timestamp> {
         self.status
             .as_ref()
             .map(|status| status.last_updated)
@@ -126,7 +126,7 @@ pub struct BoxStatus {
     pub access: BoxAccessSpec,
     #[cfg_attr(feature = "serde", serde(default))]
     pub bind_group: Option<BoxGroupSpec>,
-    pub last_updated: DateTime<Utc>,
+    pub last_updated: Timestamp,
 }
 
 #[derive(
@@ -179,8 +179,8 @@ impl BoxState {
         }
     }
 
-    pub fn timeout(&self) -> Option<Duration> {
-        let fallback_update = Duration::try_hours(2).unwrap();
+    pub fn timeout(&self) -> Option<Span> {
+        let fallback_update = Span::new().hours(2);
 
         match self {
             Self::New => None,
@@ -192,8 +192,8 @@ impl BoxState {
         }
     }
 
-    pub fn timeout_new() -> Duration {
-        Duration::try_seconds(30).unwrap()
+    pub fn timeout_new() -> SignedDuration {
+        SignedDuration::new(30, 0)
     }
 
     pub const fn complete(&self) -> Option<Self> {

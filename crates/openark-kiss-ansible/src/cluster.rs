@@ -127,7 +127,7 @@ impl<'a> ClusterState<'a> {
         }
 
         // ETCD nodes should be odd (RAFT)
-        if nodes.len() % 2 == 0 {
+        if nodes.len().is_multiple_of(2) {
             nodes.pop();
         }
 

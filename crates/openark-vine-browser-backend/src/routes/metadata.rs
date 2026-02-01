@@ -1,7 +1,11 @@
-use std::{borrow::Cow, os::unix::fs::MetadataExt, path::PathBuf};
+use std::{
+    borrow::Cow,
+    os::unix::fs::MetadataExt,
+    path::{Path, PathBuf},
+};
 
 use actix_web::{HttpRequest, HttpResponse, Responder, http::Method, web};
-use chrono::DateTime;
+use jiff::Timestamp;
 use openark_vine_browser_api::file::{FileEntry, FileMetadata, FileRef, FileTimestamp};
 use serde::Deserialize;
 use tokio::fs;
@@ -29,7 +33,7 @@ async fn get(
     path: Cow<'_, str>,
     query: web::Query<Query>,
 ) -> HttpResponse {
-    fn parse_file_ref(path: &PathBuf, metadata: &::std::fs::Metadata) -> FileRef {
+    fn parse_file_ref(path: &Path, metadata: &::std::fs::Metadata) -> FileRef {
         // Get extension
         let is_dir = metadata.is_dir();
 
@@ -48,17 +52,20 @@ async fn get(
             name,
             path,
             metadata: FileMetadata {
-                accessed: DateTime::from_timestamp(metadata.atime(), metadata.atime_nsec() as _)
+                accessed: Timestamp::new(metadata.atime(), metadata.atime_nsec() as _)
+                    .ok()
                     .map(|timestamp| FileTimestamp {
                         by: None,
                         timestamp,
                     }),
-                created: DateTime::from_timestamp(metadata.ctime(), metadata.ctime_nsec() as _)
+                created: Timestamp::new(metadata.ctime(), metadata.ctime_nsec() as _)
+                    .ok()
                     .map(|timestamp| FileTimestamp {
                         by: None,
                         timestamp,
                     }),
-                modified: DateTime::from_timestamp(metadata.mtime(), metadata.mtime_nsec() as _)
+                modified: Timestamp::new(metadata.mtime(), metadata.mtime_nsec() as _)
+                    .ok()
                     .map(|timestamp| FileTimestamp {
                         by: None,
                         timestamp,

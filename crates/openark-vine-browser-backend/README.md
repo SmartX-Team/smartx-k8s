@@ -17,7 +17,7 @@ I've modularized this backend to a minimal set of features so that it can be acc
 
 3. `[Load-Balancing Layer]` **"Accelerated Data Lake"**: Selects the optimal backend target in real-time to fit the user's budget. It optimizes the overall `TCO` of the system by adjusting the asynchronous runtime, storage abstraction level, the presence and quantity of dedicated hardware, and internal protocols (Ethernet vs. RDMA).
 
-   - **Purpose: Cose-Efficient Data Processing** Leveraging `WASM` and `io_uring`
+   - **Purpose: Cost-Efficient Data Processing** Leveraging `WASM` and `io_uring`
    - _Upper Layer_: `K8S` Layer
    - _Lower Layer_: `WASM` Layer
    - Features

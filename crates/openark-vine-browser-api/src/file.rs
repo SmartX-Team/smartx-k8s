@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 #[cfg(feature = "schemars")]
 use schemars::JsonSchema;
 #[cfg(feature = "serde")]
@@ -22,7 +22,7 @@ pub struct FileTimestamp {
 
     /// The observed timestamp.
     #[cfg_attr(feature = "serde", serde(rename = "at"))]
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: Timestamp,
 }
 
 /// A file's primary metadata.

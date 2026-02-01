@@ -3,7 +3,7 @@ use ordered_float::{Float, OrderedFloat};
 
 use crate::status::{Reason, Status};
 
-const DEFAULT_WEIGHT: u64 = (u64::MIN + u64::MAX) / 2;
+const DEFAULT_WEIGHT: u64 = u64::MAX / 2;
 
 pub(crate) struct Histogram<T> {
     pub(crate) data: Vec<Vec<T>>,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -39,7 +39,7 @@ fi
 cp "${IMAGE_HOME}/preset/values.yaml" "${IMAGE_HOME}/clusters/50-preset.yaml"
 
 # Build a template
-IMAGE_NAME="$(cat 'Chart.yaml' | yq '.name')"
+IMAGE_NAME="$(cat 'Chart.yaml' | yq -r '.name')"
 helm template "${IMAGE_NAME}" "${IMAGE_HOME}" \
     --output-dir "${IMAGE_HOME}" \
     $(find "${IMAGE_HOME}/clusters" -name '*.yaml' -exec echo "--values {}" \; | sort -V) >/dev/null

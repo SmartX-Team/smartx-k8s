@@ -137,6 +137,7 @@ packages:
       - pollinate
       - psmisc
       - python3-apt
+      - qemu-user-static
       - rsync
       - socat
       - software-properties-common
@@ -155,51 +156,181 @@ packages:
       - wpasupplicant
       - xfsprogs
     excludes:
+      - alsa-base
+      - alsa-utils
+      - anacron
       - apparmor
       - apport
+      - apt-config-icons-hidpi
+      - avahi-daemon
+      - baobab
       - bcache-tools
+      - bluez
+      - bluez-cups
       - bolt
       - byobu
+      - cloud-init
+      - cloud-initramfs-copymods
+      - cloud-initramfs-dyn-netconf
       - command-not-found
       - cron
+      - cuda-nvml-dev-*
+      - cuda-toolkit-*
+      - cups
+      - cups-bsd
+      - cups-client
+      - cups-filters
+      - deja-dup
+      - dgx-oobe-desktop
+      - dmz-cursor-theme
+      - docker
+      - docker-buildx-plugin
+      - docker-compose-plugin
       - file
+      - file-roller
+      - fontconfig
+      - fonts-dejavu-core
+      - fonts-liberation
+      - fonts-noto-cjk
+      - fonts-noto-color-emoji
+      - fonts-ubuntu
+      - fonts-ubuntu-console
       - ftp
       - fwupd
+      - gamemode
+      - ghostscript
+      - gnome-accessibility-themes
+      - gnome-bluetooth-sendto
+      - gnome-calculator
+      - gnome-calendar
+      - gnome-characters
+      - gnome-control-center
+      - gnome-font-viewer
+      - gnome-initial-setup
+      - gnome-keyring
+      - gnome-logs
+      - gnome-menus
+      - gnome-remote-desktop
+      - gnome-session-canberra
+      - gnome-settings-daemon
+      - gnome-shell
+      - gnome-shell-extension-appindicator
+      - gnome-shell-extension-ubuntu-dock
+      - gnome-shell-extension-ubuntu-tiling-assistant
+      - gnome-system-monitor
+      - gnome-terminal
+      - gnome-text-editor
+      - gsettings-ubuntu-schemas
+      - gstreamer1.0-alsa
+      - gstreamer1.0-packagekit
+      - gstreamer1.0-plugins-base-apps
+      - hplip
+      - ibus
+      - ibus-gtk
+      - ibus-gtk3
       - landscape-common
+      - language-selector-common
+      - language-selector-gnome
+      - libatk-adaptor
+      - libglib2.0-bin
+      - libnotify-bin
+      - libreoffice-calc
+      - libreoffice-gnome
+      - libreoffice-impress
+      - libreoffice-math
+      - libreoffice-writer
       - lxd-agent-loader
       - lxd-installer
       - modemmanager
       - motd-news-config
+      - mousetweaks
       - mtr-tiny
       - multipath-tools
+      - nautilus-sendto
       - needrestart
       - nfs-common
+      - nv-docker-gpus
+      - nv-no-grubmenu
+      - nv-vulkan-desktop-ppa
+      - nv-xorg-simpledrm
+      - nvidia-conf-xconfig
+      - nvidia-console-settings
+      - nvidia-dgx-telemetry
+      - nvidia-disable-bt-profiles
+      - nvidia-drm-options-modeset0
+      - nvidia-driver-*
+      - nvidia-modprobe
       - open-iscsi
       - open-vm-tools
+      - openprinting-ppds
+      - orca
+      - pipewire-pulse
       - plymouth
+      - policykit-desktop-privileges
+      - pollinate
+      - printer-driver-brlaser
+      - printer-driver-c2esp
+      - printer-driver-foo2zjs
+      - printer-driver-m2300w
+      - printer-driver-min12xxw
+      - printer-driver-pnm2ppa
+      - printer-driver-ptouch
+      - printer-driver-pxljr
+      - printer-driver-sag-gdi
+      - printer-driver-splix
+      - psmisc
       - python3-click
       - python3-commandnotfound
       - python3-gdbm
       - python3-xkit
+      - remmina
+      - rhythmbox
       - rpcbind
       - rsyslog
       - screen
+      - seahorse
+      - shotwell
+      - simple-scan
       - snapd
       - sosreport
+      - speech-dispatcher
+      - spice-vdagent
+      - srptools
       - tcpdump
       - thermald
       - time
       - tmux
+      - tnftp
+      - totem
+      - transmission-gtk
       - udisks2
       - ufw
+      - ubuntu-docs
       - ubuntu-drivers-common
       - ubuntu-minimal
       - ubuntu-pro-client
+      - ubuntu-report
       - ubuntu-server-minimal
+      - ubuntu-settings
+      - ubuntu-wallpapers
+      - ucx-utils
       - unattended-upgrades
       - update-manager-core
       - upower
       - usbutils
+      - wireplumber
+      - xcursor-themes
+      - xdg-desktop-portal-gnome
+      - xdg-user-dirs
+      - xdg-user-dirs-gtk
+      - xdg-utils
+      - xorg
+      - yaru-theme-gnome-shell
+      - yaru-theme-gtk
+      - yaru-theme-icon
+      - yaru-theme-sound
+      - yelp
+      - zenity
 
 kubespray:
   ##########################################
@@ -221,10 +352,6 @@ kubespray:
 
   containerd_enable_selinux: false
   containerd_disable_apparmor: true
-
-  # Versions
-  # TODO: newer major releases (containerd 2.x) have many compatibility issues for now: 2025-03-16
-  containerd_version: 1.7.26
 
   ##########################################
   # etcd
@@ -351,9 +478,6 @@ kubespray:
 
   ### fail with swap on (default true)
   kubelet_fail_swap_on: true
-
-  # FIXME: Wait for this PR to be merged: https://github.com/kubernetes/kubernetes/pull/131262
-  kube_version: 1.32.2
 
   ## Kube Proxy mode One of ['iptables','ipvs']
   kube_proxy_mode: ipvs
@@ -497,13 +621,6 @@ kubespray:
   kubelet_streaming_connection_idle_timeout: 5m
   kubelet_make_iptables_util_chains: true
   kubelet_seccomp_default: true
-
-  ##########################################
-  # k8s-cluster / kubelet / download
-  ##########################################
-
-  # FIXME: Wait for this PR to be merged: https://github.com/kubernetes/kubernetes/pull/131262
-  kubeadm_image_repo: quay.io/ulagbulag
 
   ##########################################
   # kubernetes / node

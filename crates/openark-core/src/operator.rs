@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use chrono::Utc;
 #[cfg(feature = "clap")]
 use clap::Parser;
+use jiff::Timestamp;
 use k8s_openapi::{
     api::core::v1::ObjectReference,
     apimachinery::pkg::apis::meta::v1::{Condition, ObjectMeta, Time},
@@ -230,7 +230,7 @@ impl<R> Status<R> {
         } = self;
 
         Condition {
-            last_transition_time: Time(Utc::now()),
+            last_transition_time: Time(Timestamp::now()),
             message,
             observed_generation: metadata.generation,
             reason: reason.to_string(),

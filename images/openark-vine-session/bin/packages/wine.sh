@@ -11,7 +11,7 @@ set -e -o pipefail
 set -x
 
 WINE_REPO="https://github.com/Kron4ek/Wine-Builds/releases/download"
-WINE_VERSION_API="https://api.github.com/repos/Kron4ek/Wine-Builds/releases/latest"
+WINE_VERSION_API="https://api.github.com/repos/Kron4ek/Wine-Builds/releases"
 
 {{- if eq "debian" .Values.dist.current.kind }}
 apt-mark hold wine
@@ -20,17 +20,17 @@ apt-mark hold wine
 # Get the latest version
 ## ARCH
 case "$(uname -m)" in
-'i386') WINE_ARCH='x86' ;;
-'x86_64') WINE_ARCH='amd64' ;;
+'x86_64') WINE_ARCH='amd64-wow64' ;;
 *)
-    echo "Unsupported WINE Architechure: '$(uname -m)'"
+    echo "Unsupported WINE Architecture: '$(uname -m)'"
     exit 1
     ;;
 esac
 
 WINE_VERSION="$(
     curl -s "${WINE_VERSION_API}" |
-        grep -Po '"tag_name": +"\K[0-9.]+(-rc[1-9][0-9]*)?'
+        grep -Po '"tag_name": +"\K[0-9.]+(-rc[1-9][0-9]*)?' |
+        head -n 1
 )"
 
 # Download

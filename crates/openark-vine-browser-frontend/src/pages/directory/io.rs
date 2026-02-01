@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use openark_vine_browser_api::file::FileRef;
 use web_sys::wasm_bindgen::{JsCast, prelude::Closure};
 use yew::{
@@ -23,7 +23,7 @@ pub(super) enum IOKind {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub(super) struct IOTaskRef {
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: Timestamp,
     pub kind: IOKind,
     pub path: String,
 }
@@ -88,7 +88,7 @@ fn render_file_io(props: &FileProps) -> Html {
         ref result,
     } = &state.queue[index];
 
-    let hash = BuildHasherDefault::<DefaultHasher>::new().hash_one(Rc::as_ptr(&r));
+    let hash = BuildHasherDefault::<DefaultHasher>::new().hash_one(Rc::as_ptr(r));
     let &IOTaskRef {
         timestamp: _,
         kind,
@@ -378,7 +378,7 @@ impl UseIOReducerHandleExt for UseIOReducerHandle {
     fn download_file(&self, src: &FileRef) {
         // Create an item
         let r = Rc::new(IOTaskRef {
-            timestamp: Utc::now(),
+            timestamp: Timestamp::now(),
             kind: IOKind::Download,
             path: src.path.clone(),
         });
@@ -409,7 +409,7 @@ impl UseIOReducerHandleExt for UseIOReducerHandle {
             .unwrap();
 
         // Invoke a click event
-        link.set_download(r.path.split('/').last().unwrap_or_default());
+        link.set_download(r.path.split('/').next_back().unwrap_or_default());
         link.set_href(&url);
         link.set_rel("noopener noreferrer");
         link.set_target("_blank");
@@ -438,7 +438,7 @@ impl UseIOReducerHandleExt for UseIOReducerHandle {
     fn upload_file(&self, src: ::web_sys::File, dst: &FileRef, oncomplete: Callback<()>) {
         // Enqueue an item
         let r = Rc::new(IOTaskRef {
-            timestamp: Utc::now(),
+            timestamp: Timestamp::now(),
             kind: IOKind::Upload,
             path: dst.path.clone(),
         });
@@ -458,7 +458,7 @@ impl UseIOReducerHandleExt for UseIOReducerHandle {
 
         // Open the API URL
         let xhr = ::web_sys::XmlHttpRequest::new().unwrap();
-        xhr.open("POST", &url.to_string()).unwrap();
+        xhr.open("POST", url.as_ref()).unwrap();
 
         // Add a hook: onprogress
         let onprogress = {
@@ -546,7 +546,7 @@ pub(super) struct Props {
 #[function_component(IOStatus)]
 pub(super) fn render(props: &Props) -> Html {
     // properties
-    let &Props { ref i18n, ref io } = props;
+    let Props { i18n, io } = props;
 
     html! {
         <div class="indicator">

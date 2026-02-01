@@ -26,4 +26,4 @@ spec:
   source:
     chart: network-operator
     repoUrl: "https://helm.ngc.nvidia.com/nvidia"
-    version: 24.10.1
+    version: 25.10.0

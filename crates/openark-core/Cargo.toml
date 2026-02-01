@@ -46,7 +46,7 @@ client = [
 ]
 operator = [
     "dep:async-trait",
-    "dep:chrono",
+    "dep:jiff",
     "dep:k8s-openapi",
     "dep:kube",
     "dep:serde",
@@ -125,8 +125,8 @@ clap = { workspace = true, optional = true, features = [
     "unicode",
     "usage",
 ] }
-chrono = { workspace = true, optional = true }
 http = { workspace = true, optional = true }
+jiff = { workspace = true, optional = true }
 k8s-openapi = { workspace = true, optional = true }
 kube = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true, features = ["json"] }

@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && rustup default {{ .Values.rust.channel | quote }} \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Load source files
 ADD . /src
@@ -31,12 +31,7 @@ ENV CSI_PROTO_URL={{ printf "%s/%s/%s/refs/heads/%s/csi.proto"
     .Values.csi.name
     .Values.csi.revision
 }}
-RUN \
-    # Cache build outputs
-    --mount=type=cache,target=/root/.cache \
-    --mount=type=cache,target=/src/target \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/usr/local/cargo/registry \
+{{ include "container.run.cached.rust" . }} \
     # Create an output directory
     mkdir /out \
     # Fix version
@@ -60,7 +55,7 @@ RUN apt-get update && apt-get install -y \
         nvme-cli \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Create an user
 RUN groupadd --gid "2000" "user" \

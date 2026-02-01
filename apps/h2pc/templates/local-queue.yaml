@@ -1,6 +1,6 @@
 {{- if .Values.features.openark.vine.enabled }}
 ---
-apiVersion: kueue.x-k8s.io/v1beta1
+apiVersion: kueue.x-k8s.io/v1beta2
 kind: LocalQueue
 metadata:
   name: {{ include "helm.fullname" $ | quote }}

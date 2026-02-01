@@ -1,0 +1,43 @@
+#!ipxe
+# Copyright (c) 2024-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Use of this source code is governed by a GPL-3-style license that can be
+# found in the LICENSE file.
+
+:init
+set arch ${buildarch}
+iseq ${arch} i386 && set arch x86_64 ||
+iseq ${arch} x86_64 && set arch amd64 ||
+
+# Configure variables
+set os_ver {{ .Values.kiss.os.version }}
+set os_rev {{ printf ( eq .Values.kiss.os.channel "release" | ternary ".%s" "-%s" ) .Values.kiss.os.revision }}
+set os_channel {{ .Values.kiss.os.channel }}
+
+# FIXME: the official cdimage repo does NOT match the versions between initrd and iso
+set assets http://assets.{{ .Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}
+set repo http://cdimage.ubuntu.com/releases/${os_ver}/${os_channel}
+iseq ${arch} amd64 && set repo ${assets}/assets/ubuntu-${os_ver} ||
+
+# Generic kernels
+set cloud_config_url ${assets}/boot/cloud-init_ubuntu.yaml
+set image_url ${repo}/ubuntu-${os_ver}${os_rev}-live-server-${arch}.iso
+set initrd_url ${repo}/netboot/${arch}/initrd
+set linux_url ${repo}/netboot/${arch}/linux
+
+:kernel
+kernel --name vmlinuz ${linux_url} || goto kernel
+
+:initrd
+initrd --name initrd ${initrd_url} || goto initrd
+
+:initargs
+imgargs vmlinuz initrd=initrd autoinstall \
+    console=tty \
+    ip=${ip}::${gateway}:${netmask}:${hostname}:BOOTIF:off:${dns} \
+    BOOTIF=01-${mac:hexhyp} \
+    modprobe.blacklist=rndis_host \
+    url=${image_url} \
+    cloud-config-url=${cloud_config_url}
+
+:boot
+boot || goto boot

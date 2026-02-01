@@ -33,4 +33,4 @@ spec:
   source:
     chart: spark-operator
     repoUrl: "https://kubeflow.github.io/spark-operator"
-    version: 1.4.6
+    version: 2.4.0

@@ -12,7 +12,7 @@ use super::upload::{
 #[derive(Clone, Debug, PartialEq, Properties)]
 struct ItemProps {
     // checkboxes: UseReducerHandle<CheckBoxGroup>,
-    // current: DateTime<Utc>,
+    // current: Timestamp,
     dir_state: super::FileEntryState,
     drag_state: UseUploadFileStateHandle,
     file: FileRef,

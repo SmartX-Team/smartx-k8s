@@ -143,7 +143,7 @@ impl PartialEq for ScaffoldProps {
 
 #[function_component(Scaffold)]
 pub fn component(props: &ScaffoldProps) -> Html {
-    const DRAWER_IDDRAWER_ID: &'static str = "app-drawer";
+    const DRAWER_IDDRAWER_ID: &str = "app-drawer";
 
     let ScaffoldProps {
         app,

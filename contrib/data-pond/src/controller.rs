@@ -5,7 +5,6 @@ use std::{
 
 use anyhow::Error;
 use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
 use data_pond_api::{
     VolumeAttributes, VolumeBindingContext, VolumePublishControllerContext, VolumeSecrets,
 };
@@ -22,6 +21,7 @@ use hickory_resolver::{
     name_server::{GenericConnector, TokioConnectionProvider},
     proto::runtime::TokioRuntimeProvider,
 };
+use jiff::{SignedDuration, Timestamp};
 use tokio::sync::{Mutex, MutexGuard};
 use tonic::{
     Request, Response, Result, Status,
@@ -42,7 +42,7 @@ struct DeviceKey {
 
 #[derive(Clone, Debug, Default)]
 struct Ponds {
-    created_at: DateTime<Utc>,
+    created_at: Timestamp,
     data: BTreeMap<String, Arc<Pond>>,
 }
 
@@ -181,7 +181,7 @@ pub(crate) struct Server {
     pond_host: String,
     pond_port: u16,
     pond_protocol: String,
-    pond_ttl: Duration,
+    pond_ttl: SignedDuration,
     resolver: Resolver<GenericConnector<TokioRuntimeProvider>>,
     state: Mutex<State>,
 }
@@ -198,7 +198,7 @@ impl Server {
             pond_host: "plugin.hoya.svc.ops.openark".into(),
             pond_port: 9090,
             pond_protocol: "http".into(),
-            pond_ttl: Duration::seconds(30),
+            pond_ttl: SignedDuration::new(30, 0),
             resolver,
             state: Default::default(),
         };
@@ -233,7 +233,7 @@ impl Server {
         // Apply cache
         let mut state = self.state.lock().await;
         let ponds = &mut state.ponds;
-        let now = Utc::now();
+        let now = Timestamp::now();
         if now < ponds.created_at + self.pond_ttl {
             return Ok(state);
         }

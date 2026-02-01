@@ -14,7 +14,3 @@ set -x
 if [ "x$(uname -m)" == 'xx86_64' ]; then
     dpkg --add-architecture i386
 fi
-
-until apt-get update; do
-    sleep 3;
-done

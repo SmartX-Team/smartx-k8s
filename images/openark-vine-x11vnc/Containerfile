@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
         x11vnc \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Copy executable files
 ADD --chmod=555 ./entrypoint.sh /usr/local/bin/

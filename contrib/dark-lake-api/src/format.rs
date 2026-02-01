@@ -1,13 +1,13 @@
 use std::{any::Any, sync::Arc};
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 
 pub trait Layout
 where
     Self: Any + Send + Sync,
 {
-    fn created_at(&self) -> Option<DateTime<Utc>>;
+    fn created_at(&self) -> Option<Timestamp>;
 }
 
 pub type DynLayout = Box<dyn Layout>;

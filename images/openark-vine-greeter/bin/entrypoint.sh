@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -71,11 +71,11 @@ load_primary_gpu 'gpu' 'false'
 # Check GPU drivers
 if ! find /dev/dri -mindepth 1 -maxdepth 1 -name "card*" -type c >/dev/null; then
     echo 'INFO: Empty video' >&2
-    exec true
+    terminate
 fi
 if ! find /dev/dri -mindepth 1 -maxdepth 1 -name "renderD*" -type c >/dev/null; then
     echo 'INFO: Empty renderer' >&2
-    exec true
+    terminate
 fi
 
 # Configure XDG_RUNTIME_DIR
@@ -93,6 +93,12 @@ if [ ! -f /etc/X11/xorg.conf ]; then
     ln -sf "${HOME}/xorg.conf.new" /etc/X11/xorg.conf
 fi
 
+# Use proprietary drivers
+if [ -d "/sys/bus/pci/drivers/nvidia" ]; then
+    sed -i 's/^\(\t\+Driver \+\)"modesetting"$/\1"nvidia"/g' /etc/X11/xorg.conf
+    sed -i 's/^\(\t\+\)BusID\( \+\)"PCI:[0-9]\+:[0-9]\+:[0-9]\+"$/\1VendorName\2"NVIDIA Corporation"/g' /etc/X11/xorg.conf
+fi
+
 # Open Xorg session
 Xorg &
 declare -ig pid_xorg="$!"
@@ -102,7 +108,7 @@ X11_SOCK="/tmp/.X11-unix/X$(echo "${DISPLAY}" | grep -Po '[0-9]+$')"
 if [ ! -S "${X11_SOCK}" ]; then
     if ! ps --pid "${pid_xorg}" >/dev/null; then
         echo 'Xorg failed' >&2
-        exec false
+        terminate
     fi
     sleep 1
 fi
@@ -114,7 +120,7 @@ echo "Finding displays..."
 monitor="$(xrandr --current | grep ' connected ' | awk '{print $1}' | head -n1 || true)"
 if [ "x${monitor}" == "x" ]; then
     echo 'Display not found!' >&2
-    exec true
+    terminate
 fi
 
 echo "Resize display..."

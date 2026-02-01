@@ -25,10 +25,10 @@ default = [
 ]
 std = [
     "base64/std",
-    "chrono/std",
     "clap?/std",
     "getrandom?/std",
     "http?/std",
+    "jiff/std",
     # "k8s-openapi?/std",
     "openark-core?/std",
     "regex?/std",
@@ -80,9 +80,9 @@ actix-web = { workspace = true, optional = true, features = ["cookies"] }
 anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true, features = ["alloc"] }
-chrono = { workspace = true }
 clap = { workspace = true, optional = true, features = ["derive"] }
 http = { workspace = true, optional = true }
+jiff = { workspace = true }
 jsonwebtoken = { workspace = true, optional = true }
 k8s-openapi = { workspace = true, optional = true, features = ["schemars"] }
 kube = { workspace = true, optional = true, features = ["client", "derive"] }

@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
         ipmitool \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Server Configuration
 WORKDIR /usr/bin

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -37,7 +37,7 @@ if [ -e "${dev}/driver/module" ]; then
     echo "INFO: Unbound PCI device: ${pci_id} <- ${driver}"
 
     PCI_ID_PATTERN='^[0-9]{4}(:[0-9]{2}){2}\.[0-9]$'
-    if [ "x${driver}" != 'xvfio-pci' ] && ! ls "/sys/bus/pci/drivers/${driver}" |
+    if [ "x${driver}" != 'xvfio-pci' ] && ! ls "/sys/bus/pci/drivers/${driver}" 2>/dev/null |
         grep -Posq "${PCI_ID_PATTERN}"; then
         echo "DEBUG: Unload driver: ${driver}"
         if rmmod "${driver}"; then

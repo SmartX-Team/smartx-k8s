@@ -23,8 +23,8 @@ workspace = true
 default = []
 std = [
     "anyhow/std",
-    "chrono/std",
     "itertools/use_std",
+    "jiff/std",
     "serde/std",
     "serde-json/std",
     "tracing?/std",
@@ -40,8 +40,8 @@ tracing = ["dep:tracing"]
 
 [dependencies]
 anyhow = { workspace = true }
-chrono = { workspace = true, features = ["alloc"] }
 itertools = { workspace = true }
+jiff = { workspace = true, features = ["alloc"] }
 pastey = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde-json = { workspace = true }

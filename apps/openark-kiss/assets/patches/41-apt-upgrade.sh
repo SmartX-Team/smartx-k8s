@@ -11,4 +11,8 @@ set -e -o pipefail
 # Verbose
 set -x
 
+until apt-get update; do
+    sleep 3;
+done
+
 exec apt-get upgrade -y

@@ -70,7 +70,7 @@
     {{ "{{ bin_dir }}/nerdctl" }} run --rm --net host
     --device /dev/ipmi0
     --name "kiss-ipmitool"
-    "quay.io/ulagbulag/openark-ipmitool:latest"
+    {{ include "helm.ipmitool.image" $ | quote }}
     user set password 9 {{ "{{ kiss_power_ipmi_password }}" | quote }}
   ignore_errors: true
   no_log: true

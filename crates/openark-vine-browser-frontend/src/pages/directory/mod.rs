@@ -10,7 +10,7 @@ mod upload;
 
 use std::{ops, rc::Rc};
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use openark_vine_browser_api::{
     client::ClientExt,
     file::{FileEntry, FileMetadata, FileRef},
@@ -150,7 +150,7 @@ enum ViewMode {
 
 struct Context<'a> {
     props: &'a Props,
-    current_timestamp: DateTime<Utc>,
+    current_timestamp: Timestamp,
     file_entry: UseHttpHandleOption<String, FileEntry>,
     indices: UseReducerHandle<FileIndices>,
     io: self::io::UseIOReducerHandle,
@@ -197,7 +197,7 @@ fn render_file_entry_lookup(ctx: &Context) -> Html {
                             ) }
                         >
                             // Navigation bar
-                            { self::navbar::render(&ctx) }
+                            { self::navbar::render(ctx) }
 
                             // File contents
                             {
@@ -283,7 +283,7 @@ pub fn component(props: &Props) -> Html {
     // context
     let ctx = Context {
         props,
-        current_timestamp: Utc::now(),
+        current_timestamp: Timestamp::now(),
         file_entry,
         indices,
         io,

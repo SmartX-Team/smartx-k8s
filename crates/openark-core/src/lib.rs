@@ -25,6 +25,7 @@ pub struct OpenArkArgs {
     pub opentelemetry_export: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for OpenArkArgs {
     fn default() -> Self {
         Self {

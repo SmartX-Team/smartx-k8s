@@ -41,16 +41,9 @@ impl From<io::Error> for SystemInterrupt {
     }
 }
 
+#[derive(Default)]
 pub struct Scheduler {
     rq: VecDeque<ProcessID>,
-}
-
-impl Default for Scheduler {
-    fn default() -> Self {
-        Self {
-            rq: Default::default(),
-        }
-    }
 }
 
 impl Scheduler {

@@ -1,12 +1,12 @@
 use std::{ops, sync::Arc};
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 
 use crate::src::Source;
 
 pub struct CachedBytes {
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
     data: Vec<u8>,
 }
 

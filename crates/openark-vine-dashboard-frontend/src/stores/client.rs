@@ -205,7 +205,7 @@ macro_rules! unwrap_response {
             $crate::stores::client::Response::Ok(value) => value,
             $crate::stores::client::Response::NotFound => {
                 ::tracing::debug!("Not Found: {:#?}", &$value);
-                $api.register_alert(crate::stores::client::Alert {
+                $api.register_alert($crate::stores::client::Alert {
                     back: false,
                     level: ::tracing::Level::WARN,
                     message: "Not Found".into(),

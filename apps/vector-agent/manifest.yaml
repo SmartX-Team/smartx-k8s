@@ -27,4 +27,4 @@ spec:
   source:
     chart: vector
     repoUrl: "https://helm.vector.dev"
-    version: 0.43.0
+    version: 0.50.0

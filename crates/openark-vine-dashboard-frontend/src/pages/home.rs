@@ -1,5 +1,5 @@
-use chrono::{Duration, Utc};
 use convert_case::{Case, Casing};
+use jiff::{Span, Timestamp};
 use openark_vine_dashboard_api::catalog::{
     CatalogCategory, CatalogItem, CatalogItemSpec, CatalogItemType,
 };
@@ -37,12 +37,13 @@ fn build_catalog_item(item: &CatalogItem) -> Html {
         },
     };
 
-    let now = Utc::now();
-    let badge = if created_at.is_none_or(|timestamp| timestamp + Duration::days(30) > now) {
+    let now = Timestamp::now();
+    let outdated = Span::new().days(30);
+    let badge = if created_at.is_none_or(|timestamp| timestamp + outdated > now) {
         Some(html! {
             <div class="badge badge-secondary">{ "NEW" }</div>
         })
-    } else if updated_at.is_none_or(|timestamp| timestamp + Duration::days(30) > now) {
+    } else if updated_at.is_none_or(|timestamp| timestamp + outdated > now) {
         Some(html! {
             <div class="badge badge-primary">{ "Updated" }</div>
         })

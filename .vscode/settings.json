@@ -22,6 +22,7 @@
     "**/apps/openark-kiss/assets/**/*.sh": "jinja-shell",
     "**/apps/openark-kiss/assets/**/*.yaml": "jinja-yaml",
     "**/apps/openark-kiss/tasks/**/manual-*.yaml": "jinja-yaml",
+    "**/apps/openark-kiss/tasks/**/patches.yaml": "jinja-yaml",
     "**/apps/openark-kiss/tasks/**/power-intel-amt-*.yaml": "jinja-yaml",
     "**/apps/openark-kiss/tasks/**/power-ipmi-*.yaml": "jinja-yaml",
     "**/apps/openark-vine-session/bin/**/*.sh": "jinja-shell",

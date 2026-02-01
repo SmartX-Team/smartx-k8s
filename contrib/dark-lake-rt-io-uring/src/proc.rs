@@ -220,7 +220,7 @@ impl ControlGroups {
         &mut self,
         pid: ProcessID,
         handler: &mut H,
-    ) -> Result<Next, SystemInterrupt>
+    ) -> Result<Next<'_>, SystemInterrupt>
     where
         H: Handler,
     {
@@ -255,7 +255,7 @@ impl ControlGroups {
         }
     }
 
-    fn terminate(&mut self, pid: ProcessID) -> Result<Next, SystemInterrupt> {
+    fn terminate(&mut self, pid: ProcessID) -> Result<Next<'_>, SystemInterrupt> {
         self.kernel.remove(&pid);
         let proc = self.proc.remove(&pid).expect("missing process");
 

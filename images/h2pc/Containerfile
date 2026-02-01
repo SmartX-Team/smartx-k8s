@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     && pip install poetry \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Configure environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -73,7 +73,7 @@ RUN apt-get update && apt-get install -y \
         openssl \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Copy executable files
 WORKDIR {{ $pysetupPath | quote }}

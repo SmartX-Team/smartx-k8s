@@ -1,2 +1,6 @@
 [default.extend-words]
+hda = "hda"
 typ = "typ"
+
+[files]
+extend-exclude = ["images/openark-vine-session/etc/apt/keyrings/*.gpg"]

@@ -1,0 +1,17 @@
+---
+- name: Patch node | Prepare
+  set_fact:
+    patch_base_url: "http://assets.{{ $.Release.Namespace }}.svc.{{ include "helm.clusterDomainName" $ }}/patches"
+    patch_files:
+{{- range $path, $_ := $.Files.Glob "assets/patches/*.sh" }}
+      - {{ base $path | quote }}
+{{- end }}
+
+- name: Patch node
+  when:
+    - kiss_os_exists
+    - not kiss_os_dirty
+  loop: {{ "{{ patch_files }}" | quote }}
+  loop_control:
+    loop_var: filename
+  include_tasks: patches-entry.yaml

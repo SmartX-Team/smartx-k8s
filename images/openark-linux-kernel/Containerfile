@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
         openssl \
     # Cleanup
     && apt-get clean all \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /var/log/*
 
 # Download source code
 WORKDIR /src
@@ -43,7 +43,11 @@ RUN git clone --depth=1 \
 
 # Build it!
 WORKDIR {{ printf "/src/%s" .Values.linux.repo.name | quote }}
-RUN --mount=type=cache,target={{ printf "/src/%s/build" .Values.linux.repo.name | quote }} \
+{{ include "container.run.cached" ( dict
+        "id" $.Release.Name
+        "key" "build"
+        "target" ( printf "/src/%s/build" .Values.linux.repo.name )
+    ) }} \
     make defconfig \
     && make
 

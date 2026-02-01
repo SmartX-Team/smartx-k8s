@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -58,8 +58,8 @@ mv "${IMAGE_HOME}/Containerfile" "${IMAGE_HOME}/template.containerfile"
 
 # Copy cluster-wide helm chart metadata
 cat "${ROOT}/Chart.yaml" |
-    yq '.name="container-image"' |
-    yq '.description="Temporary helm chart for building Containerfile"' \
+    yq -r '.name="container-image"' |
+    yq -r '.description="Temporary helm chart for building Containerfile"' \
         >"${IMAGE_HOME}/Chart.yaml"
 
 # Build a template
@@ -68,7 +68,7 @@ helm template "${IMAGE_NAME}" "${IMAGE_HOME}" ${@:1} \
 
 # Extract Containerfile
 cat "${IMAGE_HOME}/container-image/templates/configmap-containerfile.yaml" |
-    yq '.data.Containerfile' >"${IMAGE_HOME}/Containerfile"
+    yq -r '.data.Containerfile' >"${IMAGE_HOME}/Containerfile"
 
 # Return the chart home
 exec echo "${IMAGE_HOME}"

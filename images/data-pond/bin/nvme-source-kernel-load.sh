@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # Data Pond Storage
-# Load NVMe tranport Kernel Modules
+# Load NVMe transport Kernel Modules
 
 # Prehibit errors
 set -e -o pipefail

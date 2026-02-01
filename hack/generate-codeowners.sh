@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
+# Copyright (c) 2025-2026 Ho Kim (ho.kim@ulagbulag.io). All rights reserved.
 # Use of this source code is governed by a GPL-3-style license that can be
 # found in the LICENSE file.
 
@@ -40,7 +40,7 @@ for path in $(find . -name manifest.yaml | sort -u); do
     fi
 
     # Crawl owners
-    owners="$(cat "${path}" | yq '.spec.users.owners[]' | grep -Po '(?<=<).*(?=>)' | paste -sd ' ')"
+    owners="$(cat "${path}" | yq -r '.spec.users.owners[]' | grep -Po '(?<=<).*(?=>)' | paste -sd ' ')"
 
     echo "${prefix:1}" "${owners}" >>"${DST_FILE}"
 done

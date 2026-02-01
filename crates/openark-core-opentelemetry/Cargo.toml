@@ -22,13 +22,13 @@ workspace = true
 [features]
 default = []
 alloc = [
-    "chrono?/alloc",
+    "jiff?/alloc",
     # "tracing?/alloc",
     "tracing-subscriber?/alloc",
     "tracing-subscriber?/smallvec",
 ]
 std = [
-    "chrono?/std",
+    "jiff?/std",
     "tracing/std",
     "tracing-subscriber?/ansi",
     "tracing-subscriber?/env-filter",
@@ -38,7 +38,7 @@ std = [
 
 # OpenTelemetry
 opentelemetry = [
-    "dep:chrono",
+    "dep:jiff",
     "dep:opentelemetry",
     "dep:tracing-subscriber",
     "dep:tracing-web",
@@ -111,6 +111,5 @@ tracing-subscriber = { workspace = true, optional = true, features = [
 ] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-# `::tracing_subscriber::fmt::time::ChronoUtc` requires manual wasm binding
-chrono = { workspace = true, optional = true, features = ["wasmbind"] }
+jiff = { workspace = true, optional = true, features = ["js"] }
 tracing-web = { workspace = true, optional = true }
