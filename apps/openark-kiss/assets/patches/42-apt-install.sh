@@ -11,6 +11,21 @@ set -e -o pipefail
 # Verbose
 set -x
 
+# Install specialized packages
+if [ -f '/sys/class/dmi/id/product_family' ]; then
+    case "$(cat '/sys/class/dmi/id/product_family')" in
+    'DGX Spark')
+        apt-get install --no-install-recommends --no-install-suggests -y \
+            {{ printf "linux-modules-nvidia-fs-nvidia-hwe-%s" .Values.kiss.os.version | quote }} \
+            {{ printf "linux-nvidia-hwe-%s" .Values.kiss.os.version | quote }} \
+            {{ printf "linux-tools-nvidia-hwe-%s" .Values.kiss.os.version | quote }} \
+            nvidia-driver-580-open \
+            nvidia-prime \
+            && true
+        ;;
+    esac
+fi
+
 apt-get install --no-install-recommends --no-install-suggests -y \
 {{- range $_ := .Values.packages.ubuntu.requires }}
     {{ . | quote }} \

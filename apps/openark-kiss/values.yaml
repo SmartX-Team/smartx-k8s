@@ -67,6 +67,7 @@ packages:
       - bash-completion
       - bc
       - bind9-dnsutils
+      - bolt
       - bpfcc-tools
       - bpftrace
       - btrfs-progs
@@ -94,6 +95,8 @@ packages:
       - findutils
       - fonts-ubuntu-console
       - friendly-recovery
+      - fwupd
+      - fwupd-signed
       - grep
       - gzip
       - haveged
@@ -148,6 +151,8 @@ packages:
       - telnet
       - trace-cmd
       - tuned
+      - udisks2
+      - uidmap
       - unzip
       - util-linux
       - uuid-runtime
@@ -156,181 +161,423 @@ packages:
       - wpasupplicant
       - xfsprogs
     excludes:
+      - adwaita-icon-theme
       - alsa-base
       - alsa-utils
       - anacron
-      - apparmor
       - apport
       - apt-config-icons-hidpi
+      - aptdaemon
+      - aspell
       - avahi-daemon
       - baobab
       - bcache-tools
       - bluez
       - bluez-cups
-      - bolt
+      - bluez-obexd
+      - branding-ubuntu
+      - bubblewrap
       - byobu
+      - cheese-common
       - cloud-init
       - cloud-initramfs-copymods
       - cloud-initramfs-dyn-netconf
+      - colord
+      - colord-data
       - command-not-found
       - cron
+      - cuda-cccl-*
+      - cuda-command-line-tools-*
+      - cuda-culibos-dev-*
+      - cuda-cuobjdump-*
+      - cuda-cupti-*
+      - cuda-cuxxfilt-*
+      - cron-daemon-common
+      - cuda-documentation-*
+      - cuda-driver-dev-*
+      - cuda-gdb-*
+      - cuda-nsight-compute-*
+      - cuda-nsight-systems-*
+      - cuda-nvdisasm-*
       - cuda-nvml-dev-*
+      - cuda-nvprune-*
+      - cuda-nvrtc-*
+      - cuda-nvtx-*
+      - cuda-profiler-api-*
+      - cuda-sanitizer-*
       - cuda-toolkit-*
       - cups
-      - cups-bsd
-      - cups-client
-      - cups-filters
+      - cups-*
+      - dc
+      - dconf-cli
       - deja-dup
+      - desktop-file-utils
       - dgx-oobe-desktop
+      - dgx-release
+      - dgx-repo
+      - dgx-spark-mlnx-hotplug
+      - dgxstation-grub
+      - dictionaries-common
+      - dmraid
       - dmz-cursor-theme
+      - dnsmasq
+      - docbook-xml
       - docker
       - docker-buildx-plugin
       - docker-compose-plugin
+      - duplicity
+      - eatmydata
+      - emacsen-common
+      - endeavour-common
+      - espeak-ng-data
+      - evince-common
+      - evolution-data-server-common
       - file
       - file-roller
       - fontconfig
-      - fonts-dejavu-core
-      - fonts-liberation
-      - fonts-noto-cjk
-      - fonts-noto-color-emoji
-      - fonts-ubuntu
-      - fonts-ubuntu-console
+      - fonts-*
       - ftp
-      - fwupd
       - gamemode
+      - gamemode-daemon
+      - gds-tools-*
+      - gedit-common
+      - geoclue-2.0
+      - geocode-glib-common
+      - gir1.2-*
       - ghostscript
-      - gnome-accessibility-themes
-      - gnome-bluetooth-sendto
-      - gnome-calculator
-      - gnome-calendar
-      - gnome-characters
-      - gnome-control-center
-      - gnome-font-viewer
-      - gnome-initial-setup
-      - gnome-keyring
-      - gnome-logs
-      - gnome-menus
-      - gnome-remote-desktop
-      - gnome-session-canberra
-      - gnome-settings-daemon
-      - gnome-shell
-      - gnome-shell-extension-appindicator
-      - gnome-shell-extension-ubuntu-dock
-      - gnome-shell-extension-ubuntu-tiling-assistant
-      - gnome-system-monitor
-      - gnome-terminal
-      - gnome-text-editor
+      - glib-networking
+      - glib-networking-common
+      - glib-networking-services
+      - gnome-*
+      - gparted-common
+      - grilo-plugins-0.3-base
       - gsettings-ubuntu-schemas
-      - gstreamer1.0-alsa
-      - gstreamer1.0-packagekit
-      - gstreamer1.0-plugins-base-apps
+      - gstreamer1.0-*
+      - gtk-update-icon-cache
+      - guile-3.0-libs
+      - gvfs-*
+      - heif-gdk-pixbuf
+      - heif-thumbnailer
+      - hicolor-icon-theme
+      - hpc-sdk-repo
       - hplip
+      - hplip-data
+      - humanity-icon-theme
+      - hunspell-*
+      - hyphen-*
       - ibus
       - ibus-gtk
       - ibus-gtk3
+      - iio-sensor-proxy
+      - ipcalc
+      - java-common
+      - jfsutils
+      - kexec-tools
+      - kitty
+      - kitty-shell-integration
+      - kitty-terminfo
+      - kpartx
+      - kpartx-boot
       - landscape-common
+      - language-pack-*
       - language-selector-common
       - language-selector-gnome
       - libatk-adaptor
       - libglib2.0-bin
       - libnotify-bin
+      - libnvidia-container-tools
+      - libnvidia-container1
       - libreoffice-calc
       - libreoffice-gnome
       - libreoffice-impress
       - libreoffice-math
       - libreoffice-writer
+      - localechooser-data
+      - lp-solve
       - lxd-agent-loader
       - lxd-installer
+      - m17n-db
+      - makedumpfile
+      - media-player-info
+      - mobile-broadband-provider-info
       - modemmanager
       - motd-news-config
       - mousetweaks
+      - mozc-data
+      - mscompress
+      - msecli
       - mtr-tiny
       - multipath-tools
+      - mutter-common
+      - mythes-*
+      - nautilus-data
       - nautilus-sendto
       - needrestart
+      - netcat-openbsd
+      - network-manager-openvpn
       - nfs-common
+      - nsight-compute-*
+      - nsight-systems-*
+      - nv-cpu-governor
       - nv-docker-gpus
+      - nv-env-paths
+      - nv-grubserial
+      - nv-iommu
+      - nv-ipmi-devintf
+      - nv-limits
       - nv-no-grubmenu
+      - nv-persistence-mode
+      - nv-update-disable
       - nv-vulkan-desktop-ppa
       - nv-xorg-simpledrm
+      - nvgpu-services-list
+      - nvidia-compute-utils-*
       - nvidia-conf-xconfig
       - nvidia-console-settings
+      - nvidia-container-toolkit
+      - nvidia-container-toolkit-base
+      - nvidia-desktop-default-remove-gnome-software-deb
       - nvidia-dgx-telemetry
       - nvidia-disable-bt-profiles
+      - nvidia-disable-init-on-alloc
+      - nvidia-disable-numa-balancing
       - nvidia-drm-options-modeset0
-      - nvidia-driver-*
+      - nvidia-earlycon
+      - nvidia-enable-bt-profiles
+      - nvidia-enable-power-meter-cap
+      - nvidia-firmware-*
+      - nvidia-kernel-common-*
+      - nvidia-kernel-defaults
+      - nvidia-kernel-source-*
       - nvidia-modprobe
+      - nvidia-motd
+      - nvidia-nvme-options
+      - nvidia-pci-realloc
+      - nvidia-raid-config
+      - nvidia-redfish-config
+      - nvidia-relaxed-ordering-gpu
+      - nvidia-relaxed-ordering-nvme
+      - nvidia-spark-baud-rate
+      - nvidia-spark-default-remove-nvidia-fs-pkg
+      - nvidia-spark-fstab-config
+      - nvidia-spark-grub-pci
+      - nvidia-spark-initcall-bl
+      - nvidia-spark-realtek-mod-options
+      - nvidia-spark-run-apt-upgrade
+      - nvidia-update-manager
+      - nvidia-utils-*
+      - nvme-cli
       - open-iscsi
       - open-vm-tools
+      - openjdk-8-jre-headless
       - openprinting-ppds
+      - openvpn
       - orca
+      - p11-kit
+      - p11-kit-modules
+      - pastebinit
+      - pipewire
+      - pipewire-alsa
+      - pipewire-bin
       - pipewire-pulse
+      - pkg-config
+      - pkgconf
+      - pkgconf-bin
       - plymouth
       - policykit-desktop-privileges
       - pollinate
-      - printer-driver-brlaser
-      - printer-driver-c2esp
-      - printer-driver-foo2zjs
-      - printer-driver-m2300w
-      - printer-driver-min12xxw
-      - printer-driver-pnm2ppa
-      - printer-driver-ptouch
-      - printer-driver-pxljr
-      - printer-driver-sag-gdi
-      - printer-driver-splix
+      - poppler-data
+      - poppler-utils
+      - printer-driver-*
       - psmisc
+      - python-babel-localedata
+      - python3-aptdaemon
+      - python3-attr
+      - python3-automat
+      - python3-babel
+      - python3-bcrypt
+      - python3-boto3
+      - python3-botocore
+      - python3-brlapi
+      - python3-cairo
       - python3-click
+      - python3-colorama
       - python3-commandnotfound
+      - python3-configobj
+      - python3-constantly
+      - python3-cups
+      - python3-cupshelpers
+      - python3-dateutil
+      - python3-debconf
+      - python3-debian
+      - python3-defer
+      - python3-distro-info
+      - python3-distupgrade
+      - python3-dnspython
+      - python3-fasteners
+      - python3-freetype
       - python3-gdbm
+      - python3-gi-cairo
+      - python3-hamcrest
+      - python3-hyperlink
+      - python3-ibus-1.0
+      - python3-incremental
+      - python3-jinja2
+      - python3-jmespath
+      - python3-json-pointer
+      - python3-jsonpatch
+      - python3-jsonschema
+      - python3-ldb
+      - python3-louis
+      - python3-magic
+      - python3-mako
+      - python3-markdown
+      - python3-markupsafe
+      - python3-monotonic
+      - python3-nacl
+      - python3-netifaces
+      - python3-newt
+      - python3-olefile
+      - python3-packaging
+      - python3-paramiko
+      - python3-pexpect
+      - python3-pil
+      - python3-psutil
+      - python3-ptyprocess
+      - python3-pyasn1
+      - python3-pyasn1-modules
+      - python3-pyrsistent
+      - python3-reportlab
+      - python3-rlpycairo
+      - python3-s3transfer
+      - python3-samba
+      - python3-serial
+      - python3-service-identity
+      - python3-software-properties
+      - python3-speechd
+      - python3-systemd
+      - python3-talloc
+      - python3-tdb
+      - python3-twisted
+      - python3-tz
+      - python3-update-manager
+      - python3-xdg
       - python3-xkit
+      - python3-zope.interface
+      - qemu-user-static
+      - reiserfsprogs
       - remmina
+      - remmina-common
       - rhythmbox
+      - rhythmbox-data
       - rpcbind
       - rsyslog
+      - rtkit
+      - run-one
+      - rygel
+      - samba
+      - samba-common
+      - samba-common-bin
+      - samba-libs
+      - sane-utils
       - screen
       - seahorse
+      - sg3-utils
+      - sg3-utils-udev
+      - sgml-data
       - shotwell
+      - shotwell-common
       - simple-scan
       - snapd
       - sosreport
+      - sound-icons
+      - sound-theme-freedesktop
       - speech-dispatcher
+      - speech-dispatcher-audio-plugins
       - spice-vdagent
+      - squashfs-tools
       - srptools
+      - ssl-cert
+      - switcheroo-control
+      - system-config-printer-udev
+      - tcl
+      - tcl8.6
       - tcpdump
+      - tdb-tools
       - thermald
       - time
       - tmux
       - tnftp
       - totem
+      - totem-common
+      - tpm2-tools
+      - transmission-common
       - transmission-gtk
-      - udisks2
       - ufw
       - ubuntu-docs
       - ubuntu-drivers-common
       - ubuntu-minimal
+      - ubuntu-mono
       - ubuntu-pro-client
+      - ubuntu-release-upgrader-core
       - ubuntu-report
       - ubuntu-server-minimal
       - ubuntu-settings
       - ubuntu-wallpapers
+      - ubuntu-wallpapers-noble
       - ucx-utils
       - unattended-upgrades
+      - unminimize
+      - uno-libs-private
+      - update-inetd
       - update-manager-core
       - upower
+      - ure
+      - ure-java
+      - usb-modeswitch
+      - usb-modeswitch-data
+      - usbmuxd
       - usbutils
+      - user-session-migration
+      - wamerican
+      - wbrazilian
+      - wbritish
+      - webp-pixbuf-loader
+      - wfrench
+      - whoopsie-preferences
       - wireplumber
+      - witalian
+      - wngerman
+      - wogerman
+      - wportuguese
+      - wspanish
+      - wswiss
+      - x11-apps
+      - x11-session-utils
+      - x11-utils
+      - x11-xserver-utils
+      - xbitmaps
+      - xbrlapi
       - xcursor-themes
+      - xdg-dbus-proxy
+      - xdg-desktop-portal
       - xdg-desktop-portal-gnome
       - xdg-user-dirs
       - xdg-user-dirs-gtk
       - xdg-utils
+      - xinit
+      - xinput
       - xorg
-      - yaru-theme-gnome-shell
-      - yaru-theme-gtk
-      - yaru-theme-icon
-      - yaru-theme-sound
+      - xorg-docs-core
+      - xserver-xorg-video-nvidia-*
+      - xul-ext-ubufox
+      - xwayland
+      - yaru-theme-*
       - yelp
+      - yelp-xsl
       - zenity
+      - zenity-common
+      - zerofree
 
 kubespray:
   ##########################################
