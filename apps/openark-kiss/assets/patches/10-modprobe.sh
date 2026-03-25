@@ -19,3 +19,16 @@ cat <<EOF >{{ printf "/etc/modprobe.d/%s" $filename | quote }}
 {{ tpl ( $.Files.Get $path ) $ | replace "\\" "\\\\" | replace "$" "\\$" | trim }}
 EOF
 {{- end }}
+
+# Apply specialized settings
+if [ -f '/sys/class/dmi/id/product_family' ]; then
+    case "$(cat '/sys/class/dmi/id/product_family')" in
+    'DGX Spark')
+        # Enable watchdog kernel module
+        # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
+        if [ -f /lib/modprobe.d/blacklist_linux_6.8.0-106-generic.conf ]; then
+            sudo sed -i 's/^\(blacklist sbsa_gwdt$\)/#\1/' /lib/modprobe.d/blacklist_linux_6.8.0-106-generic.conf
+        fi
+        ;;
+    esac
+fi
