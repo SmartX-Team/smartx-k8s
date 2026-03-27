@@ -17,11 +17,15 @@ pub struct OpenArkArgs {
         long,
         env = "RUST_LOG",
         default_value_t = OpenArkArgs::default_log_level(),
+        global = true,
     ))]
     pub log_level: ::tracing::Level,
 
     #[cfg(all(feature = "opentelemetry", not(target_arch = "wasm32")))]
-    #[cfg_attr(feature = "clap", arg(long, env = "OPENTELEMETRY_EXPORT"))]
+    #[cfg_attr(
+        feature = "clap",
+        arg(long, env = "OPENTELEMETRY_EXPORT", global = true)
+    )]
     pub opentelemetry_export: bool,
 }
 
