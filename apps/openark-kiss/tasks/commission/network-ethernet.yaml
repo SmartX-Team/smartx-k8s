@@ -16,7 +16,10 @@
   set_fact:
     ethernet_modules:
       wifi:
+        # Intel
         - iwlwifi
+        # Mediatek
+        - mt7925e
     ethernet_modules_map: {}
     ethernet_priority:
       - wifi
