@@ -13,6 +13,8 @@ models:
     - name: exaone-deep:32b-fp16
     - name: gemma3:27b
     - name: gemma3:27b-it-fp16
+    - name: gemma4:31b-it-bf16
+    - name: gemma4:e4b
     - name: gpt-oss:120b
     - name: gpt-oss:20b
     - name: hermes3:70b
