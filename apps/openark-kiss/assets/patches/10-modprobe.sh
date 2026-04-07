@@ -26,6 +26,7 @@ if [ -f '/sys/class/dmi/id/product_family' ]; then
     'DGX Spark')
         # Enable watchdog kernel module
         # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
+        echo 'sbsa_gwdt' >/etc/modules-load.d/sbsa_gwdt.conf
         modprobe sbsa_gwdt
         ;;
     esac
