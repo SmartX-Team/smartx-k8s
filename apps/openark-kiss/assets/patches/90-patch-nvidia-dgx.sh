@@ -18,9 +18,7 @@ fi
 
 # Enable watchdog kernel module
 # NOTE: https://forums.developer.nvidia.com/t/dgx-spark-keeps-rebooting-every-20-30-minutes/350692/6
-if [ -f /lib/modprobe.d/blacklist_linux_6.8.0-106-generic.conf ]; then
-    sed -i 's/^\(blacklist sbsa_gwdt$\)/#\1/' /lib/modprobe.d/blacklist_linux_6.8.0-106-generic.conf
-fi
+sudo apt remove -y linux-generic "linux-headers-6.8.0-*" linux-headers-generic "linux-image-6.8.0-*" linux-image-generic "linux-modules-6.8.0-*" "linux-modules-extra-6.8.0-*"
 
 # Enable wireless networking
 nmcli radio wifi on
