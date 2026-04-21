@@ -38,7 +38,7 @@ fn build_catalog_item(item: &CatalogItem) -> Html {
     };
 
     let now = Timestamp::now();
-    let outdated = Span::new().days(30);
+    let outdated = Span::new().hours(24 * 30); // 30 naive days
     let badge = if created_at.is_none_or(|timestamp| timestamp + outdated > now) {
         Some(html! {
             <div class="badge badge-secondary">{ "NEW" }</div>

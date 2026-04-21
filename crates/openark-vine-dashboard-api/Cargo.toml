@@ -83,3 +83,7 @@ strum = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 tracing = { workspace = true, optional = true, features = ["attributes"] }
 url = { workspace = true }
+
+[dev-dependencies]
+jiff = { workspace = true, features = ["serde", "std"] }
+serde-json = { workspace = true, features = ["std"] }

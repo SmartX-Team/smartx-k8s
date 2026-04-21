@@ -64,6 +64,7 @@ openark-vine-oauth = { workspace = true, features = [
 
 anyhow = { workspace = true, features = ["std"] }
 async-trait = { workspace = true }
+chrono = { workspace = true, features = ["std", "wasmbind"] }
 convert-case = { workspace = true }
 gloo-net = { workspace = true, features = ["eventsource", "http", "json"] }
 http = { workspace = true, features = ["std"] }
@@ -77,7 +78,7 @@ jaq-std = { workspace = true, features = [
     "std",
     "time",
 ] }
-jiff = { workspace = true, features = ["std"] }
+jiff = { workspace = true, features = ["js", "std"] }
 regex = { workspace = true, features = ["std", "unicode"] }
 serde = { workspace = true, features = ["std"] }
 serde-json = { workspace = true, features = ["std"] }
