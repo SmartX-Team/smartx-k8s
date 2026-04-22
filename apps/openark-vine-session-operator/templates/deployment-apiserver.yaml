@@ -85,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: oidc
                   key: OAUTH_CLIENT_ID
+            - name: OAUTH_CLIENT_ORIGIN
+              value: "https://dashboard.{{ .Values.ingress.domainName }}"
             - name: OAUTH_CLIENT_REDIRECT_URL
               value: "https://dashboard.{{ .Values.ingress.domainName }}/oauth/oidc/callback"
             - name: OAUTH_CLIENT_SECRET
