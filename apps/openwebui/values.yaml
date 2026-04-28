@@ -1,4 +1,9 @@
 ---
+# -- Override the full resource name completely. When set, this takes precedence over nameOverride
+# and the standard naming convention. Leave empty to use the standard naming pattern.
+# See the "Resource Naming" section in the README for details on how resources are named.
+fullnameOverride: open-webui
+
 ollama:
   # -- Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure
   enabled: true
@@ -119,6 +124,9 @@ ollama:
 pipelines:
   # -- Automatically install Pipelines chart to extend Open WebUI functionality using Pipelines: https://github.com/open-webui/pipelines
   enabled: true
+  # -- Override the Pipelines subchart name. If not set, uses the release name with '-pipelines' suffix for multiple instance support
+  # @section -- External Tools configuration
+  fullnameOverride: open-webui-pipelines
   # -- This section can be used to pass required environment variables to your pipelines (e.g. Langfuse hostname)
   extraEnvVars: []
 
