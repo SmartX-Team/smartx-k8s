@@ -114,6 +114,7 @@ ollama:
               - key: nvidia.com/gpu.product
                 operator: In
                 values:
+                  - NVIDIA-A10
                   - NVIDIA-A100-SXM4-40GB
 
   # How to replace existing pods
