@@ -100,8 +100,8 @@ diagnosticMode:
 ## @param image.debug Specify if debug logs should be enabled
 ##
 image:
-  registry: docker.io
-  repository: bitnami/keycloak
+  registry: quay.io
+  repository: ulagbulag/keycloak
   # tag: 24.0.5-debian-12-r1
   # digest: ""
   ## Specify a imagePullPolicy
