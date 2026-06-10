@@ -51,4 +51,4 @@ spec:
   source:
     chart: opentelemetry-operator
     repoUrl: "https://open-telemetry.github.io/opentelemetry-helm-charts"
-    version: 0.105.0
+    version: 0.114.1

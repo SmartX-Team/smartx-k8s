@@ -2,9 +2,8 @@
 ## Provide OpenTelemetry Operator manager container image and resources.
 ##
 manager:
-  # For more details see: https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/apps/opentelemetry-operator/UPGRADING.md#0553-to-0560
   collectorImage:
-    repository: otel/opentelemetry-collector-k8s
+    repository: otel/opentelemetry-collector-contrib
 
   ## Adds additional environment variables
   ## e.g ENV_VAR: env_value
@@ -23,11 +22,6 @@ manager:
   # Enable manager pod automatically rolling
   rolling: true
 
-## Provide OpenTelemetry Operator kube-rbac-proxy container image.
-##
-kubeRBACProxy:
-  enabled: false
-
 ## Admission webhooks make sure only requests with correctly formatted rules will get into the Operator.
 ## They also enable the sidecar injection for OpenTelemetryCollector and Instrumentation CR's
 admissionWebhooks:
@@ -37,10 +31,30 @@ admissionWebhooks:
   ## TLS Certificate Option 1: Use certManager to generate self-signed certificate.
   ## certManager must be enabled. If enabled, always takes precedence over options 2 and 3.
   certManager:
-    enabled: false
+    enabled: true
 
   ## TLS Certificate Option 2: Use Helm to automatically generate self-signed certificate.
   ## certManager must be disabled and autoGenerateCert must be enabled.
   ## If true and certManager.enabled is false, Helm will automatically create a self-signed cert and secret for you.
   autoGenerateCert:
-    enabled: true
+    enabled: false
+
+affinity:
+  # Node affinity rules
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+        weight: 1
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/kiss
+              operator: In
+              values:
+                - Compute
+                - ControlPlane
