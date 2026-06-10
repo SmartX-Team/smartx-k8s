@@ -4,7 +4,6 @@ kind: Manifest
 metadata:
   name: smartx.apps.opentelemetry-operator
 spec:
-  enabled: false
   group: ops
   phase: stable
   scale: small
