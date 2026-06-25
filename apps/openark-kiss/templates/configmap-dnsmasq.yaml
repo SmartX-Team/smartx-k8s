@@ -15,7 +15,7 @@ data:
     nameserver {{ .Values.cluster.nameservers.loadBalancer.ipv4 | default .Values.cluster.nameservers.incluster.ipv4 }}
     nameserver {{ .Values.network.nameservers.ns1 }}
     nameserver {{ .Values.network.nameservers.ns2 }}
-    options timeout:2 attempts:3 rotate single-request-reopen
+    options timeout:2 attempts:3 rotate single-request-reopen use-vc
 
 {{- end }}
 {{- include "configmaps.dnsmasq" $ }}

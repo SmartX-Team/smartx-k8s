@@ -17,4 +17,7 @@ cat <<EOF >/etc/NetworkManager/conf.d/99-systemd.conf
 [main]
 dns=default
 rc-manager=resolvconf
+
+[global-dns]
+options=single-request-reopen use-vc
 EOF

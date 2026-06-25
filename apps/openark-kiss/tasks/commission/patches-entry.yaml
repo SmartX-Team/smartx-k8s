@@ -4,6 +4,11 @@
     url: "{{ patch_base_url }}/{{ filename }}"
     dest: "/tmp/{{ filename }}"
     mode: "0555"
+    timeout: 30
+  register: result_download
+  until: result_download is succeeded
+  retries: 10
+  delay: 5
 
 - name: "Patch node | {{ filename }} | Apply"
   shell: "/tmp/{{ filename }}"

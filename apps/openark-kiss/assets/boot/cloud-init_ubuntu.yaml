@@ -227,6 +227,9 @@ autoinstall:
       [main]
       dns=default
       rc-manager=resolvconf
+
+      [global-dns]
+      options=single-request-reopen use-vc
       EOF
     - rm -f /etc/netplan/50-cloud-init*
     - |
