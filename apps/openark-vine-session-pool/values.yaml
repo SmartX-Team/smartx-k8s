@@ -44,13 +44,15 @@ profiles:
     name: windows-11
     cdrom:
       filename: Win11_24H2_Korean_x64.iso
+    session:
+      context:
+        privileged: true
     windows:
       eula: false
 
 extraProfiles: []
 
-bindings:
-  []
+bindings: []
   # - profileName: pytorch
   #   priority: 0 # Default: 0
   #   nodeSelector: {}

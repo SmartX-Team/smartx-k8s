@@ -29,6 +29,8 @@ spec:
       enabled: true
     ssh:
       enabled: false
+  session:
+{{- .session | default dict | toYaml | nindent 4 }}
   vm:
     enabled: true
     os: {{ .name | quote }}
