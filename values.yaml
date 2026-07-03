@@ -348,7 +348,7 @@ kiss:
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
     version: "24.04"
-    revision: "3"
+    revision: "4"
     channel: release # One of: release (default), preview-*
     kernel: stable # One of: edge, stable (default)
 
