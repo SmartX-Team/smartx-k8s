@@ -1,12 +1,12 @@
 ---
-- name: Check whether nerdctl command exists
+- name: Check whether containerd command exists
   stat:
-    path: "{{ "{{ bin_dir }}" }}/nerdctl"
-  register: nerdctl_file
+    path: "{{ "{{ bin_dir }}" }}/containerd"
+  register: containerd_file
 
 - name: Install ContainerD | RockyLinux
   when:
-    - not nerdctl_file.stat.exists
+    - not containerd_file.stat.exists
     - kiss_os_dist in ['rocky']
   package:
     name: containerd.io
@@ -15,7 +15,7 @@
 
 - name: Install ContainerD | Ubuntu
   when:
-    - not nerdctl_file.stat.exists
+    - not containerd_file.stat.exists
     - kiss_os_dist in ['ubuntu']
   package:
     name: containerd
@@ -23,11 +23,15 @@
   ignore_errors: true
 
 - name: Start ContainerD
-  when: not nerdctl_file.stat.exists
   systemd:
     name: containerd.service
     state: started
     daemon_reload: true
+
+- name: Check whether nerdctl command exists
+  stat:
+    path: "{{ "{{ bin_dir }}" }}/nerdctl"
+  register: nerdctl_file
 
 - name: Download nerdctl binary
   when: not nerdctl_file.stat.exists
