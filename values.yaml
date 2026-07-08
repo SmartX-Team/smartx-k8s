@@ -92,11 +92,11 @@ build:
   # Kubespray Configuration
   kubespray:
     image:
-      repo: quay.io/ulagbulag/kubespray
+      repo: quay.io/kubespray/kubespray
       pullPolicy: IfNotPresent
     # NOTE: Before upgrading kubespray, please double-check the kubespray variables
     # Especially: `kube_version`, `kubeadm_image_repo`
-    version: 2.30.0
+    version: 2.31.0
 
   # Nginx Image Configuration
   nginx:
