@@ -375,8 +375,7 @@ ingress:
   ##   kubernetes.io/ingress.class: nginx
   ##   cert-manager.io/cluster-issuer: cluster-issuer-name
   ##
-  annotations:
-    {}
+  annotations: {}
     # nginx.ingress.kubernetes.io/enable-cors: "true"
   ## @param ingress.labels Additional labels for the Ingress resource.
   ## e.g:
@@ -957,6 +956,21 @@ keycloakConfigCli:
 ##
 postgresql:
   enabled: true
+
+  ## Bitnami PostgreSQL image version
+  ## ref: https://hub.docker.com/r/bitnami/postgresql/tags/
+  ## @param image.registry [default: REGISTRY_NAME] PostgreSQL image registry
+  ## @param image.repository [default: REPOSITORY_NAME/postgresql] PostgreSQL image repository
+  ## @skip image.tag PostgreSQL image tag (immutable tags are recommended)
+  ## @param image.digest PostgreSQL image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+  ## @param image.pullPolicy PostgreSQL image pull policy
+  ## @param image.pullSecrets Specify image pull secrets
+  ## @param image.debug Specify if debug values should be set
+  ##
+  image:
+    registry: quay.io
+    repository: ulagbulag/postgresql
+    # tag: 16.3.0-debian-12-r16
 
   ## Authentication parameters
   ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run
