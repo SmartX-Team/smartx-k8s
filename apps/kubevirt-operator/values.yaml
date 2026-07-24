@@ -58,10 +58,26 @@ kubevirt:
         - externalResourceProvider: false
           pciVendorSelector: 8086:7ec0
           resourceName: org.ulagbulag.io/pci-usb_controller-8086-7ec0
+        # Intel Corporation Tiger Lake-LP Thunderbolt 4 USB Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:9a13
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-9a13
         # Intel Corporation Tiger Lake-H Thunderbolt 4 USB Controller
         - externalResourceProvider: false
           pciVendorSelector: 8086:9a17
           resourceName: org.ulagbulag.io/pci-usb_controller-8086-9a17
+        # Intel Corporation TigerLake-LP GT2 [Iris Xe Graphics]
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:9a49
+          resourceName: org.ulagbulag.io/pci-vga_controller-8086-9a49
+        # Intel Corporation Tiger Lake-LP Smart Sound Technology Audio Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:a0c8
+          resourceName: org.ulagbulag.io/pci-audio_controller-8086-a0c8
+        # Intel Corporation Tiger Lake-LP USB 3.2 Gen 2x1 xHCI Host Controller
+        - externalResourceProvider: false
+          pciVendorSelector: 8086:a0ed
+          resourceName: org.ulagbulag.io/pci-usb_controller-8086-a0ed
 
     # VMRolloutStrategy defines how changes to a VM object propagate to its VMI
     vmRolloutStrategy: LiveUpdate
@@ -81,3 +97,30 @@ kubevirt:
             "value": "quay.io/ulagbulag/virt-launcher:v1.4.0"
           }]
         type: json
+      # - resourceType: DaemonSet
+      #   resourceName: virt-handler
+      #   patch: >
+      #     [{
+      #       "op": "add",
+      #       "path": "/spec/template/spec/containers/0/volumeMounts/-",
+      #       "value": {
+      #         "name": "kubevirt-virt-handler-certs-ext",
+      #         "mountPath": "/etc/virt-handler/clientcertificates",
+      #         "readOnly": true
+      #       }
+      #     }]
+      #   type: json
+      # - resourceType: DaemonSet
+      #   resourceName: virt-handler
+      #   patch: >
+      #     [{
+      #       "op": "add",
+      #       "path": "/spec/template/spec/volumes/-",
+      #       "value": {
+      #         "name": "kubevirt-virt-handler-certs-ext",
+      #         "secret": {
+      #           "secretName": "kubevirt-virt-handler-certs"
+      #         }
+      #       }
+      #     }]
+      #   type: json

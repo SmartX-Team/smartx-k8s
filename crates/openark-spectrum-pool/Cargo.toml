@@ -57,18 +57,14 @@ tls-default = ["tls-aws-lc-rs"]
 tls-aws-lc-rs = [
     "actix-web/rustls-0_23",
     "openark-core/tls-aws-lc-rs",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 tls-openssl = [
     "actix-web/openssl",
     "openark-core/tls-openssl",
     "reqwest/native-tls",
 ]
-tls-ring = [
-    "actix-web/rustls-0_23",
-    "openark-core/tls-ring",
-    "reqwest/rustls-tls",
-]
+tls-ring = ["actix-web/rustls-0_23", "openark-core/tls-ring", "reqwest/rustls"]
 
 # Tracing
 tracing = [

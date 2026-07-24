@@ -60,7 +60,7 @@ tls-aws-lc-rs = [
     "kube/rustls-tls",
     "openark-core/tls-aws-lc-rs",
     "openark-vine-oauth/tls-aws-lc-rs",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 tls-openssl = [
     "actix-web/openssl",
@@ -74,7 +74,7 @@ tls-ring = [
     "kube/rustls-tls",
     "openark-core/tls-ring",
     "openark-vine-oauth/tls-ring",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 
 # Tracing

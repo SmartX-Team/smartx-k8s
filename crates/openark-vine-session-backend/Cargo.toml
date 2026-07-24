@@ -61,7 +61,7 @@ tls-aws-lc-rs = [
     "openark-core/tls-aws-lc-rs",
     "openark-vine-session-exec/tls-aws-lc-rs",
     "openark-vine-oauth/tls-aws-lc-rs",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 tls-openssl = [
     "actix-web/openssl",
@@ -77,7 +77,7 @@ tls-ring = [
     "openark-core/tls-ring",
     "openark-vine-session-exec/tls-ring",
     "openark-vine-oauth/tls-ring",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 
 # Tracing

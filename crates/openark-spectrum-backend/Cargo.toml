@@ -58,7 +58,7 @@ tls-aws-lc-rs = [
     "actix-web/rustls-0_23",
     "openark-core/tls-aws-lc-rs",
     "prometheus-http-query/rustls-tls",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 tls-openssl = [
     "actix-web/openssl",
@@ -70,7 +70,7 @@ tls-ring = [
     "actix-web/rustls-0_23",
     "openark-core/tls-ring",
     "prometheus-http-query/rustls-tls",
-    "reqwest/rustls-tls",
+    "reqwest/rustls",
 ]
 
 # Tracing

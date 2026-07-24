@@ -28,9 +28,9 @@ server = ["transport"]
 transport = ["tonic/transport", "tonic-prost-build/transport"]
 
 # TLS
-tls-aws-lc-rs = ["reqwest/rustls-tls"]
+tls-aws-lc-rs = ["reqwest/rustls"]
 tls-openssl = ["reqwest/native-tls"]
-tls-ring = ["reqwest/rustls-tls"]
+tls-ring = ["reqwest/rustls"]
 
 [build-dependencies]
 anyhow = { workspace = true, features = ["std"] }

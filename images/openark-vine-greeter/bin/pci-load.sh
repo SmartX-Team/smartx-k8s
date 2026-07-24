@@ -55,14 +55,13 @@ fi
 
 # Skip if another driver is running
 if [ "x${driver}" != 'xvfio-pci' ] && [ -e "/sys/bus/pci/devices/${pci_id}/driver" ]; then
-        last_driver="$(basename "$(realpath "/sys/bus/pci/devices/${pci_id}/driver")")"
-        case "${last_driver}" in
-        'i915' | 'nouveau' | 'nvidia')
-            echo "WARN: Using the current GPU driver: ${pci_id} -> ${last_driver}"
-            exec true
-            ;;
-        esac
-    fi
+    last_driver="$(basename "$(realpath "/sys/bus/pci/devices/${pci_id}/driver")")"
+    case "${last_driver}" in
+    'i915' | 'nouveau' | 'nvidia')
+        echo "WARN: Using the current GPU driver: ${pci_id} -> ${last_driver}"
+        exec true
+        ;;
+    esac
 fi
 
 # Build driver

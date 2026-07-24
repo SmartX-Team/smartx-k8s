@@ -73,7 +73,7 @@ gloo-net = { workspace = true, features = ["eventsource", "http", "json"] }
 http = { workspace = true, features = ["std"] }
 itertools = { workspace = true, features = ["use_std"] }
 jaq-core = { workspace = true, features = ["std"] }
-jaq-json = { workspace = true, features = ["parse"] }
+jaq-json = { workspace = true }
 jaq-std = { workspace = true, features = [
     "format",
     "math",

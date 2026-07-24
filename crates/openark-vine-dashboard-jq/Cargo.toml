@@ -37,7 +37,7 @@ tracing = ["jaq-std?/log"]
 codesnake = { workspace = true }
 hifijson = { workspace = true, features = ["alloc"] }
 jaq-core = { workspace = true }
-jaq-json = { workspace = true, features = ["parse"] }
+jaq-json = { workspace = true }
 jaq-std = { workspace = true, optional = true, features = [
     "format",
     "math",

@@ -155,7 +155,7 @@ impl<R> RecorderExt<R> for Recorder {
                 action,
                 secondary: None,
             };
-            let reference = object.clone().into();
+            let reference = (*object.clone()).into();
             self.publish(&event, &reference).await.ok();
         }
         #[cfg(feature = "tracing")]

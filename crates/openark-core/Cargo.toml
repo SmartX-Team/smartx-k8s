@@ -93,7 +93,7 @@ tls = ["dep:rustls"]
 # TLS CryptoProviders
 tls-aws-lc-rs = [
     "kube?/rustls-tls",
-    "reqwest?/rustls-tls",
+    "reqwest?/rustls",
     "rustls?/aws_lc_rs",
     "tls",
 ]
@@ -104,7 +104,7 @@ tls-openssl = [
     "std",
     "tls",
 ]
-tls-ring = ["kube?/rustls-tls", "reqwest?/rustls-tls", "rustls?/ring", "tls"]
+tls-ring = ["kube?/rustls-tls", "reqwest?/rustls", "rustls?/ring", "tls"]
 
 # Tracing
 tracing = ["dep:tracing"]

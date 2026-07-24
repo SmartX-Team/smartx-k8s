@@ -61,13 +61,10 @@ opentelemetry-otlp = [
 opentelemetry-logs = [
     "opentelemetry",
     "opentelemetry?/internal-logs",
-    "opentelemetry?/spec_unstable_logs_enabled",
-    "opentelemetry-appender-tracing?/spec_unstable_logs_enabled",
     "opentelemetry-otlp?/internal-logs",
     "opentelemetry-otlp?/logs",
     "opentelemetry-sdk?/experimental_logs_batch_log_processor_with_async_runtime",
     "opentelemetry-sdk?/internal-logs",
-    "opentelemetry-sdk?/spec_unstable_logs_enabled",
 ]
 opentelemetry-metrics = [
     "opentelemetry",

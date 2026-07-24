@@ -10,10 +10,7 @@ use k8s_openapi::{Resource, api::core::v1::Node};
 use kube::{
     Api, Client,
     api::{PartialObjectMeta, Patch, PatchParams},
-    runtime::{
-        metadata_watcher,
-        watcher::{self, Event},
-    },
+    runtime::watcher::{self, Event},
 };
 use openark_vine_session_api::{VineSessionGPU, filter_taint};
 use serde_json::json;
@@ -261,10 +258,10 @@ async fn systemctl_exec(command: &str, service_name: &str) -> Result<()> {
 
 async fn try_main(args: &Args) -> Result<()> {
     let client = Client::try_default().await?;
-    let api = Api::all(client);
+    let api = Api::all(client.clone());
 
     let mut service = Service {
-        api: api.clone(),
+        api: Api::all(client),
         args,
         patch_params: PatchParams {
             dry_run: args.dry_run,
@@ -281,7 +278,7 @@ async fn try_main(args: &Args) -> Result<()> {
         ..Default::default()
     };
 
-    let mut stream = Box::pin(metadata_watcher(api, watcher_config));
+    let mut stream = Box::pin(watcher::watcher(api, watcher_config));
     while let Some(event) = stream.try_next().await? {
         match event {
             Event::Apply(node) | Event::InitApply(node) => service.apply(&node).await?,

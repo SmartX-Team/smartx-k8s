@@ -5,10 +5,10 @@ use std::{net::SocketAddr, sync::Arc, time::Duration};
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use clap::Parser;
+use hickory_net::runtime::Time;
 use hickory_server::{
-    ServerFuture,
-    authority::Catalog,
-    server::{Request, RequestHandler, ResponseHandler, ResponseInfo},
+    server::{Request, RequestHandler, ResponseHandler, ResponseInfo, Server},
+    zone_handler::Catalog,
 };
 use kube::Client;
 use tokio::{
@@ -56,14 +56,15 @@ impl Handler {
 
 #[async_trait]
 impl RequestHandler for Handler {
-    async fn handle_request<R>(&self, request: &Request, response_handle: R) -> ResponseInfo
+    async fn handle_request<R, T>(&self, request: &Request, response_handle: R) -> ResponseInfo
     where
         R: ResponseHandler,
+        T: Time,
     {
         self.catalog
             .read()
             .await
-            .handle_request(request, response_handle)
+            .handle_request::<R, T>(request, response_handle)
             .await
         // let mut header = Header::new();
         // header.set_message_type(MessageType::Response);
@@ -71,15 +72,16 @@ impl RequestHandler for Handler {
     }
 }
 
-async fn build_server(addr: SocketAddr, handler: Handler) -> Result<ServerFuture<Handler>> {
-    let mut server = ServerFuture::new(handler);
+async fn build_server(addr: SocketAddr, handler: Handler) -> Result<Server<Handler>> {
+    let mut server = Server::new(handler);
 
     let socket = UdpSocket::bind(addr).await?;
     server.register_socket(socket);
 
     let listener = TcpListener::bind(addr).await?;
     let timeout = Duration::from_secs(30);
-    server.register_listener(listener, timeout);
+    let response_buffer_size = 32;
+    server.register_listener(listener, timeout, response_buffer_size);
 
     Ok(server)
 }

@@ -44,6 +44,11 @@ opentelemetry-trace = ["openark-core/opentelemetry-trace", "opentelemetry"]
 # TLS
 tls-default = ["tls-aws-lc-rs"]
 tls-aws-lc-rs = [
+    "hickory-net/dnssec-aws-lc-rs",
+    "hickory-net/tls-aws-lc-rs",
+    "hickory-net/h3-aws-lc-rs",
+    "hickory-net/https-aws-lc-rs",
+    "hickory-net/quic-aws-lc-rs",
     "hickory-server/dnssec-aws-lc-rs",
     "hickory-server/tls-aws-lc-rs",
     "hickory-server/h3-aws-lc-rs",
@@ -54,6 +59,11 @@ tls-aws-lc-rs = [
 ]
 tls-openssl = ["kube/openssl-tls", "openark-core/tls-openssl"]
 tls-ring = [
+    "hickory-net/dnssec-ring",
+    "hickory-net/tls-ring",
+    "hickory-net/h3-ring",
+    "hickory-net/https-ring",
+    "hickory-net/quic-ring",
     "hickory-server/dnssec-ring",
     "hickory-server/tls-ring",
     "hickory-server/h3-ring",
@@ -74,6 +84,7 @@ anyhow = { workspace = true, features = ["std"] }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "std"] }
 futures = { workspace = true, features = ["std"] }
+hickory-net = { workspace = true }
 hickory-server = { workspace = true }
 k8s-openapi = { workspace = true, features = [
     # "std",

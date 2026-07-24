@@ -127,7 +127,7 @@ build:
 
   # Rust Toolchain Configuration
   rust:
-    channel: nightly
+    channel: stable
     image:
       repo: docker.io/library/rust
     version: "1"
