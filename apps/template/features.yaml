@@ -282,7 +282,7 @@ org.ulagbulag.io/gitops:
     - org.ulagbulag.io/git
     - org.ulagbulag.io/workflow
 
-org.ulagbulag.io/gitops/remote:
+org.ulagbulag.io/gitops/scalex:
   requires:
     - org.ulagbulag.io/gitops
 

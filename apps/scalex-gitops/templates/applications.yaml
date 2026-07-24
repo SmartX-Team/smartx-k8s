@@ -1,11 +1,11 @@
-{{- range $application := .Values.remoteGitOps.applications }}
+{{- range $application := .Values.scalexGitOps.applications }}
 {{- if or (not (hasKey $application "enabled")) $application.enabled }}
-{{- $name := required "Remote GitOps Application name is required" $application.name }}
+{{- $name := required "ScaleX GitOps Application name is required" $application.name }}
 {{- if and $application.source $application.sources }}
-{{- fail (printf "Remote GitOps Application %s cannot define both source and sources" $name) }}
+{{- fail (printf "ScaleX GitOps Application %s cannot define both source and sources" $name) }}
 {{- end }}
 {{- if and (not $application.source) (not $application.sources) }}
-{{- fail (printf "Remote GitOps Application %s requires source or sources" $name) }}
+{{- fail (printf "ScaleX GitOps Application %s requires source or sources" $name) }}
 {{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1

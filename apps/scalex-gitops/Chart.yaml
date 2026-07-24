@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: scalex-gitops
+description: Bootstrap ScaleX Argo CD Applications
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

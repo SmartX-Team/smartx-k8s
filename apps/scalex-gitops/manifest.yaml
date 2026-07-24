@@ -2,7 +2,7 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.apps.remote-gitops
+  name: smartx.apps.scalex-gitops
   annotations:
     argocd.argoproj.io/sync-wave: "40"
 spec:
@@ -20,7 +20,7 @@ spec:
     unsafe: true
     useClusterValues: false
     features:
-      - org.ulagbulag.io/gitops/remote
+      - org.ulagbulag.io/gitops/scalex
     ignoreDifferences: []
     sync:
       createNamespace: false

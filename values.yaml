@@ -285,7 +285,7 @@ features:
   - org.ulagbulag.io/git/github
   - org.ulagbulag.io/git/gitlab
   - org.ulagbulag.io/gitops
-  - org.ulagbulag.io/gitops/remote
+  - org.ulagbulag.io/gitops/scalex
   - org.ulagbulag.io/ingress
   - org.ulagbulag.io/messenger
   - org.ulagbulag.io/messenger/kafka
