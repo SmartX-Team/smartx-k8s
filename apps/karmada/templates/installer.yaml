@@ -1,0 +1,93 @@
+{{- $installer := .Values.installer -}}
+{{- $chart := $installer.chart -}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karmada-helm-installer
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: karmada-helm-installer
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: karmada-helm-installer
+  labels:
+    app.kubernetes.io/name: karmada-helm-installer
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: karmada-helm-installer
+    namespace: {{ .Release.Namespace | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karmada-helm-values
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: karmada-helm-installer
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  values.yaml: |-
+{{ omit .Values "installer" | toYaml | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: karmada-helm-install
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: karmada-helm-installer
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: {{ $installer.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: karmada-helm-installer
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: karmada-helm-installer
+      containers:
+        - name: helm
+          image: {{ printf "%s:%s" $installer.image.repo $installer.image.tag | quote }}
+          imagePullPolicy: {{ $installer.image.pullPolicy | quote }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              helm repo add {{ $chart.repoName | quote }} {{ $chart.repoUrl | quote }}
+              helm repo update {{ $chart.repoName | quote }}
+              helm upgrade --install {{ $chart.releaseName | quote }} {{ printf "%s/%s" $chart.repoName $chart.name | quote }} \
+                --version {{ $chart.version | quote }} \
+                --namespace {{ .Release.Namespace | quote }} \
+                --create-namespace \
+                --values /config/values.yaml \
+                --wait \
+                --timeout {{ $installer.timeout | quote }}
+          volumeMounts:
+            - name: values
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: values
+          configMap:
+            name: karmada-helm-values

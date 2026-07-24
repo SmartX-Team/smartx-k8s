@@ -17,6 +17,9 @@ metadata:
 {{- else }}
     helm.sh/resource-policy: delete
 {{- end }}
+{{- with omit .Manifest.Annotations "helm.sh/resource-policy" "org.ulagbulag.io/approvers" "org.ulagbulag.io/owners" "org.ulagbulag.io/reviewers" }}
+{{ toYaml . | nindent 4 }}
+{{- end }}
 {{- if not ( empty .Manifest.Approvers ) }}
     org.ulagbulag.io/approvers: {{ .Manifest.Approvers | quote }}
 {{- end }}
@@ -104,8 +107,8 @@ spec:
 {{- end }}
 {{- end }}
 {{- if or .Manifest.Patched $.Manifest.UseClusterValues }}
-    - repoURL: "{{ .Values.repo.baseUrl }}/{{ .Values.repo.owner }}/{{ .Values.cluster.name }}-k8s.git"
-      targetRevision: "{{ .Values.cluster.group | default "default" }}"
+    - repoURL: "{{ .Values.clusterRepository.baseUrl }}/{{ .Values.clusterRepository.owner }}/{{ .Values.clusterRepository.name }}.git"
+      targetRevision: {{ .Values.clusterRepository.revision | quote }}
       ref: cluster
 {{- end }}
   syncPolicy:

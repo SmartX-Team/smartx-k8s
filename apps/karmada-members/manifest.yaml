@@ -1,0 +1,30 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.karmada-members
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: true
+    autoSync: true
+    namespace: karmada-system
+    patched: true
+    unsafe: true
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/multicluster/karmada/members
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+      options:
+        - SkipDryRunOnMissingResource=true

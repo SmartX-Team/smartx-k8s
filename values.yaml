@@ -208,6 +208,21 @@ cluster:
   region:
     timezone: Asia/Seoul
 
+# Argo CD source for cluster-specific values and patches.
+# Empty fields retain the legacy <cluster.name>-k8s repository convention.
+clusterRepository:
+  baseUrl: ""
+  owner: ""
+  name: ""
+  revision: ""
+
+# Cluster-specific application rendering controls.
+applications:
+  # Render the cluster root Application. Parent bootstrap Applications disable
+  # this to remain the root's only Argo CD owner.
+  root:
+    enabled: true
+
 # Bare-metal Driver Configuration
 # TODO(user): Configure it!
 driver:
@@ -270,11 +285,15 @@ features:
   - org.ulagbulag.io/git/github
   - org.ulagbulag.io/git/gitlab
   - org.ulagbulag.io/gitops
+  - org.ulagbulag.io/gitops/remote
   - org.ulagbulag.io/ingress
   - org.ulagbulag.io/messenger
   - org.ulagbulag.io/messenger/kafka
   - org.ulagbulag.io/messenger/nats
   - org.ulagbulag.io/monitoring
+  - org.ulagbulag.io/multicluster
+  - org.ulagbulag.io/multicluster/karmada
+  - org.ulagbulag.io/multicluster/karmada/members
   - org.ulagbulag.io/object-store
   - org.ulagbulag.io/object-store/minio
   - org.ulagbulag.io/observability
@@ -291,6 +310,7 @@ features:
   - org.ulagbulag.io/vm/kubevirt
   - org.ulagbulag.io/workflow
   - org.ulagbulag.io/workflow/argo
+  - org.ulagbulag.io/workflow/tekton
 
 # TODO(user): Configure it!
 ingress:

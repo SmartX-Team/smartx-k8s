@@ -1,0 +1,28 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.remote-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: true
+    autoSync: true
+    namespace: argo
+    patched: true
+    unsafe: true
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/gitops/remote
+    ignoreDifferences: []
+    sync:
+      createNamespace: false
+      respectIgnoreDifferences: true
+      serverSideApply: true

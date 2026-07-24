@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: karmada-members
+description: Register push-mode member clusters with Karmada
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

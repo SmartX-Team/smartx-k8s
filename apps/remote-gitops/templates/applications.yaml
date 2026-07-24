@@ -1,0 +1,49 @@
+{{- range $application := .Values.remoteGitOps.applications }}
+{{- if or (not (hasKey $application "enabled")) $application.enabled }}
+{{- $name := required "Remote GitOps Application name is required" $application.name }}
+{{- if and $application.source $application.sources }}
+{{- fail (printf "Remote GitOps Application %s cannot define both source and sources" $name) }}
+{{- end }}
+{{- if and (not $application.source) (not $application.sources) }}
+{{- fail (printf "Remote GitOps Application %s requires source or sources" $name) }}
+{{- end }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name | quote }}
+  namespace: {{ $application.namespace | default $.Release.Namespace | quote }}
+{{- with $application.annotations }}
+  annotations:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $application.labels }}
+  labels:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $application.finalizers }}
+  finalizers:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  project: {{ required (printf "Remote GitOps Application %s project is required" $name) $application.project | quote }}
+  destination:
+{{ required (printf "Remote GitOps Application %s destination is required" $name) $application.destination | toYaml | nindent 4 }}
+{{- with $application.source }}
+  source:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $application.sources }}
+  sources:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $application.ignoreDifferences }}
+  ignoreDifferences:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- with $application.syncPolicy }}
+  syncPolicy:
+{{ toYaml . | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

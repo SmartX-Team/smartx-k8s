@@ -1,0 +1,17 @@
+---
+# Karmada is the catalog exception that must execute the upstream chart with
+# Helm lifecycle semantics. Argo CD's Helm renderer runs install and upgrade
+# hooks together, which is incompatible with the upstream bootstrap hooks.
+installer:
+  image:
+    repo: alpine/helm
+    tag: 3.18.6
+    pullPolicy: IfNotPresent
+  backoffLimit: 1
+  timeout: 15m
+  chart:
+    name: karmada
+    releaseName: karmada
+    repoName: karmada-charts
+    repoUrl: https://raw.githubusercontent.com/karmada-io/karmada/master/charts
+    version: v1.18.1

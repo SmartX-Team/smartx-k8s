@@ -1,0 +1,3 @@
+---
+# Member topology and destination settings are supplied through
+# patches/karmada-members/values.yaml.

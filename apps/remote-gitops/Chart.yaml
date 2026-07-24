@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: remote-gitops
+description: Bootstrap Argo CD Applications backed by remote repositories
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

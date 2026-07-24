@@ -1,0 +1,24 @@
+---
+{{- $manifest := tpl ( .Files.Get "manifest.yaml" ) . | fromYaml }}
+{{- $clusterName := required "SmartX cluster name is not set" .Values.cluster.name }}
+{{- $groupName := required "SmartX manifest group is not set" $manifest.spec.group }}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ printf "%s-%s" $clusterName $groupName | quote }}
+  namespace: argo
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+spec:
+  description: {{ printf "SmartX infrastructure for the %s cluster." $clusterName | quote }}
+  sourceRepos:
+    - "*"
+  destinations:
+    - name: {{ $clusterName | quote }}
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

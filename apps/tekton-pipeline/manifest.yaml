@@ -1,0 +1,48 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.tekton-pipeline
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoSync: true
+    namespace: tekton-pipelines
+    patched: false
+    unsafe: false
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/workflow/tekton
+    ignoreDifferences:
+      - kind: Secret
+        name: webhook-certs
+        jsonPointers:
+          - /data
+      - group: admissionregistration.k8s.io
+        kind: MutatingWebhookConfiguration
+        name: webhook.pipeline.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        name: config.webhook.pipeline.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        name: validation.webhook.pipeline.tekton.dev
+        jsonPointers:
+          - /webhooks/0/clientConfig/caBundle
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true
+  source:
+    chart: tekton-pipeline
+    repoUrl: "https://cdfoundation.github.io/tekton-helm-chart/"
+    version: 1.14.0

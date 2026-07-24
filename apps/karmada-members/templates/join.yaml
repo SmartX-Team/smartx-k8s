@@ -1,0 +1,284 @@
+{{- $fullname := "karmada-member-join" -}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $fullname }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+{{- if .Values.argoDestination.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-argo-destination
+  namespace: {{ .Values.argoDestination.namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $fullname }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-argo-destination
+  namespace: {{ .Values.argoDestination.namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $fullname }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-argo-destination
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}
+    namespace: {{ .Release.Namespace | quote }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullname }}-script
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $fullname }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  join.sh: |-
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    KARMADA_VERSION={{ .Values.karmada.version | quote }}
+    KARMADA_KUBECONFIG=/karmada/kubeconfig
+    CLUSTER_NAMESPACE={{ .Values.karmada.clusterNamespace | quote }}
+
+    install_karmadactl() {
+      if command -v karmadactl >/dev/null 2>&1; then
+        return
+      fi
+      arch="$(uname -m)"
+      case "$arch" in
+        x86_64|amd64) arch=amd64 ;;
+        aarch64|arm64) arch=arm64 ;;
+        *) echo "unsupported arch: $arch" >&2; exit 1 ;;
+      esac
+      url="https://github.com/karmada-io/karmada/releases/download/${KARMADA_VERSION}/karmadactl-linux-${arch}.tgz"
+      curl -fsSL "$url" -o /tmp/karmadactl.tgz
+      tar -xzf /tmp/karmadactl.tgz -C /tmp karmadactl
+      install -m 0755 /tmp/karmadactl /usr/local/bin/karmadactl
+    }
+
+    register_argo_destination() {
+      local namespace="$1"
+      local secret_name="$2"
+      local destination_name="$3"
+      local server="$4"
+      local ca_data cert_data key_data config
+
+      ca_data="$(kubectl config view --raw --minify --kubeconfig "$KARMADA_KUBECONFIG" -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')"
+      cert_data="$(kubectl config view --raw --minify --kubeconfig "$KARMADA_KUBECONFIG" -o jsonpath='{.users[0].user.client-certificate-data}')"
+      key_data="$(kubectl config view --raw --minify --kubeconfig "$KARMADA_KUBECONFIG" -o jsonpath='{.users[0].user.client-key-data}')"
+
+      if [ -z "$ca_data" ] || [ -z "$cert_data" ] || [ -z "$key_data" ]; then
+        echo "Karmada kubeconfig is missing CA or client certificate data" >&2
+        exit 1
+      fi
+
+      config="$(jq -nc \
+        --arg ca "$ca_data" \
+        --arg cert "$cert_data" \
+        --arg key "$key_data" \
+        '{tlsClientConfig:{insecure:false,caData:$ca,certData:$cert,keyData:$key}}')"
+
+      kubectl -n "$namespace" create secret generic "$secret_name" \
+        --from-literal=name="$destination_name" \
+        --from-literal=server="$server" \
+        --from-literal=config="$config" \
+        --dry-run=client -o yaml \
+        | kubectl apply -f - >/dev/null
+      kubectl -n "$namespace" label secret "$secret_name" \
+        argocd.argoproj.io/secret-type=cluster \
+        app.kubernetes.io/managed-by=karmada-members \
+        --overwrite >/dev/null
+      echo "registered Argo destination ${destination_name} -> ${server}"
+    }
+
+    build_member_kubeconfig() {
+      local name="$1"
+      local argo_namespace="$2"
+      local argo_secret="$3"
+      local outfile="$4"
+      local server config token ca_data insecure
+
+      server="$(kubectl -n "$argo_namespace" get secret "$argo_secret" -o jsonpath='{.data.server}' | base64 -d)"
+      config="$(kubectl -n "$argo_namespace" get secret "$argo_secret" -o jsonpath='{.data.config}' | base64 -d)"
+      token="$(printf '%s' "$config" | jq -r '.bearerToken // empty')"
+      ca_data="$(printf '%s' "$config" | jq -r '.tlsClientConfig.caData // empty')"
+      insecure="$(printf '%s' "$config" | jq -r '.tlsClientConfig.insecure // false')"
+
+      if [ -z "$server" ] || [ -z "$token" ]; then
+        echo "missing server/token in Argo cluster secret ${argo_namespace}/${argo_secret}" >&2
+        exit 1
+      fi
+
+      cat > "$outfile" <<YAML
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: ${name}
+        cluster:
+          server: ${server}
+    YAML
+      if [ -n "$ca_data" ] && [ "$ca_data" != "null" ]; then
+        cat >> "$outfile" <<YAML
+          certificate-authority-data: ${ca_data}
+    YAML
+      elif [ "$insecure" = "true" ]; then
+        cat >> "$outfile" <<YAML
+          insecure-skip-tls-verify: true
+    YAML
+      fi
+      cat >> "$outfile" <<YAML
+    users:
+      - name: ${name}
+        user:
+          token: ${token}
+    contexts:
+      - name: ${name}
+        context:
+          cluster: ${name}
+          user: ${name}
+    current-context: ${name}
+    YAML
+      chmod 0600 "$outfile"
+    }
+
+    join_member() {
+      local name="$1"
+      local argo_namespace="$2"
+      local argo_secret="$3"
+      local provider="$4"
+      local region="$5"
+      local labels="$6"
+      local kubeconfig="/work/${name}.kubeconfig"
+
+      echo "== preparing member ${name} from ${argo_namespace}/${argo_secret} =="
+      build_member_kubeconfig "$name" "$argo_namespace" "$argo_secret" "$kubeconfig"
+
+      if kubectl --kubeconfig "$KARMADA_KUBECONFIG" get cluster "$name" >/dev/null 2>&1; then
+        echo "member ${name} already exists in Karmada; refreshing labels only"
+      else
+        echo "joining ${name} with Karmada push mode"
+        args=(
+          join "$name"
+          --kubeconfig "$KARMADA_KUBECONFIG"
+          --cluster-kubeconfig "$kubeconfig"
+          --cluster-context "$name"
+          --cluster-namespace "$CLUSTER_NAMESPACE"
+        )
+        if [ -n "$provider" ]; then
+          args+=(--cluster-provider "$provider")
+        fi
+        if [ -n "$region" ]; then
+          args+=(--cluster-region "$region")
+        fi
+        karmadactl "${args[@]}"
+      fi
+
+      if [ -n "$labels" ]; then
+        # shellcheck disable=SC2086
+        kubectl --kubeconfig "$KARMADA_KUBECONFIG" label cluster "$name" $labels --overwrite
+      fi
+      kubectl --kubeconfig "$KARMADA_KUBECONFIG" get cluster "$name" -o wide
+    }
+
+    main() {
+      apk add --no-cache bash curl jq tar gzip ca-certificates >/dev/null
+      install_karmadactl
+      kubectl --kubeconfig "$KARMADA_KUBECONFIG" get ns "$CLUSTER_NAMESPACE" >/dev/null 2>&1 \
+        || kubectl --kubeconfig "$KARMADA_KUBECONFIG" create ns "$CLUSTER_NAMESPACE"
+{{- if .Values.argoDestination.enabled }}
+      register_argo_destination \
+        {{ .Values.argoDestination.namespace | quote }} \
+        {{ .Values.argoDestination.secretName | quote }} \
+        {{ .Values.argoDestination.name | quote }} \
+        {{ .Values.argoDestination.server | quote }}
+{{- end }}
+      mkdir -p /work
+{{- range .Values.members }}
+{{- $labels := list }}
+{{- range $k, $v := .labels }}
+{{- $labels = append $labels (printf "%s=%s" $k $v) }}
+{{- end }}
+      join_member {{ .name | quote }} {{ .argoNamespace | quote }} {{ .argoSecret | quote }} {{ default "" .provider | quote }} {{ default "" .region | quote }} {{ join " " $labels | quote }}
+{{- end }}
+      echo "== Karmada clusters =="
+      kubectl --kubeconfig "$KARMADA_KUBECONFIG" get clusters -o wide
+    }
+
+    main "$@"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $fullname }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit | default 1 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $fullname }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $fullname }}
+      containers:
+        - name: join
+          image: {{ .Values.job.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              apk add --no-cache bash >/dev/null
+              bash /scripts/join.sh
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+            - name: karmada-kubeconfig
+              mountPath: /karmada
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: {{ $fullname }}-script
+            defaultMode: 0755
+        - name: karmada-kubeconfig
+          secret:
+            secretName: {{ .Values.karmada.kubeconfigSecret.name | quote }}
+            items:
+              - key: {{ .Values.karmada.kubeconfigSecret.key | quote }}
+                path: kubeconfig

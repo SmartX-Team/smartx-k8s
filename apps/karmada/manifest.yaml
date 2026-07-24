@@ -1,0 +1,26 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.karmada
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - ScaleX Operators <ops@smartx.kr>
+  app:
+    autoPrune: false
+    autoSync: true
+    namespace: karmada-system
+    patched: true
+    unsafe: true # Multicluster control plane
+    useClusterValues: false
+    features:
+      - org.ulagbulag.io/multicluster/karmada
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      respectIgnoreDifferences: true
+      serverSideApply: true

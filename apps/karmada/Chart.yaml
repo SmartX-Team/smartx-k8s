@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: karmada
+description: Helm lifecycle adapter for the upstream Karmada chart
+type: application
+version: 2.0.0-alpha.2
+appVersion: 2.0.0-alpha.2

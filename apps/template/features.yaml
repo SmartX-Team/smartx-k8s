@@ -282,6 +282,10 @@ org.ulagbulag.io/gitops:
     - org.ulagbulag.io/git
     - org.ulagbulag.io/workflow
 
+org.ulagbulag.io/gitops/remote:
+  requires:
+    - org.ulagbulag.io/gitops
+
 org.ulagbulag.io/ingress:
   requires:
     - org.ulagbulag.io/cni
@@ -314,6 +318,18 @@ org.ulagbulag.io/monitoring:
     - org.ulagbulag.io/auth
     - org.ulagbulag.io/csi/block
     - org.ulagbulag.io/csi/object
+
+org.ulagbulag.io/multicluster:
+  requires:
+    - org.ulagbulag.io/cni
+
+org.ulagbulag.io/multicluster/karmada:
+  requires:
+    - org.ulagbulag.io/multicluster
+
+org.ulagbulag.io/multicluster/karmada/members:
+  requires:
+    - org.ulagbulag.io/multicluster/karmada
 
 org.ulagbulag.io/object-store:
   requires:
@@ -425,5 +441,9 @@ org.ulagbulag.io/workflow:
     - org.ulagbulag.io/observability
 
 org.ulagbulag.io/workflow/argo:
+  requires:
+    - org.ulagbulag.io/workflow
+
+org.ulagbulag.io/workflow/tekton:
   requires:
     - org.ulagbulag.io/workflow

@@ -157,6 +157,11 @@ Create a SmartX application
 {{- $groupName := $.Manifest.Raw.spec.group }}
 {{- $projectName := ( printf "%s-%s" $clusterName $groupName ) }}
 {{- $repoUrl := ( printf "%s/%s/%s.git" $.Values.repo.baseUrl $.Values.repo.owner $.Values.repo.name ) }}
+{{- $_ := set $.Values "clusterRepository" ( $.Values.clusterRepository | default dict ) }}
+{{- $_ := set $.Values.clusterRepository "baseUrl" ( $.Values.clusterRepository.baseUrl | default $.Values.repo.baseUrl ) }}
+{{- $_ := set $.Values.clusterRepository "owner" ( $.Values.clusterRepository.owner | default $.Values.repo.owner ) }}
+{{- $_ := set $.Values.clusterRepository "name" ( $.Values.clusterRepository.name | default ( printf "%s-k8s" $clusterName ) ) }}
+{{- $_ := set $.Values.clusterRepository "revision" ( $.Values.clusterRepository.revision | default $.Values.cluster.group | default "main" ) }}
 {{- $towerClusterName := ( required "SmartX tower cluster name is not set" $.Values.tower.cluster ) }}
 {{- $towerGroupName := ( required "SmartX tower group name is not set" $.Values.tower.group ) }}
 {{- $towerProjectName := ( printf "%s-%s" $towerClusterName $towerGroupName ) }}
@@ -190,6 +195,7 @@ Create a SmartX application
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" true }}
 {{- $_ := set $.Manifest "AppProject" $towerProjectName }}
+{{- $_ := set $.Manifest "Annotations" $.Manifest.Raw.metadata.annotations }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" false }}
 {{- $_ := set $.Manifest "AutoSync" true }}
@@ -224,7 +230,9 @@ Create a SmartX application
 {{- $_ := set $.Manifest "UseClusterValues" false }}
 {{- $_ := set $.Manifest "Values" dict }}
 {{- $_ := unset $.Manifest "Raw" }}
+{{- if $.Values.applications.root.enabled }}
 {{ tpl ( $.Files.Get $appPath ) $ }}
+{{- end }}
 
 {{- /*
 Create applications
@@ -308,6 +316,7 @@ Create applications
 {{- $_ := set $.Manifest "AppNamespace" "argo" }}
 {{- $_ := set $.Manifest "AppOfApps" false }}
 {{- $_ := set $.Manifest "AppProject" $projectName }}
+{{- $_ := set $.Manifest "Annotations" $.Manifest.Raw.metadata.annotations }}
 {{- $_ := set $.Manifest "Approvers" ( $.Manifest.Raw.spec.users.approvers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "AutoPrune" ( $.Manifest.Raw.spec.app.autoPrune | default false ) }}
 {{- $_ := set $.Manifest "AutoSync" ( $.Manifest.Raw.spec.app.autoSync | ne false ) }}
@@ -366,11 +375,11 @@ Create applications
 {{- $_ := set $.Manifest "Project" $projectName }}
 {{- $_ := set $.Manifest "Reviewers" ( $.Manifest.Raw.spec.users.reviewers | default list | join ", " ) }}
 {{- $_ := set $.Manifest "Scale" ( $.Manifest.Raw.spec.scale | default "undefined" ) }}
-{{- $_ := set $.Manifest "SyncOptions" ( list
+{{- $_ := set $.Manifest "SyncOptions" ( concat ( list
   ( print "CreateNamespace=" ( $.Manifest.Raw.spec.app.sync.createNamespace | ne false ) )
   ( print "RespectIgnoreDifferences=" ( $.Manifest.Raw.spec.app.sync.respectIgnoreDifferences | ne false ) )
   ( print "ServerSideApply=" ( $.Manifest.Raw.spec.app.sync.serverSideApply | ne false ) )
-) }}
+) ( $.Manifest.Raw.spec.app.sync.options | default list ) ) }}
 {{- $_ := set $.Manifest "TowerCluster" $towerClusterName }}
 {{- $_ := set $.Manifest "TowerProject" $towerProjectName }}
 {{- $_ := set $.Manifest "Unsafe" ( $.Manifest.Raw.spec.app.unsafe | default ( not $.Manifest.AutoSync ) ) }}
