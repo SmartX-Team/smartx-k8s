@@ -66,7 +66,7 @@ assert application["spec"]["syncPolicy"]["syncOptions"] == [
     "ServerSideApply=true",
 ]
 sources = application["spec"]["sources"]
-assert sources[0]["repoURL"] == "https://github.com/SJoon99/eecs-k8s.git"
+assert sources[0]["repoURL"] == "https://github.com/SmartX-Team/smartx-k8s.git"
 assert sources[0]["path"] == "apps/tekton-ci"
 assert sources[0]["targetRevision"] == origin_revision
 assert sources[0]["helm"]["releaseName"] == "tekton-ci"

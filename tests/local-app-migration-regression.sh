@@ -137,12 +137,15 @@ grep -F 'cluster-karmada' <<<"$(cat "$TMP_DIR/karmada-members.yaml")" >/dev/null
 if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
   assert_yq 'select(.kind == "Application" and .metadata.name == "b") |
     .spec.destination.name == "tower" and
-    .spec.sources[0].repoURL == "https://github.com/SJoon99/eecs-k8s.git" and
+    .spec.sources[0].repoURL == "https://github.com/SmartX-Team/smartx-k8s.git" and
+    .spec.sources[0].targetRevision == "scalex-sandbox-smartx-k8s" and
     .spec.sources[0].helm.valuesObject.applications.root.enabled == false and
     .spec.sources[1].repoURL == "https://github.com/SmartX-Team/b-k8s.git" and
     .spec.sources[1].targetRevision == "main"' "$TMP_DIR/remote-gitops.yaml"
   assert_yq 'select(.kind == "Application" and .metadata.name == "c") |
     .spec.destination.name == "tower" and
+    .spec.sources[0].repoURL == "https://github.com/SmartX-Team/smartx-k8s.git" and
+    .spec.sources[0].targetRevision == "scalex-sandbox-smartx-k8s" and
     .spec.sources[0].helm.valuesObject.applications.root.enabled == false and
     .spec.sources[1].repoURL == "https://github.com/SmartX-Team/c-k8s.git" and
     .spec.sources[1].targetRevision == "main"' "$TMP_DIR/remote-gitops.yaml"
