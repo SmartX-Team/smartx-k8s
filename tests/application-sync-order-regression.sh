@@ -63,12 +63,18 @@ assert_wave c c-rook-ceph-provisioning 50
 assert_wave tower tower-karmada-members 30
 assert_wave tower tower-remote-gitops 40
 
-for cluster in b c tower; do
+for cluster in b c; do
   CLUSTER="$cluster" yq -e 'select(.kind == "Application" and
     .metadata.name == strenv(CLUSTER)) |
     .spec.sources[-1].targetRevision == "main" and
+    .spec.sources[-1].repoURL == "https://github.com/SmartX-Team/" + strenv(CLUSTER) + "-k8s.git" and
     .spec.sources[-1].ref == "cluster"' "$TMP_DIR/$cluster.yaml" >/dev/null
 done
+
+yq -e 'select(.kind == "Application" and .metadata.name == "tower") |
+  .spec.sources[-1].targetRevision == "ops" and
+  .spec.sources[-1].repoURL == "https://github.com/SmartX-Team/sandbox-tower-k8s.git" and
+  .spec.sources[-1].ref == "cluster"' "$TMP_DIR/tower.yaml" >/dev/null
 
 yq -e 'select(.kind == "Application" and .metadata.name == "tower-harbor") |
   .spec.destination.name == "tower" and

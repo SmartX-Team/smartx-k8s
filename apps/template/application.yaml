@@ -107,8 +107,9 @@ spec:
 {{- end }}
 {{- end }}
 {{- if or .Manifest.Patched $.Manifest.UseClusterValues }}
-    - repoURL: "{{ .Values.repo.baseUrl }}/{{ .Values.repo.owner }}/{{ .Values.cluster.name }}-k8s.git"
-      targetRevision: "{{ .Values.cluster.group | default "default" }}"
+{{- $clusterRepository := .Values.clusterRepository | default dict }}
+    - repoURL: "{{ $clusterRepository.baseUrl | default .Values.repo.baseUrl }}/{{ $clusterRepository.owner | default .Values.repo.owner }}/{{ $clusterRepository.name | default (printf "%s-k8s" .Values.cluster.name) }}.git"
+      targetRevision: "{{ $clusterRepository.revision | default (.Values.cluster.group | default "default") }}"
       ref: cluster
 {{- end }}
   syncPolicy:
