@@ -1,5 +1,6 @@
 portal:
   name: isaac-twinx
+  deploymentName: ""
   namespace: omniverse
   replicas: 1
   image: ghcr.io/mj006648/isaac-twinx:latest
@@ -22,6 +23,7 @@ portal:
   isaacSimArm64Image: ""
   isaacSimStartXvfb: true
   isaacSimArm64StartXvfb: false
+  isaacSimArm64HostNetwork: false
   instanceImagePullSecrets: harbor-regcred
   dra:
     apiVersion: resource.k8s.io/v1
@@ -35,6 +37,8 @@ portal:
     secretName: nucleus-cred
     userKey: OMNI_USER
     passwordKey: OMNI_PASS
+  streamCommand: /isaac-sim/runheadless.sh
+  publicEndpointFlag: --/exts/omni.kit.livestream.app/primaryStream/publicIp=
   streamInitializationSeconds: 120
   probes:
     readinessTimeoutSeconds: 5

@@ -272,6 +272,8 @@ spec:
           value: '1'
         - name: OMNI_STRUCTURED_LOGGING
           value: '0'
+        - name: OMNI_PROMETHEUS_PORT
+          value: {{ .Values.nucleus.ports.logProcessorMetrics | quote }}
         volumeMounts:
         - name: nucleus-data
           mountPath: /omni/log

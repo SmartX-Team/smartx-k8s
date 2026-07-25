@@ -60,6 +60,9 @@ nucleus:
 
   instance: smartx_nucleus
 
+  ports:
+    logProcessorMetrics: 9501
+
   initImage: busybox:1.36
 
   images:

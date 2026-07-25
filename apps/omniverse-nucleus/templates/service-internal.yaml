@@ -89,7 +89,7 @@ spec:
   ports:
   - name: prom
     port: 9500
-    targetPort: 9500
+    targetPort: {{ .Values.nucleus.ports.logProcessorMetrics }}
 ---
 apiVersion: v1
 kind: Service
