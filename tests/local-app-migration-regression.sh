@@ -151,7 +151,7 @@ if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
     .spec.sources[1].targetRevision == "main"' "$TMP_DIR/remote-gitops.yaml"
   assert_yq 'select(.kind == "Application" and .metadata.name == "tower-scalex-federation") |
     .spec.source.repoURL == "https://github.com/SmartX-Team/sandbox-scalex-federation.git" and
-    .spec.source.path == "argocd"' "$TMP_DIR/remote-gitops.yaml"
+    .spec.source.path == "."' "$TMP_DIR/remote-gitops.yaml"
 fi
 
 echo "local app migration regression: PASS"
