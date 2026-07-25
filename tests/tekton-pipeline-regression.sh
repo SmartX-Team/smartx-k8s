@@ -71,7 +71,7 @@ assert sources[0]["helm"]["valueFiles"] == [
     "$origin/apps/tekton-pipeline/values.yaml",
     "$cluster/patches/tekton-pipeline/values.yaml",
 ]
-assert sources[-1]["repoURL"] == "https://github.com/SJoon99/tower-k8s.git"
+assert sources[-1]["repoURL"] == "https://github.com/SmartX-Team/sandbox-tower-k8s.git"
 assert sources[1]["targetRevision"] == origin_revision
 assert sources[-1]["targetRevision"] == cluster_revision
 assert sources[-1]["ref"] == "cluster"

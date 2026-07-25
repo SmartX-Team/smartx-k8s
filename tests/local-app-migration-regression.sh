@@ -139,15 +139,15 @@ if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
     .spec.destination.name == "tower" and
     .spec.sources[0].repoURL == "https://github.com/SJoon99/eecs-k8s.git" and
     .spec.sources[0].helm.valuesObject.applications.root.enabled == false and
-    .spec.sources[1].repoURL == "https://github.com/SJoon99/b-k8s.git" and
+    .spec.sources[1].repoURL == "https://github.com/SmartX-Team/b-k8s.git" and
     .spec.sources[1].targetRevision == "main"' "$TMP_DIR/remote-gitops.yaml"
   assert_yq 'select(.kind == "Application" and .metadata.name == "c") |
     .spec.destination.name == "tower" and
     .spec.sources[0].helm.valuesObject.applications.root.enabled == false and
-    .spec.sources[1].repoURL == "https://github.com/SJoon99/c-k8s.git" and
+    .spec.sources[1].repoURL == "https://github.com/SmartX-Team/c-k8s.git" and
     .spec.sources[1].targetRevision == "main"' "$TMP_DIR/remote-gitops.yaml"
   assert_yq 'select(.kind == "Application" and .metadata.name == "tower-scalex-federation") |
-    .spec.source.repoURL == "https://github.com/SJoon99/scalex-federation.git" and
+    .spec.source.repoURL == "https://github.com/SmartX-Team/sandbox-scalex-federation.git" and
     .spec.source.path == "argocd"' "$TMP_DIR/remote-gitops.yaml"
 fi
 

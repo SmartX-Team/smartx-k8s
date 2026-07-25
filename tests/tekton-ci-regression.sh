@@ -74,7 +74,7 @@ assert sources[0]["helm"]["valueFiles"] == [
     "$cluster/patches/tekton-ci/values.yaml",
 ]
 assert sources[1] == {
-    "repoURL": "https://github.com/SJoon99/tower-k8s.git",
+    "repoURL": "https://github.com/SmartX-Team/sandbox-tower-k8s.git",
     "targetRevision": cluster_revision,
     "ref": "cluster",
 }

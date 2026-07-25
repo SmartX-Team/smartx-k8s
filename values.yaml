@@ -528,6 +528,14 @@ openark:
 optimization:
   profile: performance # Options: [performance, balanced, power-save]
 
+# Optional preset repository override. When omitted, applications keep using
+# <repo.baseUrl>/<repo.owner>/<cluster.name>-k8s at cluster.group.
+clusterRepository:
+  baseUrl: ""
+  owner: ""
+  name: ""
+  revision: ""
+
 # SmartX default repository
 repo:
   baseUrl: https://github.com
