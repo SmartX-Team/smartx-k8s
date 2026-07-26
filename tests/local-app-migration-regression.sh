@@ -132,7 +132,7 @@ member_script="$(yq -r 'select(.kind == "ConfigMap" and .metadata.name == "karma
   .data."join.sh"' "$TMP_DIR/karmada-members.yaml")"
 grep -F 'join_member "b" "argo" "cluster-b"' <<<"$member_script" >/dev/null
 grep -F 'join_member "c" "argo" "cluster-c"' <<<"$member_script" >/dev/null
-grep -F 'cluster-karmada' <<<"$(cat "$TMP_DIR/karmada-members.yaml")" >/dev/null
+grep -F 'cluster-scalex' <<<"$(cat "$TMP_DIR/karmada-members.yaml")" >/dev/null
 
 if [[ -f "$TMP_DIR/remote-gitops.yaml" ]]; then
   assert_yq 'select(.kind == "Application" and .metadata.name == "b") |

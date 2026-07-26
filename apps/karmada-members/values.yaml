@@ -9,8 +9,8 @@ karmada:
 argoDestination:
   enabled: false
   namespace: argo
-  secretName: cluster-karmada
-  name: karmada
+  secretName: cluster-scalex
+  name: scalex
   server: https://karmada-apiserver.karmada-system.svc.cluster.local:5443
 
 job:
