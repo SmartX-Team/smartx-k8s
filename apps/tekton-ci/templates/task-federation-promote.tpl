@@ -348,7 +348,7 @@ spec:
         remote_revision="$(git ls-remote --heads origin "refs/heads/${branch}" | cut -f1)"
         git checkout -B "$branch"
         git add "$allowed_release" "$allowed_values"
-        git commit -m "chore(${child}): promote ${short_revision}"
+        git commit -s -m "chore(${child}): promote ${short_revision}"
         if [ -n "$remote_revision" ]; then
           git push --force-with-lease="refs/heads/${branch}:${remote_revision}" \
             --set-upstream origin "HEAD:refs/heads/${branch}"

@@ -365,6 +365,7 @@ assert 'git ls-remote --heads origin "refs/heads/${branch}"' in promotion_script
 assert '--force-with-lease="refs/heads/${branch}:${remote_revision}"' in promotion_script
 assert '--force-with-lease="refs/heads/${branch}:"' in promotion_script
 assert "git push --force " not in promotion_script
+assert 'git commit -s -m "chore(${child}): promote ${short_revision}"' in promotion_script
 assert "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" in promotion_script
 assert "Problems parsing JSON" not in promotion_script
 assert "'{\\\"title" not in promotion_script
