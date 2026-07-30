@@ -19,6 +19,7 @@ models:
     - name: gpt-oss:120b
     - name: gpt-oss:20b
     - name: hermes3:70b
+    - name: huihui_ai/Qwen3.6-abliterated:35b
     - name: llama3:70b
     - name: llama3.1:70b
     - name: llama3.2-vision:90b
@@ -31,7 +32,8 @@ models:
     - name: qwen3:14b
     - name: qwen3:30b-a3b-instruct-2507-q4_K_M
     - name: qwen3:8b
-    - name: qwen3.6:35b-a3b-bf16
+    - name: qwen3.6:27b
+    - name: qwen3.6:35b
     - name: r1-1776:70b
     - name: tulu3:70b
 
