@@ -153,6 +153,12 @@ cluster:
   # Vars for pointing to kubernetes api endpoints
   apiEndpoint: https://localhost:6443
 
+  # Children clusters configuration
+  children: []
+  #   - name: mycluster
+  #     ansible: |
+  #       all: ...
+
   nameservers:
     incluster:
       ipv4: 10.64.0.3

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ansible-control-planes-default
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   labels:
@@ -32,3 +32,19 @@ data:
   | toYaml
   | nindent 12
 }}
+{{- range $_ := $.Values.cluster.children }}
+{{- if and ( hasKey . "ansible" ) ( ne .name "default" ) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "ansible-control-planes-%s" .name | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" $ | nindent 4 }}
+data:
+  defaults.yaml: {{ .ansible | toString | quote }}
+{{- end }}
+{{- end }}
