@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-login-theme-smartx
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+data:
+  login.css: |-
+{{ .Files.Get "theme/smartx/login/resources/css/login.css" | indent 4 }}
+  login.ftl: |-
+{{ .Files.Get "theme/smartx/login/login.ftl" | indent 4 }}
+  logo.svg: |-
+{{ .Files.Get "theme/smartx/login/resources/img/logo.svg" | indent 4 }}
+  theme.properties: |-
+{{ .Files.Get "theme/smartx/login/theme.properties" | indent 4 }}

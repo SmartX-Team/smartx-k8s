@@ -18,6 +18,45 @@ auth:
   ##
   adminUser: {{ .Values.cluster.name | quote }}
 
+## Deploy the login theme and restart Keycloak when the packaged theme changes.
+##
+extraVolumes:
+  - name: login-theme-smartx
+    configMap:
+      name: keycloak-login-theme-smartx
+      defaultMode: 0444
+      items:
+        - key: login.css
+          path: login/resources/css/login.css
+        - key: login.ftl
+          path: login/login.ftl
+        - key: logo.svg
+          path: login/resources/img/logo.svg
+        - key: theme.properties
+          path: login/theme.properties
+extraVolumeMounts:
+  - name: login-theme-smartx
+    mountPath: /opt/bitnami/keycloak/themes/smartx
+    readOnly: true
+
+## Apply the theme to the admin realm and the configured user realm.
+##
+keycloakConfigCli:
+  enabled: true
+  image:
+    repository: adorsys/keycloak-config-cli
+    tag: "6.5.1-21"
+    pullPolicy: IfNotPresent
+  configuration:
+    smartx-master-theme.yaml: |-
+      realm: master
+      loginTheme: smartx
+{{- if and .Values.auth.realms.name ( ne .Values.auth.realms.name "master" ) }}
+    smartx-user-theme.yaml: |-
+      realm: {{ .Values.auth.realms.name | quote }}
+      loginTheme: smartx
+{{- end }}
+
 ## Keycloak ingress parameters
 ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ##
