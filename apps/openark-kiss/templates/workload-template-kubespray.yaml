@@ -188,6 +188,8 @@ spec:
           - --inventory
           - /root/inventory/default/all.yaml
           - --inventory
+          - /root/inventory/cluster/defaults.yaml
+          - --inventory
           - /root/inventory/cluster/config.yaml
           - --inventory
           - /root/inventory/cluster/hosts.yaml
