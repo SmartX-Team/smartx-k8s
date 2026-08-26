@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
         clang \
         cmake \
         coinor-libcbc-dev \
+        libblkid-dev \
     # Switch channel
     && rustup default {{ .Values.rust.channel | quote }} \
     # Cleanup
@@ -51,6 +52,7 @@ RUN apt-get update && apt-get install -y \
         curl \
         git \
         jq \
+        libblkid1 \
         polkitd \
         systemd \
     # Cleanup

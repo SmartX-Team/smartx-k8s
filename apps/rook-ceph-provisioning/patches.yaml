@@ -1,0 +1,12 @@
+{{- $rookCeph := .Values.rookCeph | default dict -}}
+{{- $provisioning := get $rookCeph "provisioning" | default dict -}}
+{{- $managed := get $provisioning "manageStorageNodes" | default false -}}
+{{- $enabled := get $provisioning "enabled" | default false -}}
+{{- if and $enabled ( not $managed ) -}}
+{{- fail "rookCeph.provisioning.enabled requires manageStorageNodes=true" -}}
+{{- end -}}
+
+# `enabled` is intentionally controlled from the root implementation values
+# because the rook-ceph-cluster application must make the same ownership
+# decision while it is being rendered.
+enabled: {{ $enabled }}

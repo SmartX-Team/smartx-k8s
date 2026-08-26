@@ -1,0 +1,42 @@
+{{- if .Values.enabled }}
+{{- $agentName := include "helm.componentName" ( dict "root" . "component" "agent" ) }}
+{{- $inventoryRoleName := include "helm.componentName" ( dict "root" . "component" "agent-inventory" ) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $inventoryRoleName | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent-inventory
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $inventoryRoleName | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+{{- include "helm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent-inventory
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $inventoryRoleName | quote }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $agentName | quote }}
+    namespace: {{ .Release.Namespace | quote }}
+{{- end }}

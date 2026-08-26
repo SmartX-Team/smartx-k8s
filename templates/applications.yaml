@@ -198,6 +198,7 @@ Create a SmartX application
 {{- $_ := set $.Manifest "Group" ( $.Manifest.Raw.spec.group | default $groupName ) }}
 {{- $_ := set $.Manifest "Namespace" $.Manifest.AppNamespace }}
 {{- $_ := set $.Manifest "IgnoreDifferences" list }}
+{{- $_ := set $.Manifest "IgnoreMissingValueFiles" false }}
 {{- $_ := set $.Manifest "ManagedNamespaceMetadata" dict }}
 {{- $_ := set $.Manifest "Owners" ( $.Manifest.Raw.spec.users.owners | default list | join ", " ) }}
 {{- $_ := set $.Manifest "Patched" true }}
@@ -359,6 +360,7 @@ Create applications
 {{- $_ := set $.Manifest "Sources" ( append $.Manifest.Sources $source ) }}
 {{- end }}
 {{- $_ := set $.Manifest "IgnoreDifferences" ( $.Manifest.Raw.spec.app.ignoreDifferences | default list ) }}
+{{- $_ := set $.Manifest "IgnoreMissingValueFiles" ( $.Manifest.Raw.spec.app.ignoreMissingValueFiles | default false ) }}
 {{- $_ := set $.Manifest "ManagedNamespaceMetadata" ( $.Manifest.Raw.spec.app.sync.managedNamespaceMetadata | default dict ) }}
 {{- $_ := set $.Manifest "Owners" ( $.Manifest.Raw.spec.users.owners | default list | join ", " ) }}
 {{- $_ := set $.Manifest "Patched" ( $.Manifest.Raw.spec.app.patched | default false ) }}

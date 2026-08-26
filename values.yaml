@@ -268,6 +268,7 @@ features:
   - org.ulagbulag.io/dev
   - org.ulagbulag.io/distributed-storage-cluster
   - org.ulagbulag.io/distributed-storage-cluster/ceph
+  - org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning
   - org.ulagbulag.io/distributed-storage-cluster/data-pond
   - org.ulagbulag.io/gateway
   - org.ulagbulag.io/gateway/envoy
@@ -392,6 +393,19 @@ kiss:
         size: 10G
       vine:
         size: 200G
+
+# Rook-Ceph Configuration
+#
+# `cluster` is the single child-owned input merged over the SmartX-generated
+# rook-ceph-cluster values.
+#
+# Automatic writes require both flags. Keep `manageStorageNodes` true when
+# suspending the runtime so broad Rook device selection remains disabled.
+rookCeph:
+  cluster: {}
+  provisioning:
+    enabled: false
+    manageStorageNodes: false
 
 # Optional Kubespray Configuration
 kubespray:

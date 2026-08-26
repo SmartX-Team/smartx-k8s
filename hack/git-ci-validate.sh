@@ -13,3 +13,4 @@ set -x
 ###########################################################
 
 helm template smartx . --debug >/dev/null
+./apps/rook-ceph-provisioning/tests/run.sh

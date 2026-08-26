@@ -1,0 +1,32 @@
+---
+appVersion: org.ulagbulag.io/v1alpha1
+kind: Manifest
+metadata:
+  name: smartx.apps.rook-ceph-provisioning
+spec:
+  group: ops
+  phase: alpha
+  scale: small
+  users:
+    owners:
+      - Ho Kim <ho.kim@smartx.kr>
+  app:
+    autoSync: true
+    autoPrune: true
+    namespace: csi-rook-ceph-provisioning
+    patched: true
+    unsafe: false
+    useClusterValues: false
+    ignoreMissingValueFiles: true
+    features:
+      - org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning
+    ignoreDifferences: []
+    sync:
+      createNamespace: true
+      managedNamespaceMetadata:
+        labels:
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/warn: privileged
+      respectIgnoreDifferences: true
+      serverSideApply: true
