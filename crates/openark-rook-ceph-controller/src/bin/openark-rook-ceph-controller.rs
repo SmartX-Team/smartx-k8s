@@ -73,7 +73,7 @@ struct Args {
     #[arg(long, env = "POLL_INTERVAL_SECONDS", default_value_t = 60)]
     poll_interval_seconds: u64,
 
-    #[arg(long, env = "DRY_RUN", default_value_t = false)]
+    #[arg(long, env = "DRY_RUN", default_value_t = true)]
     dry_run: bool,
 }
 
@@ -1132,6 +1132,7 @@ async fn main() -> Result<()> {
 mod tests {
     use std::collections::{BTreeMap, BTreeSet};
 
+    use clap::{CommandFactory, FromArgMatches};
     use k8s_openapi::{
         api::core::v1::{ConfigMap, Node, Pod, PodCondition, PodSpec, PodStatus},
         apimachinery::pkg::apis::meta::v1::OwnerReference,
@@ -1140,7 +1141,7 @@ mod tests {
     use openark_rook_ceph_controller::model::{DeviceInventory, NodeInventory, PcieLink};
 
     use super::{
-        DeviceIntersection, INVENTORY_KEY, ceph_cluster_patch, claim_inventory_identities,
+        Args, DeviceIntersection, INVENTORY_KEY, ceph_cluster_patch, claim_inventory_identities,
         current_inventory, disk_policy_allows, evidence_fingerprint,
         existing_device_nodes_are_covered, group_discovery_by_node, intersect_device,
         node_identities_unchanged, parse_rook_disks, rook_node_name, validate_inventory,
@@ -1151,6 +1152,33 @@ mod tests {
             data: Some(BTreeMap::from([("devices".to_owned(), devices.to_owned())])),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn dry_run_defaults_true_without_env_or_cli_override() {
+        let matches = Args::command()
+            .mut_arg("dry_run", |arg| arg.env(None::<&str>))
+            .try_get_matches_from([
+                "openark-rook-ceph-controller",
+                "--ceph-cluster-namespace",
+                "rook-ceph",
+                "--ceph-cluster-name",
+                "rook-ceph",
+                "--rook-discovery-namespace",
+                "rook-ceph",
+                "--provisioning-namespace",
+                "openark",
+                "--app-instance",
+                "storage",
+                "--minimum-device-bytes",
+                "100",
+                "--device-class-map",
+                r#"{"default":"ssd"}"#,
+            ])
+            .unwrap();
+        let args = Args::from_arg_matches(&matches).unwrap();
+
+        assert!(args.dry_run);
     }
 
     #[test]
