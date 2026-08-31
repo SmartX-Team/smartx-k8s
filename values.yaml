@@ -35,6 +35,10 @@ auth:
 baseImage:
   repo: quay.io/ulagbulag
 
+image:
+  repo: quay.io/ulagbulag/openark
+  tag: ""
+
 # Bootstrapper Node Configuration
 bootstrapper:
   auth:
@@ -268,7 +272,6 @@ features:
   - org.ulagbulag.io/dev
   - org.ulagbulag.io/distributed-storage-cluster
   - org.ulagbulag.io/distributed-storage-cluster/ceph
-  - org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning
   - org.ulagbulag.io/distributed-storage-cluster/data-pond
   - org.ulagbulag.io/gateway
   - org.ulagbulag.io/gateway/envoy
@@ -395,17 +398,14 @@ kiss:
         size: 200G
 
 # Rook-Ceph Configuration
-#
-# `cluster` is the single child-owned input merged over the SmartX-generated
-# rook-ceph-cluster values.
-#
-# Automatic writes require both flags. Keep `manageStorageNodes` true when
-# suspending the runtime so broad Rook device selection remains disabled.
 rookCeph:
-  cluster: {}
   provisioning:
     enabled: false
     manageStorageNodes: false
+    dryRun: true
+    minimumDeviceBytes: 0
+    osdsPerDevice: 1
+    deviceClassMap: {}
 
 # Optional Kubespray Configuration
 kubespray:
