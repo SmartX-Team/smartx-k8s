@@ -14,12 +14,9 @@ spec:
     autoSync: true
     autoPrune: true
     namespace: csi-rook-ceph-provisioning
-    patched: true
+    patched: false
     unsafe: false
     useClusterValues: false
-    ignoreMissingValueFiles: true
-    features:
-      - org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning
     ignoreDifferences: []
     sync:
       createNamespace: true
