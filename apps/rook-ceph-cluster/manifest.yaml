@@ -1,12 +1,3 @@
-{{- $rookCeph := .Values.rookCeph | default dict -}}
-{{- $provisioning := get $rookCeph "provisioning" | default dict -}}
-{{- $provisioningManaged := get $provisioning "manageStorageNodes" | default false -}}
-{{- if and
-  ( get $provisioning "enabled" | default false )
-  ( not $provisioningManaged )
--}}
-{{- fail "rookCeph.provisioning.enabled requires manageStorageNodes=true" -}}
-{{- end -}}
 ---
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
@@ -30,7 +21,7 @@ spec:
       - org.ulagbulag.io/distributed-storage-cluster/ceph
       - org.ulagbulag.io/ingress
     ignoreDifferences:
-{{ if $provisioningManaged }}
+{{ if dig "provisioning" "manageStorageNodes" false (.Values.rookCeph | default dict) }}
       - group: ceph.rook.io
         kind: CephCluster
         jsonPointers:
