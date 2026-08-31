@@ -232,10 +232,6 @@ org.ulagbulag.io/distributed-storage-cluster/ceph:
     - org.ulagbulag.io/csi/filesystem
     # - org.ulagbulag.io/csi/object
 
-org.ulagbulag.io/distributed-storage-cluster/ceph/provisioning:
-  requires:
-    - org.ulagbulag.io/distributed-storage-cluster/ceph
-
 org.ulagbulag.io/distributed-storage-cluster/data-pond:
   requires:
     - org.ulagbulag.io/distributed-storage-cluster

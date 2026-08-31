@@ -67,9 +67,6 @@ spec:
 {{- if .Helm }}
       helm:
         releaseName: {{ $.Manifest.Name | quote }}
-{{- if $.Manifest.IgnoreMissingValueFiles }}
-        ignoreMissingValueFiles: true
-{{- end }}
 {{- end }}
 {{- if not ( empty $.Manifest.Values ) }}
         valuesObject:
