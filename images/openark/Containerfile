@@ -29,6 +29,8 @@ WORKDIR /src
 {{ include "container.run.cached.rust" . }} \
     # Create an output directory
     mkdir /out \
+    && cc -Wall -Wextra -Werror images/openark/src/rook-ceph-blkid-probe.c -lblkid -o /out/rook-ceph-blkid-probe \
+    && install -m 0555 images/openark/bin/rook-ceph-provision.sh /out/rook-ceph-provision \
     # Fix version
     && sed -i 's/^\(version \+= \+\"\)[0-9a-z\.-]\+\"/\1{{ $version }}\"/g' ./Cargo.toml \
     # Build

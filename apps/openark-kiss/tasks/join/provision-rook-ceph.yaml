@@ -1,0 +1,83 @@
+---
+- hosts: target
+  tasks:
+    - name: Provision Rook Ceph storage devices
+      when: kiss_group_role == 'Storage'
+      delegate_to: "{{ groups['kube_control_plane'] | first }}"
+      block:
+        - name: Read Rook Ceph provisioning policy
+          command: >
+            {{ bin_dir }}/kubectl get configmap rook-ceph-provisioning
+            -n csi-rook-ceph-provisioning --ignore-not-found -o json
+          register: provision_policy
+
+        - name: Run Rook Ceph provisioning job
+          when: provision_policy.stdout != ''
+          block:
+            - name: Create Rook Ceph provisioning job
+              command: >
+                {{ bin_dir }}/kubectl create -n csi-rook-ceph-provisioning
+                -f - -o jsonpath={.metadata.name}
+              args:
+                stdin: |
+                  apiVersion: batch/v1
+                  kind: Job
+                  metadata:
+                    generateName: rook-ceph-provision-
+                  spec:
+                    backoffLimit: 1
+                    template:
+                      spec:
+                        nodeName: {{ inventory_hostname }}
+                        serviceAccountName: rook-ceph-provisioning
+                        restartPolicy: Never
+                        containers:
+                          - name: provision
+                            image: {{ (provision_policy.stdout | from_json).data.IMAGE }}
+                            imagePullPolicy: {{ (provision_policy.stdout | from_json).data.IMAGE_PULL_POLICY }}
+                            command: [/usr/local/bin/rook-ceph-provision]
+                            securityContext: {privileged: true, runAsUser: 0}
+                            env:
+                              - {name: EXPECTED_NODE_NAME, value: "{{ inventory_hostname }}"}
+                            envFrom:
+                              - configMapRef: {name: rook-ceph-provisioning}
+                            volumeMounts:
+                              - {name: dev, mountPath: /host/dev, readOnly: true}
+                              - {name: sys, mountPath: /host/sys, readOnly: true}
+                        volumes:
+                          - {name: dev, hostPath: {path: /dev}}
+                          - {name: sys, hostPath: {path: /sys}}
+              register: provision_job
+              failed_when: provision_job.rc != 0 or provision_job.stdout == ''
+
+            - name: Wait for Rook Ceph provisioning job
+              command: >
+                {{ bin_dir }}/kubectl wait -n csi-rook-ceph-provisioning
+                --for=condition=complete job/{{ provision_job.stdout }} --timeout=10m
+              register: provision_wait
+              failed_when: false
+
+            - name: Fail when Rook Ceph provisioning job fails
+              fail:
+                msg: Rook Ceph provisioning job failed
+              when: provision_wait.rc != 0
+          always:
+            - name: Capture Rook Ceph provisioning logs
+              command: >
+                {{ bin_dir }}/kubectl logs -n csi-rook-ceph-provisioning
+                job/{{ provision_job.stdout }}
+              when: provision_job is defined and provision_job.rc == 0 and provision_job.stdout != ''
+              failed_when: false
+
+            - name: Capture Rook Ceph provisioning status
+              command: >
+                {{ bin_dir }}/kubectl get job {{ provision_job.stdout }}
+                -n csi-rook-ceph-provisioning -o json
+              when: provision_job is defined and provision_job.rc == 0 and provision_job.stdout != ''
+              failed_when: false
+
+            - name: Delete Rook Ceph provisioning job
+              command: >
+                {{ bin_dir }}/kubectl delete job {{ provision_job.stdout }}
+                -n csi-rook-ceph-provisioning --ignore-not-found
+              when: provision_job is defined and provision_job.rc == 0 and provision_job.stdout != ''
