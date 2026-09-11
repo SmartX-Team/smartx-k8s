@@ -27,6 +27,7 @@ spec:
                     values:
                       - Compute
                       - ControlPlane
+                      - Gateway
                       - Storage
       automountServiceAccountToken: true
       containers:
