@@ -2,29 +2,28 @@
 appVersion: org.ulagbulag.io/v1alpha1
 kind: Manifest
 metadata:
-  name: smartx.apps.rook-ceph-operator
+  name: smartx.apps.rook-ceph-provisioning
 spec:
   group: ops
-  phase: stable
+  phase: alpha
   scale: small
   users:
     owners:
       - Ho Kim <ho.kim@smartx.kr>
   app:
     autoSync: true
-    namespace: csi-rook-ceph
+    autoPrune: true
+    namespace: csi-rook-ceph-provisioning
     patched: false
-    unsafe: true # CSI
+    unsafe: false
     useClusterValues: false
-    features:
-      - org.ulagbulag.io/csi
-      - org.ulagbulag.io/distributed-storage-cluster/ceph
     ignoreDifferences: []
     sync:
       createNamespace: true
+      managedNamespaceMetadata:
+        labels:
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/warn: privileged
       respectIgnoreDifferences: true
       serverSideApply: true
-  source:
-    chart: rook-ceph
-    repoUrl: "https://charts.rook.io/release"
-    version: v1.19.8

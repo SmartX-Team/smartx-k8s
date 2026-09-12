@@ -1,0 +1,33 @@
+{{- $rookCeph := .Values.rookCeph | default dict -}}
+{{- $provisioning := get $rookCeph "provisioning" | default dict -}}
+{{- $enabled := get $provisioning "enabled" | default false -}}
+{{- if and $enabled (not (get $provisioning "manageStorageNodes" | default false)) -}}
+{{- fail "rookCeph.provisioning.enabled requires manageStorageNodes=true" -}}
+{{- end -}}
+{{- $minimum := 0 -}}
+{{- if hasKey $provisioning "minimumDeviceBytes" -}}
+{{- $minimum = get $provisioning "minimumDeviceBytes" -}}
+{{- end -}}
+{{- $osds := 1 -}}
+{{- if hasKey $provisioning "osdsPerDevice" -}}
+{{- $osds = get $provisioning "osdsPerDevice" -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]+$" (toString $minimum)) -}}
+{{- fail "rookCeph.provisioning.minimumDeviceBytes must be a nonnegative integer" -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]*[1-9][0-9]*$" (toString $osds)) -}}
+{{- fail "rookCeph.provisioning.osdsPerDevice must be a positive integer" -}}
+{{- end -}}
+{{- $dryRun := true -}}
+{{- if hasKey $provisioning "dryRun" -}}
+{{- $dryRun = get $provisioning "dryRun" -}}
+{{- end -}}
+enabled: {{ $enabled }}
+manageStorageNodes: {{ get $provisioning "manageStorageNodes" | default false }}
+dryRun: {{ $dryRun }}
+minimumDeviceBytes: {{ $minimum | toString | quote }}
+osdsPerDevice: {{ $osds | toString | quote }}
+deviceClassMap: {{ get $provisioning "deviceClassMap" | default dict | toJson }}
+image:
+  repo: {{ required "image.repo is required" .Values.image.repo | quote }}
+  tag: {{ .Values.image.tag | default "" | quote }}

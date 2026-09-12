@@ -1,3 +1,29 @@
+{{- $source := $.Files.Get "apps/rook-ceph-cluster/patches.yaml" -}}
+{{- $raw := regexFind "(?s)# rook-values:start\\n.*\\n# rook-values:end" $source -}}
+{{- $raw = trimPrefix "# rook-values:start\n" $raw -}}
+{{- $raw = trimSuffix "\n# rook-values:end" $raw -}}
+{{- $baseline := tpl $raw $ | fromYaml -}}
+{{- $rookCeph := .Values.rookCeph | default dict -}}
+{{- $custom := ternary (get $rookCeph "cluster") dict (hasKey $rookCeph "cluster") -}}
+{{- if not (kindIs "map" $custom) -}}
+{{- fail "rookCeph.cluster must be a map" -}}
+{{- end -}}
+{{- $merged := mergeOverwrite (deepCopy $baseline) $custom -}}
+{{- if get (get $rookCeph "provisioning" | default dict) "manageStorageNodes" | default false -}}
+{{- $spec := get $merged "cephClusterSpec" | default dict -}}
+{{- $storage := get $spec "storage" | default dict -}}
+{{- if or (get $storage "deviceFilter") (get $storage "devicePathFilter") (get $storage "devices") -}}
+{{- fail "runtime-managed storage cannot use broad device selectors" -}}
+{{- end -}}
+{{- $_ := set $storage "useAllNodes" false -}}
+{{- $_ := set $storage "useAllDevices" false -}}
+{{- $_ := set $storage "nodes" list -}}
+{{- $_ := set $spec "storage" $storage -}}
+{{- $_ := set $merged "cephClusterSpec" $spec -}}
+{{- end -}}
+{{ $merged | toYaml }}
+{{- if false }}
+# rook-values:start
 ---
 {{- $useReplicas := not ( .Values.cluster.singleNode | default false ) }}
 
@@ -325,3 +351,6 @@ cephFileSystems:
         # will set default as `ext4`. Note that `xfs` is not recommended due to potential deadlock
         # in hyperconverged settings where the volume is mounted on the same node as the osds.
         csi.storage.k8s.io/fstype: ext4
+
+# rook-values:end
+{{- end }}

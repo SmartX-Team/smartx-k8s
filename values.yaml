@@ -35,6 +35,10 @@ auth:
 baseImage:
   repo: quay.io/ulagbulag
 
+image:
+  repo: quay.io/ulagbulag/openark
+  tag: ""
+
 # Bootstrapper Node Configuration
 bootstrapper:
   auth:
@@ -392,6 +396,16 @@ kiss:
         size: 10G
       vine:
         size: 200G
+
+# Rook-Ceph Configuration
+rookCeph:
+  provisioning:
+    enabled: false
+    manageStorageNodes: false
+    dryRun: true
+    minimumDeviceBytes: 0
+    osdsPerDevice: 1
+    deviceClassMap: {}
 
 # Optional Kubespray Configuration
 kubespray:

@@ -20,7 +20,15 @@ spec:
       - org.ulagbulag.io/csi
       - org.ulagbulag.io/distributed-storage-cluster/ceph
       - org.ulagbulag.io/ingress
-    ignoreDifferences: []
+    ignoreDifferences:
+{{ if dig "provisioning" "manageStorageNodes" false (.Values.rookCeph | default dict) }}
+      - group: ceph.rook.io
+        kind: CephCluster
+        jsonPointers:
+          - /spec/storage/nodes
+{{ else }}
+      []
+{{ end }}
     sync:
       createNamespace: false
       respectIgnoreDifferences: true
@@ -28,4 +36,4 @@ spec:
   source:
     chart: rook-ceph-cluster
     repoUrl: "https://charts.rook.io/release"
-    version: v1.19.0
+    version: v1.19.8

@@ -1,0 +1,78 @@
+{{- $enabled := .Values.enabled | default false -}}
+{{- $managed := .Values.manageStorageNodes | default false -}}
+{{- if and $enabled (not $managed) -}}
+{{- fail "enabled requires manageStorageNodes=true" -}}
+{{- end -}}
+{{- if $enabled -}}
+{{- $name := "rook-ceph-provisioning" -}}
+{{- $namespace := "csi-rook-ceph-provisioning" -}}
+{{- $image := required "image.repo is required" .Values.image.repo -}}
+{{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
+{{- $minimum := 0 -}}
+{{- if hasKey .Values "minimumDeviceBytes" -}}
+{{- $minimum = .Values.minimumDeviceBytes -}}
+{{- end -}}
+{{- $osds := 1 -}}
+{{- if hasKey .Values "osdsPerDevice" -}}
+{{- $osds = .Values.osdsPerDevice -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]+$" (toString $minimum)) -}}
+{{- fail "minimumDeviceBytes must be a nonnegative integer" -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]*[1-9][0-9]*$" (toString $osds)) -}}
+{{- fail "osdsPerDevice must be a positive integer" -}}
+{{- end -}}
+{{- $dryRun := true -}}
+{{- if hasKey .Values "dryRun" -}}
+{{- $dryRun = .Values.dryRun -}}
+{{- end -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: {{ $name }}, namespace: {{ $namespace }}}
+data:
+  DRY_RUN: {{ $dryRun | toString | quote }}
+  MINIMUM_DEVICE_BYTES: {{ $minimum | toString | quote }}
+  OSDS_PER_DEVICE: {{ $osds | toString | quote }}
+  DEVICE_CLASS_MAP: {{ .Values.deviceClassMap | default dict | toJson | quote }}
+  IMAGE: {{ printf "%s:%s" $image $tag | quote }}
+  IMAGE_PULL_POLICY: "Always"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: {{ $name }}, namespace: {{ $namespace }}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: {{ $name }}, namespace: csi-rook-ceph}
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list]
+  - apiGroups: [ceph.rook.io]
+    resources: [cephclusters]
+    resourceNames: [rook-ceph-cluster]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: {{ $name }}, namespace: csi-rook-ceph}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: {{ $name }}}
+subjects:
+  - {kind: ServiceAccount, name: {{ $name }}, namespace: {{ $namespace }}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: {{ $name }}}
+rules:
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: {{ $name }}}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: {{ $name }}}
+subjects:
+  - {kind: ServiceAccount, name: {{ $name }}, namespace: {{ $namespace }}}
+{{- end }}
