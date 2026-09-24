@@ -374,10 +374,10 @@ spec:
             mountPath: /root/inventory/default
           - name: ssh
             mountPath: /root/.ssh
-      dnsConfig:
-        nameservers:
-          - {{ .Values.network.nameservers.ns1 | quote }}
-          - {{ .Values.network.nameservers.ns2 | quote }}
+      # dnsConfig:
+      #   nameservers:
+      #     - {{ .Values.network.nameservers.ns1 | quote }}
+      #     - {{ .Values.network.nameservers.ns2 | quote }}
       dnsPolicy: ClusterFirst
       hostNetwork: true
       priorityClassName: system-cluster-critical
