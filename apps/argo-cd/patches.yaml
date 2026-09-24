@@ -140,6 +140,21 @@ configs:
       g, {{ printf "%s-%s" .Values.cluster.name .Values.group.name }}, role:admin
       g, {{ .Values.cluster.name }}, role:readonly
 
+{{- if has "org.ulagbulag.io/auth" .Values.features }}
+  # Argo CD sensitive data
+  # Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/#sensitive-data-and-sso-client-secrets
+  secret:
+    # -- add additional secrets to be added to argocd-secret
+    ## Custom secrets. Useful for injecting SSO secrets into environment variables.
+    ## Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/#sensitive-data-and-sso-client-secrets
+    ## Note that all values must be non-empty.
+    extra:
+      oidc.openid_connect.name: {{ .Values.auth.realms.name | quote }}
+      oidc.openid_connect.issuer: "https://{{ .Values.auth.domainName }}/realms/{{ .Values.auth.realms.name }}"
+      oidc.openid_connect.clientID: {{ .Values.auth.realms.clientId | quote }}
+      oidc.openid_connect.clientSecret: {{ .Values.auth.realms.clientSecret | quote }}
+{{- end }}
+
 ## Application controller
 controller:
   ## Application controller metrics configuration
