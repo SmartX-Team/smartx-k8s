@@ -168,6 +168,13 @@ operator:
               - key: node-role.kubernetes.io/kiss-ephemeral-control-plane
                 operator: DoesNotExist
   defaultRuntime: containerd
+  resources:
+    limits:
+      cpu: 1900m
+      memory: 500Mi
+    requests:
+      cpu: 200m
+      memory: 100Mi
   # upgrade CRD on chart upgrade, requires --disable-openapi-validation flag
   # to be passed during helm upgrade.
   upgradeCRD: true

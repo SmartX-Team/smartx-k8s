@@ -5,7 +5,7 @@
       access:
         primary:
           address: "{{ interface_primary_address_ipv4 | default(ansible_ssh_host) }}"
-          speedMbps: "{{ interface_primary_speed_mbps | default('0') }}"
+          speedMbps: "{{ interface_primary_speed_mbps | default('0') | string }}"
       machine:
         uuid: "{{ ansible_host_uuid }}"
       reset: "{{ not kiss_storage_exists }}"

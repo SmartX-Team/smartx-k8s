@@ -26,4 +26,4 @@ spec:
   source:
     chart: keda
     repoUrl: "https://kedacore.github.io/charts"
-    version: 2.18.3
+    version: 2.21.0

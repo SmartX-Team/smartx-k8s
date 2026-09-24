@@ -78,7 +78,7 @@ spec:
             - name: OPENARK_SPECTRUM_POOL_BASE_URL
               value: {{ printf "http://%s-pool.%s.svc" ( include "helm.fullname" $ ) ( .Release.Namespace ) | quote }}
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
             - name: UPGRADE_CRDS
               value: "true"
           resources:

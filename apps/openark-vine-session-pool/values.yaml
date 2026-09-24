@@ -12,7 +12,7 @@ features:
 
 profiles:
   - kind: Desktop
-    name: ubuntu-24.04
+    name: ubuntu-26.04
     session:
       context:
         hostNetwork: true

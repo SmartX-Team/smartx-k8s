@@ -11,6 +11,13 @@ openshift:
   # -- enables using arbitrary uid for argo repo server
   enabled: false
 
+## Globally shared configuration
+global:
+  # Default network policy rules used by all components
+  networkPolicy:
+    # -- Create NetworkPolicy objects for all components
+    create: false
+
 ## Argo Configs
 configs:
   # General Argo CD configuration

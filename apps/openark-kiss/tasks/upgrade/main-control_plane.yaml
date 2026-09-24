@@ -1,12 +1,16 @@
 ---
-- hosts: kube_control_plane
+- name: Pre-install
+  hosts: kube_control_plane
+  gather_facts: false
+  timeout: 30
   tasks:
     - name: Remove legacy APIServices
+      delegate_to: "{{ groups['kube_control_plane'] | first }}"
       command: >
         {{ bin_dir }}/kubectl delete APIServices v1beta1.metrics.k8s.io
       ignore_errors: true
 
 - name: Upgrade cluster
-  import_playbook: >
-    /kubespray/upgrade-cluster.yml
-    etcd_retries="10"
+  import_playbook: /kubespray/upgrade-cluster.yml
+  vars:
+    etcd_retries: 10

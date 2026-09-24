@@ -87,7 +87,7 @@ spec:
             - name: OPENARK_LABEL_SIGNED_OUT
               value: {{ index .Values.openark.labels "org.ulagbulag.io/signed-out" | quote }}
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
             - name: SERVICE_NAME
               value: openark-vine-greeter.service
             - name: SYSTEMCTL_FORCE_BUS

@@ -24,3 +24,11 @@ affinity:
               values:
                 - ControlPlane
                 - Gateway
+
+# Limit what kind of resources to watch, e.g. watchedResources: ["Ingress"]
+watchedResources:
+  - GRPCRoute
+  - HTTPRoute
+  - Ingress
+  - Service
+  - TLSRoute

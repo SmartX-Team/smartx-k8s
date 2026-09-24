@@ -73,7 +73,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: http
               protocol: TCP

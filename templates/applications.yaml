@@ -379,7 +379,7 @@ Create applications
 {{ tpl ( $.Files.Get $appPath ) $ }}
 {{- range $path, $_ := $.Files.Glob ( printf "%s/*.yaml" $dirname ) }}
 {{- $filename := ( base $path ) }}
-{{- if not ( has $filename ( list "Chart.yaml" "defaults.yaml"  "kustomization.yaml" "manifest.yaml" "patches.yaml" "values.yaml" ) ) }}
+{{- if not ( has $filename ( list "Chart.yaml" "defaults.yaml" "kustomization.yaml" "manifest.yaml" "patches.yaml" "values.yaml" ) ) }}
 {{- fail ( printf "Invalid app file: Unknown file type (%s)\n\n* Please remove this file: %s" $filename $path ) }}
 {{- end }}
 {{- end }}

@@ -13,3 +13,6 @@ kiss:
   os:
     dist: {{ .Values.kiss.os.dist | quote }}
     version: {{ .Values.kiss.os.version | quote }}
+
+ubuntu:
+  image: {{- .Values.build.ubuntu.image | toYaml | nindent 6 }}

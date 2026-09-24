@@ -58,7 +58,7 @@ spec:
             - name: INSTALL_CRDS
               value: "true"
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
             - name: UPGRADE_CRDS
               value: "true"
           resources:

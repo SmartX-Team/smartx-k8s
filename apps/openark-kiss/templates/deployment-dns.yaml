@@ -65,7 +65,7 @@ spec:
             - name: BIND_ADDR
               value: 0.0.0.0:5353
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: dns-tcp
               protocol: TCP

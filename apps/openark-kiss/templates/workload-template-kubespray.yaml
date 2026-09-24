@@ -23,6 +23,12 @@ spec:
                 operator: In
                 values:
                   - ControlPlane
+  dnsConfig:
+    nameservers:
+      - {{ .Values.network.nameservers.ns1 | quote }}
+      - {{ .Values.network.nameservers.ns2 | quote }}
+  dnsPolicy: ClusterFirst
+  hostNetwork: true
   podGC:
     strategy: OnPodCompletion
   serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
@@ -241,11 +247,6 @@ spec:
             value: {{ "{{ inputs.parameters.new_cluster }}" | quote }}
           - name: kiss_cluster_worker_nodes
             value: {{ "{{ inputs.parameters.worker_nodes }}" | quote }}
-          - name: kiss_os_kernel
-            valueFrom:
-              configMapKeyRef:
-                key: os_kernel
-                name: kiss-config
           - name: kiss_group_default_role
             valueFrom:
               configMapKeyRef:
@@ -366,7 +367,7 @@ spec:
                 name: kiss-config
         resources:
           limits:
-            cpu: "1"
+            # cpu: "1"
             memory: 2Gi
         volumeMounts:
           - name: ansible-task
@@ -379,14 +380,7 @@ spec:
             mountPath: /root/inventory/default
           - name: ssh
             mountPath: /root/.ssh
-      dnsConfig:
-        nameservers:
-          - {{ .Values.network.nameservers.ns1 | quote }}
-          - {{ .Values.network.nameservers.ns2 | quote }}
-      dnsPolicy: ClusterFirst
-      hostNetwork: true
       priorityClassName: system-cluster-critical
-      restartPolicy: OnFailure
       tolerations:
         - effect: NoExecute
           operator: Exists

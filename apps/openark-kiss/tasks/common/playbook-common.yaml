@@ -16,21 +16,21 @@
       loop: "{{ lookup('env', 'kiss_cluster_control_planes') | split(' ') }}"
       loop_control:
         loop_var: node_packed
-      when: node_packed | length
+      when: node_packed | length > 0
       include_tasks: ./add-node.yaml
 
     - name: Add etcd nodes
       loop: "{{ lookup('env', 'kiss_cluster_etcd_nodes') | split(' ') }}"
       loop_control:
         loop_var: node_packed
-      when: node_packed | length
+      when: node_packed | length > 0
       include_tasks: ./add-node.yaml
 
     - name: Add worker nodes
       loop: "{{ lookup('env', 'kiss_cluster_worker_nodes', errors='ignore') | default('') | split(' ') }}"
       loop_control:
         loop_var: node_packed
-      when: node_packed | length
+      when: node_packed | length > 0
       include_tasks: ./add-node.yaml
 
     - name: Add target node
@@ -46,6 +46,7 @@
         ansible_python_interpreter: /usr/bin/python3
         ansible_user: "{{ lookup('env', 'ansible_user') }}"
         bin_dir: /usr/local/bin
+        etcd_retries: 10
         ip: "{{ lookup('env', 'ansible_ssh_host') }}"
         kiss_allow_critical_commands: "{{ lookup('env', 'kiss_allow_critical_commands') == 'true' }}"
         kiss_allow_pruning_network_interfaces: "{{ lookup('env', 'kiss_allow_pruning_network_interfaces') == 'true' }}"

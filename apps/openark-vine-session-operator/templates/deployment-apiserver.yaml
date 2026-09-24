@@ -101,7 +101,7 @@ spec:
             - name: OPENARK_LABEL_BIND_USER
               value: {{ index .Values.openark.labels "org.ulagbulag.io/bind.user" | quote }}
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: http
               protocol: TCP

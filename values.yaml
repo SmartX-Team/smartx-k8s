@@ -221,10 +221,10 @@ driver:
     cuda:
       image:
         repo: nvcr.io/nvidia/cuda
-        version: 13.0.1
+        version: 13.4.1
     gpu:
       eula: false
-      version: 580.82.07
+      version: 580.178.04
 
 # Enable SmartX features
 # TODO(user): Configure it!
@@ -317,6 +317,8 @@ kiss:
     repo:
       ubuntu_24_04:
         baseUrl: http://mirror.kakao.com/ubuntu-releases/24.04
+      ubuntu_26_04:
+        baseUrl: http://mirror.kakao.com/ubuntu-releases/26.04
 
   # Bare-metal Box Authentication Configuration
   auth:
@@ -354,7 +356,7 @@ kiss:
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
     version: "24.04"
-    revision: "4"
+    revision: "5"
     channel: release # One of: release (default), preview-*
     kernel: stable # One of: edge, stable (default)
 

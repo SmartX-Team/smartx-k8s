@@ -94,13 +94,11 @@ upstream_dns_servers:
 ## List of key=value pairs that describe feature gates for
 ## the k8s cluster.
 {{- $_ := set $ "AvailableKubeadmFeatures" ( list
-  "ControlPlaneKubeletLocalMode"
   "NodeLocalCRISocket"
   "WaitForAllControlPlaneComponents"
 ) }}
 
 {{- $_ := set $ "KubeFeatures" ( list
-  "ControlPlaneKubeletLocalMode"
   "ImageVolume"
   "PodLevelResources"
   "ProcMountType"

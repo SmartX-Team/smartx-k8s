@@ -1,0 +1,158 @@
+---
+# Rook-compatible default values for the ceph-csi-drivers Helm chart.
+#
+# Use these values when installing or upgrading the ceph-csi-drivers chart
+# alongside the rook-ceph operator chart. The driver names must match the
+# provisioner names used by Rook (e.g. in StorageClasses and VolumeSnapshotClasses).
+#
+# If the Rook operator is installed in a namespace other than rook-ceph, replace
+# "rook-ceph" in the driver names below with your operator namespace.
+
+# Operator configuration section
+operatorConfig:
+  # -- Namespace for the operator configuration (default: "")
+  namespace: csi-rook-ceph # namespace:operator
+  driverSpecDefaults:
+    imageSet:
+      # -- ConfigMap reference to the image set for the driver (default: "")
+      name: rook-csi-operator-image-set-configmap
+    # Node Plugin Configuration
+    nodePlugin:
+      # -- Pod's priority class name (default: "")
+      priorityClassName: system-node-critical
+    # Controller Plugin Configuration
+    controllerPlugin:
+      priorityClassName: system-cluster-critical
+      # -- Affinity settings for the pod (default: {})
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Storage
+
+# Drivers configuration
+drivers:
+  # RBD driver configuration
+  rbd:
+    # -- Enable the RBD driver (default: true)
+    enabled: true
+    # -- CSI driver name for RBD (default: "rbd.csi.ceph.com")
+    name: csi-rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Affinity settings for the controller plugin (default: {})
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Storage
+
+  # NVMe-oF driver configuration (backed by RBD)
+  nvmeof:
+    # -- Enable the NVMe-oF driver (default: true)
+    enabled: true
+    # -- CSI driver name for NVMe-oF (default: "nvmeof.csi.ceph.com")
+    name: csi-rook-ceph.nvmeof.csi.ceph.com # csi-provisioner-name
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Affinity settings for the controller plugin (default: {})
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Storage
+
+  # CephFS driver configuration
+  cephfs:
+    # -- Enable the CephFS driver (default: true)
+    enabled: true
+    # -- CSI driver name for CephFS (default: "cephfs.csi.ceph.com")
+    name: csi-rook-ceph.cephfs.csi.ceph.com # csi-provisioner-name
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Affinity settings for the controller plugin (default: {})
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Storage
+
+  # NFS driver configuration
+  nfs:
+    # -- Enable the NFS driver (default: true)
+    enabled: true
+    # -- CSI driver name for NFS (default: "nfs.csi.ceph.com")
+    name: csi-rook-ceph.nfs.csi.ceph.com # csi-provisioner-name
+    # Controller Plugin Configuration
+    controllerPlugin:
+      # -- Affinity settings for the controller plugin (default: {})
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+              weight: 1
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/kiss
+                    operator: In
+                    values:
+                      - ControlPlane
+                      - Storage
