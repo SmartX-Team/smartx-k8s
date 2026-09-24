@@ -378,7 +378,7 @@ spec:
       #   nameservers:
       #     - {{ .Values.network.nameservers.ns1 | quote }}
       #     - {{ .Values.network.nameservers.ns2 | quote }}
-      dnsPolicy: ClusterFirst
+      # dnsPolicy: ClusterFirst
       hostNetwork: true
       priorityClassName: system-cluster-critical
       # restartPolicy: OnFailure
