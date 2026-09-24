@@ -381,7 +381,7 @@ spec:
       dnsPolicy: ClusterFirst
       hostNetwork: true
       priorityClassName: system-cluster-critical
-      restartPolicy: OnFailure
+      # restartPolicy: OnFailure
       tolerations:
         - effect: NoExecute
           operator: Exists
