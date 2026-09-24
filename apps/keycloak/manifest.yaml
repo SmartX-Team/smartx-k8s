@@ -37,4 +37,4 @@ spec:
   source:
     chart: keycloak
     repoUrl: registry-1.docker.io/bitnamicharts
-    version: 21.6.1
+    version: 25.2.0

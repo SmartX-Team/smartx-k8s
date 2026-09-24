@@ -50,9 +50,9 @@ bpf:
   # -- Enables pre-allocation of eBPF map values. This increases
   # memory usage but can reduce latency.
   # preallocateMaps: false
-  # -- (string) Mode for Pod devices for the core datapath (veth, netkit, netkit-l2, lb-only)
-  # @default -- `veth`
-  datapathMode: netkit
+  # -- (string) Mode for Pod devices for the core datapath (auto, veth, netkit, netkit-l2, lb-only)
+  # @default -- `auto`
+  datapathMode: auto
   # @schema
   # type: [null, boolean]
   # @schema
@@ -133,10 +133,12 @@ egressGateway:
   # cluster.
   enabled: true
 
+# TODO: BIG TCP in tunneling mode requires pending kernel support
+# NOTE: https://github.com/cilium/cilium/issues/46337
 # -- Enables IPv4 BIG TCP support which increases maximum IPv4 GSO/GRO limits for nodes and pods
-enableIPv4BIGTCP: true
+enableIPv4BIGTCP: false
 # -- Enables IPv6 BIG TCP support which increases maximum IPv6 GSO/GRO limits for nodes and pods
-enableIPv6BIGTCP: true
+enableIPv6BIGTCP: false
 
 encryption:
   # -- Enable transparent network encryption.

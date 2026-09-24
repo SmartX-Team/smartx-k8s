@@ -26,4 +26,4 @@ spec:
   source:
     chart: kube-prometheus-stack
     repoUrl: "https://prometheus-community.github.io/helm-charts"
-    version: 81.4.2
+    version: 91.5.1

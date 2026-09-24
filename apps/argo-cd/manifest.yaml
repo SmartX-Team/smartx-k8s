@@ -35,4 +35,4 @@ spec:
   source:
     chart: argo-cd
     repoUrl: "https://argoproj.github.io/argo-helm"
-    version: 9.3.7
+    version: 10.9.2
