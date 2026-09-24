@@ -12,8 +12,9 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - services
+      - endpointslices
       - namespaces
+      - services
     verbs:
       - get
       - list
