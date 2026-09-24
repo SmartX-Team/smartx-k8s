@@ -104,7 +104,7 @@ configs:
     # OIDC configuration as an alternative to dex (optional).
     oidc.config: |
       name: $oidc.openid_connect.name
-      issuer: $oidc.openid_connect.issuer
+      issuer: "https://{{ .Values.auth.domainName }}/realms/{{ .Values.auth.realms.name }}"
       clientID: $oidc.openid_connect.clientID
       clientSecret: $oidc.openid_connect.clientSecret
       enablePKCEAuthentication: false
