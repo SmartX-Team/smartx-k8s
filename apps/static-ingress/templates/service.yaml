@@ -1,6 +1,6 @@
 {{- range $_ := .Values.domains | default list }}
 {{- $name := printf "%s-%s" ( include "helm.fullname" $ ) .host | replace "." "-" | trunc 63 | trimSuffix "-" }}
-{{- $tls := .tls | default "true" }}
+{{- $tls := .tls | default "true" | toString }}
 
 ---
 apiVersion: v1
