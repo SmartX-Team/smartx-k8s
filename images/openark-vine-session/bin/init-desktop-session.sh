@@ -15,4 +15,4 @@ cupsd || true
 rm -rf \
     "${HOME}/.config/google-chrome/SingletonCookie" \
     "${HOME}/.config/google-chrome/SingletonLock" \
-    "${HOME}/.config/google-chrome/SingletonSocket"
+    "${HOME}/.config/google-chrome/SingletonSocket" || true
