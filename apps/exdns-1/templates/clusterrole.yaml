@@ -5,16 +5,25 @@ metadata:
   name: {{ include "helm.fullname" $ | quote }}
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    helm.sh/hook-weight: "1"
+    helm.sh/hook-weight: "-1"
   labels:
 {{- include "helm.labels" $ | nindent 4 }}
 rules:
   - apiGroups:
       - ""
     resources:
-      - services
       - namespaces
+      - services
     verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
       - list
       - watch
   - apiGroups:
@@ -23,14 +32,16 @@ rules:
     resources:
       - ingresses
     verbs:
+      - get
       - list
       - watch
-  - apiGroups: 
+  - apiGroups:
       - gateway.networking.k8s.io 
-    resources: 
+    resources:
       - grpcroutes
       - httproutes
       - tlsroutes
-    verbs: 
-      - watch 
+    verbs:
+      - get
       - list
+      - watch

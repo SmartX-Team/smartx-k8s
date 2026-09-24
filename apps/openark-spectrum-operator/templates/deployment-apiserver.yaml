@@ -64,7 +64,7 @@ spec:
             - name: PROMETHEUS_BASE_URL
               value: {{ .Values.prometheus.baseUrl | quote }}
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: http
               protocol: TCP

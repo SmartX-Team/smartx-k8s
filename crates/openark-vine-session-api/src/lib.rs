@@ -914,10 +914,10 @@ impl<'a> NodeSession<'a> {
                         let re = Regex::new(r"^nvidia\.com/[A-Z0-9_]+$").unwrap();
                         let devices = allocatable
                             .iter()
-                            .filter(|(key, _)| re.is_match(key) && !key.ends_with("_Audio"));
+                            .filter(|&(key, value)| re.is_match(key) && value.0 != "0");
 
-                        for (key, _value) in devices {
-                            map.insert(key.clone(), Quantity("1".into()));
+                        for (key, value) in devices {
+                            map.insert(key.clone(), value.clone());
                         }
                     }
                 }

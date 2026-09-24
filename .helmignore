@@ -26,6 +26,8 @@
 /*/*.key
 /*/*.pem
 /*/dist/
+/crates/
+/iso/
 
 # Documents
 /README.md

@@ -60,7 +60,7 @@ spec:
             # - name: OPENARK_SPECTRUM_POOL_PATH
             #   value: /data/openark/spectrum/pool
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: http
               protocol: TCP

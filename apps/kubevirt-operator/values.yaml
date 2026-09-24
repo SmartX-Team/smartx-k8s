@@ -38,6 +38,12 @@ kubevirt:
         # NVIDIA Corporation Device
         - externalResourceProvider: false
           pciVendorSelector: 10de:22be
+          resourceName: nvidia.com/AD107_HIGH_DEFINITION_AUDIO_CONTROLLER
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:22be
+          resourceName: nvidia.com/AD107_HIGH_DEFINITION_AUDIO_CONTROLLER_Audio
+        - externalResourceProvider: false
+          pciVendorSelector: 10de:22be
           resourceName: nvidia.com/AD107M_GEFORCE_RTX_4060_MAXQ___MOBILE_Audio
         # Intel Corporation Thunderbolt 4 USB Controller
         - externalResourceProvider: false
@@ -86,7 +92,7 @@ kubevirt:
   customizeComponents:
     flags:
       controller:
-        launcher-image: quay.io/ulagbulag/virt-launcher:v1.4.0
+        launcher-image: quay.io/ulagbulag/virt-launcher:v1.8.3
     patches:
       - resourceType: Deployment
         resourceName: virt-controller
@@ -95,7 +101,7 @@ kubevirt:
           [{
             "op": "replace",
             "path": "/spec/template/spec/containers/0/args/1",
-            "value": "quay.io/ulagbulag/virt-launcher:v1.4.0"
+            "value": "quay.io/ulagbulag/virt-launcher:v1.8.3"
           }]
         type: json
       # - resourceType: DaemonSet

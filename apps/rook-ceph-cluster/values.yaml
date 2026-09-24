@@ -37,7 +37,7 @@ cephImage:
   # In production, use a specific version tag instead of the general v19 flag, which pulls the latest release and could result in different
   # versions running within the cluster. See tags available at https://hub.docker.com/r/ceph/ceph/tags/.
   # To be more precise, you can always use a timestamp tag such as quay.io/ceph/ceph:v19.2.3-20250717
-  tag: v19.2.1
+  tag: v20.2.4
   # Whether to allow unsupported versions of Ceph. Currently Squid and Tentacle are supported.
   # Future versions such as Tentacle (v20) would require this to be set to `true`.
   # Do not set to true in production.
@@ -54,12 +54,28 @@ cephClusterSpec:
   # or stretch cluster (cluster-stretched.yaml), replace this entire `cephClusterSpec`
   # with the specs from those examples.
 
+  # Whether or not upgrade should continue even if a check fails
+  # This means Ceph's status could be degraded and we don't recommend upgrading but you might decide otherwise
+  # Use at your OWN risk
+  # To understand Rook's upgrade process of Ceph, read https://rook.io/docs/rook/v1.10/Upgrade/ceph-upgrade/
+  skipUpgradeChecks: true
+
   # For more details, check https://rook.io/docs/rook/v1.10/CRDs/Cluster/ceph-cluster-crd/
   cephVersion:
     # Whether to allow unsupported versions of Ceph. Currently `pacific` and `quincy` are supported.
     # Future versions such as `reef` (v18) would require this to be set to `true`.
     # Do not set to true in production.
     allowUnsupported: false
+
+  security:
+    cephx:
+      allowedCiphers:
+        - aes256k
+      csi:
+        keyRotationPolicy: KeyGeneration
+        keyGeneration: 2
+        keepPriorKeyCountMax: 1
+        keyType: aes256k
 
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.

@@ -48,7 +48,11 @@ impl AnsibleClient {
     }
 
     #[cfg_attr(feature = "tracing", instrument(level = Level::INFO, skip(self, job), err(Display)))]
-    pub async fn spawn(&self, job: AnsibleJob<'_>) -> Result<bool, Error> {
+    pub async fn spawn(
+        &self,
+        job: AnsibleJob<'_>,
+        allow_cronjobs: bool,
+    ) -> Result<Option<bool>, Error> {
         let box_name = job.r#box.spec.machine.uuid.to_string();
         let box_status = job.r#box.status.as_ref();
         let name = format!("box-{}-{}", &job.task, &box_name);
@@ -98,6 +102,24 @@ impl AnsibleClient {
             }
         }
 
+        // skip spawning
+        if !allow_cronjobs && job.cron.is_some() {
+            #[cfg(feature = "tracing")]
+            info!(
+                "CronJob is disabled; skipping: {} {}",
+                job.r#box.spec.group.role, &box_name,
+            );
+            return Ok(None);
+        }
+        if !self.kiss.allow_reboot {
+            #[cfg(feature = "tracing")]
+            info!(
+                "Reboot is disabled; skipping: {} {}",
+                job.r#box.spec.group.role, &box_name,
+            );
+            return Ok(None);
+        }
+
         // realize mutual exclusivity (QUEUE)
         let cluster_state = self::cluster::ClusterState::load(
             &self.client,
@@ -115,7 +137,7 @@ impl AnsibleClient {
                 "Cluster is not ready: {} {} {} -> {}",
                 new_state, job.r#box.spec.group.role, &box_name, &job.r#box.spec.group.cluster_name,
             );
-            return Ok(false);
+            return Ok(Some(false));
         }
 
         // define the object
@@ -251,6 +273,11 @@ impl AnsibleClient {
                             EnvVar {
                                 name: "kiss_allow_pruning_network_interfaces".into(),
                                 value: Some(self.kiss.allow_pruning_network_interfaces.to_string()),
+                                ..Default::default()
+                            },
+                            EnvVar {
+                                name: "kiss_allow_reboot".into(),
+                                value: Some(self.kiss.allow_reboot.to_string()),
                                 ..Default::default()
                             },
                             EnvVar {
@@ -667,7 +694,7 @@ impl AnsibleClient {
 
         #[cfg(feature = "tracing")]
         info!("spawned a job: {name}");
-        Ok(true)
+        Ok(Some(true))
     }
 }
 

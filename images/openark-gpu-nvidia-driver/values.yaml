@@ -8,7 +8,7 @@ cuda:
     repo: nvcr.io/nvidia/cuda
     tag: ""
   keyring:
-    baseUrl: https://developer.download.nvidia.com/compute/cuda
+    baseUrl: https://packages.nvidia.com
 
 driver:
   installer:
@@ -24,4 +24,4 @@ kiss:
 
 ubuntu:
   image:
-    tag: "24.04"
+    tag: ""

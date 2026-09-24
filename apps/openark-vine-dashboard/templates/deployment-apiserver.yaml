@@ -108,7 +108,7 @@ spec:
             - name: OPENARK_LABEL_TITLE
               value: {{ index .Values.openark.labels "org.ulagbulag.io/title" | quote }}
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
           ports:
             - name: http
               protocol: TCP

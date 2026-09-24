@@ -123,6 +123,7 @@ ansible_ssh_private_key_file=/root/.ssh/id_ed25519
 ansible_user={{ .Values.kiss.auth.ssh.username }}
 kiss_allow_critical_commands={{ .Values.kiss.commission.allowCriticalCommands }}
 kiss_allow_pruning_network_interfaces={{ .Values.kiss.commission.allowPruningNetworkInterfaces }}
+kiss_allow_reboot={{ .Values.kiss.commission.allow_reboot }}
 kiss_ansible_task_name=${OPENARK_KISS_TASK}
 kiss_cluster_control_planes={{ printf "kube_control_plane:%s:%s" $nodeName $nodeIP }}
 kiss_cluster_etcd_nodes={{ printf "etcd:%s:%s" $nodeName $nodeIP }}

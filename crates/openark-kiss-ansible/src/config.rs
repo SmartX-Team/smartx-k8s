@@ -12,6 +12,7 @@ use tracing::{Level, instrument};
 pub struct KissConfig {
     pub allow_critical_commands: bool,
     pub allow_pruning_network_interfaces: bool,
+    pub allow_reboot: bool,
     pub bootstrapper_network_dns_server_ns1: Ipv4Addr,
     pub bootstrapper_network_dns_server_ns2: Ipv4Addr,
     pub etcd_nodes_max: usize,
@@ -44,6 +45,7 @@ impl KissConfig {
         Ok(Self {
             allow_critical_commands: infer(&config, "allow_critical_commands")?,
             allow_pruning_network_interfaces: infer(&config, "allow_pruning_network_interfaces")?,
+            allow_reboot: infer(&config, "allow_reboot")?,
             bootstrapper_network_dns_server_ns1: infer(
                 &config,
                 "bootstrapper_network_dns_server_ns1",

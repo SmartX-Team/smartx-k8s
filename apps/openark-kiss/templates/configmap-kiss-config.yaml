@@ -21,6 +21,7 @@ data:
   ###########################################################################
   allow_critical_commands: {{ .Values.kiss.commission.allowCriticalCommands | quote }}
   allow_pruning_network_interfaces: {{ .Values.kiss.commission.allowPruningNetworkInterfaces | quote }}
+  allow_reboot: {{ .Values.kiss.commission.allowReboot | quote }}
 
   ###########################################################################
   # Bare-metal Box Grouping Configuration

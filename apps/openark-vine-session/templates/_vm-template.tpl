@@ -7,15 +7,13 @@ KubeVirt Virtual Machine GPU Passthrough devices
 {{- if regexMatch "^nvidia.com/[a-zA-Z0-9_]+$" $key }}
 {{- range $_, $_ := until ( $value | int ) }}
 {{- if $.Values.features.hostDisplay }}
+{{- if not $.Values.features.hostAudio }}
+{{- fail "VM cannot be enabled without host audio" }}
+{{- end }}
 - deviceName: {{ $key | quote }}
   name: "gpu-{{ $.Counter }}"
 {{- end }}
 {{- $_ := set $ "Counter" ( add $.Counter 1 ) }}
-{{- if $.Values.features.hostAudio }}
-- deviceName: "{{ $key }}_Audio"
-  name: "gpu-{{ $.Counter }}"
-{{- $_ := set $ "Counter" ( add $.Counter 1 ) }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -13,4 +13,4 @@ spec:
   containerImage:
     namespace: vine-session
     period: "0 0 * * *"
-    version: v1.4.0
+    version: v1.8.3

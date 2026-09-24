@@ -1,0 +1,14 @@
+# Ubuntu 26.04
+Package: *
+Pin: release n=resolute*
+Pin-Priority: 900
+
+# Ubuntu 24.04
+Package: *
+Pin: release n=noble*
+Pin-Priority: 800
+
+# Ubuntu 22.04
+Package: *
+Pin: release n=jammy*
+Pin-Priority: 700

@@ -71,7 +71,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: RUST_LOG
-              value: INFO
+              value: DEBUG
             - name: UPGRADE_CRDS
               value: "true"
           resources:

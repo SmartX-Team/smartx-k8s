@@ -41,6 +41,8 @@ VOLUME "${RUN_DIR}"
 
 # Install dependencies
 RUN true \
+    # Get OS information
+    && . /etc/os-release \
     # Remove NVIDIA's unconditionally trusted CUDA GPG keys
     && rm /etc/apt/sources.list.d/cuda* \
     # Add repository: nvidia-compute-cuda
@@ -51,14 +53,19 @@ RUN true \
     && if [ "$(uname -m)" == 'aarch64' ]; then ARCH='arm64' \
         ; else ARCH="$(uname -m)" \
     ; fi \
-    && curl -sL -o '/tmp/cuda-keyring.deb' {{ printf "%s/repos/%s%s/${ARCH}/cuda-keyring_1.1-1_all.deb"
+    && curl -sL -o '/tmp/nvidia-preview-keyring.deb' {{ printf "%s/${VERSION_CODENAME}/nvidia-preview-keyring.deb"
             .Values.cuda.keyring.baseUrl
-            .Values.kiss.os.dist
-            ( .Values.kiss.os.version | replace "." "" )
         | quote
     }} \
-    && dpkg -i '/tmp/cuda-keyring.deb' \
-    && rm '/tmp/cuda-keyring.deb' \
+    && dpkg -i '/tmp/nvidia-preview-keyring.deb' \
+    && rm '/tmp/nvidia-preview-keyring.deb' \
+    # Add repository: nvidia-container-toolkit
+    && curl -sL "https://nvidia.github.io/libnvidia-container/gpgkey" \
+        | gpg --dearmor -o '/etc/apt/keyrings/nvidia-container-toolkit.key' \
+    && curl -sL -o '/etc/apt/sources.list.d/nvidia-container-toolkit.list' \
+        "https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list" \
+    && sed -i -e 's/^deb/deb \[signed-by=\/etc\/apt\/keyrings\/nvidia-container-toolkit.key\]/g' \
+        '/etc/apt/sources.list.d/nvidia-container-toolkit.list' \
     # Enable extra architectures
     && if [ "$(uname -m)" == 'aarch64' ]; then SUBARCH='arm64' \
         ; elif [ "$(uname -m)" == 'x86_64' ]; then SUBARCH='i386' \
@@ -78,24 +85,7 @@ RUN true \
         nvidia-container-toolkit \
         pkg-config \
         # x86_64
-{{- if ge ( $driverBranch | int ) 580 }}
-        $( \
-            if [ "$(uname -m)" == 'x86_64' ]; then echo \
-                {{ printf "libnvidia-nscq=%s-*"
-                        .Values.driver.version
-                    | quote
-                }} \
-                {{ printf "nvidia-fabricmanager=%s-*"
-                        .Values.driver.version
-                    | quote
-                }} \
-                {{ printf "nvidia-imex=%s-*"
-                        .Values.driver.version
-                    | quote
-                }} \
-            ; fi \
-        ) \
-{{- else if ge ( $driverBranch | int ) 550 }}
+{{- if ge ( $driverBranch | int ) 550 }}
         $( \
             if [ "$(uname -m)" == 'x86_64' ]; then echo \
                 {{ printf "libnvidia-nscq-%s=%s-*"

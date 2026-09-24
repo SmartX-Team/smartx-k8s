@@ -160,74 +160,81 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     }
 
     // spawn an Ansible job
-    if old_state != new_state || ctx.enable_cronjobs && new_state.cron().is_some() {
+    if old_state != new_state && new_state.cron().is_some() {
         if let Some(task) = new_state.as_task() {
-            let is_spawned = ctx
-                .ansible
-                .spawn(AnsibleJob {
-                    cron: new_state.cron(),
-                    task,
-                    r#box: &r#box,
-                    new_group,
-                    new_state: Some(new_state),
-                    is_critical: false,
-                    resource_type: match old_state {
-                        BoxState::New
-                        | BoxState::Commissioning
-                        | BoxState::Ready
-                        | BoxState::Joining => AnsibleResourceType::Normal,
-                        BoxState::Running
-                        | BoxState::GroupChanged
-                        | BoxState::Failed
-                        | BoxState::Disconnected => AnsibleResourceType::Minimal,
-                    },
-                    use_workers: false,
-                })
-                .await?;
+            let job = AnsibleJob {
+                cron: new_state.cron(),
+                task,
+                r#box: &r#box,
+                new_group,
+                new_state: Some(new_state),
+                is_critical: false,
+                resource_type: match old_state {
+                    BoxState::New
+                    | BoxState::Commissioning
+                    | BoxState::Ready
+                    | BoxState::Joining => AnsibleResourceType::Normal,
+                    BoxState::Running
+                    | BoxState::GroupChanged
+                    | BoxState::Failed
+                    | BoxState::Disconnected => AnsibleResourceType::Minimal,
+                },
+                use_workers: false,
+            };
+            let allow_cronjobs = ctx.enable_cronjobs;
+            let is_spawned = ctx.ansible.spawn(job, allow_cronjobs).await?;
 
             // If there is a problem spawning a job, check back after a few minutes
-            if !is_spawned {
-                let message = "Cannot spawn an Ansible job; waiting".into();
-                report_update(&ctx.recorder, &reference, message).await?;
-                return Ok(Action::requeue(
-                    #[allow(clippy::identity_op)]
-                    Duration::from_secs(1 * 60),
-                ));
+            match is_spawned {
+                Some(true) => {
+                    // wait for being changed
+                    if old_state == new_state {
+                        let message = "Waiting for being changed".into();
+                        report_update(&ctx.recorder, &reference, message).await?;
+                        return Ok(Action::await_change());
+                    }
+
+                    // bind group before joining to a cluster
+                    let bind_group = if matches!(new_state, BoxState::Joining) {
+                        Some(&r#box.spec.group)
+                    } else {
+                        status
+                            .as_ref()
+                            .and_then(|status| status.bind_group.as_ref())
+                    };
+
+                    let patch = Patch::Merge(json!({
+                        "apiVersion": &ctx.crd.api_version,
+                        "kind": &ctx.crd.kind,
+                        "status": BoxStatus {
+                            access: status.map(|status| status.access.clone()).unwrap_or_default(),
+                            state: new_state,
+                            bind_group: bind_group.cloned(),
+                            last_updated: Timestamp::now(),
+                        },
+                    }));
+                    ctx.api
+                        .patch_status(&name, &ctx.patch_params, &patch)
+                        .await?;
+
+                    let message = format!("Updated state: {new_state}");
+                    report_update(&ctx.recorder, &reference, message).await?;
+                }
+                Some(false) => {
+                    let message = "Cannot spawn an Ansible job; waiting".into();
+                    report_update(&ctx.recorder, &reference, message).await?;
+                    return Ok(Action::requeue(
+                        #[allow(clippy::identity_op)]
+                        Duration::from_secs(1 * 60),
+                    ));
+                }
+                None => {
+                    let message = "Waiting for being changed".into();
+                    report_update(&ctx.recorder, &reference, message).await?;
+                    return Ok(Action::await_change());
+                }
             }
         }
-
-        // wait for being changed
-        if old_state == new_state {
-            let message = "Waiting for being changed".into();
-            report_update(&ctx.recorder, &reference, message).await?;
-            return Ok(Action::await_change());
-        }
-
-        // bind group before joining to a cluster
-        let bind_group = if matches!(new_state, BoxState::Joining) {
-            Some(&r#box.spec.group)
-        } else {
-            status
-                .as_ref()
-                .and_then(|status| status.bind_group.as_ref())
-        };
-
-        let patch = Patch::Merge(json!({
-            "apiVersion": &ctx.crd.api_version,
-            "kind": &ctx.crd.kind,
-            "status": BoxStatus {
-                access: status.map(|status| status.access.clone()).unwrap_or_default(),
-                state: new_state,
-                bind_group: bind_group.cloned(),
-                last_updated: Timestamp::now(),
-            },
-        }));
-        ctx.api
-            .patch_status(&name, &ctx.patch_params, &patch)
-            .await?;
-
-        let message = format!("Updated state: {new_state}");
-        report_update(&ctx.recorder, &reference, message).await?;
     }
 
     if old_state == new_state {

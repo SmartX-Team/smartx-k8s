@@ -35,7 +35,7 @@ persistence:
       # Set it to "-" to disable dynamic provisioning
       storageClass: ceph-filesystem
       accessMode: ReadWriteMany
-      size: 1Ti
+      size: 1110Gi
     jobservice:
       jobLog:
         storageClass: ceph-filesystem
