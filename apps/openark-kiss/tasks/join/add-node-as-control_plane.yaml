@@ -1,5 +1,5 @@
 ---
-- import_playbook: >
-    /kubespray/cluster.yml
-    etcd_retries="10"
-    ignore_assert_errors="true"
+- import_playbook: /kubespray/cluster.yml
+  vars:
+    etcd_retries: 10
+    ignore_assert_errors: true
