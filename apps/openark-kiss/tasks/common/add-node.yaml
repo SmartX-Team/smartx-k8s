@@ -37,6 +37,10 @@
     groups:
       - "k8s_cluster_{{ lookup('env', 'kiss_cluster_name_snake_case') }}"
 
+- name: Show about the node | {{ node[1] }}
+  debug:
+    var: node
+
 - name: Test node connection | {{ node[0] }} | {{ node[1] }}
   when: node_packed is defined and node_packed != '' and result_ping.rc == 0
   delegate_to: "{{ node[1] }}"
