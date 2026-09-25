@@ -1,8 +1,10 @@
 ---
-- hosts: kube_control_plane
+- name: Pre-install
+  hosts: kube_control_plane
   timeout: 30
   tasks:
     - name: Remove legacy APIServices
+      delegate_to: "{{ groups['kube_control_plane'] | first }}"
       command: >
         {{ bin_dir }}/kubectl delete APIServices v1beta1.metrics.k8s.io
       ignore_errors: true
