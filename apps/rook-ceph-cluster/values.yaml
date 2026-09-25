@@ -54,6 +54,12 @@ cephClusterSpec:
   # or stretch cluster (cluster-stretched.yaml), replace this entire `cephClusterSpec`
   # with the specs from those examples.
 
+  # Whether or not upgrade should continue even if a check fails
+  # This means Ceph's status could be degraded and we don't recommend upgrading but you might decide otherwise
+  # Use at your OWN risk
+  # To understand Rook's upgrade process of Ceph, read https://rook.io/docs/rook/v1.10/Upgrade/ceph-upgrade/
+  skipUpgradeChecks: true
+
   # For more details, check https://rook.io/docs/rook/v1.10/CRDs/Cluster/ceph-cluster-crd/
   cephVersion:
     # Whether to allow unsupported versions of Ceph. Currently `pacific` and `quincy` are supported.
