@@ -30,7 +30,6 @@ spec:
   dnsPolicy: ClusterFirst
   podGC:
     strategy: OnPodCompletion
-  restartPolicy: OnFailure
   serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
   ttlStrategy:
     secondsAfterCompletion: 3600 # 1 hour
