@@ -23,8 +23,14 @@ spec:
                 operator: In
                 values:
                   - ControlPlane
+  dnsConfig:
+    nameservers:
+      - {{ .Values.network.nameservers.ns1 | quote }}
+      - {{ .Values.network.nameservers.ns2 | quote }}
+  dnsPolicy: ClusterFirst
   podGC:
     strategy: OnPodCompletion
+  restartPolicy: OnFailure
   serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
   ttlStrategy:
     secondsAfterCompletion: 3600 # 1 hour
@@ -374,14 +380,8 @@ spec:
             mountPath: /root/inventory/default
           - name: ssh
             mountPath: /root/.ssh
-      # dnsConfig:
-      #   nameservers:
-      #     - {{ .Values.network.nameservers.ns1 | quote }}
-      #     - {{ .Values.network.nameservers.ns2 | quote }}
-      # dnsPolicy: ClusterFirst
       hostNetwork: true
       priorityClassName: system-cluster-critical
-      # restartPolicy: OnFailure
       tolerations:
         - effect: NoExecute
           operator: Exists
