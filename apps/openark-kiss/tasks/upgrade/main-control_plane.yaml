@@ -7,6 +7,6 @@
       ignore_errors: true
 
 - name: Upgrade cluster
-  import_playbook: >
-    /kubespray/upgrade-cluster.yml
-    etcd_retries="10"
+  import_playbook: /kubespray/upgrade-cluster.yml
+  vars:
+    etcd_retries: 10
