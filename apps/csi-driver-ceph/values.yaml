@@ -21,13 +21,13 @@ operatorConfig:
 drivers:
   cephfs:
     enabled: true
-    name: rook-ceph.cephfs.csi.ceph.com # csi-provisioner-name
+    name: csi-rook-ceph.cephfs.csi.ceph.com # csi-provisioner-name
   nfs:
     enabled: true
-    name: rook-ceph.nfs.csi.ceph.com # csi-provisioner-name
+    name: csi-rook-ceph.nfs.csi.ceph.com # csi-provisioner-name
   nvmeof:
     enabled: true
-    name: rook-ceph.nvmeof.csi.ceph.com # csi-provisioner-name
+    name: csi-rook-ceph.nvmeof.csi.ceph.com # csi-provisioner-name
   rbd:
     enabled: true
-    name: rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
+    name: csi-rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
