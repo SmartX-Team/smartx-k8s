@@ -77,6 +77,11 @@ cephClusterSpec:
       daemon:
         keyRotationPolicy: KeyGeneration
         keyGeneration: 2
+        keyType: aes256k
+      mon:
+        keyRotationPolicy: KeyGeneration
+        keyGeneration: 2
+        keyType: aes256k
 
   mon:
     # Set the number of mons to be started. Generally recommended to be 3.
