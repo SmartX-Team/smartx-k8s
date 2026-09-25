@@ -28,6 +28,7 @@ spec:
       - {{ .Values.network.nameservers.ns1 | quote }}
       - {{ .Values.network.nameservers.ns2 | quote }}
   dnsPolicy: ClusterFirst
+  hostNetwork: true
   podGC:
     strategy: OnPodCompletion
   serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
@@ -379,7 +380,6 @@ spec:
             mountPath: /root/inventory/default
           - name: ssh
             mountPath: /root/.ssh
-      hostNetwork: true
       priorityClassName: system-cluster-critical
       tolerations:
         - effect: NoExecute
