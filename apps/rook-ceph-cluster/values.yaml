@@ -70,7 +70,7 @@ cephClusterSpec:
   security:
     cephx:
       csi:
-        keyType: aes # required when Kubernetes nodes don't run Linux kernel 7.0+
+        keyType: aes256k
       daemon:
         keyRotationPolicy: KeyGeneration
         keyGeneration: 2
