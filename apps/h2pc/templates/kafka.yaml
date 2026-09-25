@@ -1,6 +1,6 @@
 {{- if eq "Kafka" .Values.messenger.kind }}
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: {{ include "helm.fullname" $ | quote }}
