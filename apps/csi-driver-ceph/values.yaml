@@ -19,9 +19,6 @@ operatorConfig:
       priorityClassName: system-cluster-critical
 
 drivers:
-  rbd:
-    enabled: true
-    name: rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
   cephfs:
     enabled: true
     name: rook-ceph.cephfs.csi.ceph.com # csi-provisioner-name
@@ -29,5 +26,8 @@ drivers:
     enabled: true
     name: rook-ceph.nfs.csi.ceph.com # csi-provisioner-name
   nvmeof:
-    enabled: false
+    enabled: true
     name: rook-ceph.nvmeof.csi.ceph.com # csi-provisioner-name
+  rbd:
+    enabled: true
+    name: rook-ceph.rbd.csi.ceph.com # csi-provisioner-name
