@@ -203,6 +203,8 @@ spec:
         env:
           - name: ANSIBLE_GATHER_TIMEOUT
             value: "30"
+          - name: ANSIBLE_SSH_ARGS
+            value: -o ConnectTimeout=30 -o ControlMaster=auto -o ControlPersist=60s -o ServerAliveCountMax=3 -o ServerAliveInterval=15 -o StrictHostKeyChecking=no
           - name: ansible_host
             value: {{ "{{ inputs.parameters.ansible_host }}" | quote }}
           - name: ansible_host_id
