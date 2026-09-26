@@ -12,6 +12,6 @@ metadata:
 data:
   kubespray.sh: |
 {{- tpl ( $.Files.Get "bin/kubespray.sh" ) $ | trim | nindent 4 }}
-  os_base_url: {{ .Values.kiss.assets.repo.ubuntu_24_04.baseUrl | quote }}
+  os_base_url: {{ .Values.kiss.assets.repo.ubuntu_26_04.baseUrl | quote }}
   os_revision: {{ .Values.kiss.os.revision | quote }}
 {{- end }}
