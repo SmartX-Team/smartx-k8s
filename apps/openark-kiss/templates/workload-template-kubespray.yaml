@@ -201,10 +201,6 @@ spec:
           - /root/inventory/cluster/hosts.yaml
           - {{ "{{= \"ControlPlane\" == inputs.parameters.group_role ? \"/opt/playbook/playbook-control_plane.yaml\" : \"/opt/playbook/playbook-worker.yaml\" }}" | quote }}
         env:
-          - name: ANSIBLE_GATHER_TIMEOUT
-            value: "30"
-          - name: ANSIBLE_SSH_ARGS
-            value: -o ConnectTimeout=30 -o ControlMaster=no -o ControlPersist=no -o ServerAliveCountMax=3 -o ServerAliveInterval=15 -o StrictHostKeyChecking=no
           - name: ansible_host
             value: {{ "{{ inputs.parameters.ansible_host }}" | quote }}
           - name: ansible_host_id
@@ -371,7 +367,7 @@ spec:
                 name: kiss-config
         resources:
           limits:
-            cpu: "1"
+            # cpu: "1"
             memory: 2Gi
         volumeMounts:
           - name: ansible-task
