@@ -136,7 +136,7 @@ build:
   ubuntu:
     image:
       repo: docker.io/library/ubuntu
-      tag: "24.04"
+      tag: "26.04"
 
 # Kubernetes Cluster Configuration
 # TODO(user): Configure it!
@@ -317,6 +317,8 @@ kiss:
     repo:
       ubuntu_24_04:
         baseUrl: http://mirror.kakao.com/ubuntu-releases/24.04
+      ubuntu_26_04:
+        baseUrl: http://mirror.kakao.com/ubuntu-releases/26.04
 
   # Bare-metal Box Authentication Configuration
   auth:
@@ -353,8 +355,8 @@ kiss:
   # OS Configuration
   os:
     dist: ubuntu # One of: flatcar, rocky, ubuntu (default)
-    version: "24.04"
-    revision: "4"
+    version: "26.04"
+    revision: "1"
     channel: release # One of: release (default), preview-*
     kernel: stable # One of: edge, stable (default)
 

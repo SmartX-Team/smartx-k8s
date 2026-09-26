@@ -24,4 +24,4 @@ kiss:
 
 ubuntu:
   image:
-    tag: "24.04"
+    tag: ""

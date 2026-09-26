@@ -1,1 +1,3 @@
-deb [signed-by=/etc/apt/keyrings/pipewire-extra-bt-codecs.gpg] https://ppa.launchpadcontent.net/aglasgall/pipewire-extra-bt-codecs/ubuntu/ ${VERSION_CODENAME} main
+# FIXME: Waiting for official Ubuntu 26.04 release
+deb [signed-by=/etc/apt/keyrings/pipewire-extra-bt-codecs.gpg] https://ppa.launchpadcontent.net/aglasgall/pipewire-extra-bt-codecs/ubuntu/ noble main
+# deb [signed-by=/etc/apt/keyrings/pipewire-extra-bt-codecs.gpg] https://ppa.launchpadcontent.net/aglasgall/pipewire-extra-bt-codecs/ubuntu/ ${VERSION_CODENAME} main

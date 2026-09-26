@@ -1,1 +1,3 @@
-deb [signed-by=/etc/apt/keyrings/xubuntu.gpg] https://ppa.launchpadcontent.net/xubuntu-dev/staging/ubuntu/ ${VERSION_CODENAME} main
+# FIXME: Waiting for official Ubuntu 26.04 release
+deb [signed-by=/etc/apt/keyrings/xubuntu.gpg] https://ppa.launchpadcontent.net/xubuntu-dev/staging/ubuntu/ noble main
+# deb [signed-by=/etc/apt/keyrings/xubuntu.gpg] https://ppa.launchpadcontent.net/xubuntu-dev/staging/ubuntu/ ${VERSION_CODENAME} main
