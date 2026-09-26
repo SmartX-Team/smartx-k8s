@@ -28,7 +28,7 @@ spec:
       - {{ .Values.network.nameservers.ns1 | quote }}
       - {{ .Values.network.nameservers.ns2 | quote }}
   dnsPolicy: ClusterFirst
-  # hostNetwork: true
+  hostNetwork: true
   podGC:
     strategy: OnPodCompletion
   serviceAccountName: {{ include "helm.serviceAccountAnsiblePlaybookName" $ | quote }}
@@ -201,6 +201,8 @@ spec:
           - /root/inventory/cluster/hosts.yaml
           - {{ "{{= \"ControlPlane\" == inputs.parameters.group_role ? \"/opt/playbook/playbook-control_plane.yaml\" : \"/opt/playbook/playbook-worker.yaml\" }}" | quote }}
         env:
+          - name: ANSIBLE_GATHER_TIMEOUT
+            value: "30"
           - name: ansible_host
             value: {{ "{{ inputs.parameters.ansible_host }}" | quote }}
           - name: ansible_host_id

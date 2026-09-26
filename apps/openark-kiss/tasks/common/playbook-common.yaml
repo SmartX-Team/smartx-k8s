@@ -47,7 +47,6 @@
         ansible_user: "{{ lookup('env', 'ansible_user') }}"
         bin_dir: /usr/local/bin
         etcd_retries: 10
-        gather_timeout: 30
         ip: "{{ lookup('env', 'ansible_ssh_host') }}"
         kiss_allow_critical_commands: "{{ lookup('env', 'kiss_allow_critical_commands') == 'true' }}"
         kiss_allow_pruning_network_interfaces: "{{ lookup('env', 'kiss_allow_pruning_network_interfaces') == 'true' }}"
