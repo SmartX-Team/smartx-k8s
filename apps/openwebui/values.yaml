@@ -18,7 +18,7 @@ ollama:
   # Docker image
   image:
     # -- Docker image tag, overrides the image tag whose default is the chart appVersion.
-    tag: "0.32.5"
+    tag: "0.40.16"
 
   # Ollama parameters
   ollama:
@@ -104,6 +104,21 @@ ollama:
   # -- Affinity for pod assignment
   affinity:
     nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/kiss
+                operator: In
+                values:
+                  - Compute
+        - weight: 2
+          preference:
+            matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                  - NVIDIA-A100-SXM4-40GB
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
@@ -111,6 +126,7 @@ ollama:
                 operator: In
                 values:
                   - Compute
+                  - Gateway
               - key: nvidia.com/gpu.product
                 operator: In
                 values:
