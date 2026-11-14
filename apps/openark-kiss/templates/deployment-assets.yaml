@@ -63,13 +63,13 @@ spec:
           ports:
             - name: http
               containerPort: 8080
-          # livenessProbe:
-          #   failureThreshold: 3
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 10
-          #   httpGet:
-          #     path: /
-          #     port: http
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: /
+              port: http
           readinessProbe:
             failureThreshold: 3
             initialDelaySeconds: 5
@@ -83,7 +83,7 @@ spec:
 {{- if .Values.kiss.assets.proxy.enabled }}
             limits:
               cpu: "4"
-              memory: 4Gi
+              memory: 8Gi
 {{- else }}
             limits:
               cpu: 200m
