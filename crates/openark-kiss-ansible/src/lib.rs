@@ -111,14 +111,6 @@ impl AnsibleClient {
             );
             return Ok(None);
         }
-        if !self.kiss.allow_reboot {
-            #[cfg(feature = "tracing")]
-            info!(
-                "Reboot is disabled; skipping: {} {}",
-                job.r#box.spec.group.role, &box_name,
-            );
-            return Ok(None);
-        }
 
         // realize mutual exclusivity (QUEUE)
         let cluster_state = self::cluster::ClusterState::load(

@@ -160,7 +160,7 @@ async fn reconcile(r#box: Arc<BoxCrd>, ctx: Arc<Context>) -> Result<Action, Erro
     }
 
     // spawn an Ansible job
-    if old_state != new_state && new_state.cron().is_some() {
+    if old_state != new_state || new_state.cron().is_some() {
         if let Some(task) = new_state.as_task() {
             let job = AnsibleJob {
                 cron: new_state.cron(),
